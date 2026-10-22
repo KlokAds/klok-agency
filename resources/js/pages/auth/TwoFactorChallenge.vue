@@ -5,6 +5,7 @@ import KButton from '@/components/k/KButton.vue';
 import KCode from '@/components/k/KCode.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
+import { t } from '@/lib/i18n';
 
 const recovery = ref(false);
 const form = useForm({ code: '', recovery_code: '' });
@@ -12,8 +13,8 @@ const form = useForm({ code: '', recovery_code: '' });
 watchEffect(() =>
     setLayoutProps(
         recovery.value
-            ? { title: 'Recovery code', description: '2FA চালুর সময় যে recovery code রেখেছিলেন, তার একটা দিন।' }
-            : { title: 'দুই ধাপের যাচাই', description: 'Authenticator app-এ যে ৬ সংখ্যার কোড দেখাচ্ছে, সেটা দিন।' },
+            ? { title: 'Recovery code', description: t('2FA চালুর সময় যে recovery code রেখেছিলেন, তার একটা দিন।') }
+            : { title: t('দুই ধাপের যাচাই'), description: t('Authenticator app-এ যে ৬ সংখ্যার কোড দেখাচ্ছে, সেটা দিন।') },
     ),
 );
 
@@ -51,9 +52,9 @@ function toggle(): void {
             <KInput v-model="form.recovery_code" autocomplete="one-time-code" placeholder="xxxxx-xxxxx" autofocus />
         </KField>
 
-        <KButton type="submit" variant="ink" size="lg" block :loading="form.processing">যাচাই করুন</KButton>
+        <KButton type="submit" variant="ink" size="lg" block :loading="form.processing">{{ t('যাচাই করুন') }}</KButton>
         <button type="button" class="text-[13px] font-semibold text-ink-2 hover:text-ink" @click="toggle">
-            {{ recovery ? 'Authenticator কোড দিয়ে ঢুকব' : 'Phone কাছে নেই? Recovery code দিন' }}
+            {{ recovery ? t('Authenticator কোড দিয়ে ঢুকব') : t('Phone কাছে নেই? Recovery code দিন') }}
         </button>
     </form>
 </template>

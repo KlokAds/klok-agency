@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t } from '@/lib/i18n';
+
 defineProps<{ label?: string; error?: string; hint?: string; for?: string; optional?: boolean }>();
 </script>
 
@@ -6,7 +8,7 @@ defineProps<{ label?: string; error?: string; hint?: string; for?: string; optio
     <div class="flex min-w-0 flex-col gap-1.5">
         <label v-if="label" :for="$props.for" class="flex items-baseline gap-2 text-[13px] font-semibold text-ink-2">
             {{ label }}
-            <span v-if="optional" class="text-[11px] font-normal text-ink-3">(ঐচ্ছিক)</span>
+            <span v-if="optional" class="text-[11px] font-normal text-ink-3">({{ t('ঐচ্ছিক') }})</span>
         </label>
         <slot />
         <p v-if="error" class="flex items-start gap-1.5 text-[12.5px] font-medium text-out">

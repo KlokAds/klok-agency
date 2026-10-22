@@ -55,7 +55,7 @@ class PayrollController extends Controller
                 'employee_id' => $p->employee_id,
                 'month' => $p->salary_month,
                 'kind' => $p->salary_kind,
-                'kind_label' => BdtEntry::SALARY_KINDS[$p->salary_kind] ?? 'বেতন',
+                'kind_label' => __(BdtEntry::SALARY_KINDS[$p->salary_kind] ?? 'বেতন'), // i18n
                 'amount' => -$p->amount,
                 'description' => $p->description,
                 'notes' => $p->notes,
@@ -68,7 +68,7 @@ class PayrollController extends Controller
             ],
             'options' => [
                 'employees' => Lookups::employees(),
-                'kinds' => Lookups::options(BdtEntry::SALARY_KINDS),
+                'kinds' => Lookups::options(array_map(fn ($label) => __($label), BdtEntry::SALARY_KINDS)),
                 'statuses' => Lookups::options(Employee::STATUSES),
             ],
         ]);
@@ -91,7 +91,7 @@ class PayrollController extends Controller
     public function storeEmployee(Request $request): RedirectResponse
     {
         Employee::create($this->validatedEmployee($request));
-        $this->toast('নতুন কর্মী যোগ হয়েছে।');
+        $this->toast(__('নতুন কর্মী যোগ হয়েছে।'));
 
         return back();
     }
@@ -99,7 +99,7 @@ class PayrollController extends Controller
     public function updateEmployee(Request $request, Employee $employee): RedirectResponse
     {
         $employee->update($this->validatedEmployee($request));
-        $this->toast('কর্মীর তথ্য আপডেট হয়েছে।');
+        $this->toast(__('কর্মীর তথ্য আপডেট হয়েছে।'));
 
         return back();
     }
@@ -107,11 +107,11 @@ class PayrollController extends Controller
     public function destroyEmployee(Employee $employee): RedirectResponse
     {
         if ($employee->payments()->exists()) {
-            throw ValidationException::withMessages(['employee' => 'এই কর্মীর বেতন দেওয়া আছে — মোছা যাবে না। "Left" করে রাখুন।']);
+            throw ValidationException::withMessages(['employee' => __('এই কর্মীর বেতন দেওয়া আছে — মোছা যাবে না। "Left" করে রাখুন।')]);
         }
 
         $employee->delete();
-        $this->toast('কর্মী Trash-এ গেছে।');
+        $this->toast(__('কর্মী Trash-এ গেছে।'));
 
         return back();
     }
@@ -125,13 +125,13 @@ class PayrollController extends Controller
             'kind' => ['required', Rule::in(array_keys(BdtEntry::SALARY_KINDS))],
             'amount' => ['required', Money::RULE],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ], [], ['amount' => 'পরিমাণ', 'entry_date' => 'তারিখ', 'salary_month' => 'মাস', 'employee_id' => 'কর্মী']);
+        ], [], ['amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'salary_month' => __('মাস'), 'employee_id' => __('কর্মী')]);
 
         $data['amount'] = Money::toMinor($data['amount']);
         abort_if($data['amount'] <= 0, 422);
 
         $postings->salary($data);
-        $this->toast('বেতন দেওয়া লেখা হয়েছে — BDT খাতায় খরচ হিসেবে উঠেছে।');
+        $this->toast(__('বেতন দেওয়া লেখা হয়েছে — BDT খাতায় খরচ হিসেবে উঠেছে।'));
 
         return back();
     }
@@ -153,7 +153,7 @@ class PayrollController extends Controller
             'salary_kind' => $data['kind'],
         ]);
 
-        $this->toast('বেতনের row কর্মীর নামে বসানো হয়েছে।');
+        $this->toast(__('বেতনের row কর্মীর নামে বসানো হয়েছে।'));
 
         return back();
     }
@@ -163,7 +163,7 @@ class PayrollController extends Controller
         abort_unless($payment->category === 'salary', 404);
 
         $payment->delete();
-        $this->toast('বেতনের row Trash-এ গেছে।');
+        $this->toast(__('বেতনের row Trash-এ গেছে।'));
 
         return back();
     }
@@ -179,7 +179,7 @@ class PayrollController extends Controller
             'left_on' => ['nullable', 'date', 'after_or_equal:joined_on'],
             'status' => ['required', Rule::in(array_keys(Employee::STATUSES))],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ], [], ['name' => 'নাম', 'monthly_salary' => 'মাসিক বেতন']);
+        ], [], ['name' => __('নাম'), 'monthly_salary' => __('মাসিক বেতন')]);
 
         $data['monthly_salary'] = Money::toMinor($data['monthly_salary']);
 

@@ -1,0 +1,12 @@
+[
+    {
+        "date": "2026-10-20",
+        "client": "GFFS",
+        "account": "meta",
+        "usd": "14.00",
+        "bdt": "2100",
+        "spend_description": "GFFS - Meta ad spend",
+        "payment_description": "GFFS reimbursement received",
+        "notes": "Covers 14 USD"
+    }
+]

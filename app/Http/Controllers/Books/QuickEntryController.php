@@ -43,25 +43,25 @@ class QuickEntryController extends Controller
                 'account_id' => ['required', 'exists:accounts,id'],
                 'amount' => ['required', Money::RULE],
                 'status' => ['required', Rule::in(['pending', 'settled'])],
-            ], fn ($d) => $postings->adSpend($d), 'Ad খরচ লেখা হয়েছে।'),
+            ], fn ($d) => $postings->adSpend($d), __('Ad খরচ লেখা হয়েছে।')),
 
             'own-spend' => $this->run($request, [
                 'description' => ['required', 'string', 'max:255'],
             ] + $base + [
                 'account_id' => ['required', 'exists:accounts,id'],
                 'amount' => ['required', Money::RULE],
-            ], fn ($d) => $postings->ownSpend($d), 'নিজের খরচ লেখা হয়েছে।'),
+            ], fn ($d) => $postings->ownSpend($d), __('নিজের খরচ লেখা হয়েছে।')),
 
             'card-charge' => $this->run($request, $base + [
                 'account_id' => ['required', 'exists:accounts,id'],
                 'amount' => ['required', Money::RULE],
-            ], fn ($d) => $postings->cardCharge($d), 'Card charge লেখা হয়েছে।'),
+            ], fn ($d) => $postings->cardCharge($d), __('Card charge লেখা হয়েছে।')),
 
             'transfer' => $this->run($request, $base + [
                 'from_id' => ['required', 'exists:accounts,id'],
                 'to_id' => ['required', 'exists:accounts,id'],
                 'amount' => ['required', Money::RULE],
-            ], fn ($d) => $postings->transfer($d), 'Transfer লেখা হয়েছে।'),
+            ], fn ($d) => $postings->transfer($d), __('Transfer লেখা হয়েছে।')),
 
             'client-payment' => $this->run($request, $base + [
                 'client_id' => ['required', 'exists:clients,id'],
@@ -69,24 +69,24 @@ class QuickEntryController extends Controller
                 'amount' => ['required', Money::RULE],
                 'settle_ids' => ['array'],
                 'settle_ids.*' => ['integer'],
-            ], fn ($d) => $postings->clientPayment($d, $d['settle_ids'] ?? []), 'Client-এর টাকা জমা হয়েছে।'),
+            ], fn ($d) => $postings->clientPayment($d, $d['settle_ids'] ?? []), __('Client-এর টাকা জমা হয়েছে।')),
 
             'expense' => $this->run($request, [
                 'description' => ['required', 'string', 'max:255'],
             ] + $base + [
                 'expense_head_id' => ['required', 'exists:expense_heads,id'],
                 'amount' => ['required', Money::RULE],
-            ], fn ($d) => $postings->expense($d), 'খরচ লেখা হয়েছে।'),
+            ], fn ($d) => $postings->expense($d), __('খরচ লেখা হয়েছে।')),
 
             'owner' => $this->run($request, $base + [
                 'direction' => ['required', Rule::in(['in', 'out'])],
                 'amount' => ['required', Money::RULE],
-            ], fn ($d) => $postings->owner($d), 'Owner-এর হিসাব লেখা হয়েছে।'),
+            ], fn ($d) => $postings->owner($d), __('Owner-এর হিসাব লেখা হয়েছে।')),
 
             'buy-usd' => $this->run($request, $base + [
                 'usd' => ['required', Money::RULE],
                 'bdt' => ['required', Money::RULE],
-            ], fn ($d) => $postings->buyUsd($d), 'USD কেনা লেখা হয়েছে — নতুন FX batch তৈরি।'),
+            ], fn ($d) => $postings->buyUsd($d), __('USD কেনা লেখা হয়েছে — নতুন FX batch তৈরি।')),
         };
 
         $this->toast($message);
@@ -97,8 +97,8 @@ class QuickEntryController extends Controller
     private function run(Request $request, array $rules, callable $post, string $message): string
     {
         $data = $request->validate($rules, [], [
-            'amount' => 'পরিমাণ', 'entry_date' => 'তারিখ', 'client_id' => 'client', 'description' => 'বিবরণ',
-            'account_id' => 'account', 'expense_head_id' => 'খরচের খাত', 'usd' => 'USD', 'bdt' => 'BDT',
+            'amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'client_id' => 'client', 'description' => __('বিবরণ'),
+            'account_id' => 'account', 'expense_head_id' => __('খরচের খাত'), 'usd' => 'USD', 'bdt' => 'BDT',
         ]);
 
         // Optional fields left empty are not in the validated data.
@@ -109,7 +109,7 @@ class QuickEntryController extends Controller
                 $data[$key] = Money::toMinor($data[$key]);
 
                 if ($data[$key] <= 0) {
-                    throw ValidationException::withMessages([$key => 'পরিমাণ ০-এর বেশি হতে হবে।']);
+                    throw ValidationException::withMessages([$key => __('পরিমাণ ০-এর বেশি হতে হবে।')]);
                 }
             }
         }

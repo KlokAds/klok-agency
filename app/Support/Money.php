@@ -16,7 +16,7 @@ class Money
             return 0;
         }
 
-        $clean = str_replace([',', ' ', '৳', '$'], '', (string) $value);
+        $clean = str_replace([',', ' ', "\u{09F3}", '$'], '', (string) $value);
         [$whole, $fraction] = array_pad(explode('.', $clean, 2), 2, '0');
         $fraction = substr(str_pad($fraction, 2, '0'), 0, 2);
         $negative = str_starts_with($whole, '-');

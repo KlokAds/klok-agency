@@ -54,7 +54,7 @@ class Postings
         $account = Account::findOrFail($data['account_id']);
 
         if ($account->kind !== 'platform') {
-            throw ValidationException::withMessages(['account_id' => 'Card charge শুধু ad platform-এর জন্য।']);
+            throw ValidationException::withMessages(['account_id' => __('Card charge শুধু ad platform-এর জন্য।')]);
         }
 
         return UsdEntry::create([
@@ -162,7 +162,7 @@ class Postings
     public function transfer(array $data): string
     {
         if ((int) $data['from_id'] === (int) $data['to_id']) {
-            throw ValidationException::withMessages(['to_id' => 'একই account-এ transfer হয় না।']);
+            throw ValidationException::withMessages(['to_id' => __('একই account-এ transfer হয় না।')]);
         }
 
         return DB::transaction(function () use ($data) {

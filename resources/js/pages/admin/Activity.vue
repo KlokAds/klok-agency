@@ -7,6 +7,7 @@ import KPager from '@/components/k/KPager.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import { ago } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Option, Paginated } from '@/types';
 
 type Activity = {
@@ -30,10 +31,10 @@ watch(filters, () => {
 });
 
 const events: Record<string, { label: string; tone: 'in' | 'out' | 'wait' | 'neutral' | 'brand' }> = {
-    created: { label: 'নতুন', tone: 'in' },
-    updated: { label: 'বদল', tone: 'wait' },
-    deleted: { label: 'মোছা', tone: 'out' },
-    restored: { label: 'ফেরত', tone: 'brand' },
+    created: { label: 'নতুন', tone: 'in' }, // i18n
+    updated: { label: 'বদল', tone: 'wait' }, // i18n
+    deleted: { label: 'মোছা', tone: 'out' }, // i18n
+    restored: { label: 'ফেরত', tone: 'brand' }, // i18n
     login: { label: 'Login', tone: 'neutral' },
 };
 
@@ -63,15 +64,15 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
 </script>
 
 <template>
-    <PageHeader eyebrow="নিয়ন্ত্রণ" title="Activity log" lead="কে, কখন, কী বদলেছে — আগের আর পরের মান সহ। এই log কেউ বদলাতে বা মুছতে পারে না।" />
+    <PageHeader :eyebrow="t('নিয়ন্ত্রণ')" title="Activity log" :lead="t('কে, কখন, কী বদলেছে — আগের আর পরের মান সহ। এই log কেউ বদলাতে বা মুছতে পারে না।')" />
 
     <div class="mb-4 grid max-w-xl gap-3 sm:grid-cols-2">
-        <KSelect v-model="filters.user_id" :options="users" placeholder="সব user" clearable size="sm" />
-        <KSelect v-model="filters.log" :options="logs" placeholder="সব ধরন" clearable size="sm" />
+        <KSelect v-model="filters.user_id" :options="users" :placeholder="t('সব user')" clearable size="sm" />
+        <KSelect v-model="filters.log" :options="logs" :placeholder="t('সব ধরন')" clearable size="sm" />
     </div>
 
     <section class="panel overflow-hidden">
-        <KEmpty v-if="!activities.data.length" title="এখনো কিছু নেই" />
+        <KEmpty v-if="!activities.data.length" :title="t('এখনো কিছু নেই')" />
         <ol v-else class="divide-y divide-dashed divide-line">
             <li v-for="a in activities.data" :key="a.id" class="grid gap-2 px-5 py-4 sm:grid-cols-[180px_1fr] sm:px-6">
                 <div>
@@ -80,7 +81,7 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
                 </div>
                 <div class="min-w-0">
                     <p class="flex flex-wrap items-center gap-2 text-[13.5px]">
-                        <KTag :tone="events[a.event]?.tone ?? 'neutral'">{{ events[a.event]?.label ?? a.event }}</KTag>
+                        <KTag :tone="events[a.event]?.tone ?? 'neutral'">{{ events[a.event] ? t(events[a.event].label) : a.event }}</KTag>
                         <span class="font-medium">{{ a.log }}</span>
                         <span v-if="a.subject_id" class="num text-[12px] text-ink-3">#{{ a.subject_id }}</span>
                         <span v-if="a.properties?.ip" class="num text-[12px] text-ink-3">{{ a.properties.ip }}</span>

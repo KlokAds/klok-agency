@@ -63,7 +63,7 @@ class FxBatchController extends Controller
         $bdt = Money::toMinor($data['bdt']);
 
         if ($usd <= 0 || $bdt <= 0) {
-            throw ValidationException::withMessages(['usd' => 'USD আর BDT দুটোই ০-এর বেশি হতে হবে।']);
+            throw ValidationException::withMessages(['usd' => __('USD আর BDT দুটোই ০-এর বেশি হতে হবে।')]);
         }
 
         DB::transaction(function () use ($fx, $data, $usd, $bdt, $postings) {
@@ -78,7 +78,7 @@ class FxBatchController extends Controller
             $postings->syncBatchEntries($fx);
         });
 
-        $this->toast("Batch {$fx->number} আপডেট হয়েছে — FIFO cost নতুন করে হিসাব হলো।");
+        $this->toast(__('Batch :n আপডেট হয়েছে — FIFO cost নতুন করে হিসাব হলো।', ['n' => $fx->number]));
 
         return back();
     }
@@ -86,11 +86,11 @@ class FxBatchController extends Controller
     public function destroy(FxBatch $fx, Books $books, Postings $postings): RedirectResponse
     {
         if (($books->fifo()['batches'][$fx->id]['used'] ?? 0) > 0) {
-            throw ValidationException::withMessages(['batch' => 'এই batch-এর USD খরচ হয়ে গেছে — মোছা যাবে না।']);
+            throw ValidationException::withMessages(['batch' => __('এই batch-এর USD খরচ হয়ে গেছে — মোছা যাবে না।')]);
         }
 
         $postings->deleteBatch($fx);
-        $this->toast("Batch {$fx->number} Trash-এ গেছে।");
+        $this->toast(__('Batch :n Trash-এ গেছে।', ['n' => $fx->number]));
 
         return back();
     }

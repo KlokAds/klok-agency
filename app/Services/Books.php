@@ -264,7 +264,7 @@ class Books
         $ownCost = $ownSpend->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0);
 
         $expenses = $bdt->whereIn('category', BdtEntry::EXPENSE)
-            ->groupBy(fn ($e) => $e->category === 'salary' ? 'বেতন (Salary)' : ($e->head?->name ?? 'অন্যান্য খরচ'))
+            ->groupBy(fn ($e) => $e->category === 'salary' ? __('বেতন (Salary)') : ($e->head?->name ?? __('অন্যান্য খরচ')))
             ->map(fn ($group, $name) => ['name' => $name, 'amount' => -(int) $group->sum('amount')])
             ->sortByDesc('amount')
             ->values()

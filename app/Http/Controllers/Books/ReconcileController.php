@@ -43,7 +43,7 @@ class ReconcileController extends Controller
             'checked_on' => ['required', 'date'],
             'app_balance' => ['required', Money::RULE],
             'note' => ['nullable', 'string', 'max:1000'],
-        ], [], ['app_balance' => 'App-এর balance']);
+        ], [], ['app_balance' => __('App-এর balance')]);
 
         $reconciliation = Reconciliation::create([
             'checked_on' => $data['checked_on'],
@@ -55,8 +55,8 @@ class ReconcileController extends Controller
         $difference = $reconciliation->app_balance - $reconciliation->system_balance;
 
         $difference === 0
-            ? $this->toast('মিলেছে — card-এর balance খাতার সাথে এক।')
-            : $this->toast('মেলেনি — পার্থক্য $'.number_format(abs($difference) / 100, 2).'। কোন entry বাদ পড়েছে দেখুন।', 'warning');
+            ? $this->toast(__('মিলেছে — card-এর balance খাতার সাথে এক।'))
+            : $this->toast(__('মেলেনি — পার্থক্য $:amount। কোন entry বাদ পড়েছে দেখুন।', ['amount' => number_format(abs($difference) / 100, 2)]), 'warning');
 
         return back();
     }

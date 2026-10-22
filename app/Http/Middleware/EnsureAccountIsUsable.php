@@ -36,7 +36,7 @@ class EnsureAccountIsUsable
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->with('status', 'এই account বন্ধ করা আছে। Owner-এর সাথে যোগাযোগ করুন।');
+            return redirect()->route('login')->with('status', __('এই account বন্ধ করা আছে। Owner-এর সাথে যোগাযোগ করুন।'));
         }
 
         if ($request->routeIs(...self::ALLOWED)) {

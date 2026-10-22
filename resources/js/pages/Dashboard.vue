@@ -7,6 +7,7 @@ import KAmount from '@/components/k/KAmount.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KTag from '@/components/k/KTag.vue';
 import { money, niceDate } from '@/lib/format';
+import { t } from '@/lib/i18n';
 
 type Platform = { id: number; name: string; spent: number; charged: number; due: number };
 
@@ -44,44 +45,44 @@ const s = computed(() => props.summary);
 const topMargin = computed(() => Math.max(1, ...props.clients.map((c) => Math.abs(c.margin))));
 
 const hour = new Date().getHours();
-const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ দুপুর' : 'শুভ সন্ধ্যা';
+const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ দুপুর' : 'শুভ সন্ধ্যা'; // i18n
 </script>
 
 <template>
-    <PageHeader :eyebrow="`${greeting}, ${user.name}`" title="আজকের ডেস্ক" lead="Card, খাতা আর client — এক নজরে। সব সংখ্যা খাতা থেকে নিজে হিসাব হয়।" />
+    <PageHeader :eyebrow="`${t(greeting)}, ${user.name}`" :title="t('আজকের ডেস্ক')" :lead="t('Card, খাতা আর client — এক নজরে। সব সংখ্যা খাতা থেকে নিজে হিসাব হয়।')" />
 
     <!-- Data that still needs a human look -->
     <div v-if="s.review_count || s.undated_count" class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-dashed border-wait/50 bg-wait-soft px-4 py-3 text-[13px] text-wait">
         <KIcon name="warn" :size="16" />
-        <span v-if="s.review_count"><b class="num">{{ s.review_count }}</b>টা row পুরনো sheet থেকে "মিলিয়ে দেখুন" চিহ্ন নিয়ে এসেছে</span>
-        <span v-if="s.undated_count"><b class="num">{{ s.undated_count }}</b>টা পুরনো row-এ তারিখ নেই</span>
-        <Link href="/bdt" class="ml-auto font-semibold underline-offset-2 hover:underline">খাতায় দেখুন →</Link>
+        <span v-if="s.review_count">{{ t('{n}টা row পুরনো sheet থেকে "মিলিয়ে দেখুন" চিহ্ন নিয়ে এসেছে', { n: s.review_count }) }}</span>
+        <span v-if="s.undated_count">{{ t('{n}টা পুরনো row-এ তারিখ নেই', { n: s.undated_count }) }}</span>
+        <Link href="/bdt" class="ml-auto font-semibold underline-offset-2 hover:underline">{{ t('খাতায় দেখুন →') }}</Link>
     </div>
 
     <!-- The four numbers that matter -->
     <section class="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4">
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p class="text-[11px] font-bold tracking-[0.14em] text-rail-dim uppercase">ব্যবসার আসল USD</p>
+            <p class="text-[11px] font-bold tracking-[0.14em] text-rail-dim uppercase">{{ t('ব্যবসার আসল USD') }}</p>
             <p class="num mt-3 text-[34px] leading-none font-medium text-white">{{ money(s.business_usd, 'usd') }}</p>
             <p class="mt-3 flex items-center gap-1.5 text-[12.5px]" :class="s.usd_check.ok ? 'text-[#2dd4bf]' : 'text-[#f0875e]'">
                 <KIcon :name="s.usd_check.ok ? 'check' : 'warn'" :size="14" />
-                {{ s.usd_check.ok ? 'মিলেছে — কেনা − খরচ' : 'মেলেনি — কেনা − খরচ = ' + money(s.usd_check.remaining, 'usd') }}
+                {{ s.usd_check.ok ? t('মিলেছে — কেনা − খরচ') : t('মেলেনি — কেনা − খরচ = {amount}', { amount: money(s.usd_check.remaining, 'usd') }) }}
             </p>
         </div>
         <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">Card-এ এখন (app)</p>
+            <p class="eyebrow">{{ t('Card-এ এখন (app)') }}</p>
             <p class="num mt-3 text-[30px] leading-none font-medium">{{ money(s.card, 'usd') }}</p>
-            <p class="mt-3 text-[12.5px] text-ink-3">Platform আরো কাটবে <span class="num font-semibold text-out">{{ money(s.platform_due, 'usd') }}</span></p>
+            <p class="mt-3 text-[12.5px] text-ink-3">{{ t('Platform আরো কাটবে') }} <span class="num font-semibold text-out">{{ money(s.platform_due, 'usd') }}</span></p>
         </div>
         <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">BDT হাতে / Bank</p>
+            <p class="eyebrow">{{ t('BDT হাতে / Bank') }}</p>
             <p class="num mt-3 text-[30px] leading-none font-medium">{{ money(s.bdt, 'bdt') }}</p>
-            <p class="mt-3 text-[12.5px] text-ink-3">BDT খাতার balance</p>
+            <p class="mt-3 text-[12.5px] text-ink-3">{{ t('BDT খাতার balance') }}</p>
         </div>
         <div class="bg-surface p-5 sm:p-6">
             <p class="eyebrow">Profit / (Loss)</p>
             <p class="num mt-3 text-[30px] leading-none font-medium" :class="s.net < -50 ? 'text-out' : s.net > 50 ? 'text-in' : ''">{{ money(s.net, 'bdt', { sign: true }) }}</p>
-            <p class="mt-3 text-[12.5px] text-ink-3">Client margin <span class="num font-semibold text-ink-2">{{ money(s.margin, 'bdt') }}</span> − খরচ</p>
+            <p class="mt-3 text-[12.5px] text-ink-3">Client margin <span class="num font-semibold text-ink-2">{{ money(s.margin, 'bdt') }}</span> {{ t('− খরচ') }}</p>
         </div>
     </section>
 
@@ -90,8 +91,8 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
         <section class="panel p-5 sm:p-6">
             <div class="mb-4 flex items-baseline justify-between gap-4">
                 <div>
-                    <h2 class="text-[16px] font-bold">মাসে মাসে ফলাফল</h2>
-                    <p class="text-[12.5px] text-ink-3">Client-এর টাকা − USD-এর FIFO cost − খরচ · শেষ ৬ মাস</p>
+                    <h2 class="text-[16px] font-bold">{{ t('মাসে মাসে ফলাফল') }}</h2>
+                    <p class="text-[12.5px] text-ink-3">{{ t('Client-এর টাকা − USD-এর FIFO cost − খরচ · শেষ ৬ মাস') }}</p>
                 </div>
                 <Link href="/reports" class="shrink-0 text-[13px] font-semibold whitespace-nowrap text-brand-ink hover:underline">P&L →</Link>
             </div>
@@ -100,22 +101,22 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
 
         <!-- Where the money sits -->
         <section class="panel p-5 sm:p-6">
-            <h2 class="text-[16px] font-bold">লাভ-লসের হিসাব</h2>
-            <p class="text-[12.5px] text-ink-3">যা আছে = যা দিয়েছেন − যা তুলেছেন + লাভ</p>
+            <h2 class="text-[16px] font-bold">{{ t('লাভ-লসের হিসাব') }}</h2>
+            <p class="text-[12.5px] text-ink-3">{{ t('যা আছে = যা দিয়েছেন − যা তুলেছেন + লাভ') }}</p>
             <dl class="mt-4 text-[14px]">
-                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt class="text-ink-2">BDT হাতে</dt><dd class="num">{{ money(s.bdt, 'bdt') }}</dd></div>
-                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt class="text-ink-2">USD (কেনা দামে)</dt><dd class="num">{{ money(s.usd_at_cost, 'bdt') }}</dd></div>
-                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt class="text-ink-2">Client-দের কাছে পাওনা <span class="text-ink-3">({{ money(s.receivable_usd, 'usd') }})</span></dt><dd class="num">{{ money(s.receivable_cost, 'bdt') }}</dd></div>
-                <div class="flex justify-between py-2.5 font-semibold"><dt>মোট সম্পদ</dt><dd class="num">{{ money(s.assets, 'bdt') }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt class="text-ink-2">{{ t('BDT হাতে') }}</dt><dd class="num">{{ money(s.bdt, 'bdt') }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt class="text-ink-2">{{ t('USD (কেনা দামে)') }}</dt><dd class="num">{{ money(s.usd_at_cost, 'bdt') }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt class="text-ink-2">{{ t('Client-দের কাছে পাওনা') }} <span class="text-ink-3">({{ money(s.receivable_usd, 'usd') }})</span></dt><dd class="num">{{ money(s.receivable_cost, 'bdt') }}</dd></div>
+                <div class="flex justify-between py-2.5 font-semibold"><dt>{{ t('মোট সম্পদ') }}</dt><dd class="num">{{ money(s.assets, 'bdt') }}</dd></div>
             </dl>
             <dl class="mt-2 rounded-xl bg-surface-2 px-4 py-1 text-[13.5px]">
-                <div class="flex justify-between border-b border-dashed border-line py-2"><dt class="text-ink-2">Capital দিয়েছেন</dt><dd class="num">{{ money(s.capital, 'bdt') }}</dd></div>
-                <div class="flex justify-between border-b border-dashed border-line py-2"><dt class="text-ink-2">Owner তুলেছেন</dt><dd class="num">{{ money(-s.drawings, 'bdt') }}</dd></div>
-                <div class="flex justify-between border-b border-dashed border-line py-2"><dt class="text-ink-2">লাভ / (লস)</dt><dd class="num">{{ money(s.net, 'bdt', { sign: true }) }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2"><dt class="text-ink-2">{{ t('Capital দিয়েছেন') }}</dt><dd class="num">{{ money(s.capital, 'bdt') }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2"><dt class="text-ink-2">{{ t('Owner তুলেছেন') }}</dt><dd class="num">{{ money(-s.drawings, 'bdt') }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2"><dt class="text-ink-2">{{ t('লাভ / (লস)') }}</dt><dd class="num">{{ money(s.net, 'bdt', { sign: true }) }}</dd></div>
                 <div class="flex items-center justify-between py-2 font-semibold">
                     <dt class="flex items-center gap-1.5">
                         <KIcon :name="s.equity_ok ? 'check' : 'warn'" :size="15" :class="s.equity_ok ? 'text-in' : 'text-out'" />
-                        {{ s.equity_ok ? 'মিলেছে' : 'মেলেনি' }}
+                        {{ s.equity_ok ? t('মিলেছে') : t('মেলেনি') }}
                     </dt>
                     <dd class="num">{{ money(s.equity, 'bdt') }}</dd>
                 </div>
@@ -127,8 +128,8 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
         <!-- Clients -->
         <section class="panel">
             <div class="flex items-baseline justify-between px-5 pt-5 sm:px-6">
-                <h2 class="text-[16px] font-bold">Client-ভিত্তিক margin</h2>
-                <Link href="/clients" class="text-[13px] font-semibold text-brand-ink hover:underline">সব client →</Link>
+                <h2 class="text-[16px] font-bold">{{ t('Client-ভিত্তিক margin') }}</h2>
+                <Link href="/clients" class="text-[13px] font-semibold text-brand-ink hover:underline">{{ t('সব client →') }}</Link>
             </div>
             <ul class="mt-3 px-5 pb-4 sm:px-6">
                 <li v-for="c in clients" :key="c.id" class="border-b border-dashed border-line py-3 last:border-0">
@@ -141,7 +142,7 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
                             <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
                                 <span class="block h-full rounded-full" :class="c.margin >= 0 ? 'bg-[var(--pos)]' : 'bg-[var(--neg)]'" :style="{ width: `${(Math.abs(c.margin) / topMargin) * 100}%` }" />
                             </span>
-                            <span class="num w-24 text-right text-[11.5px] text-ink-3">{{ money(c.usd_settled, 'usd') }} খরচ</span>
+                            <span class="num w-24 text-right text-[11.5px] text-ink-3">{{ t('{amount} খরচ', { amount: money(c.usd_settled, 'usd') }) }}</span>
                         </div>
                     </Link>
                 </li>
@@ -152,16 +153,16 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
             <!-- Platforms -->
             <section class="panel p-5 sm:p-6">
                 <div class="flex items-baseline justify-between">
-                    <h2 class="text-[16px] font-bold">Ad Platform — খরচ বনাম কাটা</h2>
-                    <Link href="/platforms" class="text-[13px] font-semibold text-brand-ink hover:underline">বিস্তারিত →</Link>
+                    <h2 class="text-[16px] font-bold">{{ t('Ad Platform — খরচ বনাম কাটা') }}</h2>
+                    <Link href="/platforms" class="text-[13px] font-semibold text-brand-ink hover:underline">{{ t('বিস্তারিত →') }}</Link>
                 </div>
                 <table class="mt-3 w-full text-[13.5px]">
                     <thead>
                         <tr class="text-left text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase">
                             <th class="pb-2 font-bold">Platform</th>
-                            <th class="pb-2 text-right font-bold">খরচ</th>
-                            <th class="pb-2 text-right font-bold">কেটেছে</th>
-                            <th class="pb-2 text-right font-bold">আরো কাটবে</th>
+                            <th class="pb-2 text-right font-bold">{{ t('খরচ') }}</th>
+                            <th class="pb-2 text-right font-bold">{{ t('কেটেছে') }}</th>
+                            <th class="pb-2 text-right font-bold">{{ t('আরো কাটবে') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -178,7 +179,7 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
             <!-- Pending from clients -->
             <section class="panel p-5 sm:p-6">
                 <div class="flex items-baseline justify-between">
-                    <h2 class="text-[16px] font-bold">Client দেবে</h2>
+                    <h2 class="text-[16px] font-bold">{{ t('Client দেবে') }}</h2>
                     <span class="num text-[14px] font-semibold text-wait">{{ money(s.receivable_usd, 'usd') }}</span>
                 </div>
                 <ul v-if="pending.length" class="mt-2">
@@ -189,17 +190,17 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
                         <span class="num font-medium">{{ money(p.amount, 'usd') }}</span>
                     </li>
                 </ul>
-                <p v-else class="mt-3 text-[13.5px] text-ink-3">সব client টাকা দিয়ে দিয়েছে।</p>
+                <p v-else class="mt-3 text-[13.5px] text-ink-3">{{ t('সব client টাকা দিয়ে দিয়েছে।') }}</p>
             </section>
         </div>
     </div>
 
     <!-- Latest entries -->
     <section class="panel mt-6">
-        <h2 class="px-5 pt-5 text-[16px] font-bold sm:px-6">সর্বশেষ entry</h2>
+        <h2 class="px-5 pt-5 text-[16px] font-bold sm:px-6">{{ t('সর্বশেষ entry') }}</h2>
         <ul class="mt-2 px-5 pb-3 sm:px-6">
             <li v-for="r in recent" :key="r.book + r.id" class="flex items-center gap-3 border-b border-dashed border-line py-3 text-[13.5px] last:border-0">
-                <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-sunken text-[12px] font-bold text-ink-2">{{ r.book === 'usd' ? '$' : '৳' }}</span>
+                <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-sunken text-[12px] font-bold text-ink-2">{{ r.book === 'usd' ? '$' : '\u09F3' }}</span>
                 <span class="min-w-0 flex-1">
                     <span class="block truncate font-medium">{{ r.description }}</span>
                     <span class="block text-[12px] text-ink-3">{{ r.category }}<template v-if="r.client"> · {{ r.client }}</template> · {{ niceDate(r.date) }}</span>

@@ -30,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
 
         // The Owner role can do everything; other roles go through permissions.
         Gate::before(fn ($user) => $user->hasRole(Access::OWNER) ? true : null);
+
+        // English text lives in lang/en.json plus one file per area under lang/parts/*/en.json,
+        // keyed by the বাংলা source text. The same files feed the Vue side.
+        foreach (glob(lang_path('parts/*'), GLOB_ONLYDIR) ?: [] as $dir) {
+            app('translator')->addJsonPath($dir);
+        }
     }
 
     /**

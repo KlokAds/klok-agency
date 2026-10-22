@@ -79,7 +79,7 @@ class ClientController extends Controller
     public function store(Request $request): RedirectResponse
     {
         Client::create($this->validated($request));
-        $this->toast('নতুন client যোগ হয়েছে।');
+        $this->toast(__('নতুন client যোগ হয়েছে।'));
 
         return back();
     }
@@ -87,7 +87,7 @@ class ClientController extends Controller
     public function update(Request $request, Client $client): RedirectResponse
     {
         $client->update($this->validated($request, $client));
-        $this->toast('Client আপডেট হয়েছে।');
+        $this->toast(__('Client আপডেট হয়েছে।'));
 
         return back();
     }
@@ -95,11 +95,11 @@ class ClientController extends Controller
     public function destroy(Client $client): RedirectResponse
     {
         if (UsdEntry::where('client_id', $client->id)->exists() || BdtEntry::where('client_id', $client->id)->exists()) {
-            throw ValidationException::withMessages(['client' => 'এই client-এর লেনদেন আছে — মোছা যাবে না। Inactive করে রাখুন।']);
+            throw ValidationException::withMessages(['client' => __('এই client-এর লেনদেন আছে — মোছা যাবে না। Inactive করে রাখুন।')]);
         }
 
         $client->delete();
-        $this->toast('Client Trash-এ গেছে।');
+        $this->toast(__('Client Trash-এ গেছে।'));
 
         return redirect()->route('clients.index');
     }
@@ -114,6 +114,6 @@ class ClientController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ], [], ['name' => 'নাম']);
+        ], [], ['name' => __('নাম')]);
     }
 }

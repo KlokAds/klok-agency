@@ -19,11 +19,11 @@ use Inertia\Response;
 class TrashController extends Controller
 {
     private const TYPES = [
-        'usd' => [UsdEntry::class, 'USD খাতা'],
-        'bdt' => [BdtEntry::class, 'BDT খাতা'],
+        'usd' => [UsdEntry::class, 'USD খাতা'], // i18n
+        'bdt' => [BdtEntry::class, 'BDT খাতা'], // i18n
         'fx' => [FxBatch::class, 'FX Batch'],
         'client' => [Client::class, 'Client'],
-        'employee' => [Employee::class, 'কর্মী'],
+        'employee' => [Employee::class, 'কর্মী'], // i18n
     ];
 
     public function index(): Response
@@ -33,7 +33,7 @@ class TrashController extends Controller
 
             return $model::onlyTrashed()->latest('deleted_at')->limit(100)->get()->map(fn ($row) => [
                 'type' => $type,
-                'type_label' => $label,
+                'type_label' => __($label),
                 'id' => $row->id,
                 'title' => $row->description ?? $row->name,
                 'amount' => $row->amount ?? $row->usd ?? null,
@@ -66,7 +66,7 @@ class TrashController extends Controller
             }
         });
 
-        $this->toast('ফেরত আনা হয়েছে।');
+        $this->toast(__('ফেরত আনা হয়েছে।'));
 
         return back();
     }

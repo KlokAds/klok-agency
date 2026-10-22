@@ -13,6 +13,7 @@ import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { confirmAction } from '@/lib/feedback';
 import { money, niceDate } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Option } from '@/types';
 
 type Client = { id: number; name: string; type: string; status: string; phone: string | null; email: string | null; company: string | null; notes: string | null };
@@ -44,7 +45,14 @@ function save(): void {
 }
 
 async function remove(): Promise<void> {
-    if (await confirmAction({ title: `${props.client.name} মুছবেন?`, body: 'যার কোনো লেনদেন নেই, শুধু তাকেই মোছা যায়।', confirm: 'Trash-এ পাঠান', danger: true })) {
+    if (
+        await confirmAction({
+            title: t('{name} মুছবেন?', { name: props.client.name }),
+            body: t('যার কোনো লেনদেন নেই, শুধু তাকেই মোছা যায়।'),
+            confirm: t('Trash-এ পাঠান'),
+            danger: true,
+        })
+    ) {
         router.delete(`/clients/${props.client.id}`);
     }
 }
@@ -57,26 +65,26 @@ function print(): void {
 <template>
     <PageHeader :eyebrow="client.type === 'associate' ? 'Associate' : 'Client'" :title="client.name" :lead="client.notes ?? undefined">
         <KButton icon="print" @click="print">Statement print</KButton>
-        <KButton v-if="can['clients.edit']" icon="pen" @click="open = true">বদলান</KButton>
+        <KButton v-if="can['clients.edit']" icon="pen" @click="open = true">{{ t('বদলান') }}</KButton>
     </PageHeader>
 
     <div class="mb-6 grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-        <div class="bg-surface p-5"><p class="eyebrow">Ad খরচ (settled)</p><p class="num mt-2 text-[22px]">{{ money(f.usd_settled, 'usd') }}</p><p class="num mt-1 text-[12px] text-ink-3">FIFO cost {{ money(f.cost_settled, 'bdt') }}</p></div>
-        <div class="bg-surface p-5"><p class="eyebrow">দিয়েছে</p><p class="num mt-2 text-[22px]">{{ money(f.received, 'bdt') }}</p><p v-if="rate" class="num mt-1 text-[12px] text-ink-3">গড় ৳{{ rate }} / USD</p></div>
+        <div class="bg-surface p-5"><p class="eyebrow">{{ t('Ad খরচ (settled)') }}</p><p class="num mt-2 text-[22px]">{{ money(f.usd_settled, 'usd') }}</p><p class="num mt-1 text-[12px] text-ink-3">FIFO cost {{ money(f.cost_settled, 'bdt') }}</p></div>
+        <div class="bg-surface p-5"><p class="eyebrow">{{ t('দিয়েছে') }}</p><p class="num mt-2 text-[22px]">{{ money(f.received, 'bdt') }}</p><p v-if="rate" class="num mt-1 text-[12px] text-ink-3">{{ t('গড়') }} &#2547;{{ rate }} / USD</p></div>
         <div class="bg-surface p-5"><p class="eyebrow">Margin</p><p class="mt-2 text-[22px]"><KAmount :value="f.margin" currency="bdt" /></p></div>
-        <div class="bg-surface p-5"><p class="eyebrow">পাওনা</p><p class="num mt-2 text-[22px] text-wait">{{ money(f.usd_pending, 'usd') }}</p><p class="num mt-1 text-[12px] text-ink-3">cost {{ money(f.cost_pending, 'bdt') }}</p></div>
+        <div class="bg-surface p-5"><p class="eyebrow">{{ t('পাওনা') }}</p><p class="num mt-2 text-[22px] text-wait">{{ money(f.usd_pending, 'usd') }}</p><p class="num mt-1 text-[12px] text-ink-3">cost {{ money(f.cost_pending, 'bdt') }}</p></div>
     </div>
 
     <section class="panel overflow-hidden">
         <div class="flex items-baseline justify-between px-5 pt-5 sm:px-6">
             <h2 class="text-[16px] font-bold">Statement</h2>
-            <span class="text-[12.5px] text-ink-3">USD খরচ আর BDT পেমেন্ট — তারিখ অনুযায়ী</span>
+            <span class="text-[12.5px] text-ink-3">{{ t('USD খরচ আর BDT পেমেন্ট — তারিখ অনুযায়ী') }}</span>
         </div>
-        <KEmpty v-if="!statement.length" title="এখনো কোনো লেনদেন নেই" />
+        <KEmpty v-if="!statement.length" :title="t('এখনো কোনো লেনদেন নেই')" />
         <div v-else class="mt-3 overflow-x-auto">
             <table class="ledger">
                 <thead>
-                    <tr><th>তারিখ</th><th>বিবরণ</th><th class="r">Ad খরচ (USD)</th><th class="r">FIFO cost</th><th class="r">পেমেন্ট (BDT)</th><th>Status</th></tr>
+                    <tr><th>{{ t('তারিখ') }}</th><th>{{ t('বিবরণ') }}</th><th class="r">{{ t('Ad খরচ (USD)') }}</th><th class="r">FIFO cost</th><th class="r">{{ t('পেমেন্ট (BDT)') }}</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                     <tr v-for="r in statement" :key="r.key">
@@ -98,20 +106,20 @@ function print(): void {
         </div>
     </section>
 
-    <KModal v-model="open" :title="`${client.name} — বদলান`">
+    <KModal v-model="open" :title="t('{name} — বদলান', { name: client.name })">
         <form id="client-edit" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
-            <KField label="নাম" :error="form.errors.name" class="sm:col-span-2"><KInput v-model="form.name" :invalid="!!form.errors.name" /></KField>
-            <KField label="ধরন"><KSegment v-model="form.type" :options="types" /></KField>
-            <KField label="অবস্থা"><KSegment v-model="form.status" :options="statuses" /></KField>
+            <KField :label="t('নাম')" :error="form.errors.name" class="sm:col-span-2"><KInput v-model="form.name" :invalid="!!form.errors.name" /></KField>
+            <KField :label="t('ধরন')"><KSegment v-model="form.type" :options="types" /></KField>
+            <KField :label="t('অবস্থা')"><KSegment v-model="form.status" :options="statuses" /></KField>
             <KField label="Phone" optional><KInput v-model="form.phone" type="tel" /></KField>
             <KField label="Email" optional :error="form.errors.email"><KInput v-model="form.email" type="email" /></KField>
             <KField label="Company" optional class="sm:col-span-2"><KInput v-model="form.company" /></KField>
             <KField label="Note" optional class="sm:col-span-2"><KTextarea v-model="form.notes" /></KField>
         </form>
         <template #footer>
-            <KButton v-if="can['clients.delete'] && !statement.length" variant="danger" icon="bin" class="mr-auto" @click="remove">মুছুন</KButton>
-            <KButton variant="quiet" @click="open = false">বাতিল</KButton>
-            <KButton type="submit" form="client-edit" variant="primary" :loading="form.processing">সংরক্ষণ</KButton>
+            <KButton v-if="can['clients.delete'] && !statement.length" variant="danger" icon="bin" class="mr-auto" @click="remove">{{ t('মুছুন') }}</KButton>
+            <KButton variant="quiet" @click="open = false">{{ t('বাতিল') }}</KButton>
+            <KButton type="submit" form="client-edit" variant="primary" :loading="form.processing">{{ t('সংরক্ষণ') }}</KButton>
         </template>
     </KModal>
 </template>

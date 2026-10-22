@@ -3,9 +3,10 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
+import { t } from '@/lib/i18n';
 
 defineOptions({
-    layout: { title: 'Password ভুলে গেছেন', description: 'Account-এর email দিন — reset link পাঠানো হবে।' },
+    layout: { title: 'Password ভুলে গেছেন', description: 'Account-এর email দিন — reset link পাঠানো হবে।' }, // i18n
 });
 
 defineProps<{ status?: string }>();
@@ -22,7 +23,7 @@ const form = useForm({ email: '' });
         <KField label="Email" for="email" :error="form.errors.email">
             <KInput id="email" v-model="form.email" type="email" autocomplete="username" :invalid="!!form.errors.email" autofocus required />
         </KField>
-        <KButton type="submit" variant="ink" size="lg" block :loading="form.processing">Reset link পাঠান</KButton>
-        <Link href="/login" class="text-center text-[13px] font-semibold text-ink-2 hover:text-ink">← Sign in-এ ফিরে যান</Link>
+        <KButton type="submit" variant="ink" size="lg" block :loading="form.processing">{{ t('Reset link পাঠান') }}</KButton>
+        <Link href="/login" class="text-center text-[13px] font-semibold text-ink-2 hover:text-ink">← {{ t('Sign in-এ ফিরে যান') }}</Link>
     </form>
 </template>

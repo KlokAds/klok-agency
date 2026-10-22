@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TrashController;
+use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Books\BdtEntryController;
 use App\Http\Controllers\Books\ClientController;
@@ -15,9 +16,12 @@ use App\Http\Controllers\Books\QuickEntryController;
 use App\Http\Controllers\Books\ReconcileController;
 use App\Http\Controllers\Books\ReportController;
 use App\Http\Controllers\Books\UsdEntryController;
+use App\Http\Controllers\Settings\LocaleController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard')->name('home');
+
+Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
@@ -79,6 +83,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('settings', [SettingController::class, 'index'])->middleware('can:settings.view')->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->middleware('can:settings.edit')->name('settings.update');
+        Route::get('update/status', [UpdateController::class, 'status'])->middleware('throttle:20,1')->name('update.status');
+        Route::post('update', [UpdateController::class, 'update'])->middleware('throttle:5,10')->name('update.run');
         Route::post('settings/heads', [SettingController::class, 'storeHead'])->middleware('can:settings.edit')->name('settings.heads.store');
         Route::put('settings/heads/{head}', [SettingController::class, 'updateHead'])->middleware('can:settings.edit')->name('settings.heads.update');
         Route::post('settings/accounts', [SettingController::class, 'storeAccount'])->middleware('can:settings.edit')->name('settings.accounts.store');

@@ -19,12 +19,12 @@ class UsdEntry extends Model
     use Audited, LedgerEntry, SoftDeletes;
 
     public const CATEGORIES = [
-        'deposit' => ['label' => 'USD কেনা (Deposit)', 'sign' => 1],
-        'client_spend' => ['label' => 'Client-এর ad খরচ', 'sign' => -1],
-        'business_spend' => ['label' => 'নিজের খরচ (KlokAds)', 'sign' => -1],
-        'card_charge' => ['label' => 'Card থেকে কাটা', 'sign' => -1],
-        'transfer' => ['label' => 'Transfer', 'sign' => 0],
-        'adjustment' => ['label' => 'Adjustment', 'sign' => 0],
+        'deposit' => ['label' => 'USD কেনা (Deposit)', 'sign' => 1], // i18n
+        'client_spend' => ['label' => 'Client-এর ad খরচ', 'sign' => -1], // i18n
+        'business_spend' => ['label' => 'নিজের খরচ (KlokAds)', 'sign' => -1], // i18n
+        'card_charge' => ['label' => 'Card থেকে কাটা', 'sign' => -1], // i18n
+        'transfer' => ['label' => 'Transfer', 'sign' => 0], // i18n
+        'adjustment' => ['label' => 'Adjustment', 'sign' => 0], // i18n
     ];
 
     /** Categories that consume USD from the FIFO pool. */

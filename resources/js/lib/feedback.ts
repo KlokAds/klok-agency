@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
+import { t } from '@/lib/i18n';
 import type { Toast } from '@/types';
 
 /* Toasts and confirm dialogs, rendered by <KFeedbackHost> in the shell. */
@@ -28,7 +29,7 @@ export function toast(message: string, type: Toast['type'] = 'success'): void {
 }
 
 export function dismiss(id: number): void {
-    feedback.toasts = feedback.toasts.filter((t) => t.id !== id);
+    feedback.toasts = feedback.toasts.filter((item) => item.id !== id);
 }
 
 export function confirmAction(opts: Omit<ConfirmRequest, 'resolve'>): Promise<boolean> {
@@ -63,7 +64,7 @@ export function initializeFeedback(): void {
 
         if (status === 403) {
             event.preventDefault();
-            toast('এই কাজের permission আপনার নেই।', 'error');
+            toast(t('এই কাজের permission আপনার নেই।'), 'error');
         } else if (status === 419) {
             event.preventDefault();
             window.location.reload();

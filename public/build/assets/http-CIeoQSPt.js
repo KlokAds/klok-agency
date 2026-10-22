@@ -1,0 +1,1 @@
+function e(){let e=document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);return e?decodeURIComponent(e[1]):``}async function t(t){let n=await fetch(t,{headers:{Accept:`application/json`,"X-Requested-With":`XMLHttpRequest`,"X-XSRF-TOKEN":e()},credentials:`same-origin`});if(!n.ok)throw Error(String(n.status));return await n.json()}export{t};

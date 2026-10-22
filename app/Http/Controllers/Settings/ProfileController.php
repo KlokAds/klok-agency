@@ -22,7 +22,7 @@ class ProfileController extends Controller
     {
         $request->user()->update(['name' => $request->validated('name')]);
 
-        $this->toast('Profile আপডেট হয়েছে।');
+        $this->toast(__('Profile আপডেট হয়েছে।'));
 
         return to_route('profile.edit');
     }

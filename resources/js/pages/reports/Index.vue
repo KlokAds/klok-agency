@@ -8,6 +8,7 @@ import KButton from '@/components/k/KButton.vue';
 import KDate from '@/components/k/KDate.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import { money, niceDate } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Option } from '@/types';
 
 type ClientRow = { id: number; name: string; usd_settled: number; cost_settled: number; received: number; margin: number; usd_pending: number; cost_pending: number };
@@ -32,13 +33,13 @@ const props = defineProps<{
 
 const can = computed(() => usePage().props.auth.can);
 
-const presets: Option[] = [
-    { value: 'all', label: 'শুরু থেকে' },
-    { value: 'this_month', label: 'এই মাস' },
-    { value: 'last_month', label: 'গত মাস' },
-    { value: 'this_year', label: 'এই বছর' },
-    { value: 'custom', label: 'নিজে বাছুন' },
-];
+const presets = computed<Option[]>(() => [
+    { value: 'all', label: t('শুরু থেকে') },
+    { value: 'this_month', label: t('এই মাস') },
+    { value: 'last_month', label: t('গত মাস') },
+    { value: 'this_year', label: t('এই বছর') },
+    { value: 'custom', label: t('নিজে বাছুন') },
+]);
 
 const preset = ref(props.period.preset);
 const from = ref(props.period.from);
@@ -68,7 +69,7 @@ const exportUrl = computed(() => {
     return `/reports/export/pl?${q}`;
 });
 
-const periodLabel = computed(() => (props.period.from ? `${niceDate(props.period.from)} — ${niceDate(props.period.to)}` : 'শুরু থেকে আজ পর্যন্ত'));
+const periodLabel = computed(() => (props.period.from ? `${niceDate(props.period.from)} — ${niceDate(props.period.to)}` : t('শুরু থেকে আজ পর্যন্ত')));
 function printPage(): void {
     window.print();
 }
@@ -77,7 +78,7 @@ const rows = computed(() => props.pl.clients.filter((c) => c.received || c.usd_s
 </script>
 
 <template>
-    <PageHeader eyebrow="হিসাব" title="Profit & Loss" lead="প্রতিটা USD খরচ তার নিজের batch-এর rate-এ cost ধরা (FIFO)। Client যা দিয়েছে তার থেকে cost বাদ দিলে আসল margin।">
+    <PageHeader :eyebrow="t('হিসাব')" title="Profit & Loss" :lead="t('প্রতিটা USD খরচ তার নিজের batch-এর rate-এ cost ধরা (FIFO)। Client যা দিয়েছে তার থেকে cost বাদ দিলে আসল margin।')">
         <KButton icon="print" @click="printPage">Print / PDF</KButton>
         <KButton v-if="can['reports.export']" :href="exportUrl" external icon="down">CSV</KButton>
     </PageHeader>
@@ -85,9 +86,9 @@ const rows = computed(() => props.pl.clients.filter((c) => c.received || c.usd_s
     <section class="no-print mb-6 flex flex-wrap items-center gap-3">
         <KSegment v-model="preset" :options="presets" size="sm" />
         <div v-if="preset === 'custom'" class="flex items-center gap-2">
-            <KDate v-model="from" placeholder="শুরু" size="sm" clearable />
+            <KDate v-model="from" :placeholder="t('শুরু')" size="sm" clearable />
             <span class="text-ink-3">—</span>
-            <KDate v-model="to" placeholder="শেষ" size="sm" clearable />
+            <KDate v-model="to" :placeholder="t('শেষ')" size="sm" clearable />
         </div>
     </section>
 
@@ -105,11 +106,11 @@ const rows = computed(() => props.pl.clients.filter((c) => c.received || c.usd_s
         </header>
 
         <div class="px-5 py-6 sm:px-8">
-            <h2 class="eyebrow mb-3">১. Revenue — client-ভিত্তিক margin (শুধু Settled)</h2>
+            <h2 class="eyebrow mb-3">{{ t('১. Revenue — client-ভিত্তিক margin (শুধু Settled)') }}</h2>
             <div class="overflow-x-auto">
                 <table class="ledger">
                     <thead>
-                        <tr><th>Client</th><th class="r">USD খরচ</th><th class="r">FIFO cost</th><th class="r">BDT পেয়েছি</th><th class="r">Margin</th><th class="r">Pending</th></tr>
+                        <tr><th>Client</th><th class="r">{{ t('USD খরচ') }}</th><th class="r">FIFO cost</th><th class="r">{{ t('BDT পেয়েছি') }}</th><th class="r">Margin</th><th class="r">Pending</th></tr>
                     </thead>
                     <tbody>
                         <tr v-for="c in rows" :key="c.id">
@@ -121,12 +122,12 @@ const rows = computed(() => props.pl.clients.filter((c) => c.received || c.usd_s
                             <td class="r num text-wait">{{ c.usd_pending ? money(c.usd_pending, 'usd') : '–' }}</td>
                         </tr>
                         <tr v-if="pl.unlinked_income">
-                            <td class="font-medium">অন্যান্য আয়</td><td /><td /><td class="r num">{{ money(pl.unlinked_income, 'bdt') }}</td><td class="r num">{{ money(pl.unlinked_income, 'bdt') }}</td><td />
+                            <td class="font-medium">{{ t('অন্যান্য আয়') }}</td><td /><td /><td class="r num">{{ money(pl.unlinked_income, 'bdt') }}</td><td class="r num">{{ money(pl.unlinked_income, 'bdt') }}</td><td />
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr class="font-semibold">
-                            <td class="border-t-2 border-ink px-3 py-3">মোট margin</td><td class="border-t-2 border-ink" /><td class="border-t-2 border-ink" /><td class="border-t-2 border-ink" />
+                            <td class="border-t-2 border-ink px-3 py-3">{{ t('মোট margin') }}</td><td class="border-t-2 border-ink" /><td class="border-t-2 border-ink" /><td class="border-t-2 border-ink" />
                             <td class="r num border-t-2 border-ink px-3 py-3">{{ money(pl.margin, 'bdt') }}</td>
                             <td class="r num border-t-2 border-ink px-3 py-3 text-wait">{{ pl.pending_usd ? money(pl.pending_usd, 'usd') : '' }}</td>
                         </tr>
@@ -134,39 +135,39 @@ const rows = computed(() => props.pl.clients.filter((c) => c.received || c.usd_s
                 </table>
             </div>
 
-            <h2 class="eyebrow mt-8 mb-3">২. Expenses</h2>
+            <h2 class="eyebrow mt-8 mb-3">{{ t('২. Expenses') }}</h2>
             <dl class="max-w-xl text-[14px]">
                 <div class="flex justify-between border-b border-dashed border-line py-2.5">
-                    <dt>নিজের USD খরচ <span class="num text-ink-3">({{ money(pl.own_usd, 'usd') }} — KlokAds ad + research)</span></dt>
+                    <dt>{{ t('নিজের USD খরচ') }} <span class="num text-ink-3">({{ money(pl.own_usd, 'usd') }} — KlokAds ad + research)</span></dt>
                     <dd class="num">{{ money(pl.own_cost, 'bdt') }}</dd>
                 </div>
                 <div v-for="x in pl.expenses" :key="x.name" class="flex justify-between border-b border-dashed border-line py-2.5">
-                    <dt>{{ x.name }}</dt>
+                    <dt>{{ t(x.name) }}</dt>
                     <dd class="num">{{ money(x.amount, 'bdt') }}</dd>
                 </div>
                 <div class="flex justify-between py-3 font-semibold">
-                    <dt>মোট খরচ</dt>
+                    <dt>{{ t('মোট খরচ') }}</dt>
                     <dd class="num">{{ money(pl.total_expense, 'bdt') }}</dd>
                 </div>
             </dl>
 
-            <h2 class="eyebrow mt-8 mb-3">৩. ফলাফল</h2>
+            <h2 class="eyebrow mt-8 mb-3">{{ t('৩. ফলাফল') }}</h2>
             <dl class="max-w-xl rounded-xl bg-surface-2 px-4 text-[14.5px]">
-                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt>মোট margin</dt><dd class="num">{{ money(pl.margin, 'bdt') }}</dd></div>
-                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt>বাদ: মোট খরচ</dt><dd class="num">{{ money(-pl.total_expense, 'bdt') }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt>{{ t('মোট margin') }}</dt><dd class="num">{{ money(pl.margin, 'bdt') }}</dd></div>
+                <div class="flex justify-between border-b border-dashed border-line py-2.5"><dt>{{ t('বাদ: মোট খরচ') }}</dt><dd class="num">{{ money(-pl.total_expense, 'bdt') }}</dd></div>
                 <div class="flex justify-between py-3 text-[16px] font-bold"><dt>Net profit / (loss)</dt><dd><KAmount :value="pl.net" currency="bdt" sign /></dd></div>
             </dl>
-            <p v-if="pl.pending_cost" class="mt-3 text-[13px] text-ink-3">এখনো বাকি (client দেবে): <b class="num text-ink-2">{{ money(pl.pending_cost, 'bdt') }}</b> cost — এই টাকা পেলে Settled হয়ে margin-এ ঢুকবে।</p>
+            <p v-if="pl.pending_cost" class="mt-3 text-[13px] text-ink-3">{{ t('এখনো বাকি (client দেবে):') }} <b class="num text-ink-2">{{ money(pl.pending_cost, 'bdt') }}</b> {{ t('cost — এই টাকা পেলে Settled হয়ে margin-এ ঢুকবে।') }}</p>
             <ul class="mt-6 list-disc space-y-1 pl-5 text-[12.5px] text-ink-3">
-                <li>Owner-এর তোলা টাকা (drawing) খরচ নয় — তাই P&L-এ নেই, capital থেকে কমে।</li>
-                <li>নিজের বা টিমের সময়ের দাম এখানে ধরা নেই, শুধু যে বেতন দেওয়া হয়েছে তা আছে।</li>
-                <li>সময় বাছাই করলে তারিখ ছাড়া পুরনো row গুলো বাদ পড়ে।</li>
+                <li>{{ t('Owner-এর তোলা টাকা (drawing) খরচ নয় — তাই P&L-এ নেই, capital থেকে কমে।') }}</li>
+                <li>{{ t('নিজের বা টিমের সময়ের দাম এখানে ধরা নেই, শুধু যে বেতন দেওয়া হয়েছে তা আছে।') }}</li>
+                <li>{{ t('সময় বাছাই করলে তারিখ ছাড়া পুরনো row গুলো বাদ পড়ে।') }}</li>
             </ul>
         </div>
     </article>
 
     <section class="panel no-print mt-6 p-5 sm:p-6">
-        <h2 class="mb-4 text-[16px] font-bold">শেষ ১২ মাস</h2>
+        <h2 class="mb-4 text-[16px] font-bold">{{ t('শেষ ১২ মাস') }}</h2>
         <MonthlyChart :rows="monthly" />
     </section>
 </template>

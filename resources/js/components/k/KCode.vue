@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue';
+import { t } from '@/lib/i18n';
 
 // Six separate boxes for an authenticator code; paste fills all of them.
 const props = withDefaults(defineProps<{ length?: number; invalid?: boolean }>(), { length: 6 });
@@ -44,7 +45,7 @@ function onKey(index: number, event: KeyboardEvent): void {
 </script>
 
 <template>
-    <div class="flex gap-2" role="group" aria-label="কোড">
+    <div class="flex gap-2" role="group" :aria-label="t('কোড')">
         <input
             v-for="i in length"
             :key="i"

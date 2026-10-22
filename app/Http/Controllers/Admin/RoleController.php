@@ -24,8 +24,8 @@ class RoleController extends Controller
                 'users' => $r->users_count,
                 'permissions' => $r->permissions->pluck('name'),
             ]),
-            'modules' => collect(Access::MODULES)->map(fn ($m, $key) => ['key' => $key] + $m)->values(),
-            'actions' => Access::ACTIONS,
+            'modules' => collect(Access::MODULES)->map(fn ($m, $key) => ['key' => $key, 'label' => __($m['label'])] + $m)->values(),
+            'actions' => array_map(fn ($a) => __($a), Access::ACTIONS),
         ]);
     }
 
@@ -34,7 +34,7 @@ class RoleController extends Controller
         $data = $this->validated($request);
 
         Role::create(['name' => $data['name'], 'guard_name' => 'web'])->syncPermissions($data['permissions']);
-        $this->toast("\"{$data['name']}\" role তৈরি হয়েছে।");
+        $this->toast(__('":name" role তৈরি হয়েছে।', ['name' => $data['name']]));
 
         return back();
     }
@@ -49,7 +49,7 @@ class RoleController extends Controller
         activity('Role')->performedOn($role)->causedBy($request->user())
             ->withProperties(['permissions' => $data['permissions']])->log('permissions updated');
 
-        $this->toast('Role আপডেট হয়েছে।');
+        $this->toast(__('Role আপডেট হয়েছে।'));
 
         return back();
     }
@@ -59,11 +59,11 @@ class RoleController extends Controller
         $this->guardOwner($role);
 
         if ($role->users()->exists()) {
-            throw ValidationException::withMessages(['role' => 'এই role-এ user আছে — আগে তাদের অন্য role দিন।']);
+            throw ValidationException::withMessages(['role' => __('এই role-এ user আছে — আগে তাদের অন্য role দিন।')]);
         }
 
         $role->delete();
-        $this->toast('Role মুছে ফেলা হয়েছে।');
+        $this->toast(__('Role মুছে ফেলা হয়েছে।'));
 
         return back();
     }
@@ -71,7 +71,7 @@ class RoleController extends Controller
     private function guardOwner(Role $role): void
     {
         if ($role->name === Access::OWNER) {
-            throw ValidationException::withMessages(['role' => 'Owner role বদলানো বা মোছা যায় না।']);
+            throw ValidationException::withMessages(['role' => __('Owner role বদলানো বা মোছা যায় না।')]);
         }
     }
 
@@ -81,6 +81,6 @@ class RoleController extends Controller
             'name' => ['required', 'string', 'max:60', Rule::notIn([Access::OWNER]), Rule::unique('roles', 'name')->ignore($role?->id)],
             'permissions' => ['array'],
             'permissions.*' => [Rule::in(Access::all())],
-        ], [], ['name' => 'Role-এর নাম']);
+        ], [], ['name' => __('Role-এর নাম')]);
     }
 }

@@ -36,7 +36,7 @@ trait LedgerEntry
 
     public static function categoryLabel(string $category): string
     {
-        return static::CATEGORIES[$category]['label'] ?? $category;
+        return isset(static::CATEGORIES[$category]) ? __(static::CATEGORIES[$category]['label']) : $category;
     }
 
     protected function guardLockedPeriod(): void
@@ -57,7 +57,7 @@ trait LedgerEntry
         foreach ($dates as $date) {
             if ($date === null || Carbon::parse($date)->lte($lock)) {
                 throw ValidationException::withMessages([
-                    'entry_date' => "খাতা {$lock} পর্যন্ত বন্ধ (locked) — এই সময়ের বা তারিখ ছাড়া entry বদলানো যাবে না।",
+                    'entry_date' => __('খাতা :date পর্যন্ত বন্ধ (locked) — এই সময়ের বা তারিখ ছাড়া entry বদলানো যাবে না।', ['date' => $lock]),
                 ]);
             }
         }

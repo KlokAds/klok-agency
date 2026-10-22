@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\ExpenseHead;
 use App\Models\Setting;
+use App\Services\PaymentFees;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,6 +22,7 @@ class SettingController extends Controller
                 'lock_date' => Setting::get('lock_date'),
                 'require_2fa' => (bool) Setting::get('require_2fa', false),
                 'idle_minutes' => (int) Setting::get('idle_minutes', 30),
+                'payment_fee_percent' => (string) PaymentFees::percent(),
             ],
             'heads' => ExpenseHead::orderBy('name')->get(['id', 'name', 'is_active']),
             'accounts' => Account::orderBy('sort')->get(['id', 'code', 'name', 'kind', 'is_active']),
@@ -34,17 +36,20 @@ class SettingController extends Controller
             'lock_date' => ['nullable', 'date', 'before_or_equal:today'],
             'require_2fa' => ['required', 'boolean'],
             'idle_minutes' => ['required', 'integer', 'min:5', 'max:240'],
+            'payment_fee_percent' => ['required', 'numeric', 'min:0', 'max:10'],
         ]);
 
         if ($data['require_2fa'] && ! $request->user()->two_factor_confirmed_at) {
-            return back()->withErrors(['require_2fa' => 'আগে নিজের account-এ 2FA চালু করুন, তারপর সবার জন্য বাধ্যতামূলক করুন।']);
+            return back()->withErrors(['require_2fa' => __('আগে নিজের account-এ 2FA চালু করুন, তারপর সবার জন্য বাধ্যতামূলক করুন।')]);
         }
 
         Setting::put('lock_date', $data['lock_date']);
         Setting::put('require_2fa', $data['require_2fa'] ? '1' : '0');
         Setting::put('idle_minutes', (string) $data['idle_minutes']);
+        // Applies to payments saved from now on; earlier fee rows keep the rate they were made with.
+        Setting::put('payment_fee_percent', (string) round((float) $data['payment_fee_percent'], 3));
 
-        $this->toast('Settings সংরক্ষণ হয়েছে।');
+        $this->toast(__('Settings সংরক্ষণ হয়েছে।'));
 
         return back();
     }
@@ -52,7 +57,7 @@ class SettingController extends Controller
     public function storeHead(Request $request): RedirectResponse
     {
         ExpenseHead::create($request->validate(['name' => ['required', 'string', 'max:80', 'unique:expense_heads,name']]));
-        $this->toast('নতুন খরচের খাত যোগ হয়েছে।');
+        $this->toast(__('নতুন খরচের খাত যোগ হয়েছে।'));
 
         return back();
     }
@@ -63,7 +68,7 @@ class SettingController extends Controller
             'name' => ['required', 'string', 'max:80', Rule::unique('expense_heads', 'name')->ignore($head->id)],
             'is_active' => ['required', 'boolean'],
         ]));
-        $this->toast('খরচের খাত আপডেট হয়েছে।');
+        $this->toast(__('খরচের খাত আপডেট হয়েছে।'));
 
         return back();
     }
@@ -79,7 +84,7 @@ class SettingController extends Controller
             'code' => str($data['name'])->slug('_')->limit(24, '')->append('_'.now()->format('His'))->toString(),
             'sort' => (int) Account::max('sort') + 1,
         ]);
-        $this->toast('নতুন account যোগ হয়েছে।');
+        $this->toast(__('নতুন account যোগ হয়েছে।'));
 
         return back();
     }
@@ -97,7 +102,7 @@ class SettingController extends Controller
         }
 
         $account->update($data);
-        $this->toast('Account আপডেট হয়েছে।');
+        $this->toast(__('Account আপডেট হয়েছে।'));
 
         return back();
     }

@@ -62,7 +62,7 @@ class UserController extends Controller
             $user->syncRoles([$data['role']]);
         });
 
-        $this->toast("{$data['name']}-এর account তৈরি হয়েছে। প্রথম login-এ password বদলাতে হবে।");
+        $this->toast(__(':name-এর account তৈরি হয়েছে। প্রথম login-এ password বদলাতে হবে।', ['name' => $data['name']]));
 
         return back();
     }
@@ -80,7 +80,7 @@ class UserController extends Controller
         $this->guardOwnerRole($request, $data['role'], $user);
 
         if ($user->is($request->user()) && (! $data['is_active'] || $data['role'] !== $user->roles->first()?->name)) {
-            throw ValidationException::withMessages(['role' => 'নিজের role বা access নিজে বদলানো যায় না।']);
+            throw ValidationException::withMessages(['role' => __('নিজের role বা access নিজে বদলানো যায় না।')]);
         }
 
         $this->keepOneOwner($user, $data['role'], $data['is_active']);
@@ -103,7 +103,7 @@ class UserController extends Controller
             }
         });
 
-        $this->toast('User আপডেট হয়েছে।');
+        $this->toast(__('User আপডেট হয়েছে।'));
 
         return back();
     }
@@ -117,7 +117,7 @@ class UserController extends Controller
         ])->save();
 
         activity('User')->performedOn($user)->causedBy($request->user())->log('2FA reset');
-        $this->toast("{$user->name}-এর 2FA বন্ধ করা হলো — আবার চালু করতে হবে।");
+        $this->toast(__(':name-এর 2FA বন্ধ করা হলো — আবার চালু করতে হবে।', ['name' => $user->name]));
 
         return back();
     }
@@ -125,14 +125,14 @@ class UserController extends Controller
     public function destroy(Request $request, User $user): RedirectResponse
     {
         if ($user->is($request->user())) {
-            throw ValidationException::withMessages(['user' => 'নিজের account নিজে মোছা যায় না।']);
+            throw ValidationException::withMessages(['user' => __('নিজের account নিজে মোছা যায় না।')]);
         }
 
         $this->keepOneOwner($user, null, false);
 
         DB::table('sessions')->where('user_id', $user->id)->delete();
         $user->delete();
-        $this->toast('User মুছে ফেলা হয়েছে।');
+        $this->toast(__('User মুছে ফেলা হয়েছে।'));
 
         return back();
     }
@@ -143,7 +143,7 @@ class UserController extends Controller
         $touchesOwner = $role === Access::OWNER || $user?->hasRole(Access::OWNER);
 
         if ($touchesOwner && ! $request->user()->hasRole(Access::OWNER)) {
-            throw ValidationException::withMessages(['role' => 'Owner role শুধু Owner দিতে বা বদলাতে পারে।']);
+            throw ValidationException::withMessages(['role' => __('Owner role শুধু Owner দিতে বা বদলাতে পারে।')]);
         }
     }
 
@@ -156,7 +156,7 @@ class UserController extends Controller
         $others = User::role(Access::OWNER)->where('is_active', true)->whereKeyNot($user->id)->count();
 
         if ($others === 0) {
-            throw ValidationException::withMessages(['role' => 'অন্তত একজন সক্রিয় Owner থাকতে হবে।']);
+            throw ValidationException::withMessages(['role' => __('অন্তত একজন সক্রিয় Owner থাকতে হবে।')]);
         }
     }
 }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t } from '@/lib/i18n';
+
 withDefaults(defineProps<{ size?: number; light?: boolean; compact?: boolean }>(), { size: 34 });
 </script>
 
@@ -16,7 +18,7 @@ withDefaults(defineProps<{ size?: number; light?: boolean; compact?: boolean }>(
                 class="mt-1 font-semibold uppercase"
                 :class="[compact ? 'text-[9.5px] tracking-[0.1em]' : 'text-[10.5px] tracking-[0.16em]', light ? 'text-rail-dim' : 'text-ink-3']"
             >
-                Klok Ads · হিসাবের খাতা
+                {{ t('Klok Ads · হিসাবের খাতা') }}
             </span>
         </span>
     </span>

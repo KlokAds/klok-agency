@@ -13,6 +13,7 @@ import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { money, niceDate, today } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Option } from '@/types';
 
 const open = defineModel<boolean>({ default: false });
@@ -31,20 +32,20 @@ const loading = ref(false);
 
 // The jobs, in the words the old sheet used ("কোথায় কী লিখব").
 const JOBS = [
-    { key: 'ad-spend', label: 'Client-এর ad চালালাম', note: 'USD খাতা · Client Spend · Pending', icon: 'signal', perm: 'usd.create' },
-    { key: 'client-payment', label: 'Client টাকা দিল', note: 'BDT খাতা · Pending → Settled', icon: 'taka', perm: 'bdt.create' },
-    { key: 'card-charge', label: 'Card থেকে কেটেছে', note: 'Meta/Google card charge', icon: 'wallet', perm: 'usd.create' },
-    { key: 'buy-usd', label: 'USD কিনলাম', note: 'USD +, BDT −, নতুন FX batch', icon: 'swap', perm: 'fx.create' },
-    { key: 'expense', label: 'ব্যবসার খরচ (BDT)', note: 'Domain, যাতায়াত, অফিস…', icon: 'bin', perm: 'bdt.create' },
-    { key: 'own-spend', label: 'নিজের USD খরচ', note: 'KlokAds-এর নিজের ad / research', icon: 'dollar', perm: 'usd.create' },
-    { key: 'transfer', label: 'USD এক account থেকে আরেকটায়', note: 'Card ↔ Other account', icon: 'arrow', perm: 'usd.create' },
-    { key: 'owner', label: 'Owner টাকা দিল / তুলল', note: 'Capital বা Owner drawing', icon: 'user', perm: 'bdt.create' },
+    { key: 'ad-spend', label: 'Client-এর ad চালালাম', note: 'USD খাতা · Client Spend · Pending', icon: 'signal', perm: 'usd.create' }, // i18n
+    { key: 'client-payment', label: 'Client টাকা দিল', note: 'BDT খাতা · Pending → Settled', icon: 'taka', perm: 'bdt.create' }, // i18n
+    { key: 'card-charge', label: 'Card থেকে কেটেছে', note: 'Meta/Google card charge', icon: 'wallet', perm: 'usd.create' }, // i18n
+    { key: 'buy-usd', label: 'USD কিনলাম', note: 'USD +, BDT −, নতুন FX batch', icon: 'swap', perm: 'fx.create' }, // i18n
+    { key: 'expense', label: 'ব্যবসার খরচ (BDT)', note: 'Domain, যাতায়াত, অফিস…', icon: 'bin', perm: 'bdt.create' }, // i18n
+    { key: 'own-spend', label: 'নিজের USD খরচ', note: 'KlokAds-এর নিজের ad / research', icon: 'dollar', perm: 'usd.create' }, // i18n
+    { key: 'transfer', label: 'USD এক account থেকে আরেকটায়', note: 'Card ↔ Other account', icon: 'arrow', perm: 'usd.create' }, // i18n
+    { key: 'owner', label: 'Owner টাকা দিল / তুলল', note: 'Capital বা Owner drawing', icon: 'user', perm: 'bdt.create' }, // i18n
 ] as const;
 
 type JobKey = (typeof JOBS)[number]['key'];
 
 const jobs = computed(() => JOBS.filter((j) => can.value[j.perm]));
-const jobOptions = computed<Option[]>(() => jobs.value.map((j) => ({ value: j.key, label: j.label, note: j.note, icon: j.icon })));
+const jobOptions = computed<Option[]>(() => jobs.value.map((j) => ({ value: j.key, label: t(j.label), note: t(j.note), icon: j.icon })));
 const job = ref<JobKey>('ad-spend');
 
 const blank = () => ({
@@ -151,25 +152,25 @@ function submit(): void {
     });
 }
 
-const yesNo: Option[] = [
-    { value: 'pending', label: 'Pending — টাকা পাইনি' },
-    { value: 'settled', label: 'Settled — টাকা পেয়েছি' },
-];
-const incomeKinds: Option[] = [
-    { value: 'client_payment', label: 'Ad-এর টাকা' },
+const yesNo = computed<Option[]>(() => [
+    { value: 'pending', label: t('Pending — টাকা পাইনি') },
+    { value: 'settled', label: t('Settled — টাকা পেয়েছি') },
+]);
+const incomeKinds = computed<Option[]>(() => [
+    { value: 'client_payment', label: t('Ad-এর টাকা') },
     { value: 'service_income', label: 'Service fee' },
-];
-const directions: Option[] = [
-    { value: 'in', label: 'টাকা দিলাম (Capital)' },
-    { value: 'out', label: 'টাকা তুললাম (Drawing)' },
-];
+]);
+const directions = computed<Option[]>(() => [
+    { value: 'in', label: t('টাকা দিলাম (Capital)') },
+    { value: 'out', label: t('টাকা তুললাম (Drawing)') },
+]);
 </script>
 
 <template>
     <KModal v-model="open" width="xl">
         <template #header>
-            <p class="eyebrow">নতুন entry</p>
-            <h2 class="mt-0.5 text-[18px] font-bold tracking-tight">কী হলো?</h2>
+            <p class="eyebrow">{{ t('নতুন entry') }}</p>
+            <h2 class="mt-0.5 text-[18px] font-bold tracking-tight">{{ t('কী হলো?') }}</h2>
         </template>
 
         <div class="grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-[250px_minmax(0,1fr)] md:gap-6">
@@ -186,8 +187,8 @@ const directions: Option[] = [
                 >
                     <KIcon :name="j.icon" :size="18" :class="job === j.key ? 'mt-0.5 text-brand-ink' : 'mt-0.5 text-ink-3'" />
                     <span class="min-w-0">
-                        <span class="block text-[13.5px] font-semibold" :class="job === j.key && 'text-brand-ink'">{{ j.label }}</span>
-                        <span class="block text-[11.5px] text-ink-3">{{ j.note }}</span>
+                        <span class="block text-[13.5px] font-semibold" :class="job === j.key && 'text-brand-ink'">{{ t(j.label) }}</span>
+                        <span class="block text-[11.5px] text-ink-3">{{ t(j.note) }}</span>
                     </span>
                 </button>
             </div>
@@ -195,27 +196,27 @@ const directions: Option[] = [
             <!-- The form for it -->
             <form class="flex min-w-0 flex-col gap-4" @submit.prevent="submit">
                 <div class="hidden rounded-xl border border-dashed border-line-2 bg-surface-2 px-4 py-3 text-[13px] text-ink-2 md:block">
-                    <span class="font-semibold text-ink">{{ current.label }}</span> — {{ current.note }}
-                    <span v-if="loading" class="ml-2 text-ink-3">লোড হচ্ছে…</span>
+                    <span class="font-semibold text-ink">{{ t(current.label) }}</span> — {{ t(current.note) }}
+                    <span v-if="loading" class="ml-2 text-ink-3">{{ t('লোড হচ্ছে…') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <KField label="তারিখ" :error="form.errors.entry_date">
+                    <KField :label="t('তারিখ')" :error="form.errors.entry_date">
                         <KDate v-model="form.entry_date" :max="today()" :invalid="!!form.errors.entry_date" />
                     </KField>
 
                     <!-- Ad spend -->
                     <template v-if="job === 'ad-spend'">
                         <KField label="Client" :error="form.errors.client_id">
-                            <KSelect v-model="form.client_id" :options="lookups?.clients ?? []" placeholder="কোন client?" :invalid="!!form.errors.client_id" />
+                            <KSelect v-model="form.client_id" :options="lookups?.clients ?? []" :placeholder="t('কোন client?')" :invalid="!!form.errors.client_id" />
                         </KField>
-                        <KField label="কোথায় চলেছে" :error="form.errors.account_id">
+                        <KField :label="t('কোথায় চলেছে')" :error="form.errors.account_id">
                             <KSelect v-model="form.account_id" :options="spendAccounts" :invalid="!!form.errors.account_id" />
                         </KField>
-                        <KField label="খরচ (USD)" :error="form.errors.amount">
+                        <KField :label="t('খরচ (USD)')" :error="form.errors.amount">
                             <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
                         </KField>
-                        <KField label="Client টাকা দিয়েছে?" class="sm:col-span-2">
+                        <KField :label="t('Client টাকা দিয়েছে?')" class="sm:col-span-2">
                             <KSegment v-model="form.status" :options="yesNo" />
                         </KField>
                     </template>
@@ -223,16 +224,16 @@ const directions: Option[] = [
                     <!-- Client payment -->
                     <template v-if="job === 'client-payment'">
                         <KField label="Client" :error="form.errors.client_id">
-                            <KSelect v-model="form.client_id" :options="lookups?.clients ?? []" placeholder="কে দিল?" :invalid="!!form.errors.client_id" />
+                            <KSelect v-model="form.client_id" :options="lookups?.clients ?? []" :placeholder="t('কে দিল?')" :invalid="!!form.errors.client_id" />
                         </KField>
-                        <KField label="পেলাম (BDT)" :error="form.errors.amount">
+                        <KField :label="t('পেলাম (BDT)')" :error="form.errors.amount">
                             <KMoney v-model="form.amount" currency="bdt" :invalid="!!form.errors.amount" />
                         </KField>
-                        <KField label="কীসের টাকা">
+                        <KField :label="t('কীসের টাকা')">
                             <KSegment v-model="form.category" :options="incomeKinds" />
                         </KField>
                         <div v-if="form.client_id && form.category === 'client_payment'" class="sm:col-span-2">
-                            <p class="mb-2 text-[13px] font-semibold text-ink-2">কোন Pending খরচগুলো এই টাকায় শোধ হলো?</p>
+                            <p class="mb-2 text-[13px] font-semibold text-ink-2">{{ t('কোন Pending খরচগুলো এই টাকায় শোধ হলো?') }}</p>
                             <div v-if="clientPending.length" class="divide-y divide-dashed divide-line rounded-xl border border-line">
                                 <div v-for="p in clientPending" :key="p.id" class="flex items-center gap-3 px-3.5 py-2.5">
                                     <KCheck :model-value="form.settle_ids.includes(p.id)" @update:model-value="(v: boolean) => toggleSettle(p.id, v)">
@@ -242,99 +243,99 @@ const directions: Option[] = [
                                     <span class="num ml-auto text-[13.5px] font-medium">{{ money(p.amount, 'usd') }}</span>
                                 </div>
                             </div>
-                            <p v-else class="rounded-xl bg-sunken px-3.5 py-3 text-[13px] text-ink-3">এই client-এর কোনো Pending খরচ নেই।</p>
+                            <p v-else class="rounded-xl bg-sunken px-3.5 py-3 text-[13px] text-ink-3">{{ t('এই client-এর কোনো Pending খরচ নেই।') }}</p>
                             <p v-if="effectiveRate" class="mt-2 text-[12.5px] text-ink-2">
-                                বাছাই করা <span class="num font-semibold">{{ money(settleTotal, 'usd') }}</span> — client-এর rate দাঁড়াল <span class="num font-semibold text-brand-ink">৳{{ effectiveRate }}</span> / USD
+                                {{ t('বাছাই করা') }} <span class="num font-semibold">{{ money(settleTotal, 'usd') }}</span> — {{ t('client-এর rate দাঁড়াল') }} <span class="num font-semibold text-brand-ink">&#2547;{{ effectiveRate }}</span> / USD
                             </p>
                         </div>
                     </template>
 
                     <!-- Card charge -->
                     <template v-if="job === 'card-charge'">
-                        <KField label="কে কেটেছে" :error="form.errors.account_id">
+                        <KField :label="t('কে কেটেছে')" :error="form.errors.account_id">
                             <KSelect v-model="form.account_id" :options="platforms" :invalid="!!form.errors.account_id" />
                         </KField>
-                        <KField label="কত কেটেছে (USD)" :error="form.errors.amount">
+                        <KField :label="t('কত কেটেছে (USD)')" :error="form.errors.amount">
                             <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
                         </KField>
-                        <KField label="Card statement-এর লেখা" optional hint="যেমন FACEBK* S5LHCASSD4">
+                        <KField :label="t('Card statement-এর লেখা')" optional :hint="t('যেমন FACEBK* S5LHCASSD4')">
                             <KInput v-model="form.description" placeholder="FACEBK* …" />
                         </KField>
                     </template>
 
                     <!-- Buy USD -->
                     <template v-if="job === 'buy-usd'">
-                        <KField label="পেলাম (USD)" :error="form.errors.usd">
+                        <KField :label="t('পেলাম (USD)')" :error="form.errors.usd">
                             <KMoney v-model="form.usd" currency="usd" :invalid="!!form.errors.usd" />
                         </KField>
-                        <KField label="দিলাম (BDT)" :error="form.errors.bdt">
+                        <KField :label="t('দিলাম (BDT)')" :error="form.errors.bdt">
                             <KMoney v-model="form.bdt" currency="bdt" :invalid="!!form.errors.bdt" />
                         </KField>
-                        <KField label="নাম" optional hint="না দিলে Deposit 4, 5… নিজে বসবে">
+                        <KField :label="t('নাম')" optional :hint="t('না দিলে Deposit 4, 5… নিজে বসবে')">
                             <KInput v-model="form.description" placeholder="Deposit" />
                         </KField>
                         <div v-if="rate" class="flex items-center rounded-xl bg-brand-soft px-4 py-3 text-[13.5px] text-brand-ink sm:col-span-2">
-                            এই batch-এর rate: <span class="num ml-1.5 text-[16px] font-semibold">৳{{ rate }}</span>&nbsp;/ USD
+                            {{ t('এই batch-এর rate:') }} <span class="num ml-1.5 text-[16px] font-semibold">&#2547;{{ rate }}</span>&nbsp;/ USD
                         </div>
                     </template>
 
                     <!-- Expense -->
                     <template v-if="job === 'expense'">
-                        <KField label="খরচের খাত" :error="form.errors.expense_head_id">
+                        <KField :label="t('খরচের খাত')" :error="form.errors.expense_head_id">
                             <KSelect v-model="form.expense_head_id" :options="lookups?.heads ?? []" :invalid="!!form.errors.expense_head_id" />
                         </KField>
-                        <KField label="কত (BDT)" :error="form.errors.amount">
+                        <KField :label="t('কত (BDT)')" :error="form.errors.amount">
                             <KMoney v-model="form.amount" currency="bdt" :invalid="!!form.errors.amount" />
                         </KField>
-                        <KField label="কীসের খরচ" :error="form.errors.description">
-                            <KInput v-model="form.description" placeholder="যেমন Domain renew" :invalid="!!form.errors.description" />
+                        <KField :label="t('কীসের খরচ')" :error="form.errors.description">
+                            <KInput v-model="form.description" :placeholder="t('যেমন Domain renew')" :invalid="!!form.errors.description" />
                         </KField>
                     </template>
 
                     <!-- Own USD spend -->
                     <template v-if="job === 'own-spend'">
-                        <KField label="কোথায়" :error="form.errors.account_id">
+                        <KField :label="t('কোথায়')" :error="form.errors.account_id">
                             <KSelect v-model="form.account_id" :options="spendAccounts" :invalid="!!form.errors.account_id" />
                         </KField>
-                        <KField label="খরচ (USD)" :error="form.errors.amount">
+                        <KField :label="t('খরচ (USD)')" :error="form.errors.amount">
                             <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
                         </KField>
-                        <KField label="কীসের খরচ" :error="form.errors.description">
-                            <KInput v-model="form.description" placeholder="যেমন KlokAds - own ad spend" :invalid="!!form.errors.description" />
+                        <KField :label="t('কীসের খরচ')" :error="form.errors.description">
+                            <KInput v-model="form.description" :placeholder="t('যেমন KlokAds - own ad spend')" :invalid="!!form.errors.description" />
                         </KField>
                     </template>
 
                     <!-- Transfer -->
                     <template v-if="job === 'transfer'">
-                        <KField label="কোথা থেকে" :error="form.errors.from_id">
+                        <KField :label="t('কোথা থেকে')" :error="form.errors.from_id">
                             <KSelect v-model="form.from_id" :options="ownAccounts" :invalid="!!form.errors.from_id" />
                         </KField>
-                        <KField label="কোথায়" :error="form.errors.to_id">
+                        <KField :label="t('কোথায়')" :error="form.errors.to_id">
                             <KSelect v-model="form.to_id" :options="ownAccounts" :invalid="!!form.errors.to_id" />
                         </KField>
-                        <KField label="কত (USD)" :error="form.errors.amount">
+                        <KField :label="t('কত (USD)')" :error="form.errors.amount">
                             <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
                         </KField>
                     </template>
 
                     <!-- Owner -->
                     <template v-if="job === 'owner'">
-                        <KField label="কী হলো" class="sm:col-span-2">
+                        <KField :label="t('কী হলো')" class="sm:col-span-2">
                             <KSegment v-model="form.direction" :options="directions" />
                         </KField>
-                        <KField label="কত (BDT)" :error="form.errors.amount">
+                        <KField :label="t('কত (BDT)')" :error="form.errors.amount">
                             <KMoney v-model="form.amount" currency="bdt" :invalid="!!form.errors.amount" />
                         </KField>
                     </template>
                 </div>
 
                 <KField label="Note" optional>
-                    <KTextarea v-model="form.notes" placeholder="দরকারি কিছু থাকলে লিখুন" />
+                    <KTextarea v-model="form.notes" :placeholder="t('দরকারি কিছু থাকলে লিখুন')" />
                 </KField>
 
                 <div class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
-                    <KButton variant="quiet" @click="open = false">বাতিল</KButton>
-                    <KButton type="submit" variant="primary" icon="check" :loading="form.processing">খাতায় তুলুন</KButton>
+                    <KButton variant="quiet" @click="open = false">{{ t('বাতিল') }}</KButton>
+                    <KButton type="submit" variant="primary" icon="check" :loading="form.processing">{{ t('খাতায় তুলুন') }}</KButton>
                 </div>
             </form>
         </div>

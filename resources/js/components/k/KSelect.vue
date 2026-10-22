@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import { usePopover } from '@/composables/usePopover';
+import { t } from '@/lib/i18n';
 import type { Option } from '@/types';
 import KIcon from './KIcon.vue';
 
@@ -15,7 +16,7 @@ const props = withDefaults(
         id?: string;
         size?: 'md' | 'sm';
     }>(),
-    { placeholder: 'বেছে নিন', clearable: false, searchable: 'auto', size: 'md' },
+    { placeholder: 'বেছে নিন', clearable: false, searchable: 'auto', size: 'md' }, // i18n
 );
 
 const model = defineModel<string | number | null>();
@@ -117,14 +118,14 @@ function onKey(event: KeyboardEvent): void {
         >
             <KIcon v-if="selected?.icon" :name="String(selected.icon)" :size="18" class="text-brand-ink" />
             <span class="min-w-0 flex-1 truncate" :class="selected ? 'text-ink' : 'text-ink-3'">
-                <span :class="selected?.note && 'font-semibold'">{{ selected?.label ?? placeholder }}</span>
+                <span :class="selected?.note && 'font-semibold'">{{ selected?.label ?? t(placeholder) }}</span>
                 <span v-if="selected?.note" class="block truncate text-[12px] font-normal text-ink-3">{{ selected.note }}</span>
             </span>
             <span
                 v-if="clearable && selected"
                 role="button"
                 tabindex="-1"
-                aria-label="মুছুন"
+                :aria-label="t('মুছুন')"
                 class="-mr-1 grid size-6 place-items-center rounded-md text-ink-3 hover:bg-sunken hover:text-ink"
                 @click.stop="model = null"
             >
@@ -140,7 +141,7 @@ function onKey(event: KeyboardEvent): void {
                 <div v-if="withSearch" class="border-b border-line p-2">
                     <div class="flex items-center gap-2 rounded-lg bg-sunken px-2.5">
                         <svg viewBox="0 0 16 16" class="size-3.5 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>
-                        <input ref="search" v-model="query" type="text" class="h-9 w-full text-[13.5px]" placeholder="খুঁজুন…" />
+                        <input ref="search" v-model="query" type="text" class="h-9 w-full text-[13.5px]" :placeholder="t('খুঁজুন…')" />
                     </div>
                 </div>
 
@@ -164,7 +165,7 @@ function onKey(event: KeyboardEvent): void {
                         <span v-if="option.hint" class="shrink-0 text-[11.5px] text-ink-3">{{ option.hint }}</span>
                         <svg v-if="String(option.value) === String(model ?? '')" viewBox="0 0 16 16" class="size-4 shrink-0 text-brand" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7" /></svg>
                     </li>
-                    <li v-if="!filtered.length" class="px-3 py-6 text-center text-[13px] text-ink-3">কিছু পাওয়া যায়নি</li>
+                    <li v-if="!filtered.length" class="px-3 py-6 text-center text-[13px] text-ink-3">{{ t('কিছু পাওয়া যায়নি') }}</li>
                 </ul>
             </div>
         </Teleport>

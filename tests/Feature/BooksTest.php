@@ -28,17 +28,38 @@ function userWithRole(string $role): User
     return $user;
 }
 
-it('reproduces the numbers from the old Google Sheet', function () {
+// The import itself fails unless the sheet's totals match before anything is added.
+it('imports the sheet, the 20 Oct GFFS payment and the 0.1% fees', function () {
     $summary = app(Books::class)->summary();
+    $fees = -BdtEntry::whereNotNull('fee_for_id')->sum('amount');
 
     expect($summary['card'])->toBe(12066)
-        ->and($summary['business_usd'])->toBe(10766)
-        ->and($summary['platform_due'])->toBe(1300)
-        ->and($summary['bdt'])->toBe(1963300)
+        ->and($summary['business_usd'])->toBe(9366)
+        ->and($summary['platform_due'])->toBe(2700)
+        ->and($fees)->toBe(10103)
+        ->and($summary['bdt'])->toBe(1963300 + 210000 - 10103)
         ->and($summary['receivable_usd'])->toBe(410)
-        ->and(abs($summary['margin'] - 1511200))->toBeLessThan(100)
         ->and($summary['usd_check']['ok'])->toBeTrue()
         ->and($summary['equity_ok'])->toBeTrue();
+});
+
+it('takes 0.1% off a client payment as a locked fee row that follows it', function () {
+    $gffs = Client::where('name', 'GFFS')->first();
+
+    $this->actingAs($this->owner)->post('/quick/client-payment', [
+        'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'amount' => '5000',
+    ])->assertRedirect();
+
+    $payment = BdtEntry::where('client_id', $gffs->id)->latest('id')->first();
+    $fee = $payment->fee;
+
+    expect($fee->amount)->toBe(-500)
+        ->and($fee->head->name)->toBe('Payment fee');
+
+    $this->actingAs($this->owner)->delete("/bdt/{$fee->id}")->assertSessionHasErrors('entry');
+
+    $this->actingAs($this->owner)->delete("/bdt/{$payment->id}")->assertRedirect();
+    expect($fee->fresh()->trashed())->toBeTrue();
 });
 
 it('opens every page for the owner', function (string $url) {
@@ -125,13 +146,18 @@ it('moves card balance only on a card charge', function () {
 
     expect(app(Books::class)->summary()['card'])->toBe(12066);
 
+    // Meta was owed $8 + $14 (20 Oct) + $14 (above), Google $5.
     $this->actingAs($this->owner)->post('/quick/card-charge', [
-        'entry_date' => now()->toDateString(), 'account_id' => $meta->id, 'amount' => '27',
+        'entry_date' => now()->toDateString(), 'account_id' => $meta->id, 'amount' => '36',
+    ]);
+    $google = Account::where('code', 'google')->first();
+    $this->actingAs($this->owner)->post('/quick/card-charge', [
+        'entry_date' => now()->toDateString(), 'account_id' => $google->id, 'amount' => '5',
     ]);
 
     $summary = app(Books::class)->summary();
 
-    expect($summary['card'])->toBe(9366)
+    expect($summary['card'])->toBe(12066 - 4100)
         ->and($summary['platform_due'])->toBe(0)
         ->and($summary['usd_check']['ok'])->toBeTrue();
 });

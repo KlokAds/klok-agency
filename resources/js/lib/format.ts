@@ -2,6 +2,8 @@
  * Money arrives from the server as integer minor units
  * (cents for USD, poisha for BDT).
  */
+import { t } from '@/lib/i18n';
+
 export type Currency = 'usd' | 'bdt';
 
 const grouping = new Intl.NumberFormat('en-US', {
@@ -20,7 +22,7 @@ export function money(
         return '–';
     }
 
-    const symbol = currency === 'usd' ? '$' : '৳';
+    const symbol = currency === 'usd' ? '$' : '\u09F3';
     const value = Math.abs(minor) / 100;
     const round = opts.round ?? currency === 'bdt';
     const shown = round ? Math.round(value) : Math.round(value * 100) / 100;
@@ -42,19 +44,24 @@ export function toInput(minor: number | null | undefined): string {
 }
 
 export const BN_MONTHS = [
-    'জানুয়ারি',
-    'ফেব্রুয়ারি',
-    'মার্চ',
-    'এপ্রিল',
-    'মে',
-    'জুন',
-    'জুলাই',
-    'আগস্ট',
-    'সেপ্টেম্বর',
-    'অক্টোবর',
-    'নভেম্বর',
-    'ডিসেম্বর',
+    'জানুয়ারি', // i18n
+    'ফেব্রুয়ারি', // i18n
+    'মার্চ', // i18n
+    'এপ্রিল', // i18n
+    'মে', // i18n
+    'জুন', // i18n
+    'জুলাই', // i18n
+    'আগস্ট', // i18n
+    'সেপ্টেম্বর', // i18n
+    'অক্টোবর', // i18n
+    'নভেম্বর', // i18n
+    'ডিসেম্বর', // i18n
 ];
+
+/** Month names in the current language (January… or জানুয়ারি…). */
+export function monthNames(): string[] {
+    return BN_MONTHS.map((name) => t(name));
+}
 
 const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -99,7 +106,7 @@ export function monthLabel(ym: string | null | undefined): string {
 
     const [y, m] = ym.split('-').map(Number);
 
-    return `${BN_MONTHS[m - 1]} ${y}`;
+    return `${monthNames()[m - 1]} ${y}`;
 }
 
 export function ago(iso: string | null | undefined): string {
@@ -110,22 +117,22 @@ export function ago(iso: string | null | undefined): string {
     const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
 
     if (seconds < 60) {
-        return 'এইমাত্র';
+        return t('এইমাত্র');
     }
 
     const minutes = Math.round(seconds / 60);
     if (minutes < 60) {
-        return `${minutes} মিনিট আগে`;
+        return t('{n} মিনিট আগে', { n: minutes });
     }
 
     const hours = Math.round(minutes / 60);
     if (hours < 24) {
-        return `${hours} ঘণ্টা আগে`;
+        return hours === 1 ? t('1 ঘণ্টা আগে') : t('{n} ঘণ্টা আগে', { n: hours });
     }
 
     const days = Math.round(hours / 24);
     if (days < 30) {
-        return `${days} দিন আগে`;
+        return days === 1 ? t('1 দিন আগে') : t('{n} দিন আগে', { n: days });
     }
 
     return niceDate(iso.slice(0, 10));

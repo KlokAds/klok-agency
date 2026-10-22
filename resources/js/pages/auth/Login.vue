@@ -4,9 +4,10 @@ import KButton from '@/components/k/KButton.vue';
 import KCheck from '@/components/k/KCheck.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
+import { t } from '@/lib/i18n';
 
 defineOptions({
-    layout: { title: 'আবার স্বাগতম', description: 'খাতা খুলতে আপনার email আর password দিন।' },
+    layout: { title: 'আবার স্বাগতম', description: 'খাতা খুলতে আপনার email আর password দিন।' }, // i18n
 });
 
 defineProps<{ status?: string; canResetPassword: boolean }>();
@@ -33,8 +34,8 @@ function submit(): void {
         </KField>
 
         <div class="flex items-center justify-between gap-4">
-            <KCheck v-model="form.remember" label="এই device মনে রাখো" />
-            <Link v-if="canResetPassword" href="/forgot-password" class="text-[13px] font-semibold text-brand-ink hover:underline">Password ভুলে গেছেন?</Link>
+            <KCheck v-model="form.remember" :label="t('এই device মনে রাখো')" />
+            <Link v-if="canResetPassword" href="/forgot-password" class="text-[13px] font-semibold text-brand-ink hover:underline">{{ t('Password ভুলে গেছেন?') }}</Link>
         </div>
 
         <KButton type="submit" variant="ink" size="lg" block :loading="form.processing" class="mt-2">Sign in</KButton>

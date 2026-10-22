@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { t } from '@/lib/i18n';
 import type { Paginated } from '@/types';
 
 defineProps<{ page: Paginated<unknown> }>();
 </script>
 
 <template>
-    <nav v-if="page.last_page > 1" class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-[13px]" aria-label="পাতা">
+    <nav v-if="page.last_page > 1" class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-[13px]" :aria-label="t('পাতা')">
         <span class="text-ink-3"><span class="num">{{ page.from }}–{{ page.to }}</span> / <span class="num">{{ page.total }}</span></span>
         <div class="flex gap-1">
             <template v-for="(link, i) in page.links" :key="i">

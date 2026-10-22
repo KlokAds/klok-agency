@@ -7,7 +7,7 @@ const props = withDefaults(
 );
 
 const model = defineModel<string | null>();
-const symbol = computed(() => (props.currency === 'usd' ? '$' : '৳'));
+const symbol = computed(() => (props.currency === 'usd' ? '$' : '\u09F3'));
 
 // Digits and one dot with two decimals; thousands commas appear as you type.
 function onInput(event: Event): void {

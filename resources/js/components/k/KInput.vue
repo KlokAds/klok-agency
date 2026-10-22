@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { t } from '@/lib/i18n';
 import KIcon from './KIcon.vue';
 
 withDefaults(
@@ -52,7 +53,7 @@ defineExpose({ focus: () => input.value?.focus() });
             type="button"
             tabindex="-1"
             class="-mr-1 grid size-7 place-items-center rounded-md text-ink-3 hover:text-ink"
-            :aria-label="reveal ? 'Password লুকান' : 'Password দেখুন'"
+            :aria-label="reveal ? t('Password লুকান') : t('Password দেখুন')"
             @click.stop="reveal = !reveal"
         >
             <KIcon :name="reveal ? 'eyeoff' : 'eye'" :size="16" />

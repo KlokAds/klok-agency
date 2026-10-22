@@ -66,7 +66,7 @@ class SecurityController extends Controller
         DB::table('sessions')->where('user_id', $user->id)->where('id', '!=', $request->session()->getId())->delete();
         activity('Auth')->causedBy($user)->log('password changed');
 
-        $this->toast('Password বদলানো হয়েছে। অন্য সব device থেকে sign out করা হলো।');
+        $this->toast(__('Password বদলানো হয়েছে। অন্য সব device থেকে sign out করা হলো।'));
 
         return back();
     }

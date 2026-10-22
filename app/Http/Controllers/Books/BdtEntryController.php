@@ -39,7 +39,7 @@ class BdtEntryController extends Controller
                 'notes' => $e->notes,
                 'review_note' => $e->review_note,
                 'balance' => $running[$e->id] ?? null,
-                'locked' => $e->fx_batch_id !== null || ($e->category === 'salary' && $e->employee_id !== null),
+                'locked' => $e->fx_batch_id !== null || $e->fee_for_id !== null || ($e->category === 'salary' && $e->employee_id !== null),
             ]);
 
         if (($filters['order'] ?? 'new') === 'new') {
@@ -97,7 +97,7 @@ class BdtEntryController extends Controller
     public function store(Request $request): RedirectResponse
     {
         BdtEntry::create($this->validated($request));
-        $this->toast('BDT entry যোগ হয়েছে।');
+        $this->toast(__('BDT entry যোগ হয়েছে।'));
 
         return back();
     }
@@ -112,7 +112,7 @@ class BdtEntryController extends Controller
         }
 
         $bdt->update($data);
-        $this->toast('BDT entry আপডেট হয়েছে।');
+        $this->toast(__('BDT entry আপডেট হয়েছে।'));
 
         return back();
     }
@@ -124,7 +124,7 @@ class BdtEntryController extends Controller
         // Spend this payment settled goes back to pending.
         $bdt->settles()->get()->each->update(['status' => 'pending', 'settled_by_id' => null]);
         $bdt->delete();
-        $this->toast('Entry Trash-এ গেছে। দরকার হলে Trash থেকে ফেরত আনা যাবে।');
+        $this->toast(__('Entry Trash-এ গেছে। দরকার হলে Trash থেকে ফেরত আনা যাবে।'));
 
         return back();
     }
@@ -132,11 +132,15 @@ class BdtEntryController extends Controller
     private function ensureEditable(BdtEntry $entry): void
     {
         if ($entry->fx_batch_id) {
-            throw ValidationException::withMessages(['entry' => 'এই row একটা FX batch-এর অংশ — FX Batch পাতা থেকে বদলান।']);
+            throw ValidationException::withMessages(['entry' => __('এই row একটা FX batch-এর অংশ — FX Batch পাতা থেকে বদলান।')]);
         }
 
         if ($entry->category === 'salary' && $entry->employee_id) {
-            throw ValidationException::withMessages(['entry' => 'বেতনের row Payroll পাতা থেকে বদলান।']);
+            throw ValidationException::withMessages(['entry' => __('বেতনের row Payroll পাতা থেকে বদলান।')]);
+        }
+
+        if ($entry->fee_for_id) {
+            throw ValidationException::withMessages(['entry' => __('এই fee payment থেকে নিজে আসে — payment বদলালে fee-ও বদলাবে।')]);
         }
     }
 
@@ -152,12 +156,12 @@ class BdtEntryController extends Controller
             'expense_head_id' => ['nullable', 'exists:expense_heads,id'],
             'amount' => ['required', Money::RULE],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ], [], ['amount' => 'পরিমাণ', 'entry_date' => 'তারিখ', 'client_id' => 'client']);
+        ], [], ['amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'client_id' => 'client']);
 
         $amount = Money::toMinor($data['amount']);
 
         if ($amount <= 0) {
-            throw ValidationException::withMessages(['amount' => 'পরিমাণ ০-এর বেশি হতে হবে।']);
+            throw ValidationException::withMessages(['amount' => __('পরিমাণ ০-এর বেশি হতে হবে।')]);
         }
 
         $data['amount'] = BdtEntry::CATEGORIES[$data['category']]['sign'] * $amount;

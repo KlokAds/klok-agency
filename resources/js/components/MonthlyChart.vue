@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { money, monthLabel } from '@/lib/format';
+import { t } from '@/lib/i18n';
 
 type Row = { month: string; label: string; received: number; cost: number; expense: number; result: number; usd_spent: number };
 
@@ -63,7 +64,7 @@ const showTable = ref(false);
 <template>
     <div>
         <div ref="box" class="relative min-w-0" :style="{ height: `${H}px` }">
-            <svg v-if="W > 0" :viewBox="`0 0 ${W} ${H}`" :height="H" class="block w-full overflow-visible" role="img" aria-label="মাসভিত্তিক ফলাফল" @mouseleave="hover = null">
+            <svg v-if="W > 0" :viewBox="`0 0 ${W} ${H}`" :height="H" class="block w-full overflow-visible" role="img" :aria-label="t('মাসভিত্তিক ফলাফল')" @mouseleave="hover = null">
                 <line :x1="PAD.left" :x2="W - PAD.right" :y1="zeroY" :y2="zeroY" stroke="var(--line-2)" stroke-width="1" />
                 <g v-for="(b, i) in bars" :key="b.month">
                     <rect :x="PAD.left + slot * i" :y="0" :width="slot" :height="H - PAD.bottom + 4" fill="transparent" @mouseenter="hover = i" />
@@ -79,20 +80,20 @@ const showTable = ref(false);
             >
                 <p class="font-bn font-semibold text-ink">{{ monthLabel(tip.month) }}</p>
                 <dl class="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-ink-2">
-                    <dt>Client দিয়েছে</dt><dd class="num text-right text-ink">{{ money(tip.received, 'bdt') }}</dd>
-                    <dt>USD-এর cost</dt><dd class="num text-right text-ink">{{ money(-tip.cost, 'bdt') }}</dd>
-                    <dt>খরচ</dt><dd class="num text-right text-ink">{{ money(-tip.expense, 'bdt') }}</dd>
-                    <dt class="border-t border-line pt-1 font-semibold text-ink">ফলাফল</dt>
+                    <dt>{{ t('Client দিয়েছে') }}</dt><dd class="num text-right text-ink">{{ money(tip.received, 'bdt') }}</dd>
+                    <dt>{{ t('USD-এর cost') }}</dt><dd class="num text-right text-ink">{{ money(-tip.cost, 'bdt') }}</dd>
+                    <dt>{{ t('খরচ') }}</dt><dd class="num text-right text-ink">{{ money(-tip.expense, 'bdt') }}</dd>
+                    <dt class="border-t border-line pt-1 font-semibold text-ink">{{ t('ফলাফল') }}</dt>
                     <dd class="num border-t border-line pt-1 text-right font-semibold text-ink">{{ money(tip.result, 'bdt', { sign: true }) }}</dd>
                 </dl>
             </div>
         </div>
 
         <div class="mt-3 flex items-center gap-4 text-[12px] text-ink-3">
-            <span class="flex items-center gap-1.5"><span class="size-2.5 rounded-[3px] bg-[var(--pos)]" /> লাভ</span>
-            <span class="flex items-center gap-1.5"><span class="size-2.5 rounded-[3px] bg-[var(--neg)]" /> লস</span>
+            <span class="flex items-center gap-1.5"><span class="size-2.5 rounded-[3px] bg-[var(--pos)]" /> {{ t('লাভ') }}</span>
+            <span class="flex items-center gap-1.5"><span class="size-2.5 rounded-[3px] bg-[var(--neg)]" /> {{ t('লস') }}</span>
             <span class="flex-1" />
-            <button type="button" class="font-semibold text-ink-2 hover:text-ink" @click="showTable = !showTable">{{ showTable ? 'Chart দেখুন' : 'Table দেখুন' }}</button>
+            <button type="button" class="font-semibold text-ink-2 hover:text-ink" @click="showTable = !showTable">{{ showTable ? t('Chart দেখুন') : t('Table দেখুন') }}</button>
         </div>
 
         <!-- Phone: one compact row per month instead of a five-column table -->
@@ -103,16 +104,16 @@ const showTable = ref(false);
                     <span class="num font-semibold whitespace-nowrap" :class="r.result > 50 ? 'text-in' : r.result < -50 ? 'text-out' : 'text-ink-3'">{{ money(r.result, 'bdt', { sign: true }) }}</span>
                 </div>
                 <p v-if="r.received || r.cost || r.expense" class="mt-1 flex flex-wrap gap-x-3 text-[12px] text-ink-3">
-                    <span class="whitespace-nowrap">পেয়েছি <b class="num font-medium text-ink-2">{{ money(r.received, 'bdt') }}</b></span>
+                    <span class="whitespace-nowrap">{{ t('পেয়েছি') }} <b class="num font-medium text-ink-2">{{ money(r.received, 'bdt') }}</b></span>
                     <span class="whitespace-nowrap">cost <b class="num font-medium text-ink-2">{{ money(r.cost, 'bdt') }}</b></span>
-                    <span class="whitespace-nowrap">খরচ <b class="num font-medium text-ink-2">{{ money(r.expense, 'bdt') }}</b></span>
+                    <span class="whitespace-nowrap">{{ t('খরচ') }} <b class="num font-medium text-ink-2">{{ money(r.expense, 'bdt') }}</b></span>
                 </p>
             </li>
         </ul>
 
         <table v-if="showTable" class="ledger mt-3 hidden sm:table">
             <thead>
-                <tr><th>মাস</th><th class="r">পেয়েছি</th><th class="r">Cost</th><th class="r">খরচ</th><th class="r">ফলাফল</th></tr>
+                <tr><th>{{ t('মাস') }}</th><th class="r">{{ t('পেয়েছি') }}</th><th class="r">Cost</th><th class="r">{{ t('খরচ') }}</th><th class="r">{{ t('ফলাফল') }}</th></tr>
             </thead>
             <tbody>
                 <tr v-for="r in rows" :key="r.month">

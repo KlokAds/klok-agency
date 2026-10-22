@@ -9,6 +9,7 @@ use App\Models\ExpenseHead;
 use App\Models\FxBatch;
 use App\Models\UsdEntry;
 use App\Services\Books;
+use App\Services\PaymentFees;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -38,6 +39,9 @@ class ImportSheet extends Command
                 return self::FAILURE;
             }
         }
+
+        // Fees come after the totals are checked against the sheet (which had none).
+        PaymentFees::$paused = true;
 
         DB::transaction(function () use ($data) {
             if ($this->option('fresh')) {
@@ -109,7 +113,57 @@ class ImportSheet extends Command
         $this->info(sprintf('Imported %d clients, %d batches, %d USD rows, %d BDT rows.',
             count($data['clients']), count($data['fx_batches']), count($data['usd']), count($data['bdt'])));
 
-        return $this->verify($data['expected']) ? self::SUCCESS : self::FAILURE;
+        if (! $this->verify($data['expected'])) {
+            return self::FAILURE;
+        }
+
+        // The sheet is checked; now what happened after it, and the 0.1% payment fees.
+        $this->applyAdditions();
+        PaymentFees::$paused = false;
+        $this->info('Payment fees added to '.PaymentFees::backfill().' client payments ('.PaymentFees::label().').');
+
+        return self::SUCCESS;
+    }
+
+    /** Entries made after the sheet snapshot, kept in database/import/after-sheet.json. */
+    private function applyAdditions(): void
+    {
+        $path = base_path('database/import/after-sheet.json');
+
+        if (! is_file($path)) {
+            return;
+        }
+
+        $rows = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+        $accounts = Account::pluck('id', 'code');
+        $clients = Client::pluck('id', 'name');
+
+        DB::transaction(function () use ($rows, $accounts, $clients) {
+            foreach ($rows as $row) {
+                $payment = BdtEntry::create([
+                    'entry_date' => $row['date'],
+                    'description' => $row['payment_description'],
+                    'category' => 'client_payment',
+                    'client_id' => $clients[$row['client']],
+                    'amount' => $this->cents($row['bdt']),
+                    'notes' => $row['notes'] ?? null,
+                ]);
+
+                UsdEntry::create([
+                    'entry_date' => $row['date'],
+                    'description' => $row['spend_description'],
+                    'category' => 'client_spend',
+                    'account_id' => $accounts[$row['account']],
+                    'client_id' => $clients[$row['client']],
+                    'amount' => -$this->cents($row['usd']),
+                    'status' => 'settled',
+                    'settled_by_id' => $payment->id,
+                    'notes' => $row['notes'] ?? null,
+                ]);
+            }
+        });
+
+        $this->info('Added '.count($rows).' entries made after the sheet.');
     }
 
     private function verify(array $expected): bool

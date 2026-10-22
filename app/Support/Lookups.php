@@ -50,16 +50,16 @@ class Lookups
 
     public static function usdCategories(): array
     {
-        return collect(UsdEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => $c['label']])->values()->all();
+        return collect(UsdEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => __($c['label'])])->values()->all();
     }
 
     public static function bdtCategories(): array
     {
-        return collect(BdtEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => $c['label']])->values()->all();
+        return collect(BdtEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => __($c['label'])])->values()->all();
     }
 
     public static function options(array $map): array
     {
-        return collect($map)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values()->all();
+        return collect($map)->map(fn ($label, $value) => ['value' => $value, 'label' => __($label)])->values()->all();
     }
 }

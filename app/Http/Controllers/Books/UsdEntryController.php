@@ -104,7 +104,7 @@ class UsdEntryController extends Controller
     public function store(Request $request): RedirectResponse
     {
         UsdEntry::create($this->validated($request));
-        $this->toast('USD entry যোগ হয়েছে।');
+        $this->toast(__('USD entry যোগ হয়েছে।'));
 
         return back();
     }
@@ -128,7 +128,7 @@ class UsdEntryController extends Controller
             }
         });
 
-        $this->toast('USD entry আপডেট হয়েছে।');
+        $this->toast(__('USD entry আপডেট হয়েছে।'));
 
         return back();
     }
@@ -142,7 +142,7 @@ class UsdEntryController extends Controller
             $rows->each->delete();
         });
 
-        $this->toast('Entry Trash-এ গেছে। দরকার হলে Trash থেকে ফেরত আনা যাবে।');
+        $this->toast(__('Entry Trash-এ গেছে। দরকার হলে Trash থেকে ফেরত আনা যাবে।'));
 
         return back();
     }
@@ -150,7 +150,7 @@ class UsdEntryController extends Controller
     private function ensureEditable(UsdEntry $entry): void
     {
         if ($entry->fx_batch_id) {
-            throw ValidationException::withMessages(['entry' => 'এই row একটা FX batch-এর অংশ — FX Batch পাতা থেকে বদলান।']);
+            throw ValidationException::withMessages(['entry' => __('এই row একটা FX batch-এর অংশ — FX Batch পাতা থেকে বদলান।')]);
         }
     }
 
@@ -166,12 +166,12 @@ class UsdEntryController extends Controller
             'direction' => ['nullable', Rule::in(['in', 'out'])],
             'status' => ['required', Rule::in(array_keys(UsdEntry::STATUSES))],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ], [], ['amount' => 'পরিমাণ', 'entry_date' => 'তারিখ', 'client_id' => 'client']);
+        ], [], ['amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'client_id' => 'client']);
 
         $amount = Money::toMinor($data['amount']);
 
         if ($amount <= 0) {
-            throw ValidationException::withMessages(['amount' => 'পরিমাণ ০-এর বেশি হতে হবে।']);
+            throw ValidationException::withMessages(['amount' => __('পরিমাণ ০-এর বেশি হতে হবে।')]);
         }
 
         $sign = UsdEntry::CATEGORIES[$data['category']]['sign'];

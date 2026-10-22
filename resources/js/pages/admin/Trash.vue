@@ -6,6 +6,7 @@ import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KTag from '@/components/k/KTag.vue';
 import { ago, money } from '@/lib/format';
+import { t } from '@/lib/i18n';
 
 defineProps<{ items: { type: string; type_label: string; id: number; title: string; amount: number | null; currency: 'usd' | 'bdt'; deleted_at: string }[] }>();
 
@@ -17,17 +18,17 @@ function restore(type: string, id: number): void {
 </script>
 
 <template>
-    <PageHeader eyebrow="নিয়ন্ত্রণ" title="Trash" lead="খাতা থেকে কিছুই চিরতরে মোছা হয় না। ভুল করে মুছলে এখান থেকে ফেরত আনুন।" />
+    <PageHeader :eyebrow="t('নিয়ন্ত্রণ')" title="Trash" :lead="t('খাতা থেকে কিছুই চিরতরে মোছা হয় না। ভুল করে মুছলে এখান থেকে ফেরত আনুন।')" />
 
     <section class="panel overflow-hidden">
-        <KEmpty v-if="!items.length" title="Trash খালি" body="কিছু মুছলে এখানে দেখা যাবে।" />
+        <KEmpty v-if="!items.length" :title="t('Trash খালি')" :body="t('কিছু মুছলে এখানে দেখা যাবে।')" />
         <ul v-else class="divide-y divide-dashed divide-line">
             <li v-for="i in items" :key="i.type + i.id" class="flex flex-wrap items-center gap-3 px-5 py-3.5 sm:px-6">
                 <KTag>{{ i.type_label }}</KTag>
                 <span class="min-w-0 flex-1 font-medium">{{ i.title }}</span>
                 <span v-if="i.amount !== null" class="num text-[13.5px]">{{ money(i.amount, i.currency) }}</span>
                 <span class="w-28 text-right text-[12.5px] text-ink-3">{{ ago(i.deleted_at) }}</span>
-                <KButton v-if="can['trash.restore']" size="sm" icon="undo" @click="restore(i.type, i.id)">ফেরত আনুন</KButton>
+                <KButton v-if="can['trash.restore']" size="sm" icon="undo" @click="restore(i.type, i.id)">{{ t('ফেরত আনুন') }}</KButton>
             </li>
         </ul>
     </section>

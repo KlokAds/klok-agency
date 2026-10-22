@@ -6,7 +6,9 @@ use App\Models\Concerns\Audited;
 use App\Models\Concerns\LedgerEntry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Services\PaymentFees;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -17,17 +19,17 @@ class BdtEntry extends Model
     use Audited, LedgerEntry, SoftDeletes;
 
     public const CATEGORIES = [
-        'capital' => ['label' => 'Capital জমা', 'sign' => 1, 'group' => 'owner'],
-        'owner_drawing' => ['label' => 'Owner উত্তোলন', 'sign' => -1, 'group' => 'owner'],
-        'usd_purchase' => ['label' => 'USD কেনা', 'sign' => -1, 'group' => 'fx'],
-        'client_payment' => ['label' => 'Client পেমেন্ট', 'sign' => 1, 'group' => 'revenue'],
-        'service_income' => ['label' => 'Service আয়', 'sign' => 1, 'group' => 'revenue'],
-        'other_income' => ['label' => 'অন্যান্য আয়', 'sign' => 1, 'group' => 'revenue'],
-        'expense' => ['label' => 'ব্যবসার খরচ', 'sign' => -1, 'group' => 'expense'],
-        'salary' => ['label' => 'বেতন', 'sign' => -1, 'group' => 'expense'],
+        'capital' => ['label' => 'Capital জমা', 'sign' => 1, 'group' => 'owner'], // i18n
+        'owner_drawing' => ['label' => 'Owner উত্তোলন', 'sign' => -1, 'group' => 'owner'], // i18n
+        'usd_purchase' => ['label' => 'USD কেনা', 'sign' => -1, 'group' => 'fx'], // i18n
+        'client_payment' => ['label' => 'Client পেমেন্ট', 'sign' => 1, 'group' => 'revenue'], // i18n
+        'service_income' => ['label' => 'Service আয়', 'sign' => 1, 'group' => 'revenue'], // i18n
+        'other_income' => ['label' => 'অন্যান্য আয়', 'sign' => 1, 'group' => 'revenue'], // i18n
+        'expense' => ['label' => 'ব্যবসার খরচ', 'sign' => -1, 'group' => 'expense'], // i18n
+        'salary' => ['label' => 'বেতন', 'sign' => -1, 'group' => 'expense'], // i18n
     ];
 
-    public const SALARY_KINDS = ['salary' => 'বেতন', 'advance' => 'Advance', 'bonus' => 'Bonus'];
+    public const SALARY_KINDS = ['salary' => 'বেতন', 'advance' => 'Advance', 'bonus' => 'Bonus']; // i18n
 
     public const REVENUE = ['client_payment', 'service_income', 'other_income'];
 
@@ -35,12 +37,31 @@ class BdtEntry extends Model
 
     protected $fillable = [
         'entry_date', 'sequence', 'description', 'category', 'client_id', 'expense_head_id', 'employee_id',
-        'salary_month', 'salary_kind', 'fx_batch_id', 'amount', 'notes', 'review_note', 'created_by', 'updated_by',
+        'salary_month', 'salary_kind', 'fx_batch_id', 'fee_for_id', 'amount', 'notes', 'review_note', 'created_by', 'updated_by',
     ];
 
     protected function casts(): array
     {
         return ['entry_date' => 'date', 'amount' => 'integer', 'sequence' => 'integer'];
+    }
+
+    protected static function booted(): void
+    {
+        // A client payment carries its transfer fee row along with it.
+        static::saved(fn (BdtEntry $entry) => PaymentFees::sync($entry));
+        static::deleted(fn (BdtEntry $entry) => PaymentFees::sync($entry));
+        static::restored(fn (BdtEntry $entry) => PaymentFees::sync($entry));
+    }
+
+    /** The fee row taken off this payment. */
+    public function fee(): HasOne
+    {
+        return $this->hasOne(BdtEntry::class, 'fee_for_id');
+    }
+
+    public function feeFor(): BelongsTo
+    {
+        return $this->belongsTo(BdtEntry::class, 'fee_for_id');
     }
 
     public function client(): BelongsTo
