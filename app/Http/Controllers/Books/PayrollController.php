@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Services\Postings;
 use App\Support\Lookups;
 use App\Support\Money;
+use App\Support\Paging;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,7 +58,7 @@ class PayrollController extends Controller
             ->values();
         $page = LengthAwarePaginator::resolveCurrentPage('payments_page');
         $history = new LengthAwarePaginator(
-            $shown->forPage($page, 30)->values(), $shown->count(), 30, $page,
+            $shown->forPage($page, Paging::size($request))->values(), $shown->count(), Paging::size($request), $page,
             ['path' => $request->url(), 'query' => $request->query(), 'pageName' => 'payments_page'],
         );
 

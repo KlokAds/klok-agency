@@ -15,6 +15,7 @@ import KSwitch from '@/components/k/KSwitch.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { quickJob } from '@/lib/quick-entry';
 import type { Option } from '@/types';
 
 const open = defineModel<boolean>({ default: false });
@@ -25,6 +26,7 @@ type Lookups = {
     clients: Option[];
     accounts: Option[];
     heads: Option[];
+    wallets: Option[];
     pending: {
         id: number;
         client_id: number;
@@ -137,6 +139,15 @@ const form = useForm(blank());
 
 watch(open, (value) => {
     if (value) {
+        // A page asked for one job (e.g. the Payment page's "new payment").
+        if (
+            quickJob.value &&
+            jobs.value.some((j) => j.key === quickJob.value)
+        ) {
+            job.value = quickJob.value as JobKey;
+        }
+        quickJob.value = null;
+
         if (!jobs.value.some((j) => j.key === job.value)) {
             job.value = jobs.value[0]?.key ?? 'ad-spend';
         }
@@ -256,11 +267,7 @@ const yesNo = computed<Option[]>(() => [
     { value: 'pending', label: t('Pending — টাকা পাইনি') },
     { value: 'settled', label: t('Settled — টাকা পেয়েছি') },
 ]);
-const walletOptions = computed<Option[]>(() => [
-    { value: 'bank', label: 'Bank' },
-    { value: 'bkash', label: 'bKash' },
-    { value: 'cash', label: 'Cash' },
-]);
+const walletOptions = computed<Option[]>(() => lookups.value?.wallets ?? []);
 // A payment's place follows how it came: MFS lands in bKash, bank in the bank.
 watch(
     () => form.pay_via,
@@ -282,6 +289,7 @@ watch(
 );
 const payVia = computed<Option[]>(() => [
     { value: 'mfs', label: 'MFS (bKash / Nagad)' },
+    { value: 'qr', label: 'Bangla QR' },
     { value: 'bank', label: 'Bank' },
     { value: 'cash', label: 'Cash' },
 ]);
@@ -410,22 +418,6 @@ const directions = computed<Option[]>(() => [
                             class="sm:col-span-2"
                         >
                             <KSegment v-model="form.status" :options="yesNo" />
-                        </KField>
-                        <KField
-                            :label="t('কত দিন চলবে')"
-                            optional
-                            :error="form.errors.run_days"
-                            :hint="
-                                t(
-                                    'দিলে ad-টা “Ad চালানো”-তে উঠবে, শেষের আগে renew-এর reminder আসবে।',
-                                )
-                            "
-                        >
-                            <KInput
-                                v-model="form.run_days"
-                                inputmode="numeric"
-                                :placeholder="t('যেমন 7')"
-                            />
                         </KField>
                     </template>
 

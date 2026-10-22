@@ -7,6 +7,7 @@ use App\Models\UsdEntry;
 use App\Services\Books;
 use App\Support\Lookups;
 use App\Support\Money;
+use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -59,8 +60,9 @@ class UsdEntryController extends Controller
         ];
 
         $page = LengthAwarePaginator::resolveCurrentPage();
+        $size = Paging::size($request);
         $paginator = new LengthAwarePaginator(
-            $rows->forPage($page, 50)->values(), $rows->count(), 50, $page,
+            $rows->forPage($page, $size)->values(), $rows->count(), $size, $page,
             ['path' => $request->url(), 'query' => $request->query()],
         );
 

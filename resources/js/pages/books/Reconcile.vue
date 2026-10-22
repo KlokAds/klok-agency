@@ -196,7 +196,7 @@ const diff = computed(() =>
                     </tr>
                 </tbody>
             </table>
-            <KPager :page="history" />
+            <KPager :page="history" :sizes="[10, 25, 50, 100]" />
         </section>
     </div>
 </template>

@@ -13,6 +13,12 @@ export const SETTINGS_TABS = [
         icon: 'bell',
         perm: 'settings.view',
     }, // i18n
+    {
+        label: 'Payment',
+        href: '/admin/payment',
+        icon: 'wallet',
+        perm: 'settings.view',
+    },
     { label: 'User', href: '/admin/users', icon: 'user', perm: 'users.view' },
     {
         label: 'Role ও Permission',

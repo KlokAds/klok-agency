@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Employee;
 use App\Models\FxBatch;
 use App\Models\UsdEntry;
+use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -53,7 +54,7 @@ class TrashController extends Controller
 
         return Inertia::render('admin/Trash', [
             'items' => new LengthAwarePaginator(
-                $items->forPage($page, 40)->values(), $items->count(), 40, $page,
+                $items->forPage($page, Paging::size($request))->values(), $items->count(), Paging::size($request), $page,
                 ['path' => $request->url(), 'query' => $request->query()],
             ),
             'filters' => ['type' => $filters['type'] ?? null],

@@ -173,6 +173,6 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
                 </div>
             </li>
         </ol>
-        <KPager :page="activities" />
+        <KPager :page="activities" :sizes="[10, 25, 50, 100]" />
     </section>
 </template>

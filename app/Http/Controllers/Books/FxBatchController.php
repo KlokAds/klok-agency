@@ -7,6 +7,7 @@ use App\Models\FxBatch;
 use App\Services\Books;
 use App\Services\Postings;
 use App\Support\Money;
+use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -43,7 +44,7 @@ class FxBatchController extends Controller
 
         return Inertia::render('books/FxBatches', [
             'batches' => new LengthAwarePaginator(
-                $newest->forPage($page, 30)->values(), $newest->count(), 30, $page,
+                $newest->forPage($page, Paging::size($request))->values(), $newest->count(), Paging::size($request), $page,
                 ['path' => $request->url(), 'query' => $request->query()],
             ),
             'pool' => $batches->take(-12)->values(),

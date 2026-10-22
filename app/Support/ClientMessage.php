@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\AdRun;
+use App\Models\Invoice;
 
 /**
  * Ready-to-send text for a client, opened in WhatsApp or the phone's SMS app
@@ -34,6 +35,18 @@ class ClientMessage
             'title' => $run->title,
             'date' => $run->end_on->format('d M'),
         ]);
+    }
+
+    /** Always in বাংলা: it goes to the client, not to whoever is signed in. */
+    public static function invoice(Invoice $invoice): string
+    {
+        return __('আসসালামু আলাইকুম :name, Klok Ads-এর invoice :number — মোট :amount:due। দেখতে ও পেমেন্ট করতে: :url', [
+            'name' => $invoice->client->name,
+            'number' => $invoice->number,
+            'amount' => Money::bdt($invoice->due()),
+            'due' => $invoice->due_date ? __(', শেষ তারিখ :date', ['date' => $invoice->due_date->format('d M Y')], 'bn') : '',
+            'url' => $invoice->publicUrl(),
+        ], 'bn');
     }
 
     /** @return array{phone: ?string, whatsapp: ?string, sms: ?string, text: string} */

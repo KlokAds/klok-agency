@@ -16,6 +16,17 @@ import { money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Option, Paginated } from '@/types';
 
+type Place = {
+    id: number;
+    key: string;
+    name: string;
+    type: string;
+    detail: string | null;
+    opening_balance: number;
+    is_active: boolean;
+    used: boolean;
+};
+
 type Move = {
     id: number;
     date: string;
@@ -30,11 +41,23 @@ type Move = {
 // the rows that still need a place.
 const props = defineProps<{
     wallets: {
-        places: { key: string; label: string; balance: number }[];
+        opening_on: string | null;
+        places: {
+            key: string;
+            label: string;
+            type: string;
+            detail: string | null;
+            active: boolean;
+            opening: number;
+            balance: number;
+        }[];
         untagged: number;
         untagged_count: number;
         total: number;
+        counted: number;
+        unexplained: number;
     };
+    list: Place[];
     card: number;
     platform_due: number;
     untagged: Paginated<{
@@ -46,13 +69,122 @@ const props = defineProps<{
         amount: number;
     }>;
     moves: Paginated<Move>;
-    options: { wallets: Option[] };
+    options: { wallets: Option[]; types: Option[] };
     fees: { mfs_percent: number; bank_fee: number };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
 const label = (key: string) =>
     props.options.wallets.find((w) => w.value === key)?.label ?? key;
+
+const typeLabel = (type: string) =>
+    props.options.types.find((o) => o.value === type)?.label ?? type;
+
+// Places: add, rename, switch off or delete (a place with history is only switched off).
+const placesOpen = ref(false);
+const editingPlace = ref<Place | null>(null);
+const placeForm = useForm({
+    name: '' as string | null,
+    type: 'bank' as string | null,
+    detail: '' as string | null,
+    is_active: true,
+});
+
+function startPlace(place: Place | null): void {
+    editingPlace.value = place;
+    placeForm.clearErrors();
+    Object.assign(placeForm, {
+        name: place?.name ?? '',
+        type: place?.type ?? 'bank',
+        detail: place?.detail ?? '',
+        is_active: place?.is_active ?? true,
+    });
+}
+
+function savePlace(): void {
+    const opts = {
+        preserveScroll: true,
+        onSuccess: () => startPlace(null),
+    };
+
+    if (editingPlace.value) {
+        placeForm.put(`/wallets/places/${editingPlace.value.id}`, opts);
+    } else {
+        placeForm.post('/wallets/places', opts);
+    }
+}
+
+async function removePlace(place: Place): Promise<void> {
+    const ok = await confirmAction({
+        title: t('{name} মুছবেন?', { name: place.name }),
+        body: place.used
+            ? t('এই জায়গায় লেনদেন আছে — মোছা হবে না, শুধু বন্ধ হবে।')
+            : t('এই জায়গা তালিকা থেকে চলে যাবে।'),
+        confirm: place.used ? t('বন্ধ করুন') : t('মুছুন'),
+        danger: true,
+    });
+
+    if (ok) {
+        router.delete(`/wallets/places/${place.id}`, { preserveScroll: true });
+    }
+}
+
+// The real balances, counted on a day: places start from there.
+const openingOpen = ref(false);
+const openingForm = useForm({
+    opening_on: today() as string | null,
+    balances: {} as Record<string, string | null>,
+});
+
+function startOpening(): void {
+    openingForm.clearErrors();
+    openingForm.opening_on = props.wallets.opening_on ?? today();
+    openingForm.balances = Object.fromEntries(
+        props.list
+            .filter((w) => w.is_active)
+            .map((w) => [
+                w.key,
+                props.wallets.opening_on
+                    ? (w.opening_balance / 100).toFixed(2)
+                    : '',
+            ]),
+    );
+    openingOpen.value = true;
+}
+
+function saveOpening(): void {
+    openingForm.put('/wallets/opening', {
+        preserveScroll: true,
+        onSuccess: () => (openingOpen.value = false),
+    });
+}
+
+const openingTotal = computed(() =>
+    Object.values(openingForm.balances).reduce(
+        (sum, v) => sum + (parseFloat(String(v ?? '').replace(/,/g, '')) || 0),
+        0,
+    ),
+);
+
+async function adjust(): Promise<void> {
+    const ok = await confirmAction({
+        title: t('অমিলটা খাতায় তুলবেন?'),
+        body: t(
+            'খাতায় যা আছে আর জায়গাগুলোতে আসলে যা আছে, তার পার্থক্য {amount}। এটা {date}-এর একটা adjustment entry হিসেবে লেখা হবে, তাহলে দুটো মিলে যাবে।',
+            {
+                amount: money(Math.abs(props.wallets.unexplained), 'bdt', {
+                    round: false,
+                }),
+                date: niceDate(props.wallets.opening_on ?? today(), false),
+            },
+        ),
+        confirm: t('খাতায় তুলুন'),
+    });
+
+    if (ok) {
+        router.post('/wallets/adjust', {}, { preserveScroll: true });
+    }
+}
 
 // The place button that is being saved, so it cannot be clicked twice.
 const busy = ref<string | null>(null);
@@ -172,13 +304,30 @@ async function removeMove(move: Move): Promise<void> {
             )
         "
     >
-        <KButton
-            v-if="can['bdt.create']"
-            variant="ink"
-            icon="swap"
-            @click="openMove"
-            >{{ t('টাকা সরানো') }}</KButton
-        >
+        <div class="flex flex-wrap gap-2">
+            <KButton
+                v-if="can['bdt.edit']"
+                icon="pen"
+                @click="
+                    startPlace(null);
+                    placesOpen = true;
+                "
+                >{{ t('জায়গা') }}</KButton
+            >
+            <KButton
+                v-if="can['bdt.edit']"
+                icon="scale"
+                @click="startOpening"
+                >{{ t('আসল balance বসান') }}</KButton
+            >
+            <KButton
+                v-if="can['bdt.create']"
+                variant="ink"
+                icon="swap"
+                @click="openMove"
+                >{{ t('টাকা সরানো') }}</KButton
+            >
+        </div>
     </PageHeader>
 
     <section
@@ -195,6 +344,11 @@ async function removeMove(move: Move): Promise<void> {
                 :class="p.balance < 0 ? 'text-out' : ''"
             >
                 {{ money(p.balance, 'bdt', { round: false }) }}
+            </p>
+            <p class="mt-2 truncate text-[12px] text-ink-3">
+                {{ typeLabel(p.type)
+                }}<template v-if="p.detail"> · {{ p.detail }}</template
+                ><template v-if="!p.active"> · {{ t('বন্ধ') }}</template>
             </p>
         </div>
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
@@ -220,11 +374,38 @@ async function removeMove(move: Move): Promise<void> {
         class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[13.5px]"
     >
         <span
-            >{{ t('মোট BDT') }}
+            >{{ t('খাতায় মোট BDT') }}
             <b class="num">{{
                 money(wallets.total, 'bdt', { round: false })
             }}</b></span
         >
+        <span v-if="wallets.opening_on" class="text-ink-3">{{
+            t('{date} থেকে গোনা', {
+                date: niceDate(wallets.opening_on, false),
+            })
+        }}</span>
+        <span
+            v-if="wallets.opening_on && wallets.unexplained"
+            class="flex flex-wrap items-center gap-2 text-wait"
+        >
+            <KIcon name="warn" :size="14" />
+            {{
+                t('খাতার সাথে অমিল {amount}', {
+                    amount: money(wallets.unexplained, 'bdt', {
+                        sign: true,
+                        round: false,
+                    }),
+                })
+            }}
+            <button
+                v-if="can['bdt.edit']"
+                type="button"
+                class="font-semibold underline underline-offset-2"
+                @click="adjust"
+            >
+                {{ t('খাতায় তুলুন') }}
+            </button>
+        </span>
         <span
             v-if="wallets.untagged_count"
             class="flex items-center gap-1.5 text-wait"
@@ -335,7 +516,7 @@ async function removeMove(move: Move): Promise<void> {
                     </div>
                 </li>
             </ul>
-            <KPager :page="untagged" />
+            <KPager :page="untagged" :sizes="[10, 25, 50, 100]" />
         </section>
 
         <section class="panel overflow-hidden">
@@ -390,7 +571,7 @@ async function removeMove(move: Move): Promise<void> {
                     </button>
                 </li>
             </ul>
-            <KPager :page="moves" />
+            <KPager :page="moves" :sizes="[10, 25, 50, 100]" />
         </section>
     </div>
 
@@ -497,6 +678,156 @@ async function removeMove(move: Move): Promise<void> {
                 form="move-form"
                 variant="primary"
                 :loading="form.processing"
+                >{{ t('সংরক্ষণ') }}</KButton
+            >
+        </template>
+    </KModal>
+
+    <KModal v-model="placesOpen" :title="t('জায়গা — bank, MFS, cash, hold')">
+        <ul class="rounded-xl border border-line">
+            <li
+                v-for="w in list"
+                :key="w.id"
+                class="flex items-center gap-3 border-b border-dashed border-line px-3 py-2.5 text-[13.5px] last:border-0"
+            >
+                <span class="min-w-0 flex-1">
+                    <span
+                        class="block truncate font-medium"
+                        :class="w.is_active ? '' : 'text-ink-3 line-through'"
+                        >{{ w.name }}</span
+                    >
+                    <span class="text-[12px] text-ink-3"
+                        >{{ typeLabel(w.type)
+                        }}<template v-if="w.detail">
+                            · {{ w.detail }}</template
+                        ></span
+                    >
+                </span>
+                <KButton size="sm" variant="quiet" @click="startPlace(w)">{{
+                    t('বদলান')
+                }}</KButton>
+                <button
+                    type="button"
+                    class="grid size-7 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
+                    :aria-label="t('মুছুন')"
+                    @click="removePlace(w)"
+                >
+                    <KIcon name="bin" :size="14" />
+                </button>
+            </li>
+        </ul>
+
+        <form
+            class="mt-5 grid grid-cols-1 gap-4 rounded-xl bg-sunken p-4 sm:grid-cols-2"
+            @submit.prevent="savePlace"
+        >
+            <p class="text-[13px] font-semibold sm:col-span-2">
+                {{
+                    editingPlace
+                        ? t('{name} বদলান', { name: editingPlace.name })
+                        : t('নতুন জায়গা')
+                }}
+            </p>
+            <KField :label="t('নাম')" :error="placeForm.errors.name">
+                <KInput
+                    v-model="placeForm.name"
+                    :placeholder="t('যেমন City Bank, bKash 2')"
+                />
+            </KField>
+            <KField :label="t('ধরন')" :error="placeForm.errors.type">
+                <KSelect
+                    v-model="placeForm.type"
+                    :options="options.types"
+                    :searchable="false"
+                />
+            </KField>
+            <KField
+                :label="t('Account / নম্বর')"
+                optional
+                class="sm:col-span-2"
+            >
+                <KInput
+                    v-model="placeForm.detail"
+                    :placeholder="t('যেমন A/C 1234 বা 017…')"
+                />
+            </KField>
+            <div class="flex justify-end gap-2 sm:col-span-2">
+                <KButton
+                    v-if="editingPlace"
+                    variant="quiet"
+                    @click="startPlace(null)"
+                    >{{ t('বাতিল') }}</KButton
+                >
+                <KButton
+                    type="submit"
+                    variant="primary"
+                    :loading="placeForm.processing"
+                    >{{ editingPlace ? t('সংরক্ষণ') : t('যোগ করুন') }}</KButton
+                >
+            </div>
+        </form>
+        <template #footer>
+            <KButton variant="quiet" @click="placesOpen = false">{{
+                t('বন্ধ করুন')
+            }}</KButton>
+        </template>
+    </KModal>
+
+    <KModal v-model="openingOpen" :title="t('আসল balance বসান')">
+        <p class="text-[13px] text-ink-2">
+            {{
+                t(
+                    'আজ প্রতিটা জায়গায় আসলে কত আছে লিখুন। এই দিন থেকে প্রতিটা জায়গা এখান থেকে গোনা শুরু করবে — আগের entry-র জায়গা আর বাছতে হবে না।',
+                )
+            }}
+        </p>
+        <form
+            id="opening-form"
+            class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
+            @submit.prevent="saveOpening"
+        >
+            <KField
+                :label="t('কোন দিনের শেষে গোনা')"
+                :error="openingForm.errors.opening_on"
+                class="sm:col-span-2"
+            >
+                <KDate v-model="openingForm.opening_on" :max="today()" />
+            </KField>
+            <KField
+                v-for="w in list.filter((x) => x.is_active)"
+                :key="w.key"
+                :label="w.name"
+            >
+                <KMoney v-model="openingForm.balances[w.key]" currency="bdt" />
+            </KField>
+            <div
+                class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-sunken px-4 py-3 text-[13px] sm:col-span-2"
+            >
+                <span
+                    >{{ t('মোট') }}
+                    <b class="num">{{
+                        money(Math.round(openingTotal * 100), 'bdt', {
+                            round: false,
+                        })
+                    }}</b></span
+                >
+                <span class="text-ink-3"
+                    >{{ t('খাতায় এখন') }}
+                    <b class="num">{{
+                        money(wallets.total, 'bdt', { round: false })
+                    }}</b></span
+                >
+            </div>
+        </form>
+        <template #footer>
+            <KButton variant="quiet" @click="openingOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                type="submit"
+                form="opening-form"
+                variant="primary"
+                :loading="openingForm.processing"
                 >{{ t('সংরক্ষণ') }}</KButton
             >
         </template>

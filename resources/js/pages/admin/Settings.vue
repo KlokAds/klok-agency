@@ -17,15 +17,6 @@ import { getJson } from '@/lib/http';
 import { t } from '@/lib/i18n';
 import type { Option } from '@/types';
 
-type Head = { id: number; name: string; is_active: boolean };
-type Account = {
-    id: number;
-    code: string;
-    name: string;
-    kind: string;
-    is_active: boolean;
-};
-
 const props = defineProps<{
     settings: {
         lock_date: string | null;
@@ -34,9 +25,6 @@ const props = defineProps<{
         mfs_out_percent: string;
         bank_transfer_fee: string;
     };
-    heads: Head[];
-    accounts: Account[];
-    kinds: Option[];
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -49,55 +37,6 @@ const idleOptions = computed<Option[]>(() =>
         label: t('{n} মিনিট', { n: m }),
     })),
 );
-
-const headForm = useForm({ name: '' });
-
-function addHead(): void {
-    headForm.post('/admin/settings/heads', {
-        preserveScroll: true,
-        onSuccess: () => headForm.reset(),
-    });
-}
-
-function toggleHead(h: Head): void {
-    useForm({ name: h.name, is_active: !h.is_active }).put(
-        `/admin/settings/heads/${h.id}`,
-        { preserveScroll: true },
-    );
-}
-
-const accountOpen = ref(false);
-const editingAccount = ref<Account | null>(null);
-const accountForm = useForm({ name: '', kind: 'platform', is_active: true });
-
-function startAccount(a?: Account): void {
-    editingAccount.value = a ?? null;
-    accountForm.clearErrors();
-    Object.assign(
-        accountForm,
-        a
-            ? { name: a.name, kind: a.kind, is_active: a.is_active }
-            : { name: '', kind: 'platform', is_active: true },
-    );
-    accountOpen.value = true;
-}
-
-function saveAccount(): void {
-    const opts = {
-        preserveScroll: true,
-        onSuccess: () => (accountOpen.value = false),
-    };
-    if (editingAccount.value) {
-        accountForm.put(
-            `/admin/settings/accounts/${editingAccount.value.id}`,
-            opts,
-        );
-    } else {
-        accountForm.post('/admin/settings/accounts', opts);
-    }
-}
-
-const newKinds = computed(() => props.kinds.filter((k) => k.value !== 'card'));
 
 // App update (Owner only): what is running, what GitHub has, and the last run's log.
 type UpdateStatus = {
@@ -153,7 +92,7 @@ onMounted(() => {
     <SettingsNav />
     <PageHeader eyebrow="Settings" title="Settings" />
 
-    <div class="grid gap-6 lg:grid-cols-2">
+    <div class="grid max-w-3xl gap-6">
         <!-- Rules of the books, then security -->
         <form
             class="panel flex flex-col gap-6 p-6"
@@ -209,7 +148,7 @@ onMounted(() => {
                     >
                         <template #trail
                             ><span class="text-[13px] font-semibold text-ink-3"
-                                >৳</span
+                                >&#2547;</span
                             ></template
                         >
                     </KInput>
@@ -281,114 +220,6 @@ onMounted(() => {
                 >
             </div>
         </form>
-
-        <div class="flex flex-col gap-6">
-            <!-- Expense heads -->
-            <section class="panel p-6">
-                <h2 class="text-[17px] font-bold">{{ t('খরচের খাত') }}</h2>
-                <p class="mt-1 text-[13px] text-ink-3">
-                    {{
-                        t(
-                            'BDT খরচ লেখার সময় এগুলো থেকে বাছা যায়। বন্ধ করলে নতুন entry-তে দেখাবে না।',
-                        )
-                    }}
-                </p>
-                <div class="mt-4 flex flex-wrap gap-2">
-                    <button
-                        v-for="h in heads"
-                        :key="h.id"
-                        type="button"
-                        :disabled="!editable"
-                        class="rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors"
-                        :class="
-                            h.is_active
-                                ? 'border-line-2 bg-surface hover:border-ink-3'
-                                : 'border-dashed border-line-2 text-ink-3 line-through'
-                        "
-                        :title="
-                            h.is_active
-                                ? t('বন্ধ করতে চাপুন')
-                                : t('চালু করতে চাপুন')
-                        "
-                        @click="toggleHead(h)"
-                    >
-                        {{ h.name }}
-                    </button>
-                </div>
-                <form
-                    v-if="editable"
-                    class="mt-4 flex gap-2"
-                    @submit.prevent="addHead"
-                >
-                    <KInput
-                        v-model="headForm.name"
-                        :placeholder="t('নতুন খাত, যেমন Office rent')"
-                        size="sm"
-                        class="flex-1"
-                        :invalid="!!headForm.errors.name"
-                    />
-                    <KButton
-                        type="submit"
-                        size="sm"
-                        icon="plus"
-                        :loading="headForm.processing"
-                        >{{ t('যোগ') }}</KButton
-                    >
-                </form>
-                <p
-                    v-if="headForm.errors.name"
-                    class="mt-1.5 text-[12.5px] text-out"
-                >
-                    {{ headForm.errors.name }}
-                </p>
-            </section>
-
-            <!-- Accounts -->
-            <section class="panel p-6">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <h2 class="text-[17px] font-bold">
-                            {{ t('USD account ও platform') }}
-                        </h2>
-                        <p class="mt-1 text-[13px] text-ink-3">
-                            {{ t('নতুন ad platform বা USD রাখার জায়গা।') }}
-                        </p>
-                    </div>
-                    <KButton
-                        v-if="editable"
-                        size="sm"
-                        icon="plus"
-                        @click="startAccount()"
-                        >{{ t('যোগ') }}</KButton
-                    >
-                </div>
-                <ul class="mt-3">
-                    <li
-                        v-for="a in accounts"
-                        :key="a.id"
-                        class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[14px] last:border-0"
-                    >
-                        <span
-                            class="flex-1 font-medium"
-                            :class="!a.is_active && 'text-ink-3 line-through'"
-                            >{{ a.name }}</span
-                        >
-                        <KTag>{{
-                            kinds.find((k) => k.value === a.kind)?.label
-                        }}</KTag>
-                        <button
-                            v-if="editable"
-                            type="button"
-                            class="rounded-md p-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
-                            :aria-label="t('বদলান')"
-                            @click="startAccount(a)"
-                        >
-                            <KIcon name="pen" :size="15" />
-                        </button>
-                    </li>
-                </ul>
-            </section>
-        </div>
     </div>
 
     <!-- App update -->
@@ -524,44 +355,6 @@ onMounted(() => {
                 variant="primary"
                 :loading="updateForm.processing"
                 >{{ t('Update শুরু করুন') }}</KButton
-            >
-        </template>
-    </KModal>
-
-    <KModal
-        v-model="accountOpen"
-        width="sm"
-        :title="editingAccount ? editingAccount.name : t('নতুন account')"
-    >
-        <form
-            id="acct-form"
-            class="flex flex-col gap-4"
-            @submit.prevent="saveAccount"
-        >
-            <KField :label="t('নাম')" :error="accountForm.errors.name"
-                ><KInput
-                    v-model="accountForm.name"
-                    :placeholder="t('যেমন LinkedIn Ads')"
-            /></KField>
-            <KField v-if="!editingAccount" :label="t('ধরন')"
-                ><KSegment v-model="accountForm.kind" :options="newKinds"
-            /></KField>
-            <KSwitch
-                v-if="editingAccount && editingAccount.kind !== 'card'"
-                v-model="accountForm.is_active"
-                :label="t('চালু')"
-            />
-        </form>
-        <template #footer>
-            <KButton variant="quiet" @click="accountOpen = false">{{
-                t('বাতিল')
-            }}</KButton>
-            <KButton
-                type="submit"
-                form="acct-form"
-                variant="primary"
-                :loading="accountForm.processing"
-                >{{ t('সংরক্ষণ') }}</KButton
             >
         </template>
     </KModal>

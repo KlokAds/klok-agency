@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Reconciliation;
 use App\Services\Books;
 use App\Support\Money;
+use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,7 +25,7 @@ class ReconcileController extends Controller
             'card' => $summary['card'],
             'platform_due' => $summary['platform_due'],
             'business_usd' => $summary['business_usd'],
-            'history' => Reconciliation::with('author:id,name')->latest('checked_on')->latest('id')->paginate(20)
+            'history' => Reconciliation::with('author:id,name')->latest('checked_on')->latest('id')->paginate(Paging::size(request()))->withQueryString()
                 ->through(fn ($r) => [
                     'id' => $r->id,
                     'date' => $r->checked_on->toDateString(),

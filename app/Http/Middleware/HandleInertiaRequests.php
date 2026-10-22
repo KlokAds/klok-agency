@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
                 'clients' => Lookups::clients(),
                 'accounts' => Lookups::accounts(),
                 'heads' => Lookups::heads(),
+                'wallets' => Lookups::wallets(),
                 // Campaign spend is settled by the client's credit, not picked by hand.
                 'pending' => UsdEntry::where('category', 'client_spend')->where('status', 'pending')->whereNull('source')
                     ->ledgerOrder()->get(['id', 'client_id', 'entry_date', 'description', 'amount'])

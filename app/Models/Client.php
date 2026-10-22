@@ -29,6 +29,12 @@ class Client extends Model
         return $this->hasMany(UsdEntry::class);
     }
 
+    /** @return HasMany<Invoice, $this> */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     /** @return HasMany<BdtEntry, $this> */
     public function bdtEntries(): HasMany
     {

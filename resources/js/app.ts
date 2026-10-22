@@ -9,7 +9,13 @@ const appName = import.meta.env.VITE_APP_NAME || 'Klok Finance';
 
 void createInertiaApp({
     title: (title) => (title ? `${t(title)} · ${appName}` : appName),
-    layout: (name) => (name.startsWith('auth/') ? AuthLayout : AppLayout),
+    // public/ pages are for clients (no sign-in): they bring their own frame.
+    layout: (name) =>
+        name.startsWith('auth/')
+            ? AuthLayout
+            : name.startsWith('public/')
+              ? null
+              : AppLayout,
     withApp: (app) => {
         app.directive('focus', {
             mounted: (el: HTMLElement, shouldFocus) => {

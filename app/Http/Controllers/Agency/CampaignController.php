@@ -11,6 +11,7 @@ use App\Services\CampaignBilling;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
 use App\Support\Lookups;
+use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -68,7 +69,7 @@ class CampaignController extends Controller
             ->orderByDesc('last_spend_day')
             ->orderBy('name')
             ->orderBy('id')
-            ->paginate(30)
+            ->paginate(Paging::size($request))
             ->withQueryString()
             ->through(fn (Campaign $c) => [
                 'id' => $c->id,

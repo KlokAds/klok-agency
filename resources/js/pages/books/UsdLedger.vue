@@ -484,7 +484,7 @@ const needsDirection = computed(() =>
                 </li>
             </ul>
 
-            <KPager :page="entries" />
+            <KPager :page="entries" :sizes="[10, 25, 50, 100]" />
         </template>
     </section>
 

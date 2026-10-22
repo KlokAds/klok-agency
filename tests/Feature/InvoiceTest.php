@@ -1,0 +1,317 @@
+<?php
+
+use App\Models\BdtEntry;
+use App\Models\Campaign;
+use App\Models\CampaignDay;
+use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\InvoicePayment;
+use App\Models\PaymentSms;
+use App\Models\PilotAccount;
+use App\Models\Setting;
+use App\Models\User;
+use App\Payments\PaymentMatcher;
+use App\Payments\PaymentMethod;
+use App\Payments\SmsParser;
+use App\Services\Invoices;
+use App\Services\Postings;
+use App\Support\Access;
+use Database\Seeders\AccessSeeder;
+use Database\Seeders\BooksSeeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\TestResponse;
+
+const SMS_TOKEN = 'test-device-token-0123456789';
+
+beforeEach(function () {
+    $this->seed(AccessSeeder::class);
+
+    $this->owner = User::factory()->create();
+    $this->owner->assignRole(Access::OWNER);
+    $this->client = Client::create(['name' => 'GFFS', 'type' => 'client', 'status' => 'active', 'phone' => '01711111111']);
+
+    Setting::put('sms_device_token', Hash::make(SMS_TOKEN));
+    foreach (['pay_bkash_on' => '1', 'pay_bkash_number' => '01700000001', 'pay_nagad_on' => '1', 'pay_nagad_number' => '01700000002', 'pay_bank_on' => '1', 'pay_bank_name' => 'DBBL', 'pay_bank_account_name' => 'Klok Ads', 'pay_bank_account_number' => '1234567890'] as $key => $value) {
+        Setting::put($key, $value);
+    }
+});
+
+/** An invoice for ৳14,900: $100 of ads at ৳137 plus a ৳1,200 service fee. */
+function sentInvoice(Client $client, array $overrides = []): Invoice
+{
+    $invoice = app(Invoices::class)->save([
+        'client_id' => $client->id, 'issue_date' => now()->toDateString(), 'due_date' => now()->addWeek()->toDateString(), 'notes' => null,
+        'items' => [
+            ['kind' => 'ad_budget', 'description' => '', 'usd' => 10000, 'rate' => 137.0, 'amount' => null, 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null],
+            ['kind' => 'service', 'description' => 'Page management', 'usd' => null, 'rate' => null, 'amount' => 120000, 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null],
+        ],
+    ]);
+    app(Invoices::class)->markSent($invoice);
+
+    return tap($invoice->fresh(), fn ($i) => $i->forceFill($overrides)->save());
+}
+
+function smsHook(string $from, string $text): TestResponse
+{
+    return test()->postJson(route('hooks.sms', SMS_TOKEN), ['from' => $from, 'text' => $text]);
+}
+
+it('creates a numbered invoice with campaign, advance and service lines and their totals', function () {
+    $account = PilotAccount::create(['pilot_id' => 9, 'name' => 'Agency', 'platform' => 'meta', 'currency' => 'USD', 'seen_at' => now()]);
+    $campaign = Campaign::create(['pilot_campaign_id' => 101, 'pilot_account_id' => $account->id, 'name' => 'GFFS - Messages', 'client_id' => $this->client->id, 'bill_from' => now()->subDays(5)->toDateString()]);
+    CampaignDay::create(['campaign_id' => $campaign->id, 'day' => now()->subDays(10)->toDateString(), 'spend' => 999, 'results' => 1, 'clicks' => 1]);
+    CampaignDay::create(['campaign_id' => $campaign->id, 'day' => now()->subDays(2)->toDateString(), 'spend' => 2550, 'results' => 12, 'clicks' => 40]);
+    CampaignDay::create(['campaign_id' => $campaign->id, 'day' => now()->subDay()->toDateString(), 'spend' => 1450, 'results' => 8, 'clicks' => 20]);
+
+    // Only days from bill_from on count.
+    $this->actingAs($this->owner)->getJson('/invoices/campaigns?'.http_build_query(['client' => $this->client->id, 'from' => now()->subDays(20)->toDateString(), 'to' => now()->toDateString()]))
+        ->assertOk()->assertJsonPath('campaigns.0.usd', 4000)->assertJsonPath('campaigns.0.results', 20);
+
+    $this->actingAs($this->owner)->post('/invoices', [
+        'client_id' => $this->client->id, 'issue_date' => now()->toDateString(), 'due_date' => now()->addWeek()->toDateString(),
+        'items' => [
+            ['kind' => 'ad_spend', 'description' => 'GFFS - Messages', 'campaign_id' => $campaign->id, 'period_from' => now()->subDays(5)->toDateString(), 'period_to' => now()->toDateString(), 'results' => 20, 'clicks' => 60, 'usd' => '40.00', 'rate' => '137.5'],
+            ['kind' => 'ad_budget', 'usd' => '100', 'rate' => '137.5'],
+            ['kind' => 'service', 'description' => 'Page management', 'amount' => '1,200'],
+        ],
+    ])->assertRedirect();
+
+    $invoice = Invoice::with('items')->sole();
+
+    expect($invoice->number)->toBe('KA-0001')
+        ->and($invoice->status)->toBe('draft')
+        ->and($invoice->usd)->toBe(14000)
+        ->and($invoice->total)->toBe(550000 + 1375000 + 120000)
+        ->and($invoice->items[0]->results)->toBe(20)
+        ->and(strlen($invoice->public_token))->toBe(40);
+
+    $this->actingAs($this->owner)->get("/invoices/{$invoice->id}")->assertOk()
+        ->assertInertia(fn ($page) => $page->component('invoices/Show')->where('invoice.total', 2045000));
+    $this->actingAs($this->owner)->get('/invoices')->assertOk()
+        ->assertInertia(fn ($page) => $page->component('invoices/Index')->where('invoices.total', 1));
+});
+
+it('defaults the client rate to the current FX batch plus the commission', function () {
+    $this->seed(BooksSeeder::class);
+    app(Postings::class)->buyUsd(['entry_date' => now()->toDateString(), 'description' => null, 'usd' => 100000, 'bdt' => 12250000, 'notes' => null]);
+    Setting::put('commission_percent', '20');
+
+    expect(Invoices::fxRate())->toBe(122.5)->and(Invoices::clientRate())->toBe(147.0);
+});
+
+it('shows the public page by its token only, and hides drafts', function () {
+    $invoice = sentInvoice($this->client);
+
+    $this->get('/i/'.$invoice->public_token)->assertOk()
+        ->assertInertia(fn ($page) => $page->component('public/Invoice')
+            ->where('invoice.number', $invoice->number)
+            ->where('state.due', 1490000)
+            ->has('methods.bkash')
+            ->missing('invoice.client_id'));
+
+    $this->get('/i/'.str_repeat('x', 40))->assertNotFound();
+    $this->get('/i/short')->assertNotFound();
+
+    $invoice->forceFill(['status' => 'draft'])->save();
+    $this->get('/i/'.$invoice->public_token)->assertNotFound();
+});
+
+it('reads incoming wallet and bank SMS and ignores fakes and outgoing money', function () {
+    $parser = new SmsParser;
+    Setting::put('pay_bank_sms_senders', 'DBBL, BRAC BANK');
+
+    expect($parser->parse('bKash', 'You have received Tk 14,900.00 from 01712345678. Ref KA0001. Fee Tk 0.00. Balance Tk 52,310.50. TrxID BJK7Q2M9XZ at 20/10/2026 14:23'))
+        ->toMatchArray(['provider' => 'bkash', 'amount' => 1490000, 'trx_id' => 'BJK7Q2M9XZ', 'payer_number' => '01712345678'])
+        ->and($parser->parse('NAGAD', "Money Received.\nAmount: Tk 2,500.00\nSender: 01912345678\nRef: N/A\nTxnID: 73KD9PLQ\nBalance: Tk 3,000.00"))
+        ->toMatchArray(['provider' => 'nagad', 'amount' => 250000, 'trx_id' => '73KD9PLQ'])
+        ->and($parser->parse('16216', 'Tk1,000.00 received from A/C:01612345678 Fee:Tk0, Your A/C Balance: Tk5,250.00 TxnId:4417829301 Date:20-OCT-26'))
+        ->toMatchArray(['provider' => 'rocket', 'amount' => 100000, 'trx_id' => '4417829301'])
+        ->and($parser->parse('BRAC BANK', 'Your A/C 1234***890 has been credited by BDT 5,000.00 on 20-Oct-26. Ref No: NPSB778812. Avl Bal BDT 90,000.00'))
+        ->toMatchArray(['provider' => 'bank', 'amount' => 500000, 'trx_id' => 'NPSB778812'])
+        ->and($parser->parse('+8801712345678', 'You have received Tk 14,900.00 from 01712345678. TrxID FAKE123456'))->toBeNull()
+        ->and($parser->parse('bKash', 'Send Money Tk 500.00 to 01712345678 successful. Fee Tk 0.00. TrxID ABC1234567'))->toBeNull()
+        ->and($parser->parse('BRAC BANK', 'Your A/C 1234 has been debited by BDT 500.00. Ref No: X12345678'))->toBeNull();
+});
+
+it('asks a second open session on the same wallet for one taka more', function () {
+    $first = sentInvoice($this->client);
+    $second = sentInvoice(Client::create(['name' => 'Other', 'type' => 'client', 'status' => 'active']));
+    $matcher = app(PaymentMatcher::class);
+
+    $a = $matcher->startSession($first, PaymentMethod::Bkash);
+    $b = $matcher->startSession($second, PaymentMethod::Bkash);
+    $c = $matcher->startSession(sentInvoice(Client::create(['name' => 'Third', 'type' => 'client', 'status' => 'active'])), PaymentMethod::Nagad);
+
+    expect($a->amount)->toBe(1490000)
+        ->and($b->amount)->toBe(1490100)
+        ->and($c->amount)->toBe(1490000)
+        ->and($matcher->startSession($first, PaymentMethod::Bkash)->id)->toBe($a->id);
+
+    smsHook('bKash', 'You have received Tk 14,901.00 from 01711111111. TrxID SECOND1234 at 20/10/2026 14:25')->assertJson(['status' => 'matched']);
+
+    expect($second->fresh()->status)->toBe('paid')->and($first->fresh()->status)->toBe('sent');
+});
+
+it('checks the forwarder token, stores each SMS once, and settles the open session into the books', function () {
+    smsHook('bKash', 'x');
+    $this->postJson(route('hooks.sms', 'wrong-token'), ['from' => 'bKash', 'text' => 'x'])->assertNotFound();
+    $this->postJson(route('hooks.sms', SMS_TOKEN), [])->assertJson(['status' => 'heartbeat']);
+    expect(Setting::get('sms_last_seen'))->not->toBeNull();
+
+    $invoice = sentInvoice($this->client);
+
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'bkash'])->assertOk()
+        ->assertJsonPath('session.amount', 1490000)->assertJsonPath('session.method', 'bkash');
+
+    $payload = ['sender' => 'bKash', 'message' => 'You have received Tk 14,900.00 from 01798765432. Fee Tk 0.00. Balance Tk 60,000.00. TrxID AUTO123456 at 20/10/2026 14:25'];
+    $this->postJson(route('hooks.sms', SMS_TOKEN), $payload)->assertJson(['status' => 'matched']);
+    $this->postJson(route('hooks.sms', SMS_TOKEN), $payload)->assertJson(['status' => 'duplicate']);
+
+    $invoice->refresh();
+    $payment = InvoicePayment::where('status', 'verified')->sole();
+    $entry = BdtEntry::findOrFail($payment->bdt_entry_id);
+
+    expect($invoice->status)->toBe('paid')
+        ->and($invoice->paid)->toBe(1490000)
+        ->and($payment->reference)->toBe('AUTO123456')
+        ->and($entry->category)->toBe('client_payment')
+        ->and($entry->client_id)->toBe($this->client->id)
+        ->and($entry->amount)->toBe(1490000)
+        ->and($entry->pay_via)->toBe('mfs')
+        ->and($entry->wallet)->toBe('bkash')
+        ->and($entry->usd_credit)->toBe(10000)
+        ->and(PaymentSms::where('trx_id', 'AUTO123456')->count())->toBe(1);
+
+    $this->getJson("/i/{$invoice->public_token}/status")->assertJsonPath('status', 'paid')->assertJsonPath('session', null);
+});
+
+it('ignores a session payer who is not the one who paid, and money short of the session', function () {
+    $invoice = sentInvoice($this->client);
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'nagad', 'payer' => '01712345678'])->assertOk();
+
+    smsHook('NAGAD', "Money Received.\nAmount: Tk 14,900.00\nSender: 01999999999\nTxnID: OTHER123");
+    expect($invoice->fresh()->status)->toBe('sent');
+
+    smsHook('NAGAD', "Money Received.\nAmount: Tk 14,900.00\nSender: 01712345678\nTxnID: MINE1234");
+    expect($invoice->fresh()->status)->toBe('paid');
+});
+
+it('confirms a TrxID claim from an SMS that came first, and refuses a reused TrxID', function () {
+    $invoice = sentInvoice($this->client);
+
+    smsHook('bKash', 'You have received Tk 14,900.00 from 01712345678. TrxID QWE123RTY9 at 20/10/2026 14:23')->assertJson(['status' => 'stored']);
+
+    $this->postJson("/i/{$invoice->public_token}/claim", ['method' => 'bkash', 'reference' => ' qwe123rty9 ', 'sender' => '01712345678'])
+        ->assertOk()->assertJsonPath('status', 'paid');
+
+    $other = sentInvoice($this->client);
+    $this->postJson("/i/{$other->public_token}/claim", ['method' => 'bkash', 'reference' => 'QWE123RTY9', 'sender' => '01712345678'])
+        ->assertStatus(422)->assertJsonValidationErrors('reference');
+});
+
+it('confirms a claim when its SMS arrives later, but not a short one', function () {
+    $invoice = sentInvoice($this->client);
+
+    $this->postJson("/i/{$invoice->public_token}/claim", ['method' => 'bkash', 'reference' => 'LATE123456', 'sender' => '01712345678'])
+        ->assertOk()->assertJsonPath('checking', true);
+    expect($this->owner->notifications()->where('data->kind', 'invoice_claim')->count())->toBe(1);
+
+    smsHook('bKash', 'You have received Tk 14,900.00 from 01712345678. TrxID LATE123456 at 20/10/2026 14:23')->assertJson(['status' => 'matched']);
+    expect($invoice->fresh()->status)->toBe('paid');
+
+    $short = sentInvoice($this->client);
+    $this->postJson("/i/{$short->public_token}/claim", ['method' => 'bkash', 'reference' => 'LOW1234567', 'sender' => '01712345678']);
+    smsHook('bKash', 'You have received Tk 1,000.00 from 01712345678. TrxID LOW1234567 at 20/10/2026 14:23');
+
+    expect($short->fresh()->status)->toBe('sent')
+        ->and((string) InvoicePayment::where('reference', 'LOW1234567')->value('note'))->toContain('1,000');
+});
+
+it('takes a manual part payment with its share of the ad budget as credit', function () {
+    $invoice = sentInvoice($this->client);
+
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/pay", [
+        'method' => 'bank', 'wallet' => 'bank', 'paid_on' => now()->toDateString(), 'amount' => '7,450', 'reference' => 'NPSB1',
+    ])->assertRedirect();
+
+    $invoice->refresh();
+    $entry = BdtEntry::where('category', 'client_payment')->sole();
+
+    expect($invoice->status)->toBe('partial')
+        ->and($invoice->paid)->toBe(745000)
+        ->and($entry->pay_via)->toBe('bank')
+        ->and($entry->usd_credit)->toBe(5000);
+
+    // The rest takes whatever ad credit is left.
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/pay", [
+        'method' => 'cash', 'wallet' => 'cash', 'paid_on' => now()->toDateString(), 'amount' => '7450',
+    ])->assertRedirect();
+
+    expect($invoice->fresh()->status)->toBe('paid')
+        ->and((int) BdtEntry::where('category', 'client_payment')->sum('usd_credit'))->toBe(10000)
+        ->and(BdtEntry::where('category', 'client_payment')->latest('id')->first()->wallet)->toBe('cash');
+
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/void")->assertSessionHasErrors('invoice');
+});
+
+it('books the Bangla QR fee from the bank when a QR payment is confirmed', function () {
+    Setting::put('pay_qr_on', '1');
+    Setting::put('pay_qr_image', 'payments/qr.png');
+    Setting::put('qr_fee_percent', '1');
+    $invoice = sentInvoice($this->client);
+
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'qr'])->assertOk()->assertJsonPath('session.method', 'qr');
+    smsHook('bKash', 'You have received payment Tk 14,900.00 from 01812345678. Fee Tk 0.00. TrxID QRPAY12345 at 20/10/2026 10:01')->assertJson(['status' => 'matched']);
+
+    $payment = InvoicePayment::where('status', 'verified')->sole();
+    $fee = BdtEntry::findOrFail($payment->fee_entry_id);
+
+    expect($payment->method)->toBe(PaymentMethod::BanglaQr)
+        ->and(BdtEntry::findOrFail($payment->bdt_entry_id)->pay_via)->toBe('qr')
+        ->and(BdtEntry::findOrFail($payment->bdt_entry_id)->wallet)->toBe('bank')
+        ->and($fee->category)->toBe('expense')
+        ->and($fee->wallet)->toBe('bank')
+        ->and($fee->amount)->toBe(-14900)
+        ->and($fee->head->name)->toBe('Bank charge');
+});
+
+it('lets the Owner give an unmatched SMS to an invoice', function () {
+    $invoice = sentInvoice($this->client);
+    smsHook('bKash', 'You have received Tk 5,000.00 from 01712345678. TrxID ODD1234567 at 20/10/2026 14:23')->assertJson(['status' => 'stored']);
+    $sms = PaymentSms::sole();
+
+    $this->actingAs($this->owner)->post("/invoices/sms/{$sms->id}/assign", ['invoice_id' => $invoice->id])->assertRedirect();
+
+    expect($sms->fresh()->status)->toBe('matched')
+        ->and($invoice->fresh()->status)->toBe('partial')
+        ->and($invoice->fresh()->paid)->toBe(500000);
+});
+
+it('marks sent invoices past due as overdue and tells the Owner once', function () {
+    $invoice = sentInvoice($this->client, ['due_date' => now()->subDays(2)->toDateString()]);
+    $future = sentInvoice($this->client);
+
+    expect(app(Invoices::class)->markOverdue())->toBe(1)
+        ->and($invoice->fresh()->status)->toBe('overdue')
+        ->and($future->fresh()->status)->toBe('sent')
+        ->and(app(Invoices::class)->markOverdue())->toBe(0)
+        ->and($this->owner->notifications()->where('data->kind', 'invoice_overdue')->count())->toBe(1);
+});
+
+it('saves the payment settings and makes a forwarder URL shown once', function () {
+    $this->actingAs($this->owner)->post('/admin/payment', [
+        'pay_business_name' => 'Klok Ads', 'qr_fee_percent' => '1', 'commission_percent' => '20',
+        'pay_bkash_on' => '1', 'pay_bkash_number' => '01711112222', 'pay_bkash_type' => 'merchant',
+        'pay_nagad_on' => '0', 'pay_rocket_on' => '0', 'pay_qr_on' => '0', 'pay_bank_on' => '0',
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(Setting::get('pay_bkash_number'))->toBe('01711112222')->and(Setting::get('pay_nagad_on'))->toBe('0');
+
+    $this->actingAs($this->owner)->post('/admin/payment', ['pay_business_name' => 'Klok Ads', 'qr_fee_percent' => '1', 'commission_percent' => '20', 'pay_bank_on' => '1'])
+        ->assertSessionHasErrors(['pay_bank_name', 'pay_bank_account_number']);
+
+    $this->actingAs($this->owner)->post('/admin/payment/token')->assertRedirect()->assertSessionHas('sms_hook_url');
+    expect(Hash::check(SMS_TOKEN, (string) Setting::get('sms_device_token')))->toBeFalse();
+
+    $this->actingAs($this->owner)->get('/admin/payment')->assertOk()->assertInertia(fn ($page) => $page->component('admin/Payment'));
+});

@@ -25,6 +25,12 @@ class Money
         return $negative ? -$minor : $minor;
     }
 
+    /** "৳1,250" (or "৳1,250.50" when there are poisha), for text that leaves the app. */
+    public static function bdt(int $minor): string
+    {
+        return "\u{09F3}".number_format($minor / 100, $minor % 100 === 0 ? 0 : 2);
+    }
+
     public static function toInput(int $minor): string
     {
         return number_format(abs($minor) / 100, 2, '.', '');

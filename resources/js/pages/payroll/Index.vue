@@ -466,7 +466,7 @@ const shortMonth = (ym: string) =>
                 </button>
             </li>
         </ul>
-        <KPager :page="payments" />
+        <KPager :page="payments" :sizes="[10, 25, 50, 100]" />
     </section>
 
     <!-- Pay -->

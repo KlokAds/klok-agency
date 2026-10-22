@@ -4,8 +4,10 @@ use App\Models\BdtEntry;
 use App\Models\Client;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Models\WalletMove;
 use App\Services\Books;
+use App\Services\MoveFees;
 use App\Services\PaymentFees;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
@@ -126,4 +128,56 @@ it('adds the bank transfer fee when owner money leaves the bank by transfer', fu
 
     expect(app(Books::class)->summary()['bdt'])->toBe($before - 850000 - 1000)
         ->and(BdtEntry::latest('id')->first()->description)->toStartWith('Bank transfer fee');
+});
+
+it('counts each place from its real balance once the places are counted, and books the mismatch', function () {
+    $total = app(Books::class)->summary()['bdt'];
+
+    // Counted on a day: bank and bKash as they really were. Older rows no longer need a place.
+    $this->actingAs($this->owner)->put('/wallets/opening', [
+        'opening_on' => now()->subDay()->toDateString(),
+        'balances' => ['bank' => '11122', 'bkash' => '2100', 'cash' => '0'],
+    ])->assertRedirect();
+
+    $wallets = app(Books::class)->wallets();
+    $places = collect($wallets['places'])->keyBy('key');
+
+    expect($places['bank']['balance'])->toBe(1112200)
+        ->and($places['bkash']['balance'])->toBe(210000)
+        ->and($wallets['untagged_count'])->toBe(0)
+        ->and($wallets['unexplained'])->toBe($total - 1322200);
+
+    // A later payment into bKash counts there.
+    $this->actingAs($this->owner)->post('/quick/client-payment', [
+        'entry_date' => now()->toDateString(), 'client_id' => Client::where('name', 'GFFS')->value('id'),
+        'category' => 'client_payment', 'pay_via' => 'mfs', 'wallet' => 'bkash', 'amount' => '1000',
+    ])->assertRedirect();
+    expect(collect(app(Books::class)->wallets()['places'])->keyBy('key')['bkash']['balance'])->toBe(310000);
+
+    // Booking the mismatch makes the books and the places agree, and the books still balance.
+    $this->actingAs($this->owner)->post('/wallets/adjust')->assertRedirect();
+    $books = app(Books::class);
+    expect($books->wallets()['unexplained'])->toBe(0)
+        ->and($books->summary()['equity_ok'])->toBeTrue();
+});
+
+it('adds, renames and removes places; a place with history is only switched off', function () {
+    $this->actingAs($this->owner)->post('/wallets/places', ['name' => 'City Bank', 'type' => 'bank', 'detail' => 'A/C 1234'])->assertRedirect();
+    $city = Wallet::where('name', 'City Bank')->sole();
+
+    expect(Wallet::keys())->toContain($city->key);
+
+    // Moving out of a bank-type place costs the bank transfer fee; an MFS-type place the %.
+    expect(MoveFees::forMove($city->key, 100000)['fee'])->toBe(1000);
+
+    $this->actingAs($this->owner)->put("/wallets/places/{$city->id}", ['name' => 'City Bank Ltd', 'type' => 'bank', 'is_active' => true])->assertRedirect();
+    expect($city->fresh()->name)->toBe('City Bank Ltd');
+
+    $this->actingAs($this->owner)->delete("/wallets/places/{$city->id}")->assertRedirect();
+    expect(Wallet::find($city->id))->toBeNull();
+
+    $bank = Wallet::where('key', 'bank')->sole();
+    BdtEntry::query()->limit(1)->update(['wallet' => 'bank']);
+    $this->actingAs($this->owner)->delete("/wallets/places/{$bank->id}")->assertRedirect();
+    expect($bank->fresh()->is_active)->toBeFalse();
 });

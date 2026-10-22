@@ -350,7 +350,7 @@ function sync(): void {
                     </tbody>
                 </table>
             </div>
-            <KPager :page="campaigns" />
+            <KPager :page="campaigns" :sizes="[10, 25, 50, 100]" />
         </section>
     </template>
 

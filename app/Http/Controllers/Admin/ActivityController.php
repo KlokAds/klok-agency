@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Paging;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,7 +20,7 @@ class ActivityController extends Controller
             ->when($filters['user_id'] ?? null, fn ($q, $id) => $q->where('causer_id', $id)->where('causer_type', User::class))
             ->when($filters['log'] ?? null, fn ($q, $log) => $q->where('log_name', $log))
             ->latest('id')
-            ->paginate(40)
+            ->paginate(Paging::size($request))
             ->withQueryString()
             ->through(fn ($a) => [
                 'id' => $a->id,

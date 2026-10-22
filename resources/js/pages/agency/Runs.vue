@@ -463,7 +463,7 @@ onMounted(() => {
             </div>
         </article>
     </div>
-    <KPager :page="runs" class="mt-4" />
+    <KPager :page="runs" :sizes="[10, 25, 50, 100]" class="mt-4" />
 
     <!-- Add / edit -->
     <KModal

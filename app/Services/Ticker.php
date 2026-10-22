@@ -30,6 +30,7 @@ class Ticker
             $reminders = $this->dueReminders();
             $summary = $this->dailySummary();
             $this->syncCampaignSpend();
+            $this->overdueInvoices();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
             return compact('ended', 'reminders', 'summary');
@@ -43,6 +44,20 @@ class Ticker
     {
         try {
             app(CampaignBilling::class)->syncIfDue();
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /** Sent invoices past their due date, once a day (the first tick of the day). */
+    private function overdueInvoices(): void
+    {
+        if (! Cache::add('invoices:overdue:'.now()->toDateString(), true, 86400)) {
+            return;
+        }
+
+        try {
+            app(Invoices::class)->markOverdue();
         } catch (\Throwable $e) {
             report($e);
         }

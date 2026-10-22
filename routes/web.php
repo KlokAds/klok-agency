@@ -16,7 +16,9 @@ use App\Http\Controllers\Agency\TickController;
 use App\Http\Controllers\Books\BdtEntryController;
 use App\Http\Controllers\Books\ClientController;
 use App\Http\Controllers\Books\DashboardController;
+use App\Http\Controllers\Books\DollarController;
 use App\Http\Controllers\Books\FxBatchController;
+use App\Http\Controllers\Books\MoneyInOutController;
 use App\Http\Controllers\Books\PayrollController;
 use App\Http\Controllers\Books\PlatformController;
 use App\Http\Controllers\Books\QuickEntryController;
@@ -24,6 +26,11 @@ use App\Http\Controllers\Books\ReconcileController;
 use App\Http\Controllers\Books\ReportController;
 use App\Http\Controllers\Books\UsdEntryController;
 use App\Http\Controllers\Books\WalletController;
+use App\Http\Controllers\Invoices\InvoiceController;
+use App\Http\Controllers\Invoices\PaymentSettingsController;
+use App\Http\Controllers\Invoices\PublicInvoiceController;
+use App\Http\Controllers\Invoices\SmsHookController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\LocaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,8 +41,38 @@ Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->nam
 // For cron-job.org: the token in Settings → Reminders makes the URL secret.
 Route::get('agency/tick/{token}', TickController::class)->middleware('throttle:30,1')->name('agency.tick');
 
+// The wallet phone's SMS forwarder (token in Settings → Payment; CSRF-exempt in bootstrap/app.php).
+Route::post('hooks/sms/{token}', SmsHookController::class)->middleware('throttle:120,1')->name('hooks.sms');
+
+// The client's invoice page: no sign-in, the token is the key.
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('i/{token}', [PublicInvoiceController::class, 'show'])->name('invoice.public');
+    Route::get('i/{token}/status', [PublicInvoiceController::class, 'status'])->name('invoice.public.status');
+    Route::get('pay/media/{kind}', [PaymentSettingsController::class, 'media'])->name('pay.media');
+});
+Route::middleware('throttle:12,1')->group(function () {
+    Route::post('i/{token}/pay', [PublicInvoiceController::class, 'start'])->name('invoice.public.start');
+    Route::post('i/{token}/cancel', [PublicInvoiceController::class, 'cancel'])->name('invoice.public.cancel');
+});
+Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1')->name('invoice.public.claim');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
+
+    Route::get('invoices', [InvoiceController::class, 'index'])->middleware('can:clients.view')->name('invoices.index');
+    Route::get('invoices/create', [InvoiceController::class, 'create'])->middleware('can:clients.edit')->name('invoices.create');
+    Route::get('invoices/campaigns', [InvoiceController::class, 'campaigns'])->middleware(['can:clients.edit', 'throttle:60,1'])->name('invoices.campaigns');
+    Route::post('invoices', [InvoiceController::class, 'store'])->middleware('can:clients.edit')->name('invoices.store');
+    Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('can:clients.view')->name('invoices.show');
+    Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->middleware('can:clients.edit')->name('invoices.edit');
+    Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->middleware('can:clients.edit')->name('invoices.update');
+    Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->middleware('can:clients.edit')->name('invoices.send');
+    Route::post('invoices/{invoice}/email', [InvoiceController::class, 'email'])->middleware(['can:clients.edit', 'throttle:10,1'])->name('invoices.email');
+    Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void'])->middleware('can:clients.edit')->name('invoices.void');
+    Route::post('invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->middleware('can:bdt.create')->name('invoices.pay');
+    Route::post('invoices/{invoice}/payments/{payment}/reject', [InvoiceController::class, 'reject'])->middleware('can:bdt.create')->name('invoices.payments.reject');
+    Route::post('invoices/sms/{sms}/assign', [InvoiceController::class, 'assignSms'])->name('invoices.sms.assign');
+    Route::post('invoices/sms/{sms}/ignore', [InvoiceController::class, 'ignoreSms'])->name('invoices.sms.ignore');
 
     Route::post('quick/{type}', QuickEntryController::class)->middleware('throttle:60,1')->name('quick.store');
 
@@ -49,9 +86,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('bdt/{bdt}', [BdtEntryController::class, 'update'])->middleware('can:bdt.edit')->name('bdt.update');
     Route::delete('bdt/{bdt}', [BdtEntryController::class, 'destroy'])->middleware('can:bdt.delete')->name('bdt.destroy');
 
+    Route::get('search', SearchController::class)->middleware('throttle:60,1')->name('search');
+    Route::get('dollars', [DollarController::class, 'index'])->middleware('can:usd.view')->name('dollars.index');
+    Route::post('dollars/accounts', [DollarController::class, 'storeAccount'])->middleware('can:usd.edit')->name('dollars.accounts.store');
+    Route::put('dollars/accounts/{account}', [DollarController::class, 'updateAccount'])->middleware('can:usd.edit')->name('dollars.accounts.update');
+    Route::get('payments', [MoneyInOutController::class, 'payments'])->middleware('can:bdt.view')->name('payments.index');
+    Route::get('expenses', [MoneyInOutController::class, 'expenses'])->middleware('can:bdt.view')->name('expenses.index');
+    Route::post('expenses/heads', [MoneyInOutController::class, 'storeHead'])->middleware('can:bdt.edit')->name('expenses.heads.store');
+    Route::put('expenses/heads/{head}', [MoneyInOutController::class, 'updateHead'])->middleware('can:bdt.edit')->name('expenses.heads.update');
+
     Route::get('wallets', [WalletController::class, 'index'])->middleware('can:bdt.view')->name('wallets.index');
     Route::put('wallets/tag/{entry}', [WalletController::class, 'tag'])->middleware('can:bdt.edit')->name('wallets.tag');
     Route::put('wallets/tag-rest', [WalletController::class, 'tagRest'])->middleware('can:bdt.edit')->name('wallets.tag-rest');
+    Route::post('wallets/places', [WalletController::class, 'storePlace'])->middleware('can:bdt.edit')->name('wallets.places.store');
+    Route::put('wallets/places/{wallet}', [WalletController::class, 'updatePlace'])->middleware('can:bdt.edit')->name('wallets.places.update');
+    Route::delete('wallets/places/{wallet}', [WalletController::class, 'destroyPlace'])->middleware('can:bdt.edit')->name('wallets.places.destroy');
+    Route::put('wallets/opening', [WalletController::class, 'opening'])->middleware('can:bdt.edit')->name('wallets.opening');
+    Route::post('wallets/adjust', [WalletController::class, 'adjust'])->middleware('can:bdt.edit')->name('wallets.adjust');
     Route::post('wallets/moves', [WalletController::class, 'storeMove'])->middleware('can:bdt.create')->name('wallets.moves.store');
     Route::delete('wallets/moves/{move}', [WalletController::class, 'destroyMove'])->middleware('can:bdt.delete')->name('wallets.moves.destroy');
 
@@ -129,6 +180,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('settings', [SettingController::class, 'index'])->middleware('can:settings.view')->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->middleware('can:settings.edit')->name('settings.update');
+        Route::get('payment', [PaymentSettingsController::class, 'index'])->middleware('can:settings.view')->name('payment.index');
+        Route::post('payment', [PaymentSettingsController::class, 'update'])->middleware('can:settings.edit')->name('payment.update');
+        Route::delete('payment/image/{kind}', [PaymentSettingsController::class, 'removeImage'])->middleware('can:settings.edit')->name('payment.image.destroy');
+        Route::post('payment/token', [PaymentSettingsController::class, 'token'])->middleware('can:settings.edit')->name('payment.token');
+        Route::post('payment/disconnect', [PaymentSettingsController::class, 'disconnect'])->middleware('can:settings.edit')->name('payment.disconnect');
         Route::get('agency', [AgencySettingsController::class, 'index'])->middleware('can:settings.view')->name('agency.index');
         Route::put('agency', [AgencySettingsController::class, 'update'])->middleware('can:settings.edit')->name('agency.update');
         Route::put('agency/pilot-token', [AgencySettingsController::class, 'pilotToken'])->middleware('can:settings.edit')->name('agency.pilot-token');
@@ -137,10 +193,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('agency/summary-now', [AgencySettingsController::class, 'summaryNow'])->middleware(['can:settings.edit', 'throttle:3,1'])->name('agency.summary-now');
         Route::get('update/status', [UpdateController::class, 'status'])->middleware('throttle:20,1')->name('update.status');
         Route::post('update', [UpdateController::class, 'update'])->middleware('throttle:5,10')->name('update.run');
-        Route::post('settings/heads', [SettingController::class, 'storeHead'])->middleware('can:settings.edit')->name('settings.heads.store');
-        Route::put('settings/heads/{head}', [SettingController::class, 'updateHead'])->middleware('can:settings.edit')->name('settings.heads.update');
-        Route::post('settings/accounts', [SettingController::class, 'storeAccount'])->middleware('can:settings.edit')->name('settings.accounts.store');
-        Route::put('settings/accounts/{account}', [SettingController::class, 'updateAccount'])->middleware('can:settings.edit')->name('settings.accounts.update');
     });
 });
 

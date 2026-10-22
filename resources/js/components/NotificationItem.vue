@@ -53,12 +53,17 @@ const ICONS: Record<string, string> = {
     meeting: 'calendar',
     follow_up: 'chat',
     task: 'check',
+    invoice_paid: 'check',
+    invoice_overdue: 'warn',
+    invoice_claim: 'doc',
 };
 
 const tone = computed(() =>
-    props.item.kind === 'renewal' || props.item.kind === 'ended'
+    ['renewal', 'ended', 'invoice_overdue', 'invoice_claim'].includes(
+        props.item.kind,
+    )
         ? 'bg-wait-soft text-wait'
-        : props.item.kind === 'scale'
+        : ['scale', 'invoice_paid'].includes(props.item.kind)
           ? 'bg-in-soft text-in'
           : 'bg-brand-soft text-brand-ink',
 );

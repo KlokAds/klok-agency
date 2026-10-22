@@ -6,7 +6,9 @@ use App\Models\Account;
 use App\Models\BdtEntry;
 use App\Models\Client;
 use App\Models\FxBatch;
+use App\Models\Setting;
 use App\Models\UsdEntry;
+use App\Models\Wallet;
 use App\Models\WalletMove;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -505,35 +507,58 @@ class Books
     }
 
     /**
-     * How much BDT sits in each place: rows tagged with it plus moves in and
-     * out. Rows not tagged yet are shown on their own so the total still
-     * matches the BDT balance.
+     * How much BDT sits in each place. Once the real balances were counted
+     * on a day (Settings "wallet_opening_on"), each place starts from its
+     * opening balance and only later rows and moves count; before that
+     * every tagged row counts. Rows after the opening day with no place are
+     * listed so they can be given one, and "unexplained" is whatever the
+     * books' BDT total and the places do not agree on.
      *
-     * @return array{places: list<array{key: string, label: string, balance: int}>, untagged: int, untagged_count: int, total: int}
+     * @return array{opening_on: string|null, places: list<array{key: string, label: string, type: string, detail: string|null, active: bool, opening: int, balance: int}>, untagged: int, untagged_count: int, total: int, counted: int, unexplained: int}
      */
     public function wallets(): array
     {
-        $entries = $this->bdtEntries();
-        $moves = WalletMove::all();
+        $opening = Setting::get('wallet_opening_on');
+        $opening = is_string($opening) && $opening !== '' ? $opening : null;
+        $after = fn ($date) => $opening === null || ($date !== null && $date->toDateString() > $opening);
+
+        $entries = $this->bdtEntries()->filter(fn (BdtEntry $e) => $after($e->entry_date));
+        $moves = WalletMove::all()->filter(fn (WalletMove $m) => $after($m->moved_on));
         $places = [];
 
-        foreach (BdtEntry::WALLETS as $key => $label) {
+        foreach (Wallet::places() as $wallet) {
+            $balance = ($opening !== null ? $wallet->opening_balance : 0)
+                + (int) $entries->where('wallet', $wallet->key)->sum('amount')
+                + (int) $moves->where('to_wallet', $wallet->key)->sum('amount')
+                - (int) $moves->where('from_wallet', $wallet->key)->sum('amount');
+
+            if (! $wallet->is_active && $balance === 0) {
+                continue;
+            }
+
             $places[] = [
-                'key' => $key,
-                'label' => $label,
-                'balance' => (int) $entries->where('wallet', $key)->sum('amount')
-                    + (int) $moves->where('to_wallet', $key)->sum('amount')
-                    - (int) $moves->where('from_wallet', $key)->sum('amount'),
+                'key' => $wallet->key,
+                'label' => $wallet->name,
+                'type' => $wallet->type,
+                'detail' => $wallet->detail,
+                'active' => $wallet->is_active,
+                'opening' => $wallet->opening_balance,
+                'balance' => $balance,
             ];
         }
 
         $untagged = $entries->whereNull('wallet');
+        $total = (int) $this->bdtEntries()->sum('amount');
+        $counted = array_sum(array_column($places, 'balance')) + (int) $untagged->sum('amount');
 
         return [
+            'opening_on' => $opening,
             'places' => $places,
             'untagged' => (int) $untagged->sum('amount'),
             'untagged_count' => $untagged->count(),
-            'total' => (int) $entries->sum('amount'),
+            'total' => $total,
+            'counted' => $counted,
+            'unexplained' => $total - $counted,
         ];
     }
 

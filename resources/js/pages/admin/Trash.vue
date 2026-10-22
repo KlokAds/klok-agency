@@ -89,6 +89,6 @@ function restore(type: string, id: number): void {
                 >
             </li>
         </ul>
-        <KPager :page="items" />
+        <KPager :page="items" :sizes="[10, 25, 50, 100]" />
     </section>
 </template>

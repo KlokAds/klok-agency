@@ -208,7 +208,7 @@ const showOptions = computed<Option[]>(() => [
             </p>
         </Link>
     </div>
-    <KPager :page="clients" class="mt-4" />
+    <KPager :page="clients" :sizes="[10, 25, 50, 100]" class="mt-4" />
 
     <KModal
         v-model="open"

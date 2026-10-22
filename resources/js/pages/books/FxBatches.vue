@@ -254,7 +254,7 @@ async function remove(batch: Batch): Promise<void> {
                 </tr>
             </tbody>
         </table>
-        <KPager :page="batches" />
+        <KPager :page="batches" :sizes="[10, 25, 50, 100]" />
     </section>
 
     <KModal

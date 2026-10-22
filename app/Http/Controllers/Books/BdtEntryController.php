@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Books;
 
 use App\Http\Controllers\Controller;
 use App\Models\BdtEntry;
+use App\Models\Wallet;
 use App\Services\Books;
 use App\Support\Lookups;
 use App\Support\Money;
+use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -55,8 +57,9 @@ class BdtEntryController extends Controller
         ];
 
         $page = LengthAwarePaginator::resolveCurrentPage();
+        $size = Paging::size($request);
         $paginator = new LengthAwarePaginator(
-            $rows->forPage($page, 50)->values(), $rows->count(), 50, $page,
+            $rows->forPage($page, $size)->values(), $rows->count(), $size, $page,
             ['path' => $request->url(), 'query' => $request->query()],
         );
 
@@ -160,7 +163,7 @@ class BdtEntryController extends Controller
             'client_id' => ['nullable', Rule::requiredIf($request->input('category') === 'client_payment'), 'exists:clients,id'],
             'pay_via' => ['nullable', Rule::requiredIf(in_array($request->input('category'), ['client_payment', 'service_income'], true)), Rule::in(array_keys(BdtEntry::PAY_VIA))],
             'expense_head_id' => ['nullable', 'exists:expense_heads,id'],
-            'wallet' => ['nullable', Rule::in(array_keys(BdtEntry::WALLETS))],
+            'wallet' => ['nullable', Rule::in(Wallet::keys())],
             'amount' => ['required', Money::RULE],
             'notes' => ['nullable', 'string', 'max:2000'],
         ], [], ['amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'client_id' => 'client']);

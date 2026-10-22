@@ -45,9 +45,9 @@ class AdRunController extends Controller
             ->orderBy('id');
 
         // A reminder link opens the page its run is on.
-        $page = $request->has('page') ? null : Paging::pageOf($query, $filters['focus'] ?? null, 30);
+        $page = $request->has('page') ? null : Paging::pageOf($query, $filters['focus'] ?? null, Paging::size($request));
 
-        $runs = $query->paginate(30, ['*'], 'page', $page)
+        $runs = $query->paginate(Paging::size($request), ['*'], 'page', $page)
             ->withQueryString()
             ->through(fn (AdRun $run) => $this->present($run));
 

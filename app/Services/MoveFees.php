@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BdtEntry;
 use App\Models\ExpenseHead;
 use App\Models\Setting;
+use App\Models\Wallet;
 
 /**
  * What moving BDT costs (Settings → খাতার নিয়ম): cashing out of MFS takes a
@@ -33,8 +34,8 @@ class MoveFees
      */
     public static function forMove(string $from, int $amount): array
     {
-        return match ($from) {
-            'bkash' => ['fee' => (int) round($amount * self::mfsPercent() / 100), 'inside' => true],
+        return match (Wallet::typeOf($from)) {
+            'mfs' => ['fee' => (int) round($amount * self::mfsPercent() / 100), 'inside' => true],
             'bank' => ['fee' => self::bankFee(), 'inside' => false],
             default => ['fee' => 0, 'inside' => false],
         };

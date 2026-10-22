@@ -53,6 +53,6 @@ function opened(item: Notice): void {
             full
             @open="opened"
         />
-        <KPager :page="notifications" />
+        <KPager :page="notifications" :sizes="[10, 25, 50, 100]" />
     </section>
 </template>

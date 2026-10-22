@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Employee;
 use App\Models\ExpenseHead;
 use App\Models\UsdEntry;
+use App\Models\Wallet;
 
 /**
  * Option lists the forms need, in the { value, label } shape the
@@ -24,6 +25,16 @@ class Lookups
             ->get(['id', 'name', 'type', 'status'])
             ->map(fn ($c) => ['value' => $c->id, 'label' => $c->name, 'hint' => $c->status === 'inactive' ? 'Inactive' : null])
             ->all();
+    }
+
+    public static function clientName(int $id): string
+    {
+        return (string) (Client::withTrashed()->whereKey($id)->value('name') ?? '#'.$id);
+    }
+
+    public static function headName(int $id): string
+    {
+        return (string) (ExpenseHead::whereKey($id)->value('name') ?? '#'.$id);
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -58,10 +69,11 @@ class Lookups
         return collect(UsdEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => __($c['label'])])->values()->all();
     }
 
-    /** @return array<int, array{value: string, label: string}> */
+    /** @return array<int, array{value: string, label: string, hint: string|null}> */
     public static function wallets(): array
     {
-        return collect(BdtEntry::WALLETS)->map(fn ($label, $key) => ['value' => $key, 'label' => $label])->values()->all();
+        return Wallet::places()->where('is_active', true)
+            ->map(fn (Wallet $w) => ['value' => $w->key, 'label' => $w->name, 'hint' => $w->detail])->values()->all();
     }
 
     /** @return array<int, array<string, mixed>> */

@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Books;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdRun;
 use App\Models\BdtEntry;
+use App\Models\Campaign;
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\PilotAccount;
 use App\Models\Task;
 use App\Models\UsdEntry;
@@ -13,7 +14,9 @@ use App\Models\User;
 use App\Services\Books;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
+use App\Support\InvoiceView;
 use App\Support\Lookups;
+use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -43,7 +46,7 @@ class ClientController extends Controller
             ->when($filters['status'] !== 'all', fn ($q) => $q->where('status', $filters['status']))
             ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->orderBy('name')
-            ->paginate(30)
+            ->paginate(Paging::size($request))
             ->withQueryString()
             ->through(fn (Client $c) => [
                 'id' => $c->id,
@@ -103,17 +106,20 @@ class ClientController extends Controller
             'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id']),
             'figures' => $figures,
             'statement' => $statement,
-            'runs' => AdRun::with('account:id,name')->where('client_id', $client->id)->latest('start_on')->limit(10)->get()
-                ->map(fn (AdRun $r) => [
-                    'id' => $r->id, 'title' => $r->title, 'platform' => $r->account?->name, 'status' => $r->status,
-                    'start_on' => $r->start_on->toDateString(), 'end_on' => $r->end_on->toDateString(),
-                    'budget_usd' => $r->budget_usd, 'result' => $r->result, 'days_left' => $r->daysLeft(),
+            'campaigns' => Campaign::with('account:id,name')->where('client_id', $client->id)
+                ->orderByRaw('case when last_spend_day is null then 1 else 0 end')->orderByDesc('last_spend_day')->limit(10)->get()
+                ->map(fn (Campaign $c) => [
+                    'id' => $c->id, 'name' => $c->name, 'live' => $c->isLive(), 'account' => $c->account?->name,
+                    'spend_7d' => $c->spend_7d, 'bill_from' => $c->bill_from?->toDateString(),
                 ]),
+            'credit' => collect($books->clients())->firstWhere('id', $client->id),
             'tasks' => Task::with('assignee:id,name')->where('client_id', $client->id)->whereNull('done_at')->orderBy('due_at')->limit(10)->get()
                 ->map(fn (Task $t) => [
                     'id' => $t->id, 'title' => $t->title, 'kind' => $t->kind, 'due_at' => $t->due_at?->format('Y-m-d\TH:i'),
                     'assignee' => $t->assignee?->name, 'overdue' => $t->due_at !== null && $t->due_at->isPast(),
                 ]),
+            'invoices' => $client->invoices()->with('client:id,name')->latest('seq')->limit(8)->get()
+                ->map(fn (Invoice $i) => InvoiceView::row($i)),
             'pilot' => $this->pilotReports($client, $request->integer('pilot_days', 7)),
             'options' => [
                 'users' => User::visible()->where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),

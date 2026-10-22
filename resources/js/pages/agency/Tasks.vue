@@ -272,7 +272,7 @@ onMounted(() => {
                 </div>
             </li>
         </ul>
-        <KPager :page="tasks" />
+        <KPager :page="tasks" :sizes="[10, 25, 50, 100]" />
     </section>
 
     <TaskForm v-model="formOpen" :task="editing" :options="options" />

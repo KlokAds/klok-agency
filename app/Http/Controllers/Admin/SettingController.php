@@ -3,13 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Account;
-use App\Models\ExpenseHead;
 use App\Models\Setting;
 use App\Services\MoveFees;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,9 +22,6 @@ class SettingController extends Controller
                 'mfs_out_percent' => (string) MoveFees::mfsPercent(),
                 'bank_transfer_fee' => (string) (MoveFees::bankFee() / 100),
             ],
-            'heads' => ExpenseHead::orderBy('name')->get(['id', 'name', 'is_active']),
-            'accounts' => Account::orderBy('sort')->get(['id', 'code', 'name', 'kind', 'is_active']),
-            'kinds' => collect(Account::KINDS)->map(fn ($l, $v) => ['value' => $v, 'label' => $l])->values(),
         ]);
     }
 
@@ -53,59 +47,6 @@ class SettingController extends Controller
         Setting::put('bank_transfer_fee', (string) round((float) $data['bank_transfer_fee'], 2));
 
         $this->toast(__('Settings সংরক্ষণ হয়েছে।'));
-
-        return back();
-    }
-
-    public function storeHead(Request $request): RedirectResponse
-    {
-        ExpenseHead::create($request->validate(['name' => ['required', 'string', 'max:80', 'unique:expense_heads,name']]));
-        $this->toast(__('নতুন খরচের খাত যোগ হয়েছে।'));
-
-        return back();
-    }
-
-    public function updateHead(Request $request, ExpenseHead $head): RedirectResponse
-    {
-        $head->update($request->validate([
-            'name' => ['required', 'string', 'max:80', Rule::unique('expense_heads', 'name')->ignore($head->id)],
-            'is_active' => ['required', 'boolean'],
-        ]));
-        $this->toast(__('খরচের খাত আপডেট হয়েছে।'));
-
-        return back();
-    }
-
-    public function storeAccount(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:80'],
-            'kind' => ['required', Rule::in(['holding', 'platform'])],
-        ]);
-
-        Account::create($data + [
-            'code' => str($data['name'])->slug('_')->limit(24, '')->append('_'.now()->format('His'))->toString(),
-            'sort' => (int) Account::max('sort') + 1,
-        ]);
-        $this->toast(__('নতুন account যোগ হয়েছে।'));
-
-        return back();
-    }
-
-    public function updateAccount(Request $request, Account $account): RedirectResponse
-    {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:80'],
-            'is_active' => ['required', 'boolean'],
-        ]);
-
-        // The card is what every balance is measured against; it stays on.
-        if ($account->kind === 'card') {
-            $data['is_active'] = true;
-        }
-
-        $account->update($data);
-        $this->toast(__('Account আপডেট হয়েছে।'));
 
         return back();
     }

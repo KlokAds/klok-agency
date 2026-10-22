@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import BrandMark from '@/components/BrandMark.vue';
+import GlobalSearch from '@/components/GlobalSearch.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
 import QuickEntry from '@/components/QuickEntry.vue';
 import KButton from '@/components/k/KButton.vue';
@@ -12,6 +13,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { useIdleLogout } from '@/composables/useIdleLogout';
 import { usePopover } from '@/composables/usePopover';
 import { locale, switchLocale, t } from '@/lib/i18n';
+import { quickOpen } from '@/lib/quick-entry';
 import { SETTINGS_TABS, isSettingsPath } from '@/lib/settings-tabs';
 
 const page = usePage();
@@ -40,7 +42,20 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 icon: 'wallet',
                 perm: 'bdt.view',
             }, // i18n
+            {
+                label: 'Payment (আয়)',
+                href: '/payments',
+                icon: 'down',
+                perm: 'bdt.view',
+            }, // i18n
+            { label: 'খরচ', href: '/expenses', icon: 'bin', perm: 'bdt.view' }, // i18n
             { label: 'BDT খাতা', href: '/bdt', icon: 'taka', perm: 'bdt.view' }, // i18n
+            {
+                label: 'Dollar কোথায়',
+                href: '/dollars',
+                icon: 'dollar',
+                perm: 'usd.view',
+            }, // i18n
             {
                 label: 'USD খাতা',
                 href: '/usd',
@@ -66,17 +81,17 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 perm: 'clients.view',
             },
             {
+                label: 'Invoice',
+                href: '/invoices',
+                icon: 'doc',
+                perm: 'clients.view',
+            },
+            {
                 label: 'Campaign',
                 href: '/campaigns',
                 icon: 'pulse',
                 perm: 'runs.view',
             },
-            {
-                label: 'Ad চালানো',
-                href: '/runs',
-                icon: 'rocket',
-                perm: 'runs.view',
-            }, // i18n
             {
                 label: 'Ad account',
                 href: '/ad-accounts',
@@ -121,6 +136,12 @@ const settingsHref = computed(
     () => SETTINGS_TABS.find((tab) => can.value[tab.perm])?.href ?? null,
 );
 
+// Pages the search box can jump to: the menu plus the Settings tabs.
+const searchPages = computed(() => [
+    ...visible.value.flatMap((g) => g.items),
+    ...SETTINGS_TABS.filter((tab) => can.value[tab.perm]),
+]);
+
 const visible = computed(() =>
     groups
         .map((g) => ({ ...g, items: g.items.filter((i) => can.value[i.perm]) }))
@@ -143,7 +164,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
 const drawer = ref(false);
 watch(path, () => (drawer.value = false));
 
-const quick = ref(false);
+const quick = quickOpen;
 
 const userAnchor = ref<HTMLElement | null>(null);
 const userPanel = ref<HTMLElement | null>(null);
@@ -274,7 +295,9 @@ function logout(): void {
                     ><BrandMark :size="28" compact
                 /></Link>
 
-                <span class="flex-1" />
+                <span class="flex flex-1 justify-end md:justify-start">
+                    <GlobalSearch :pages="searchPages" />
+                </span>
 
                 <span v-if="canQuick" class="hidden sm:block">
                     <KButton

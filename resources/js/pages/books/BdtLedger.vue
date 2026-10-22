@@ -66,6 +66,7 @@ const { filters, clear } = useFilters('/bdt', {
     from: props.filters.from ?? null,
     to: props.filters.to ?? null,
     order: props.filters.order ?? 'new',
+    wallet: props.filters.wallet ?? null,
 });
 
 const filtered = computed(() =>
@@ -179,6 +180,7 @@ async function remove(row: Row): Promise<void> {
 
 const payVia = computed<Option[]>(() => [
     { value: 'mfs', label: 'MFS (bKash / Nagad)' },
+    { value: 'qr', label: 'Bangla QR' },
     { value: 'bank', label: 'Bank' },
     { value: 'cash', label: 'Cash' },
 ]);
@@ -215,7 +217,7 @@ const needsClient = computed(() =>
     </PageHeader>
 
     <section
-        class="panel no-print mb-4 grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:p-4"
+        class="panel no-print mb-4 grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:p-4"
     >
         <KInput
             v-model="filters.q"
@@ -242,6 +244,13 @@ const needsClient = computed(() =>
             v-model="filters.expense_head_id"
             :options="options.heads"
             :placeholder="t('সব খরচের খাত')"
+            clearable
+            size="sm"
+        />
+        <KSelect
+            v-model="filters.wallet"
+            :options="options.wallets"
+            :placeholder="t('সব জায়গা')"
             clearable
             size="sm"
         />
@@ -459,7 +468,7 @@ const needsClient = computed(() =>
                 </li>
             </ul>
 
-            <KPager :page="entries" />
+            <KPager :page="entries" :sizes="[10, 25, 50, 100]" />
         </template>
     </section>
 

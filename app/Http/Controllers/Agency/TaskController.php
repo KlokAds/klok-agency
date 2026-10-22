@@ -44,9 +44,9 @@ class TaskController extends Controller
             ->orderBy('id');
 
         // A reminder link opens the page its task is on.
-        $page = $request->has('page') ? null : Paging::pageOf($query, $filters['focus'] ?? null, 40);
+        $page = $request->has('page') ? null : Paging::pageOf($query, $filters['focus'] ?? null, Paging::size($request));
 
-        $tasks = $query->paginate(40, ['*'], 'page', $page)
+        $tasks = $query->paginate(Paging::size($request), ['*'], 'page', $page)
             ->withQueryString()
             ->through(fn (Task $t) => [
                 'id' => $t->id,

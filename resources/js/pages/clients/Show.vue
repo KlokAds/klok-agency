@@ -31,18 +31,6 @@ type Client = {
     manager_id: number | null;
 };
 
-type Run = {
-    id: number;
-    title: string;
-    platform: string | null;
-    status: string;
-    start_on: string;
-    end_on: string;
-    budget_usd: number;
-    result: string | null;
-    days_left: number;
-};
-
 type OpenTask = {
     id: number;
     title: string;
@@ -74,8 +62,28 @@ const props = defineProps<{
         bdt: number | null;
         status: string | null;
     }[];
-    runs: Run[];
+    campaigns: {
+        id: number;
+        name: string;
+        live: boolean;
+        account: string | null;
+        spend_7d: number;
+        bill_from: string | null;
+    }[];
+    credit: {
+        credit_usd: number;
+        campaign_usd: number;
+        credit_left: number;
+    } | null;
     tasks: OpenTask[];
+    invoices: {
+        id: number;
+        number: string;
+        issue_date: string;
+        status: string;
+        total: number;
+        due: number;
+    }[];
     pilot: { days: number; accounts: PilotAccount[] } | null;
     options: { users: Option[] };
 }>();
@@ -369,52 +377,141 @@ function print(): void {
         </div>
     </section>
 
+    <section class="no-print panel mb-6 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-[16px] font-bold">Invoice</h2>
+            <div class="flex items-center gap-3">
+                <Link
+                    :href="`/invoices?client=${client.id}`"
+                    class="text-[13px] font-semibold text-brand-ink hover:underline"
+                    >{{ t('সব দেখুন') }} →</Link
+                >
+                <KButton
+                    v-if="can['clients.edit']"
+                    size="sm"
+                    icon="plus"
+                    :href="`/invoices/create?client=${client.id}`"
+                    >{{ t('নতুন invoice') }}</KButton
+                >
+            </div>
+        </div>
+        <p v-if="!invoices.length" class="mt-3 text-[13px] text-ink-3">
+            {{ t('এখনো কোনো invoice নেই।') }}
+        </p>
+        <ul v-else class="mt-2">
+            <li
+                v-for="i in invoices"
+                :key="i.id"
+                class="border-b border-dashed border-line last:border-0"
+            >
+                <Link
+                    :href="`/invoices/${i.id}`"
+                    class="flex items-center gap-3 py-2.5 text-[13px]"
+                >
+                    <span class="num font-semibold">{{ i.number }}</span>
+                    <span class="num text-ink-3">{{
+                        niceDate(i.issue_date)
+                    }}</span>
+                    <span class="flex-1" />
+                    <span class="num text-right"
+                        >{{ money(i.total, 'bdt') }}
+                        <span
+                            class="block text-[11px]"
+                            :class="
+                                i.status === 'overdue'
+                                    ? 'text-out'
+                                    : i.due
+                                      ? 'text-wait'
+                                      : 'text-in'
+                            "
+                            >{{
+                                i.status === 'void'
+                                    ? t('বাতিল')
+                                    : i.due
+                                      ? t('বাকি {amount}', {
+                                            amount: money(i.due, 'bdt'),
+                                        })
+                                      : i.status === 'draft'
+                                        ? 'Draft'
+                                        : t('পরিশোধিত')
+                            }}</span
+                        ></span
+                    >
+                </Link>
+            </li>
+        </ul>
+    </section>
     <div class="no-print mb-6 grid gap-6 lg:grid-cols-2">
         <section class="panel p-5 sm:p-6">
             <div class="flex items-baseline justify-between">
-                <h2 class="text-[16px] font-bold">{{ t('Ad চালানো') }}</h2>
+                <h2 class="text-[16px] font-bold">Campaign</h2>
                 <Link
                     v-if="can['runs.view']"
-                    :href="`/runs?client_id=${client.id}&view=all`"
+                    href="/campaigns"
                     class="text-[13px] font-semibold text-brand-ink hover:underline"
                     >{{ t('সব দেখুন') }} →</Link
                 >
             </div>
-            <p v-if="!runs.length" class="mt-3 text-[13px] text-ink-3">
-                {{ t('এখনো কোনো ad run নেই।') }}
+            <div
+                v-if="credit && (credit.credit_usd || credit.campaign_usd)"
+                class="mt-3 grid grid-cols-3 gap-2 text-[12.5px]"
+            >
+                <div class="rounded-lg bg-sunken px-3 py-2">
+                    <p class="text-ink-3">{{ t('আগাম credit') }}</p>
+                    <p class="num mt-0.5 font-semibold">
+                        {{ money(credit.credit_usd, 'usd') }}
+                    </p>
+                </div>
+                <div class="rounded-lg bg-sunken px-3 py-2">
+                    <p class="text-ink-3">{{ t('খরচ হয়েছে') }}</p>
+                    <p class="num mt-0.5 font-semibold">
+                        {{ money(credit.campaign_usd, 'usd') }}
+                    </p>
+                </div>
+                <div class="rounded-lg bg-sunken px-3 py-2">
+                    <p class="text-ink-3">{{ t('বাকি credit') }}</p>
+                    <p
+                        class="num mt-0.5 font-semibold"
+                        :class="credit.credit_left < 0 ? 'text-out' : ''"
+                    >
+                        {{ money(credit.credit_left, 'usd') }}
+                    </p>
+                </div>
+            </div>
+            <p v-if="!campaigns.length" class="mt-3 text-[13px] text-ink-3">
+                {{ t('এখনো কোনো campaign এই client-এর সাথে যুক্ত নয়।') }}
             </p>
             <ul v-else class="mt-2">
                 <li
-                    v-for="r in runs"
-                    :key="r.id"
+                    v-for="c in campaigns"
+                    :key="c.id"
                     class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
                 >
+                    <span
+                        class="size-2 shrink-0 rounded-full"
+                        :class="c.live ? 'bg-in' : 'bg-line-2'"
+                    />
                     <span class="min-w-0 flex-1">
                         <span class="block truncate font-medium">{{
-                            r.title
+                            c.name
                         }}</span>
-                        <span class="num text-[12px] text-ink-3"
-                            >{{ r.platform }} ·
-                            {{ niceDate(r.start_on, false) }} –
-                            {{ niceDate(r.end_on, false) }}</span
+                        <span class="text-[12px] text-ink-3"
+                            >{{ c.account }}
+                            <template v-if="c.bill_from">
+                                ·
+                                {{
+                                    t('{date} থেকে', {
+                                        date: niceDate(c.bill_from, false),
+                                    })
+                                }}</template
+                            ></span
                         >
                     </span>
-                    <span class="num">{{ money(r.budget_usd, 'usd') }}</span>
-                    <KTag
-                        :tone="
-                            r.status === 'running'
-                                ? r.days_left <= 1
-                                    ? 'wait'
-                                    : 'brand'
-                                : 'neutral'
-                        "
-                        >{{
-                            r.status === 'running'
-                                ? t('{n} দিন বাকি', {
-                                      n: Math.max(0, r.days_left),
-                                  })
-                                : t('শেষ')
-                        }}</KTag
+                    <span class="num text-right"
+                        >{{ money(c.spend_7d, 'usd') }}
+                        <span class="block text-[11px] text-ink-3">{{
+                            t('৭ দিনে')
+                        }}</span></span
                     >
                 </li>
             </ul>

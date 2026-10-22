@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
+use App\Support\Paging;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class NotificationController extends Controller
 {
     public function index(Request $request): Response
     {
-        $page = $request->user()->notifications()->latest()->paginate(30)->through(fn ($n) => $this->present($n));
+        $page = $request->user()->notifications()->latest()->paginate(Paging::size($request))->withQueryString()->through(fn ($n) => $this->present($n));
 
         return Inertia::render('agency/Notifications', ['notifications' => $page]);
     }

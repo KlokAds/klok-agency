@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Books;
 use App\Http\Controllers\Controller;
 use App\Models\AdRun;
 use App\Models\BdtEntry;
+use App\Models\Wallet;
 use App\Services\Agency;
 use App\Services\MoveFees;
 use App\Services\Postings;
@@ -42,7 +43,7 @@ class QuickEntryController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
-        $wallet = ['wallet' => ['required', Rule::in(array_keys(BdtEntry::WALLETS))]];
+        $wallet = ['wallet' => ['required', Rule::in(Wallet::keys())]];
 
         $message = match ($type) {
             'ad-spend' => $this->run($request, $base + [

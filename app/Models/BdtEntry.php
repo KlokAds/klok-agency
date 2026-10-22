@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $entry_date
  * @property int $amount
  * @property int $sequence
- * @property string|null $pay_via mfs|bank|cash
+ * @property string|null $pay_via mfs|qr|bank|cash
  * @property string|null $wallet bank|bkash|cash
  * @property int|null $usd_credit cents of ad credit a client's advance payment bought
  */
@@ -46,11 +46,11 @@ class BdtEntry extends Model
 
     public const EXPENSE = ['expense', 'salary'];
 
-    /** The places BDT sits in. */
+    /** The places a new install starts with; the owner's list lives in the wallets table (App\Models\Wallet). */
     public const WALLETS = ['bank' => 'Bank', 'bkash' => 'bKash', 'cash' => 'Cash'];
 
-    /** How a client's money came in; only MFS carries the payment fee. */
-    public const PAY_VIA = ['mfs' => 'MFS (bKash / Nagad)', 'bank' => 'Bank', 'cash' => 'Cash'];
+    /** How a client's money came in; only MFS carries the payment fee (Bangla QR's fee is booked with its invoice payment). */
+    public const PAY_VIA = ['mfs' => 'MFS (bKash / Nagad)', 'qr' => 'Bangla QR', 'bank' => 'Bank', 'cash' => 'Cash'];
 
     protected $fillable = [
         'entry_date', 'sequence', 'description', 'category', 'client_id', 'pay_via', 'wallet', 'expense_head_id', 'employee_id',

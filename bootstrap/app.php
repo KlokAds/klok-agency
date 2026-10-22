@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // The SMS forwarder phone has no session; its secret URL is its key.
+        $middleware->preventRequestForgery(except: ['hooks/*']);
+
         $middleware->web(append: [
             SecurityHeaders::class,
             SetLocale::class,
