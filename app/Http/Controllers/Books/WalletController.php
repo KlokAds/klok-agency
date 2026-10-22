@@ -62,6 +62,22 @@ class WalletController extends Controller
         return back();
     }
 
+    /** Gives every row that still has no place the same place. */
+    public function tagRest(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['wallet' => ['required', Rule::in(array_keys(BdtEntry::WALLETS))]]);
+        $count = 0;
+
+        BdtEntry::whereNull('wallet')->orderBy('id')->each(function (BdtEntry $entry) use ($data, &$count) {
+            $entry->update(['wallet' => $data['wallet']]);
+            $count++;
+        });
+
+        $this->toast(__(':countটা entry :place-এ রাখা হলো।', ['count' => $count, 'place' => BdtEntry::WALLETS[$data['wallet']]]));
+
+        return back();
+    }
+
     public function storeMove(Request $request): RedirectResponse
     {
         $data = $request->validate([

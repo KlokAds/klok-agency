@@ -137,5 +137,10 @@
     ":from থেকে :to-তে টাকা সরানো লেখা হয়েছে।": "Moved money from :from to :to.",
     "টাকা সরানোর entry মুছে ফেলা হয়েছে।": "The move was deleted.",
     "Owner নিল (ফেরত দেবে)": "Owner took (to give back)",
-    "Owner ফেরত দিল": "Owner gave back"
+    "Owner ফেরত দিল": "Owner gave back",
+    "বাকি সব entry {place}-এ রাখবেন?": "Put all the rest in {place}?",
+    "{n}টা entry-র জায়গা একসাথে বসবে। পরে BDT খাতা থেকে যেকোনোটা বদলানো যায়।": "{n} entries get this place at once. Any of them can be changed later in the BDT book.",
+    "হ্যাঁ, রাখুন": "Yes, put them there",
+    "বাকি সব একসাথে…": "All the rest at once…",
+    ":countটা entry :place-এ রাখা হলো।": ":count entries put in :place."
 }

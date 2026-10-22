@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SettingsNav from '@/components/SettingsNav.vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -28,8 +29,9 @@ function restore(type: string, id: number): void {
 </script>
 
 <template>
+    <SettingsNav />
     <PageHeader
-        :eyebrow="t('নিয়ন্ত্রণ')"
+        eyebrow="Settings"
         title="Trash"
         :lead="
             t(

@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('wallets', [WalletController::class, 'index'])->middleware('can:bdt.view')->name('wallets.index');
     Route::put('wallets/tag/{entry}', [WalletController::class, 'tag'])->middleware('can:bdt.edit')->name('wallets.tag');
+    Route::put('wallets/tag-rest', [WalletController::class, 'tagRest'])->middleware('can:bdt.edit')->name('wallets.tag-rest');
     Route::post('wallets/moves', [WalletController::class, 'storeMove'])->middleware('can:bdt.create')->name('wallets.moves.store');
     Route::delete('wallets/moves/{move}', [WalletController::class, 'destroyMove'])->middleware('can:bdt.delete')->name('wallets.moves.destroy');
 

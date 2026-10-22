@@ -51,6 +51,31 @@ const can = computed(() => usePage().props.auth.can);
 const label = (key: string) =>
     props.options.wallets.find((w) => w.value === key)?.label ?? key;
 
+async function tagRest(
+    wallet: string | number | null | undefined,
+): Promise<void> {
+    if (!wallet) {
+        return;
+    }
+
+    const ok = await confirmAction({
+        title: t('বাকি সব entry {place}-এ রাখবেন?', {
+            place: label(String(wallet)),
+        }),
+        body: t(
+            '{n}টা entry-র জায়গা একসাথে বসবে। পরে BDT খাতা থেকে যেকোনোটা বদলানো যায়।',
+            {
+                n: props.untagged.length,
+            },
+        ),
+        confirm: t('হ্যাঁ, রাখুন'),
+    });
+
+    if (ok) {
+        router.put('/wallets/tag-rest', { wallet }, { preserveScroll: true });
+    }
+}
+
 function tag(id: number, wallet: string | number | null | undefined): void {
     router.put(
         `/wallets/tag/${id}`,
@@ -179,9 +204,21 @@ async function removeMove(move: Move): Promise<void> {
     <div class="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <section class="panel overflow-hidden">
             <div class="px-5 pt-5 sm:px-6">
-                <h2 class="text-[16px] font-bold">
-                    {{ t('জায়গা বাছা হয়নি') }}
-                </h2>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-[16px] font-bold">
+                        {{ t('জায়গা বাছা হয়নি') }}
+                    </h2>
+                    <div v-if="can['bdt.edit'] && untagged.length" class="w-44">
+                        <KSelect
+                            :model-value="null"
+                            :options="options.wallets"
+                            :placeholder="t('বাকি সব একসাথে…')"
+                            :searchable="false"
+                            size="sm"
+                            @update:model-value="tagRest"
+                        />
+                    </div>
+                </div>
                 <p class="text-[12.5px] text-ink-3">
                     {{
                         t(

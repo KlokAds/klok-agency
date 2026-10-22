@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SettingsNav from '@/components/SettingsNav.vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -148,10 +149,11 @@ onMounted(() => {
 </script>
 
 <template>
-    <PageHeader :eyebrow="t('নিয়ন্ত্রণ')" title="Settings" />
+    <SettingsNav />
+    <PageHeader eyebrow="Settings" title="Settings" />
 
     <div class="grid gap-6 lg:grid-cols-2">
-        <!-- Security & books -->
+        <!-- Rules of the books, then security -->
         <form
             class="panel flex flex-col gap-6 p-6"
             @submit.prevent="
@@ -160,42 +162,14 @@ onMounted(() => {
         >
             <div>
                 <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                    <KIcon name="shield" class="text-brand" />{{
-                        t('নিরাপত্তা ও খাতা')
+                    <KIcon name="scale" class="text-brand" />{{
+                        t('খাতার নিয়ম')
                     }}
                 </h2>
                 <p class="mt-1 text-[13px] text-ink-3">
-                    {{ t('সবার জন্য প্রযোজ্য।') }}
+                    {{ t('Fee আর কোন মাস পর্যন্ত খাতা বন্ধ — সবার জন্য।') }}
                 </p>
             </div>
-
-            <KSwitch
-                v-model="form.require_2fa"
-                :label="t('সবার জন্য 2FA বাধ্যতামূলক')"
-                :hint="
-                    t(
-                        'চালু করলে 2FA ছাড়া কেউ খাতা খুলতে পারবে না — আগে নিজে চালু করুন।',
-                    )
-                "
-            />
-            <p
-                v-if="form.errors.require_2fa"
-                class="-mt-4 text-[12.5px] font-medium text-out"
-            >
-                {{ form.errors.require_2fa }}
-            </p>
-
-            <KField
-                :label="t('কাজ না করলে নিজে sign out')"
-                :hint="t('শেষ ১ মিনিটে সতর্ক করা হবে।')"
-            >
-                <KSegment
-                    v-model="form.idle_minutes"
-                    :options="idleOptions"
-                    size="sm"
-                />
-            </KField>
-
             <KField
                 :label="t('MFS payment থেকে fee (%)')"
                 :error="form.errors.payment_fee_percent"
@@ -233,6 +207,45 @@ onMounted(() => {
                     :max="today()"
                     clearable
                     :placeholder="t('Lock নেই')"
+                />
+            </KField>
+
+            <hr class="border-dashed border-line" />
+
+            <div>
+                <h2 class="flex items-center gap-2 text-[17px] font-bold">
+                    <KIcon name="shield" class="text-brand" />{{
+                        t('নিরাপত্তা')
+                    }}
+                </h2>
+                <p class="mt-1 text-[13px] text-ink-3">
+                    {{ t('Login আর sign out-এর নিয়ম — সবার জন্য।') }}
+                </p>
+            </div>
+            <KSwitch
+                v-model="form.require_2fa"
+                :label="t('সবার জন্য 2FA বাধ্যতামূলক')"
+                :hint="
+                    t(
+                        'চালু করলে 2FA ছাড়া কেউ খাতা খুলতে পারবে না — আগে নিজে চালু করুন।',
+                    )
+                "
+            />
+            <p
+                v-if="form.errors.require_2fa"
+                class="-mt-4 text-[12.5px] font-medium text-out"
+            >
+                {{ form.errors.require_2fa }}
+            </p>
+
+            <KField
+                :label="t('কাজ না করলে নিজে sign out')"
+                :hint="t('শেষ ১ মিনিটে সতর্ক করা হবে।')"
+            >
+                <KSegment
+                    v-model="form.idle_minutes"
+                    :options="idleOptions"
+                    size="sm"
                 />
             </KField>
 

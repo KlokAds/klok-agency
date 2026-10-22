@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SettingsNav from '@/components/SettingsNav.vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -103,8 +104,9 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
 </script>
 
 <template>
+    <SettingsNav />
     <PageHeader
-        :eyebrow="t('নিয়ন্ত্রণ')"
+        eyebrow="Settings"
         :title="t('Role ও Permission')"
         :lead="
             t(

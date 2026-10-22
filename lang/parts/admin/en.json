@@ -150,5 +150,12 @@
     "সবার জন্য প্রযোজ্য।": "Applies to everyone.",
     "সাথে সাথে sign out হবে। তার লেখা entry-গুলো খাতায় থেকে যাবে। শুধু বন্ধ রাখতে চাইলে “Active” বন্ধ করুন।": "They will be signed out right away. Entries they wrote stay in the books. To just block access, turn off “Active” instead.",
     "হ্যাঁ, বন্ধ করুন": "Yes, turn off",
-    "“দেখা” ছাড়া অন্য কিছু দিলে “দেখা” নিজে চালু হয়। Server-এ প্রতিটা কাজের আগে permission যাচাই হয় — পাতায় বোতাম লুকানো শুধু সুবিধার জন্য।": "Giving anything besides “View” turns on “View” as well. The server checks permission before every action — hiding buttons on the page is only for convenience."
+    "“দেখা” ছাড়া অন্য কিছু দিলে “দেখা” নিজে চালু হয়। Server-এ প্রতিটা কাজের আগে permission যাচাই হয় — পাতায় বোতাম লুকানো শুধু সুবিধার জন্য।": "Giving anything besides “View” turns on “View” as well. The server checks permission before every action — hiding buttons on the page is only for convenience.",
+    "Settings-এর ভাগ": "Settings sections",
+    "টাকা": "Money",
+    "Client ও Ads": "Clients & ads",
+    "অফিস": "Office",
+    "খাতার নিয়ম": "Rules of the books",
+    "Fee আর কোন মাস পর্যন্ত খাতা বন্ধ — সবার জন্য।": "The fee, and up to when the books are closed — for everyone.",
+    "Login আর sign out-এর নিয়ম — সবার জন্য।": "Rules for signing in and out — for everyone."
 }

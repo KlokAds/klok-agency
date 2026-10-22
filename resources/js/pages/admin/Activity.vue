@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SettingsNav from '@/components/SettingsNav.vue';
 import { router } from '@inertiajs/vue3';
 import { reactive, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -93,8 +94,9 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
 </script>
 
 <template>
+    <SettingsNav />
     <PageHeader
-        :eyebrow="t('নিয়ন্ত্রণ')"
+        eyebrow="Settings"
         title="Activity log"
         :lead="
             t(

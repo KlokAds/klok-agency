@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SettingsNav from '@/components/SettingsNav.vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -125,8 +126,9 @@ async function remove(user: User): Promise<void> {
 </script>
 
 <template>
+    <SettingsNav />
     <PageHeader
-        :eyebrow="t('নিয়ন্ত্রণ')"
+        eyebrow="Settings"
         title="User"
         :lead="
             t(

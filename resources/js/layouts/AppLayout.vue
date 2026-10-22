@@ -12,6 +12,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { useIdleLogout } from '@/composables/useIdleLogout';
 import { usePopover } from '@/composables/usePopover';
 import { locale, switchLocale, t } from '@/lib/i18n';
+import { SETTINGS_TABS, isSettingsPath } from '@/lib/settings-tabs';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -31,20 +32,20 @@ const groups: { title?: string; items: NavItem[] }[] = [
         ],
     }, // i18n
     {
-        title: 'খাতা', // i18n
+        title: 'টাকা', // i18n
         items: [
-            {
-                label: 'USD খাতা',
-                href: '/usd',
-                icon: 'dollar',
-                perm: 'usd.view',
-            }, // i18n
-            { label: 'BDT খাতা', href: '/bdt', icon: 'taka', perm: 'bdt.view' }, // i18n
             {
                 label: 'টাকা কোথায়',
                 href: '/wallets',
                 icon: 'wallet',
                 perm: 'bdt.view',
+            }, // i18n
+            { label: 'BDT খাতা', href: '/bdt', icon: 'taka', perm: 'bdt.view' }, // i18n
+            {
+                label: 'USD খাতা',
+                href: '/usd',
+                icon: 'dollar',
+                perm: 'usd.view',
             }, // i18n
             { label: 'FX Batch', href: '/fx', icon: 'swap', perm: 'fx.view' },
             {
@@ -56,7 +57,7 @@ const groups: { title?: string; items: NavItem[] }[] = [
         ],
     },
     {
-        title: 'ব্যবসা', // i18n
+        title: 'Client ও Ads', // i18n
         items: [
             {
                 label: 'Client',
@@ -77,21 +78,26 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 perm: 'runs.view',
             },
             {
+                label: 'Ad Platform',
+                href: '/platforms',
+                icon: 'chart',
+                perm: 'platforms.view',
+            },
+        ],
+    },
+    {
+        title: 'অফিস', // i18n
+        items: [
+            {
                 label: 'কাজ ও reminder',
                 href: '/tasks',
                 icon: 'list',
                 perm: 'tasks.view',
             }, // i18n
             {
-                label: 'Ad Platform',
-                href: '/platforms',
-                icon: 'signal',
-                perm: 'platforms.view',
-            },
-            {
                 label: 'Payroll',
                 href: '/payroll',
-                icon: 'wallet',
+                icon: 'user',
                 perm: 'payroll.view',
             },
             {
@@ -102,43 +108,12 @@ const groups: { title?: string; items: NavItem[] }[] = [
             },
         ],
     },
-    {
-        title: 'নিয়ন্ত্রণ', // i18n
-        items: [
-            {
-                label: 'User',
-                href: '/admin/users',
-                icon: 'user',
-                perm: 'users.view',
-            },
-            {
-                label: 'Role ও Permission',
-                href: '/admin/roles',
-                icon: 'key',
-                perm: 'roles.view',
-            }, // i18n
-            {
-                label: 'Activity log',
-                href: '/activity',
-                icon: 'pulse',
-                perm: 'activity.view',
-            },
-            { label: 'Trash', href: '/trash', icon: 'bin', perm: 'trash.view' },
-            {
-                label: 'Reminder ও Pilot',
-                href: '/admin/agency',
-                icon: 'bell',
-                perm: 'settings.view',
-            }, // i18n
-            {
-                label: 'Settings',
-                href: '/admin/settings',
-                icon: 'gear',
-                perm: 'settings.view',
-            },
-        ],
-    },
 ];
+
+// Everything about running the app sits behind one Settings link.
+const settingsHref = computed(
+    () => SETTINGS_TABS.find((tab) => can.value[tab.perm])?.href ?? null,
+);
 
 const visible = computed(() =>
     groups
@@ -152,7 +127,9 @@ const canQuick = computed(() =>
 
 const path = computed(() => page.url.split('?')[0]);
 const isActive = (href: string) =>
-    path.value === href || path.value.startsWith(href + '/');
+    path.value === href ||
+    path.value.startsWith(href + '/') ||
+    (href === settingsHref.value && isSettingsPath(path.value));
 
 // The switch always names the other language, written in that language.
 const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN')); // i18n
@@ -230,6 +207,33 @@ function logout(): void {
                     </Link>
                 </div>
             </nav>
+
+            <div v-if="settingsHref" class="px-3 pb-3">
+                <Link
+                    :href="settingsHref"
+                    class="group relative flex items-center gap-3 rounded-[10px] px-3 py-2 text-[14px] font-medium transition-colors"
+                    :class="
+                        isActive(settingsHref)
+                            ? 'bg-rail-2 text-white'
+                            : 'text-rail-ink/80 hover:bg-rail-2/60 hover:text-white'
+                    "
+                >
+                    <span
+                        v-if="isActive(settingsHref)"
+                        class="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r bg-[#2dd4bf]"
+                    />
+                    <KIcon
+                        name="gear"
+                        :size="18"
+                        :class="
+                            isActive(settingsHref)
+                                ? 'text-[#2dd4bf]'
+                                : 'text-rail-dim group-hover:text-rail-ink'
+                        "
+                    />
+                    Settings
+                </Link>
+            </div>
 
             <div
                 class="border-t border-rail-2 px-5 py-4 text-[11.5px] text-rail-dim"
