@@ -16,6 +16,8 @@ class Access
         'bdt' => ['label' => 'BDT খাতা', 'actions' => ['view', 'create', 'edit', 'delete']], // i18n
         'fx' => ['label' => 'FX Batch', 'actions' => ['view', 'create', 'edit', 'delete']],
         'clients' => ['label' => 'Client', 'actions' => ['view', 'create', 'edit', 'delete']],
+        'runs' => ['label' => 'Ad চালানো', 'actions' => ['view', 'create', 'edit', 'delete']], // i18n
+        'tasks' => ['label' => 'কাজ ও reminder', 'actions' => ['view', 'create', 'edit', 'delete']], // i18n
         'platforms' => ['label' => 'Ad Platform', 'actions' => ['view']],
         'payroll' => ['label' => 'Payroll', 'actions' => ['view', 'create', 'edit', 'delete']],
         'reports' => ['label' => 'Report / P&L', 'actions' => ['view', 'export']],

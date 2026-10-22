@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
@@ -55,6 +56,11 @@ class ReportController extends Controller
 
         return response()->streamDownload(function () use ($book, $books, $request) {
             $out = fopen('php://output', 'w');
+
+            if ($out === false) {
+                throw new RuntimeException('Could not open the CSV output stream.');
+            }
+
             fwrite($out, "\xEF\xBB\xBF"); // so Excel reads Bangla correctly
 
             match ($book) {
@@ -67,6 +73,7 @@ class ReportController extends Controller
         }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    /** @param  resource  $out */
     private function usdCsv($out, Books $books): void
     {
         $fifo = $books->fifo()['entries'];
@@ -84,6 +91,7 @@ class ReportController extends Controller
         }
     }
 
+    /** @param  resource  $out */
     private function bdtCsv($out, Books $books): void
     {
         $running = $books->bdtRunning();
@@ -93,13 +101,14 @@ class ReportController extends Controller
         foreach ($books->bdtEntries() as $e) {
             fputcsv($out, [
                 $e->entry_date?->toDateString(), $e->description, BdtEntry::categoryLabel($e->category),
-                $e->client?->name ?? $e->employee?->name, $e->head?->name, $this->num($e->amount),
+                $e->client->name ?? $e->employee?->name, $e->head?->name, $this->num($e->amount),
                 $this->num($running[$e->id]), $e->notes,
             ]);
         }
     }
 
-    private function plCsv($out, Books $books, $from, $to): void
+    /** @param  resource  $out */
+    private function plCsv($out, Books $books, ?CarbonImmutable $from, ?CarbonImmutable $to): void
     {
         $pl = $books->profitAndLoss($from, $to);
 

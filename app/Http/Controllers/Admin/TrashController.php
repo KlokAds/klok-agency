@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\FxBatch;
 use App\Models\UsdEntry;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,7 +29,7 @@ class TrashController extends Controller
 
     public function index(): Response
     {
-        $items = collect(self::TYPES)->flatMap(function ($meta, $type) {
+        $items = collect(self::TYPES)->flatMap(function (array $meta, string $type): Collection {
             [$model, $label] = $meta;
 
             return $model::onlyTrashed()->latest('deleted_at')->limit(100)->get()->map(fn ($row) => [

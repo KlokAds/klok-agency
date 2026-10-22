@@ -75,6 +75,7 @@ class RoleController extends Controller
         }
     }
 
+    /** @return array<string, mixed> */
     private function validated(Request $request, ?Role $role = null): array
     {
         return $request->validate([

@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Books;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdRun;
+use App\Services\Agency;
 use App\Services\Postings;
 use App\Support\Money;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -26,7 +30,7 @@ class QuickEntryController extends Controller
         'buy-usd' => 'fx.create',
     ];
 
-    public function __invoke(Request $request, string $type, Postings $postings): RedirectResponse
+    public function __invoke(Request $request, string $type, Postings $postings, Agency $agency): RedirectResponse
     {
         abort_unless(isset(self::PERMISSIONS[$type]), 404);
         abort_unless($request->user()->can(self::PERMISSIONS[$type]), 403);
@@ -43,7 +47,8 @@ class QuickEntryController extends Controller
                 'account_id' => ['required', 'exists:accounts,id'],
                 'amount' => ['required', Money::RULE],
                 'status' => ['required', Rule::in(['pending', 'settled'])],
-            ], fn ($d) => $postings->adSpend($d), __('Ad খরচ লেখা হয়েছে।')),
+                'run_days' => ['nullable', 'integer', 'min:1', 'max:365'],
+            ], fn ($d) => $this->adSpendWithRun($d, $postings, $agency), __('Ad খরচ লেখা হয়েছে।')),
 
             'own-spend' => $this->run($request, [
                 'description' => ['required', 'string', 'max:255'],
@@ -94,6 +99,42 @@ class QuickEntryController extends Controller
         return back();
     }
 
+    /**
+     * Ad spend; when "how many days" is given the ad is also tracked as an
+     * ad run, so its renew reminder comes on time.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function adSpendWithRun(array $data, Postings $postings, Agency $agency): void
+    {
+        DB::transaction(function () use ($data, $postings, $agency) {
+            $entry = $postings->adSpend($data);
+
+            if (empty($data['run_days'])) {
+                return;
+            }
+
+            $days = (int) $data['run_days'];
+            $start = CarbonImmutable::parse($data['entry_date']);
+
+            $run = AdRun::create([
+                'client_id' => $entry->client_id,
+                'account_id' => $entry->account_id,
+                'title' => $entry->description,
+                'budget_usd' => -$entry->amount,
+                'daily_usd' => (int) round(-$entry->amount / $days),
+                'days' => $days,
+                'start_on' => $start->toDateString(),
+                'end_on' => $start->addDays($days - 1)->toDateString(),
+                'usd_entry_id' => $entry->id,
+                'status' => 'running',
+            ]);
+
+            $agency->plan($run);
+        });
+    }
+
+    /** @param  array<string, mixed>  $rules */
     private function run(Request $request, array $rules, callable $post, string $message): string
     {
         $data = $request->validate($rules, [], [

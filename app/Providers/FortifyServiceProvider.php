@@ -55,6 +55,11 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Event::listen(Login::class, function (Login $event) {
+            // Only app users sign in; anything else has no login columns to stamp.
+            if (! $event->user instanceof User) {
+                return;
+            }
+
             $event->user->forceFill([
                 'last_login_at' => now(),
                 'last_login_ip' => request()->ip(),

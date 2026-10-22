@@ -6,6 +6,11 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TrashController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Agency\AdRunController;
+use App\Http\Controllers\Agency\AgencySettingsController;
+use App\Http\Controllers\Agency\NotificationController;
+use App\Http\Controllers\Agency\TaskController;
+use App\Http\Controllers\Agency\TickController;
 use App\Http\Controllers\Books\BdtEntryController;
 use App\Http\Controllers\Books\ClientController;
 use App\Http\Controllers\Books\DashboardController;
@@ -22,6 +27,9 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard')->name('home');
 
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
+
+// For cron-job.org: the token in Settings → Reminders makes the URL secret.
+Route::get('agency/tick/{token}', TickController::class)->middleware('throttle:30,1')->name('agency.tick');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
@@ -47,6 +55,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('clients', [ClientController::class, 'store'])->middleware('can:clients.create')->name('clients.store');
     Route::put('clients/{client}', [ClientController::class, 'update'])->middleware('can:clients.edit')->name('clients.update');
     Route::delete('clients/{client}', [ClientController::class, 'destroy'])->middleware('can:clients.delete')->name('clients.destroy');
+
+    Route::get('runs', [AdRunController::class, 'index'])->middleware('can:runs.view')->name('runs.index');
+    Route::post('runs', [AdRunController::class, 'store'])->middleware('can:runs.create')->name('runs.store');
+    Route::put('runs/{run}', [AdRunController::class, 'update'])->middleware('can:runs.edit')->name('runs.update');
+    Route::put('runs/{run}/result', [AdRunController::class, 'result'])->middleware('can:runs.edit')->name('runs.result');
+    Route::post('runs/{run}/renew', [AdRunController::class, 'renew'])->middleware('can:runs.create')->name('runs.renew');
+    Route::post('runs/{run}/stop', [AdRunController::class, 'stop'])->middleware('can:runs.edit')->name('runs.stop');
+    Route::delete('runs/{run}', [AdRunController::class, 'destroy'])->middleware('can:runs.delete')->name('runs.destroy');
+
+    Route::get('tasks', [TaskController::class, 'index'])->middleware('can:tasks.view')->name('tasks.index');
+    Route::post('tasks', [TaskController::class, 'store'])->middleware('can:tasks.create')->name('tasks.store');
+    Route::put('tasks/{task}', [TaskController::class, 'update'])->middleware('can:tasks.edit')->name('tasks.update');
+    Route::post('tasks/{task}/toggle', [TaskController::class, 'toggle'])->middleware('can:tasks.edit')->name('tasks.toggle');
+    Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->middleware('can:tasks.delete')->name('tasks.destroy');
+
+    // Everyone sees their own notifications; no permission needed.
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/feed', [NotificationController::class, 'feed'])->middleware('throttle:60,1')->name('notifications.feed');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
     Route::get('platforms', PlatformController::class)->middleware('can:platforms.view')->name('platforms.index');
 
@@ -83,6 +111,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('settings', [SettingController::class, 'index'])->middleware('can:settings.view')->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->middleware('can:settings.edit')->name('settings.update');
+        Route::get('agency', [AgencySettingsController::class, 'index'])->middleware('can:settings.view')->name('agency.index');
+        Route::put('agency', [AgencySettingsController::class, 'update'])->middleware('can:settings.edit')->name('agency.update');
+        Route::put('agency/pilot-token', [AgencySettingsController::class, 'pilotToken'])->middleware('can:settings.edit')->name('agency.pilot-token');
+        Route::post('agency/pilot-test', [AgencySettingsController::class, 'pilotTest'])->middleware(['can:settings.edit', 'throttle:10,1'])->name('agency.pilot-test');
+        Route::post('agency/tick-token', [AgencySettingsController::class, 'tickToken'])->middleware('can:settings.edit')->name('agency.tick-token');
+        Route::post('agency/summary-now', [AgencySettingsController::class, 'summaryNow'])->middleware(['can:settings.edit', 'throttle:3,1'])->name('agency.summary-now');
         Route::get('update/status', [UpdateController::class, 'status'])->middleware('throttle:20,1')->name('update.status');
         Route::post('update', [UpdateController::class, 'update'])->middleware('throttle:5,10')->name('update.run');
         Route::post('settings/heads', [SettingController::class, 'storeHead'])->middleware('can:settings.edit')->name('settings.heads.store');

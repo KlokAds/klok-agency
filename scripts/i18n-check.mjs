@@ -60,11 +60,28 @@ for (const file of files) {
     }
 
     // A line marked `// i18n` holds source text that is translated where it is shown
-    // (e.g. a label in a constant): it only needs its English to exist.
-    src = src
-        .split('\n')
-        .map((line) => {
-            if (!/\/\/\s*i18n\b/.test(line)) return line;
+    // (e.g. a label in a constant): it only needs its English to exist. The formatter
+    // may leave the marker after a closing `}` or `]`, so it covers the whole literal
+    // back to the line that opened it.
+    const rows = src.split('\n');
+    const marked = new Set();
+    rows.forEach((line, i) => {
+        if (!/\/\/\s*i18n\b/.test(line)) return;
+        marked.add(i);
+        if (/^\s*[}\]]/.test(line)) {
+            let depth = 0;
+            for (let j = i; j >= 0; j--) {
+                depth += (rows[j].match(/[}\]]/g) ?? []).length;
+                depth -= (rows[j].match(/[{[]/g) ?? []).length;
+                marked.add(j);
+                if (depth <= 0) break;
+            }
+        }
+    });
+
+    src = rows
+        .map((line, i) => {
+            if (!marked.has(i)) return line;
             for (const m of line.matchAll(/(['"`])((?:\\.|(?!\1).)*)\1/g)) {
                 const key = unescape(m[2], m[1]);
                 if (BN.test(key) && !(key in english)) {

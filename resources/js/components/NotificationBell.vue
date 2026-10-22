@@ -1,0 +1,162 @@
+<script setup lang="ts">
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import NotificationItem from '@/components/NotificationItem.vue';
+import type { Notice } from '@/components/NotificationItem.vue';
+import KIcon from '@/components/k/KIcon.vue';
+import { usePopover } from '@/composables/usePopover';
+import { toast } from '@/lib/feedback';
+import { getJson } from '@/lib/http';
+import { t } from '@/lib/i18n';
+
+// The bell: unread count from the page, the latest few on open, and a
+// quiet check every minute so new reminders show up without a reload.
+const page = usePage();
+const unread = ref(Number(page.props.unread ?? 0));
+const items = ref<Notice[]>([]);
+const loading = ref(false);
+
+watch(
+    () => page.props.unread,
+    (value) => (unread.value = Number(value ?? 0)),
+);
+
+const anchor = ref<HTMLElement | null>(null);
+const panel = ref<HTMLElement | null>(null);
+const menu = usePopover(anchor, panel, { align: 'end' });
+
+async function load(): Promise<void> {
+    loading.value = true;
+    try {
+        const feed = await getJson<{ unread: number; items: Notice[] }>(
+            '/notifications/feed',
+        );
+        const fresh = feed.items.filter(
+            (n) => !n.read && !items.value.some((old) => old.id === n.id),
+        );
+
+        // Tell about new ones once, unless the list is open anyway.
+        if (items.value.length && fresh.length && !menu.open.value) {
+            toast(t(fresh[0].title, fresh[0].params), 'info');
+        }
+
+        items.value = feed.items;
+        unread.value = feed.unread;
+    } catch {
+        // offline or signed out — try again on the next round
+    } finally {
+        loading.value = false;
+    }
+}
+
+watch(menu.open, (open) => {
+    if (open) {
+        void load();
+    }
+});
+
+function readAll(): void {
+    router.post(
+        '/notifications/read-all',
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                unread.value = 0;
+                items.value = items.value.map((n) => ({ ...n, read: true }));
+            },
+        },
+    );
+}
+
+function opened(item: Notice): void {
+    menu.close();
+
+    if (!item.read) {
+        void fetch(`/notifications/${item.id}/read`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-XSRF-TOKEN': decodeURIComponent(
+                    document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
+                ),
+            },
+            credentials: 'same-origin',
+        });
+    }
+}
+
+let timer: number | undefined;
+onMounted(() => {
+    void load();
+    timer = window.setInterval(() => void load(), 60_000);
+});
+onBeforeUnmount(() => window.clearInterval(timer));
+
+const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
+</script>
+
+<template>
+    <div ref="anchor">
+        <button
+            type="button"
+            class="relative grid size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken hover:text-ink"
+            :aria-label="t('Notification')"
+            @click="menu.toggle()"
+        >
+            <KIcon name="bell" />
+            <span
+                v-if="unread > 0"
+                class="num absolute top-1.5 right-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-out px-1 text-[10px] font-bold text-white"
+                >{{ badge }}</span
+            >
+        </button>
+
+        <Teleport to="body">
+            <div
+                v-if="menu.open.value"
+                ref="panel"
+                :style="menu.style.value"
+                class="popover k-rise flex max-h-[70vh] w-[min(380px,calc(100vw-16px))] flex-col"
+            >
+                <div
+                    class="flex items-center justify-between border-b border-line px-4 py-3"
+                >
+                    <p class="text-[14px] font-bold">{{ t('Notification') }}</p>
+                    <button
+                        v-if="unread > 0"
+                        type="button"
+                        class="text-[12.5px] font-semibold text-brand-ink hover:underline"
+                        @click="readAll"
+                    >
+                        {{ t('সব পড়া হয়েছে') }}
+                    </button>
+                </div>
+                <div class="min-h-0 flex-1 overflow-y-auto p-1.5">
+                    <p
+                        v-if="!items.length"
+                        class="px-4 py-10 text-center text-[13px] text-ink-3"
+                    >
+                        {{
+                            loading
+                                ? t('লোড হচ্ছে…')
+                                : t('কোনো notification নেই')
+                        }}
+                    </p>
+                    <NotificationItem
+                        v-for="n in items"
+                        :key="n.id"
+                        :item="n"
+                        @open="opened"
+                    />
+                </div>
+                <Link
+                    href="/notifications"
+                    class="border-t border-line px-4 py-2.5 text-center text-[13px] font-semibold text-ink-2 hover:text-ink"
+                    @click="menu.close()"
+                    >{{ t('সব দেখুন') }}</Link
+                >
+            </div>
+        </Teleport>
+    </div>
+</template>

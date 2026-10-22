@@ -15,6 +15,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 #[Signature('books:import-sheet {file=database/import/sheet-2026-10-22.json} {--fresh : Remove existing ledger rows first}')]
 #[Description('Import the old Google Sheet snapshot and check the totals against the sheet')]
@@ -22,7 +23,15 @@ class ImportSheet extends Command
 {
     public function handle(): int
     {
-        $path = base_path($this->argument('file'));
+        $file = $this->argument('file');
+
+        if (! is_string($file)) {
+            $this->error('Give the path of one snapshot file.');
+
+            return self::FAILURE;
+        }
+
+        $path = base_path($file);
 
         if (! is_file($path)) {
             $this->error("File not found: {$path}");
@@ -30,7 +39,7 @@ class ImportSheet extends Command
             return self::FAILURE;
         }
 
-        $data = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+        $data = $this->readJson($path);
 
         if (UsdEntry::withTrashed()->exists() || BdtEntry::withTrashed()->exists()) {
             if (! $this->option('fresh')) {
@@ -134,7 +143,7 @@ class ImportSheet extends Command
             return;
         }
 
-        $rows = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+        $rows = $this->readJson($path);
         $accounts = Account::pluck('id', 'code');
         $clients = Client::pluck('id', 'name');
 
@@ -166,6 +175,7 @@ class ImportSheet extends Command
         $this->info('Added '.count($rows).' entries made after the sheet.');
     }
 
+    /** @param  array<string, mixed>  $expected */
     private function verify(array $expected): bool
     {
         $books = app(Books::class);
@@ -197,6 +207,17 @@ class ImportSheet extends Command
             number_format($summary['assets'] / 100, 2), number_format($summary['equity'] / 100, 2), $summary['equity_ok'] ? 'OK' : 'MISMATCH'));
 
         return $ok;
+    }
+
+    private function readJson(string $path): mixed
+    {
+        $json = file_get_contents($path);
+
+        if ($json === false) {
+            throw new RuntimeException("Could not read {$path}");
+        }
+
+        return json_decode($json, true, flags: JSON_THROW_ON_ERROR);
     }
 
     private function cents(string $value): int

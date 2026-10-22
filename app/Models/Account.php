@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * A place USD sits or is spent through: the card, a holding account,
  * or an ad platform (Meta, Google, TikTok).
+ *
+ * @property bool $is_active
  */
 class Account extends Model
 {
@@ -23,6 +25,7 @@ class Account extends Model
         return ['is_active' => 'boolean'];
     }
 
+    /** @return HasMany<UsdEntry, $this> */
     public function entries(): HasMany
     {
         return $this->hasMany(UsdEntry::class);

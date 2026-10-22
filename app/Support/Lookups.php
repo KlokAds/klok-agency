@@ -15,6 +15,7 @@ use App\Models\UsdEntry;
  */
 class Lookups
 {
+    /** @return array<int, array<string, mixed>> */
     public static function clients(bool $activeOnly = false): array
     {
         return Client::query()
@@ -25,6 +26,7 @@ class Lookups
             ->all();
     }
 
+    /** @return array<int, array<string, mixed>> */
     public static function accounts(?string $kind = null): array
     {
         return Account::query()
@@ -36,28 +38,36 @@ class Lookups
             ->all();
     }
 
+    /** @return array<int, array<string, mixed>> */
     public static function heads(): array
     {
         return ExpenseHead::where('is_active', true)->orderBy('name')->get(['id', 'name'])
             ->map(fn ($h) => ['value' => $h->id, 'label' => $h->name])->all();
     }
 
+    /** @return array<int, array<string, mixed>> */
     public static function employees(): array
     {
         return Employee::where('status', 'active')->orderBy('name')->get(['id', 'name', 'designation'])
             ->map(fn ($e) => ['value' => $e->id, 'label' => $e->name, 'hint' => $e->designation])->all();
     }
 
+    /** @return array<int, array<string, mixed>> */
     public static function usdCategories(): array
     {
         return collect(UsdEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => __($c['label'])])->values()->all();
     }
 
+    /** @return array<int, array<string, mixed>> */
     public static function bdtCategories(): array
     {
         return collect(BdtEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => __($c['label'])])->values()->all();
     }
 
+    /**
+     * @param  array<string, mixed>  $map
+     * @return array<int, array<string, mixed>>
+     */
     public static function options(array $map): array
     {
         return collect($map)->map(fn ($label, $value) => ['value' => $value, 'label' => __($label)])->values()->all();

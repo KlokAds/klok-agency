@@ -3,12 +3,17 @@
 namespace App\Models;
 
 use App\Models\Concerns\Audited;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * One purchase of USD. usd is in cents, bdt in poisha.
+ *
+ * @property CarbonImmutable|null $purchased_on
+ * @property int $usd
+ * @property int $bdt
  */
 class FxBatch extends Model
 {
@@ -27,11 +32,13 @@ class FxBatch extends Model
         return $this->usd > 0 ? $this->bdt / $this->usd : 0.0;
     }
 
+    /** @return HasOne<UsdEntry, $this> */
     public function usdEntry(): HasOne
     {
         return $this->hasOne(UsdEntry::class);
     }
 
+    /** @return HasOne<BdtEntry, $this> */
     public function bdtEntry(): HasOne
     {
         return $this->hasOne(BdtEntry::class);

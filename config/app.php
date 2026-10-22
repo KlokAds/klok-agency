@@ -123,4 +123,20 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Owner Account
+    |--------------------------------------------------------------------------
+    |
+    | The first Owner account, created by the database seeder. There is no
+    | public sign-up, so this is how a fresh install gets its first user.
+    |
+    */
+
+    'owner' => [
+        'name' => env('OWNER_NAME', 'Klok Ads'),
+        'email' => env('OWNER_EMAIL'),
+        'password' => env('OWNER_PASSWORD'),
+    ],
+
 ];

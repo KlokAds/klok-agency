@@ -28,7 +28,12 @@ trait LedgerEntry
         }
     }
 
-    /** Undated rows (from the old sheet) first, then by date, then entry order. */
+    /**
+     * Undated rows (from the old sheet) first, then by date, then entry order.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeLedgerOrder(Builder $query): Builder
     {
         return $query->orderByRaw('entry_date is null desc')->orderBy('entry_date')->orderBy('sequence');

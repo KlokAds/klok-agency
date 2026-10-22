@@ -5,6 +5,9 @@ namespace App\Models;
 use App\Models\Concerns\Audited;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property bool $is_active
+ */
 class ExpenseHead extends Model
 {
     use Audited;

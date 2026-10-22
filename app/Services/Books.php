@@ -24,17 +24,22 @@ use Illuminate\Support\Collection;
  */
 class Books
 {
+    /** @var array{entries: array<int, array{before:int, after:int, cost:int, rate:float}>, bought:int, consumed:int, overdrawn:bool, batches: array<int, array{used:int, left:int}>, segments: list<array{id:int, start:int, end:int, rate:float}>}|null */
     private ?array $fifo = null;
 
+    /** @var Collection<int, UsdEntry>|null */
     private ?Collection $usd = null;
 
+    /** @var Collection<int, BdtEntry>|null */
     private ?Collection $bdt = null;
 
+    /** @return Collection<int, UsdEntry> */
     public function usdEntries(): Collection
     {
         return $this->usd ??= UsdEntry::with(['account', 'client'])->ledgerOrder()->get();
     }
 
+    /** @return Collection<int, BdtEntry> */
     public function bdtEntries(): Collection
     {
         return $this->bdt ??= BdtEntry::with(['client', 'head', 'employee'])->ledgerOrder()->get();
@@ -43,7 +48,7 @@ class Books
     /**
      * Walks the consuming USD rows in ledger order through the batches.
      *
-     * @return array{entries: array<int, array{before:int, after:int, cost:int, rate:float}>, bought:int, consumed:int, overdrawn:bool, batches: array<int, array{used:int, left:int}>, segments: array}
+     * @return array{entries: array<int, array{before:int, after:int, cost:int, rate:float}>, bought:int, consumed:int, overdrawn:bool, batches: array<int, array{used:int, left:int}>, segments: list<array{id:int, start:int, end:int, rate:float}>}
      */
     public function fifo(): array
     {
@@ -102,7 +107,11 @@ class Books
         ];
     }
 
-    /** BDT cost (poisha, unrounded) of using USD cents from position $from to $to. */
+    /**
+     * BDT cost (poisha, unrounded) of using USD cents from position $from to $to.
+     *
+     * @param  list<array{id:int, start:int, end:int, rate:float}>  $segments
+     */
     private function costOfRange(array $segments, int $from, int $to): float
     {
         if ($to <= $from || $segments === []) {
@@ -139,7 +148,11 @@ class Books
         return $entry->category === 'card_charge' || $entry->account?->kind === 'card';
     }
 
-    /** Balance of the card after each row that touches it, keyed by entry id. */
+    /**
+     * Balance of the card after each row that touches it, keyed by entry id.
+     *
+     * @return array<int, int>
+     */
     public function cardRunning(): array
     {
         $balance = 0;
@@ -155,6 +168,7 @@ class Books
         return $running;
     }
 
+    /** @return array<int, int> */
     public function bdtRunning(): array
     {
         $balance = 0;
@@ -168,7 +182,11 @@ class Books
         return $running;
     }
 
-    /** Spend booked on each ad platform against what the card has paid it. */
+    /**
+     * Spend booked on each ad platform against what the card has paid it.
+     *
+     * @return list<array{id:int, code:string, name:string, spent:int|float, charged:int|float, due:int|float}>
+     */
     public function platforms(): array
     {
         $rows = [];
@@ -191,7 +209,11 @@ class Books
         return $rows;
     }
 
-    /** Per-client margin, pending and totals. */
+    /**
+     * Per-client margin, pending and totals.
+     *
+     * @return list<array<string, mixed>>
+     */
     public function clients(?CarbonInterface $from = null, ?CarbonInterface $to = null): array
     {
         $fifo = $this->fifo();
@@ -234,6 +256,10 @@ class Books
         return $rows;
     }
 
+    /**
+     * @param  Collection<int, UsdEntry>|Collection<int, BdtEntry>  $entries
+     * @return Collection<int, UsdEntry>|Collection<int, BdtEntry>
+     */
     private function inPeriod(Collection $entries, ?CarbonInterface $from, ?CarbonInterface $to): Collection
     {
         if (! $from && ! $to) {
@@ -249,7 +275,11 @@ class Books
         });
     }
 
-    /** Profit & loss, optionally for a date range. */
+    /**
+     * Profit & loss, optionally for a date range.
+     *
+     * @return array<string, mixed>
+     */
     public function profitAndLoss(?CarbonInterface $from = null, ?CarbonInterface $to = null): array
     {
         $fifo = $this->fifo();
@@ -264,7 +294,7 @@ class Books
         $ownCost = $ownSpend->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0);
 
         $expenses = $bdt->whereIn('category', BdtEntry::EXPENSE)
-            ->groupBy(fn ($e) => $e->category === 'salary' ? __('বেতন (Salary)') : ($e->head?->name ?? __('অন্যান্য খরচ')))
+            ->groupBy(fn ($e) => $e->category === 'salary' ? __('বেতন (Salary)') : ($e->head->name ?? __('অন্যান্য খরচ')))
             ->map(fn ($group, $name) => ['name' => $name, 'amount' => -(int) $group->sum('amount')])
             ->sortByDesc('amount')
             ->values()
@@ -289,7 +319,11 @@ class Books
         ];
     }
 
-    /** Everything the dashboard shows, plus the two cross-checks. */
+    /**
+     * Everything the dashboard shows, plus the two cross-checks.
+     *
+     * @return array<string, mixed>
+     */
     public function summary(): array
     {
         $fifo = $this->fifo();
@@ -343,7 +377,11 @@ class Books
         ];
     }
 
-    /** Month-by-month receipts, costs and result for dated rows. */
+    /**
+     * Month-by-month receipts, costs and result for dated rows.
+     *
+     * @return list<array<string, mixed>>
+     */
     public function monthly(int $months = 6): array
     {
         $fifo = $this->fifo();

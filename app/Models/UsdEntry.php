@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Audited;
 use App\Models\Concerns\LedgerEntry;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,6 +14,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * client_spend and business_spend use up USD (FIFO from the batches);
  * card_charge is the platform actually taking money off the card.
+ *
+ * @property CarbonImmutable|null $entry_date
+ * @property int $amount
+ * @property int $sequence
  */
 class UsdEntry extends Model
 {
@@ -42,26 +47,31 @@ class UsdEntry extends Model
         return ['entry_date' => 'date', 'amount' => 'integer', 'sequence' => 'integer'];
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
+    /** @return BelongsTo<Client, $this> */
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
     }
 
+    /** @return BelongsTo<FxBatch, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(FxBatch::class, 'fx_batch_id');
     }
 
+    /** @return BelongsTo<BdtEntry, $this> */
     public function settledBy(): BelongsTo
     {
         return $this->belongsTo(BdtEntry::class, 'settled_by_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

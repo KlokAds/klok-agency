@@ -19,10 +19,11 @@ use Illuminate\Validation\ValidationException;
  */
 class Postings
 {
+    /** @param  array<string, mixed>  $data */
     public function adSpend(array $data): UsdEntry
     {
-        $client = Client::findOrFail($data['client_id']);
-        $account = Account::findOrFail($data['account_id']);
+        $client = Client::findOrFail((int) $data['client_id']);
+        $account = Account::findOrFail((int) $data['account_id']);
 
         return UsdEntry::create([
             'entry_date' => $data['entry_date'],
@@ -36,6 +37,7 @@ class Postings
         ]);
     }
 
+    /** @param  array<string, mixed>  $data */
     public function ownSpend(array $data): UsdEntry
     {
         return UsdEntry::create([
@@ -49,9 +51,10 @@ class Postings
         ]);
     }
 
+    /** @param  array<string, mixed>  $data */
     public function cardCharge(array $data): UsdEntry
     {
-        $account = Account::findOrFail($data['account_id']);
+        $account = Account::findOrFail((int) $data['account_id']);
 
         if ($account->kind !== 'platform') {
             throw ValidationException::withMessages(['account_id' => __('Card charge শুধু ad platform-এর জন্য।')]);
@@ -71,12 +74,13 @@ class Postings
     /**
      * BDT received from a client; the chosen pending spend rows become Settled.
      *
+     * @param  array<string, mixed>  $data
      * @param  list<int>  $settleIds
      */
     public function clientPayment(array $data, array $settleIds = []): BdtEntry
     {
         return DB::transaction(function () use ($data, $settleIds) {
-            $client = Client::findOrFail($data['client_id']);
+            $client = Client::findOrFail((int) $data['client_id']);
 
             $payment = BdtEntry::create([
                 'entry_date' => $data['entry_date'],
@@ -103,7 +107,11 @@ class Postings
         });
     }
 
-    /** Buying USD: a new FX batch, USD into the card, BDT out. */
+    /**
+     * Buying USD: a new FX batch, USD into the card, BDT out.
+     *
+     * @param  array<string, mixed>  $data
+     */
     public function buyUsd(array $data): FxBatch
     {
         return DB::transaction(function () use ($data) {
@@ -158,7 +166,11 @@ class Postings
         });
     }
 
-    /** USD moved between two of our own accounts (e.g. card ↔ holding). */
+    /**
+     * USD moved between two of our own accounts (e.g. card ↔ holding).
+     *
+     * @param  array<string, mixed>  $data
+     */
     public function transfer(array $data): string
     {
         if ((int) $data['from_id'] === (int) $data['to_id']) {
@@ -167,8 +179,8 @@ class Postings
 
         return DB::transaction(function () use ($data) {
             $key = (string) Str::uuid();
-            $from = Account::findOrFail($data['from_id']);
-            $to = Account::findOrFail($data['to_id']);
+            $from = Account::findOrFail((int) $data['from_id']);
+            $to = Account::findOrFail((int) $data['to_id']);
             $description = $data['description'] ?: "{$from->name} → {$to->name}";
 
             foreach ([[$from, -$data['amount']], [$to, $data['amount']]] as [$account, $amount]) {
@@ -188,6 +200,7 @@ class Postings
         });
     }
 
+    /** @param  array<string, mixed>  $data */
     public function expense(array $data): BdtEntry
     {
         return BdtEntry::create([
@@ -200,7 +213,11 @@ class Postings
         ]);
     }
 
-    /** Owner putting money in (capital) or taking it out (drawing). */
+    /**
+     * Owner putting money in (capital) or taking it out (drawing).
+     *
+     * @param  array<string, mixed>  $data
+     */
     public function owner(array $data): BdtEntry
     {
         $in = $data['direction'] === 'in';
@@ -214,9 +231,10 @@ class Postings
         ]);
     }
 
+    /** @param  array<string, mixed>  $data */
     public function salary(array $data): BdtEntry
     {
-        $employee = Employee::findOrFail($data['employee_id']);
+        $employee = Employee::findOrFail((int) $data['employee_id']);
         $kind = $data['kind'] ?? 'salary';
 
         return BdtEntry::create([

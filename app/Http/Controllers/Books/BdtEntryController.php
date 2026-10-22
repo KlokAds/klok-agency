@@ -71,6 +71,7 @@ class BdtEntryController extends Controller
         ]);
     }
 
+    /** @param  array<string, mixed>  $f */
     private function matches(BdtEntry $e, array $f): bool
     {
         if (! empty($f['q']) && ! str_contains(mb_strtolower($e->description.' '.$e->notes.' '.$e->client?->name), mb_strtolower($f['q']))) {
@@ -144,6 +145,7 @@ class BdtEntryController extends Controller
         }
     }
 
+    /** @return array<string, mixed> */
     private function validated(Request $request, ?BdtEntry $entry = null): array
     {
         $categories = array_diff(array_keys(BdtEntry::CATEGORIES), ['usd_purchase']);

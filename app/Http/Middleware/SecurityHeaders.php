@@ -20,7 +20,8 @@ class SecurityHeaders
         $response = $next($request);
 
         $dev = app()->isLocal() && is_file(public_path('hot'));
-        $devHost = $dev ? trim(file_get_contents(public_path('hot'))) : '';
+        $hot = $dev ? file_get_contents(public_path('hot')) : false;
+        $devHost = $hot !== false ? trim($hot) : '';
         $devWs = $dev ? preg_replace('#^http#', 'ws', $devHost) : '';
 
         $csp = implode('; ', array_filter([

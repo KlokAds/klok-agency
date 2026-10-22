@@ -11,6 +11,7 @@ use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -74,8 +75,12 @@ class PayrollController extends Controller
         ]);
     }
 
-    /** Whole months the person has been on salary, up to this month. */
-    private function monthsOwed(Employee $employee, $payments): int
+    /**
+     * Whole months the person has been on salary, up to this month.
+     *
+     * @param  Collection<int, BdtEntry>  $payments
+     */
+    private function monthsOwed(Employee $employee, Collection $payments): int
     {
         $first = $employee->joined_on ?? ($payments->min('salary_month') ? CarbonImmutable::parse($payments->min('salary_month').'-01') : null);
 
@@ -168,6 +173,7 @@ class PayrollController extends Controller
         return back();
     }
 
+    /** @return array<string, mixed> */
     private function validatedEmployee(Request $request): array
     {
         $data = $request->validate([

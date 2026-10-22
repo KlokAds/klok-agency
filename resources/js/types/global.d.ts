@@ -21,6 +21,8 @@ declare module '@inertiajs/core' {
             auth: Auth;
             notice: string | null;
             idleMinutes: number | null;
+            unread: number;
+            locale: 'bn' | 'en';
             [key: string]: unknown;
         };
     }

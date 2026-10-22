@@ -12,8 +12,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([AccessSeeder::class, BooksSeeder::class]);
 
-        $email = env('OWNER_EMAIL');
-        $password = env('OWNER_PASSWORD');
+        $email = config('app.owner.email');
+        $password = config('app.owner.password');
 
         if (! $email || ! $password) {
             $this->command?->warn('OWNER_EMAIL / OWNER_PASSWORD not set in .env — no owner account created.');
@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $owner = User::firstOrCreate(['email' => $email], [
-            'name' => env('OWNER_NAME', 'Klok Ads'),
+            'name' => config('app.owner.name'),
             'password' => $password,
             'email_verified_at' => now(),
         ]);

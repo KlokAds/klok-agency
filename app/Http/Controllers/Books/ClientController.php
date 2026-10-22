@@ -3,17 +3,23 @@
 namespace App\Http\Controllers\Books;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdRun;
 use App\Models\BdtEntry;
 use App\Models\Client;
+use App\Models\Task;
 use App\Models\UsdEntry;
+use App\Models\User;
 use App\Services\Books;
+use App\Services\PilotClient;
 use App\Support\Lookups;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class ClientController extends Controller
 {
@@ -50,7 +56,7 @@ class ClientController extends Controller
         $spend = $books->usdEntries()->where('client_id', $client->id)->where('category', 'client_spend')
             ->map(fn ($e) => [
                 'key' => 'u'.$e->id, 'id' => $e->id, 'book' => 'usd', 'date' => $e->entry_date?->toDateString(),
-                'sort' => [$e->entry_date?->timestamp ?? 0, 0, $e->sequence],
+                'sort' => [$e->entry_date->timestamp ?? 0, 0, $e->sequence],
                 'description' => $e->description, 'account' => $e->account?->name,
                 'usd' => -$e->amount, 'cost' => $books->costOf($e), 'bdt' => null, 'status' => $e->status,
             ]);
@@ -58,7 +64,7 @@ class ClientController extends Controller
         $payments = $books->bdtEntries()->where('client_id', $client->id)->whereIn('category', BdtEntry::REVENUE)
             ->map(fn ($e) => [
                 'key' => 'b'.$e->id, 'id' => $e->id, 'book' => 'bdt', 'date' => $e->entry_date?->toDateString(),
-                'sort' => [$e->entry_date?->timestamp ?? 0, 1, $e->sequence],
+                'sort' => [$e->entry_date->timestamp ?? 0, 1, $e->sequence],
                 'description' => $e->description, 'account' => BdtEntry::categoryLabel($e->category),
                 'usd' => null, 'cost' => null, 'bdt' => $e->amount, 'status' => null,
             ]);
@@ -70,10 +76,45 @@ class ClientController extends Controller
         });
 
         return Inertia::render('clients/Show', [
-            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes']),
+            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'pilot_shop_id']),
             'figures' => $figures,
             'statement' => $statement,
+            'runs' => AdRun::with('account:id,name')->where('client_id', $client->id)->latest('start_on')->limit(10)->get()
+                ->map(fn (AdRun $r) => [
+                    'id' => $r->id, 'title' => $r->title, 'platform' => $r->account?->name, 'status' => $r->status,
+                    'start_on' => $r->start_on->toDateString(), 'end_on' => $r->end_on->toDateString(),
+                    'budget_usd' => $r->budget_usd, 'result' => $r->result, 'days_left' => $r->daysLeft(),
+                ]),
+            'tasks' => Task::with('assignee:id,name')->where('client_id', $client->id)->whereNull('done_at')->orderBy('due_at')->limit(10)->get()
+                ->map(fn (Task $t) => [
+                    'id' => $t->id, 'title' => $t->title, 'kind' => $t->kind, 'due_at' => $t->due_at?->format('Y-m-d\TH:i'),
+                    'assignee' => $t->assignee?->name, 'overdue' => $t->due_at !== null && $t->due_at->isPast(),
+                ]),
+            'options' => [
+                'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
+                'shops' => $this->pilotShops(),
+            ],
         ]);
+    }
+
+    /**
+     * Klok Pilot shops the agency token can see, for linking this client (cached briefly).
+     *
+     * @return array<int, array{value: int, label: string}>
+     */
+    private function pilotShops(): array
+    {
+        if (! PilotClient::connected()) {
+            return [];
+        }
+
+        return Cache::remember('pilot:shops', 600, function () {
+            try {
+                return collect(app(PilotClient::class)->shops())->map(fn ($s) => ['value' => $s['id'], 'label' => $s['name']])->all();
+            } catch (RuntimeException) {
+                return [];
+            }
+        });
     }
 
     public function store(Request $request): RedirectResponse
@@ -104,6 +145,7 @@ class ClientController extends Controller
         return redirect()->route('clients.index');
     }
 
+    /** @return array<string, mixed> */
     private function validated(Request $request, ?Client $client = null): array
     {
         return $request->validate([
@@ -114,6 +156,8 @@ class ClientController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'manager_id' => ['nullable', 'exists:users,id'],
+            'pilot_shop_id' => ['nullable', 'integer', 'min:1'],
         ], [], ['name' => __('নাম')]);
     }
 }

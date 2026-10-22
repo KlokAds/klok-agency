@@ -26,7 +26,7 @@ class ActivityController extends Controller
                 'log' => $a->log_name,
                 'event' => $a->event ?? $a->description,
                 'subject_id' => $a->subject_id,
-                'by' => $a->causer?->name ?? 'System',
+                'by' => $a->causer?->getAttribute('name') ?? 'System',
                 'changes' => $a->attribute_changes,
                 'properties' => $a->properties,
                 'at' => $a->created_at->toIso8601String(),

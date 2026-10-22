@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\Audited;
 use App\Models\Concerns\LedgerEntry;
 use App\Services\PaymentFees;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,6 +14,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * One movement of BDT. amount is signed poisha.
+ *
+ * @property CarbonImmutable|null $entry_date
+ * @property int $amount
+ * @property int $sequence
  */
 class BdtEntry extends Model
 {
@@ -53,42 +58,53 @@ class BdtEntry extends Model
         static::restored(fn (BdtEntry $entry) => PaymentFees::sync($entry));
     }
 
-    /** The fee row taken off this payment. */
+    /**
+     * The fee row taken off this payment.
+     *
+     * @return HasOne<BdtEntry, $this>
+     */
     public function fee(): HasOne
     {
         return $this->hasOne(BdtEntry::class, 'fee_for_id');
     }
 
+    /** @return BelongsTo<BdtEntry, $this> */
     public function feeFor(): BelongsTo
     {
         return $this->belongsTo(BdtEntry::class, 'fee_for_id');
     }
 
+    /** @return BelongsTo<Client, $this> */
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
     }
 
+    /** @return BelongsTo<ExpenseHead, $this> */
     public function head(): BelongsTo
     {
         return $this->belongsTo(ExpenseHead::class, 'expense_head_id');
     }
 
+    /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
+    /** @return BelongsTo<FxBatch, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(FxBatch::class, 'fx_batch_id');
     }
 
+    /** @return HasMany<UsdEntry, $this> */
     public function settles(): HasMany
     {
         return $this->hasMany(UsdEntry::class, 'settled_by_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

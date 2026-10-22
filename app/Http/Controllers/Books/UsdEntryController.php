@@ -78,6 +78,7 @@ class UsdEntryController extends Controller
         ]);
     }
 
+    /** @param  array<string, mixed>  $f */
     private function matches(UsdEntry $e, array $f): bool
     {
         if (! empty($f['q']) && ! str_contains(mb_strtolower($e->description.' '.$e->notes.' '.$e->client?->name), mb_strtolower($f['q']))) {
@@ -154,6 +155,7 @@ class UsdEntryController extends Controller
         }
     }
 
+    /** @return array<string, mixed> */
     private function validated(Request $request, ?UsdEntry $entry = null): array
     {
         $data = $request->validate([

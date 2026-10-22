@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Setting;
 use App\Models\UsdEntry;
+use App\Models\User;
 use App\Support\Access;
 use App\Support\Lookups;
 use Illuminate\Http\Request;
@@ -46,6 +47,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'notice' => fn () => $request->session()->get('notice'),
             'idleMinutes' => fn () => $user ? (int) Setting::get('idle_minutes', 30) : null,
+            'unread' => fn () => $user ? $user->unreadNotifications()->count() : 0,
             // Loaded only when the quick-entry panel opens (partial reload).
             'lookups' => Inertia::optional(fn () => $user ? [
                 // Inactive clients stay pickable: they can still owe money.
@@ -62,7 +64,8 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 
-    private function permissions($user): array
+    /** @return array<string, bool> */
+    private function permissions(User $user): array
     {
         $names = $user->hasRole(Access::OWNER) ? Access::all() : $user->getAllPermissions()->pluck('name')->all();
 

@@ -125,6 +125,7 @@ const blank = () => ({
     description: '' as string | null,
     notes: '' as string | null,
     settle_ids: [] as number[],
+    run_days: '' as string | null,
 });
 
 const form = useForm(blank());
@@ -365,6 +366,22 @@ const directions = computed<Option[]>(() => [
                             class="sm:col-span-2"
                         >
                             <KSegment v-model="form.status" :options="yesNo" />
+                        </KField>
+                        <KField
+                            :label="t('কত দিন চলবে')"
+                            optional
+                            :error="form.errors.run_days"
+                            :hint="
+                                t(
+                                    'দিলে ad-টা “Ad চালানো”-তে উঠবে, শেষের আগে renew-এর reminder আসবে।',
+                                )
+                            "
+                        >
+                            <KInput
+                                v-model="form.run_days"
+                                inputmode="numeric"
+                                :placeholder="t('যেমন 7')"
+                            />
                         </KField>
                     </template>
 

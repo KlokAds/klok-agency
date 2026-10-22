@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { router, useForm, usePage } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import TaskForm from '@/components/TaskForm.vue';
+import KSelect from '@/components/k/KSelect.vue';
 import KAmount from '@/components/k/KAmount.vue';
 import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
@@ -25,6 +27,29 @@ type Client = {
     email: string | null;
     company: string | null;
     notes: string | null;
+    manager_id: number | null;
+    pilot_shop_id: number | null;
+};
+
+type Run = {
+    id: number;
+    title: string;
+    platform: string | null;
+    status: string;
+    start_on: string;
+    end_on: string;
+    budget_usd: number;
+    result: string | null;
+    days_left: number;
+};
+
+type OpenTask = {
+    id: number;
+    title: string;
+    kind: string;
+    due_at: string | null;
+    assignee: string | null;
+    overdue: boolean;
 };
 
 const props = defineProps<{
@@ -49,7 +74,15 @@ const props = defineProps<{
         bdt: number | null;
         status: string | null;
     }[];
+    runs: Run[];
+    tasks: OpenTask[];
+    options: { users: Option[]; shops: Option[] };
 }>();
+
+const taskOpen = ref(false);
+const clientOptions = computed<Option[]>(() => [
+    { value: props.client.id, label: props.client.name },
+]);
 
 const can = computed(() => usePage().props.auth.can);
 const f = computed(
@@ -119,6 +152,12 @@ function print(): void {
         :lead="client.notes ?? undefined"
     >
         <KButton icon="print" @click="print">Statement print</KButton>
+        <KButton
+            v-if="can['tasks.create']"
+            icon="bell"
+            @click="taskOpen = true"
+            >{{ t('Reminder যোগ') }}</KButton
+        >
         <KButton v-if="can['clients.edit']" icon="pen" @click="open = true">{{
             t('বদলান')
         }}</KButton>
@@ -158,6 +197,101 @@ function print(): void {
                 cost {{ money(f.cost_pending, 'bdt') }}
             </p>
         </div>
+    </div>
+
+    <div class="no-print mb-6 grid gap-6 lg:grid-cols-2">
+        <section class="panel p-5 sm:p-6">
+            <div class="flex items-baseline justify-between">
+                <h2 class="text-[16px] font-bold">{{ t('Ad চালানো') }}</h2>
+                <Link
+                    v-if="can['runs.view']"
+                    :href="`/runs?client_id=${client.id}&view=all`"
+                    class="text-[13px] font-semibold text-brand-ink hover:underline"
+                    >{{ t('সব দেখুন') }} →</Link
+                >
+            </div>
+            <p v-if="!runs.length" class="mt-3 text-[13px] text-ink-3">
+                {{ t('এখনো কোনো ad run নেই।') }}
+            </p>
+            <ul v-else class="mt-2">
+                <li
+                    v-for="r in runs"
+                    :key="r.id"
+                    class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                >
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate font-medium">{{
+                            r.title
+                        }}</span>
+                        <span class="num text-[12px] text-ink-3"
+                            >{{ r.platform }} ·
+                            {{ niceDate(r.start_on, false) }} –
+                            {{ niceDate(r.end_on, false) }}</span
+                        >
+                    </span>
+                    <span class="num">{{ money(r.budget_usd, 'usd') }}</span>
+                    <KTag
+                        :tone="
+                            r.status === 'running'
+                                ? r.days_left <= 1
+                                    ? 'wait'
+                                    : 'brand'
+                                : 'neutral'
+                        "
+                        >{{
+                            r.status === 'running'
+                                ? t('{n} দিন বাকি', {
+                                      n: Math.max(0, r.days_left),
+                                  })
+                                : t('শেষ')
+                        }}</KTag
+                    >
+                </li>
+            </ul>
+        </section>
+
+        <section class="panel p-5 sm:p-6">
+            <div class="flex items-baseline justify-between">
+                <h2 class="text-[16px] font-bold">
+                    {{ t('বাকি কাজ ও reminder') }}
+                </h2>
+                <Link
+                    v-if="can['tasks.view']"
+                    :href="`/tasks?client_id=${client.id}`"
+                    class="text-[13px] font-semibold text-brand-ink hover:underline"
+                    >{{ t('সব দেখুন') }} →</Link
+                >
+            </div>
+            <p v-if="!tasks.length" class="mt-3 text-[13px] text-ink-3">
+                {{ t('কোনো কাজ বাকি নেই।') }}
+            </p>
+            <ul v-else class="mt-2">
+                <li
+                    v-for="task in tasks"
+                    :key="task.id"
+                    class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                >
+                    <span class="min-w-0 flex-1 truncate font-medium">{{
+                        t(task.title)
+                    }}</span>
+                    <span
+                        class="num shrink-0 text-[12px]"
+                        :class="
+                            task.overdue
+                                ? 'font-semibold text-out'
+                                : 'text-ink-3'
+                        "
+                        >{{
+                            task.due_at
+                                ? niceDate(task.due_at.slice(0, 10), false) +
+                                  ' ' +
+                                  task.due_at.slice(11, 16)
+                                : '—'
+                        }}</span
+                    >
+                </li>
+            </ul>
+        </section>
     </div>
 
     <section class="panel overflow-hidden">
@@ -243,6 +377,31 @@ function print(): void {
             <KField label="Company" optional class="sm:col-span-2"
                 ><KInput v-model="form.company"
             /></KField>
+            <KField
+                label="Manager"
+                optional
+                :hint="t('এই client-এর ad আর কাজের reminder এঁর কাছে যাবে।')"
+                ><KSelect
+                    v-model="form.manager_id"
+                    :options="options.users"
+                    :placeholder="t('কেউ না')"
+                    clearable
+            /></KField>
+            <KField
+                label="Klok Pilot shop"
+                optional
+                :hint="
+                    options.shops.length
+                        ? t('দিনের শেষে এই shop-এর ads-এর ফলাফল আসবে।')
+                        : t('Reminder ও Pilot-এ token দিলে shop দেখা যাবে।')
+                "
+                ><KSelect
+                    v-model="form.pilot_shop_id"
+                    :options="options.shops"
+                    :placeholder="t('যুক্ত নয়')"
+                    :disabled="!options.shops.length"
+                    clearable
+            /></KField>
             <KField label="Note" optional class="sm:col-span-2"
                 ><KTextarea v-model="form.notes"
             /></KField>
@@ -268,4 +427,11 @@ function print(): void {
             >
         </template>
     </KModal>
+
+    <TaskForm
+        v-model="taskOpen"
+        :task="null"
+        :client-id="client.id"
+        :options="{ clients: clientOptions, users: options.users }"
+    />
 </template>

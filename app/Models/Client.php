@@ -15,13 +15,15 @@ class Client extends Model
 
     public const STATUSES = ['active' => 'Active', 'inactive' => 'Inactive'];
 
-    protected $fillable = ['name', 'type', 'status', 'phone', 'email', 'company', 'notes'];
+    protected $fillable = ['name', 'type', 'status', 'manager_id', 'pilot_shop_id', 'phone', 'email', 'company', 'notes'];
 
+    /** @return HasMany<UsdEntry, $this> */
     public function usdEntries(): HasMany
     {
         return $this->hasMany(UsdEntry::class);
     }
 
+    /** @return HasMany<BdtEntry, $this> */
     public function bdtEntries(): HasMany
     {
         return $this->hasMany(BdtEntry::class);

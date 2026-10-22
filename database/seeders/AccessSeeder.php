@@ -31,10 +31,13 @@ class AccessSeeder extends Seeder
             'payroll.view',
             'reports.view', 'reports.export',
             'reconcile.view', 'reconcile.create',
+            'runs.view', 'runs.create', 'runs.edit',
+            'tasks.view', 'tasks.create', 'tasks.edit',
         ]);
 
         Role::findOrCreate('Viewer', 'web')->syncPermissions([
             'dashboard.view', 'usd.view', 'bdt.view', 'fx.view', 'clients.view', 'platforms.view', 'reports.view',
+            'runs.view', 'tasks.view',
         ]);
     }
 }

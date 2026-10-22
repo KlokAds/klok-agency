@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import BrandMark from '@/components/BrandMark.vue';
+import NotificationBell from '@/components/NotificationBell.vue';
 import QuickEntry from '@/components/QuickEntry.vue';
 import KButton from '@/components/k/KButton.vue';
 import KFeedbackHost from '@/components/k/KFeedbackHost.vue';
@@ -58,6 +59,18 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 perm: 'clients.view',
             },
             {
+                label: 'Ad চালানো',
+                href: '/runs',
+                icon: 'rocket',
+                perm: 'runs.view',
+            }, // i18n
+            {
+                label: 'কাজ ও reminder',
+                href: '/tasks',
+                icon: 'list',
+                perm: 'tasks.view',
+            }, // i18n
+            {
                 label: 'Ad Platform',
                 href: '/platforms',
                 icon: 'signal',
@@ -100,6 +113,12 @@ const groups: { title?: string; items: NavItem[] }[] = [
             },
             { label: 'Trash', href: '/trash', icon: 'bin', perm: 'trash.view' },
             {
+                label: 'Reminder ও Pilot',
+                href: '/admin/agency',
+                icon: 'bell',
+                perm: 'settings.view',
+            }, // i18n
+            {
                 label: 'Settings',
                 href: '/admin/settings',
                 icon: 'gear',
@@ -122,6 +141,9 @@ const canQuick = computed(() =>
 const path = computed(() => page.url.split('?')[0]);
 const isActive = (href: string) =>
     path.value === href || path.value.startsWith(href + '/');
+
+// The switch always names the other language, written in that language.
+const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN')); // i18n
 
 const drawer = ref(false);
 watch(path, () => (drawer.value = false));
@@ -241,15 +263,17 @@ function logout(): void {
                     >
                 </span>
 
+                <NotificationBell />
+
                 <button
                     type="button"
                     class="h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken hover:text-ink"
                     :aria-label="
-                        locale === 'en' ? 'বাংলায় দেখুন' : 'Switch to English'
+                        locale === 'en' ? 'বাংলায় দেখুন' : 'Switch to English' // i18n
                     "
                     @click="switchLocale(locale === 'en' ? 'bn' : 'en')"
                 >
-                    {{ locale === 'en' ? 'বাং' : 'EN' }}
+                    {{ otherLanguage }}
                 </button>
 
                 <button
