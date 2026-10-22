@@ -9,6 +9,7 @@ import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
+import KPager from '@/components/k/KPager.vue';
 import KMoney from '@/components/k/KMoney.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
@@ -17,7 +18,7 @@ import KTextarea from '@/components/k/KTextarea.vue';
 import { confirmAction } from '@/lib/feedback';
 import { money, niceDate, toInput, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import type { Option } from '@/types';
+import type { Option, Paginated } from '@/types';
 
 type Run = {
     id: number;
@@ -49,7 +50,7 @@ type Run = {
 };
 
 const props = defineProps<{
-    runs: Run[];
+    runs: Paginated<Run>;
     filters: { view: string; client_id: number | null; focus: number | null };
     counts: { running: number; ending: number };
     options: { clients: Option[]; platforms: Option[]; users: Option[] };
@@ -323,7 +324,7 @@ onMounted(() => {
     </section>
 
     <KEmpty
-        v-if="!runs.length"
+        v-if="!runs.data.length"
         :title="t('কোনো ad run নেই')"
         :body="
             t(
@@ -334,7 +335,7 @@ onMounted(() => {
 
     <div v-else class="grid gap-4 lg:grid-cols-2">
         <article
-            v-for="run in runs"
+            v-for="run in runs.data"
             :id="`run-${run.id}`"
             :key="run.id"
             class="panel flex flex-col p-5"
@@ -462,6 +463,7 @@ onMounted(() => {
             </div>
         </article>
     </div>
+    <KPager :page="runs" class="mt-4" />
 
     <!-- Add / edit -->
     <KModal

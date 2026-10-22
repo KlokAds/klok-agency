@@ -7,13 +7,14 @@ import type { TaskRow } from '@/components/TaskForm.vue';
 import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KIcon from '@/components/k/KIcon.vue';
+import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import { confirmAction } from '@/lib/feedback';
 import { niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import type { Option } from '@/types';
+import type { Option, Paginated } from '@/types';
 
 type Task = TaskRow & {
     client: string | null;
@@ -26,7 +27,7 @@ type Task = TaskRow & {
 };
 
 const props = defineProps<{
-    tasks: Task[];
+    tasks: Paginated<Task>;
     filters: {
         view: string;
         who: string;
@@ -171,7 +172,7 @@ onMounted(() => {
 
     <section class="panel overflow-hidden">
         <KEmpty
-            v-if="!tasks.length"
+            v-if="!tasks.data.length"
             :title="
                 view === 'done'
                     ? t('এখনো কিছু শেষ হয়নি')
@@ -180,7 +181,7 @@ onMounted(() => {
         />
         <ul v-else class="divide-y divide-dashed divide-line">
             <li
-                v-for="task in tasks"
+                v-for="task in tasks.data"
                 :id="`task-${task.id}`"
                 :key="task.id"
                 class="group flex items-start gap-3 px-4 py-3.5 sm:px-5"
@@ -271,6 +272,7 @@ onMounted(() => {
                 </div>
             </li>
         </ul>
+        <KPager :page="tasks" />
     </section>
 
     <TaskForm v-model="formOpen" :task="editing" :options="options" />

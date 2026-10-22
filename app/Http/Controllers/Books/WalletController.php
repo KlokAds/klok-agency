@@ -25,10 +25,17 @@ class WalletController extends Controller
     {
         $summary = $books->summary();
 
-        $untagged = BdtEntry::with('client:id,name')->whereNull('wallet')
-            ->orderByRaw('entry_date is null')->orderBy('entry_date')->orderBy('sequence')->orderBy('id')
-            ->get()
-            ->map(fn (BdtEntry $e) => [
+        $query = BdtEntry::with('client:id,name')->whereNull('wallet')
+            ->orderByRaw('entry_date is null')->orderBy('entry_date')->orderBy('sequence')->orderBy('id');
+        $untagged = $query->clone()->paginate(30, ['*'], 'untagged_page');
+
+        // Tagging the last rows of the last page: show the page before it, not an empty list.
+        if ($untagged->isEmpty() && $untagged->currentPage() > 1) {
+            $untagged = $query->paginate(30, ['*'], 'untagged_page', max(1, $untagged->lastPage()));
+        }
+
+        $untagged = $untagged->withQueryString()
+            ->through(fn (BdtEntry $e) => [
                 'id' => $e->id,
                 'date' => $e->entry_date?->toDateString(),
                 'description' => $e->description,
@@ -42,8 +49,10 @@ class WalletController extends Controller
             'card' => $summary['card'],
             'platform_due' => $summary['platform_due'],
             'untagged' => $untagged,
-            'moves' => WalletMove::latest('moved_on')->latest('id')->limit(30)->get()
-                ->map(fn (WalletMove $m) => [
+            'moves' => WalletMove::latest('moved_on')->latest('id')
+                ->paginate(20, ['*'], 'moves_page')
+                ->withQueryString()
+                ->through(fn (WalletMove $m) => [
                     'id' => $m->id, 'date' => $m->moved_on->toDateString(), 'from' => $m->from_wallet,
                     'to' => $m->to_wallet, 'amount' => $m->amount, 'note' => $m->note,
                 ]),

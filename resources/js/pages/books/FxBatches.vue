@@ -9,10 +9,12 @@ import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KMoney from '@/components/k/KMoney.vue';
+import KPager from '@/components/k/KPager.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { confirmAction } from '@/lib/feedback';
 import { t } from '@/lib/i18n';
 import { money, niceDate, toInput } from '@/lib/format';
+import type { Paginated } from '@/types';
 
 type Batch = {
     id: number;
@@ -28,7 +30,8 @@ type Batch = {
 };
 
 defineProps<{
-    batches: Batch[];
+    batches: Paginated<Batch>;
+    pool: Batch[];
     totals: {
         usd: number;
         bdt: number;
@@ -156,7 +159,7 @@ async function remove(batch: Batch): Promise<void> {
         </div>
         <div class="flex h-10 gap-[2px] overflow-hidden rounded-lg">
             <div
-                v-for="b in batches"
+                v-for="b in pool"
                 :key="b.id"
                 class="relative flex bg-sunken"
                 :style="{ flexGrow: b.usd }"
@@ -208,7 +211,7 @@ async function remove(batch: Batch): Promise<void> {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="b in batches" :key="b.id" class="group">
+                <tr v-for="b in batches.data" :key="b.id" class="group">
                     <td class="num font-semibold">{{ b.number }}</td>
                     <td class="num text-[12.5px] text-ink-2">
                         {{ niceDate(b.date) }}
@@ -251,6 +254,7 @@ async function remove(batch: Batch): Promise<void> {
                 </tr>
             </tbody>
         </table>
+        <KPager :page="batches" />
     </section>
 
     <KModal

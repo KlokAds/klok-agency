@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\User;
 use App\Support\Lookups;
+use App\Support\Paging;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class TaskController extends Controller
         $who = $filters['who'] ?? 'all';
         $me = $request->user()->id;
 
-        $tasks = Task::with(['client:id,name', 'assignee:id,name', 'adRun:id,title'])
+        $query = Task::with(['client:id,name', 'assignee:id,name', 'adRun:id,title'])
             ->when($who === 'mine', fn ($q) => $q->where('assigned_to', $me))
             ->when($filters['client_id'] ?? null, fn ($q, $id) => $q->where('client_id', $id))
             ->when($view === 'open', fn ($q) => $q->whereNull('done_at'))
@@ -40,9 +41,14 @@ class TaskController extends Controller
             ->when($view === 'done', fn ($q) => $q->whereNotNull('done_at')->latest('done_at'))
             ->orderByRaw('case when due_at is null then 1 else 0 end')
             ->orderBy('due_at')
-            ->limit(300)
-            ->get()
-            ->map(fn (Task $t) => [
+            ->orderBy('id');
+
+        // A reminder link opens the page its task is on.
+        $page = $request->has('page') ? null : Paging::pageOf($query, $filters['focus'] ?? null, 40);
+
+        $tasks = $query->paginate(40, ['*'], 'page', $page)
+            ->withQueryString()
+            ->through(fn (Task $t) => [
                 'id' => $t->id,
                 'title' => $t->title,
                 'notes' => $t->notes,

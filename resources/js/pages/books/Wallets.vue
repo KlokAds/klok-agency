@@ -9,11 +9,12 @@ import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KMoney from '@/components/k/KMoney.vue';
+import KPager from '@/components/k/KPager.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import { confirmAction } from '@/lib/feedback';
 import { money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import type { Option } from '@/types';
+import type { Option, Paginated } from '@/types';
 
 type Move = {
     id: number;
@@ -35,15 +36,15 @@ const props = defineProps<{
     };
     card: number;
     platform_due: number;
-    untagged: {
+    untagged: Paginated<{
         id: number;
         date: string | null;
         description: string;
         category: string;
         client: string | null;
         amount: number;
-    }[];
-    moves: Move[];
+    }>;
+    moves: Paginated<Move>;
     options: { wallets: Option[] };
 }>();
 
@@ -51,13 +52,10 @@ const can = computed(() => usePage().props.auth.can);
 const label = (key: string) =>
     props.options.wallets.find((w) => w.value === key)?.label ?? key;
 
-async function tagRest(
-    wallet: string | number | null | undefined,
-): Promise<void> {
-    if (!wallet) {
-        return;
-    }
+// The place button that is being saved, so it cannot be clicked twice.
+const busy = ref<string | null>(null);
 
+async function tagRest(wallet: string | number): Promise<void> {
     const ok = await confirmAction({
         title: t('বাকি সব entry {place}-এ রাখবেন?', {
             place: label(String(wallet)),
@@ -65,22 +63,37 @@ async function tagRest(
         body: t(
             '{n}টা entry-র জায়গা একসাথে বসবে। পরে BDT খাতা থেকে যেকোনোটা বদলানো যায়।',
             {
-                n: props.untagged.length,
+                n: props.untagged.total,
             },
         ),
         confirm: t('হ্যাঁ, রাখুন'),
     });
 
     if (ok) {
-        router.put('/wallets/tag-rest', { wallet }, { preserveScroll: true });
+        busy.value = `rest:${wallet}`;
+        router.put(
+            '/wallets/tag-rest',
+            { wallet },
+            { preserveScroll: true, onFinish: () => (busy.value = null) },
+        );
     }
 }
 
-function tag(id: number, wallet: string | number | null | undefined): void {
+function tag(id: number, wallet: string | number): void {
+    if (busy.value) {
+        return;
+    }
+
+    busy.value = `${id}:${wallet}`;
     router.put(
         `/wallets/tag/${id}`,
-        { wallet: wallet ?? null },
-        { preserveScroll: true },
+        { wallet },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['wallets', 'untagged'],
+            onFinish: () => (busy.value = null),
+        },
     );
 }
 
@@ -208,15 +221,28 @@ async function removeMove(move: Move): Promise<void> {
                     <h2 class="text-[16px] font-bold">
                         {{ t('জায়গা বাছা হয়নি') }}
                     </h2>
-                    <div v-if="can['bdt.edit'] && untagged.length" class="w-44">
-                        <KSelect
-                            :model-value="null"
-                            :options="options.wallets"
-                            :placeholder="t('বাকি সব একসাথে…')"
-                            :searchable="false"
-                            size="sm"
-                            @update:model-value="tagRest"
-                        />
+                    <div
+                        v-if="can['bdt.edit'] && untagged.total"
+                        class="flex items-center gap-2"
+                    >
+                        <span class="text-[12px] text-ink-3">{{
+                            t('বাকি সব:')
+                        }}</span>
+                        <div class="flex gap-1">
+                            <button
+                                v-for="w in options.wallets"
+                                :key="String(w.value)"
+                                type="button"
+                                class="h-7 rounded-lg border border-line px-2.5 text-[12px] font-semibold hover:bg-sunken disabled:cursor-default"
+                                :class="
+                                    busy === `rest:${w.value}` && 'opacity-60'
+                                "
+                                :disabled="!!busy"
+                                @click="tagRest(w.value)"
+                            >
+                                {{ w.label }}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <p class="text-[12.5px] text-ink-3">
@@ -228,16 +254,16 @@ async function removeMove(move: Move): Promise<void> {
                 </p>
             </div>
             <p
-                v-if="!untagged.length"
+                v-if="!untagged.data.length"
                 class="px-5 py-8 text-center text-[13px] text-ink-3 sm:px-6"
             >
                 {{ t('সব entry-র জায়গা বাছা আছে।') }}
             </p>
             <ul v-else class="mt-3">
                 <li
-                    v-for="e in untagged"
+                    v-for="e in untagged.data"
                     :key="e.id"
-                    class="flex flex-wrap items-center gap-3 border-t border-dashed border-line px-5 py-2.5 text-[13px] sm:flex-nowrap sm:px-6"
+                    class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-dashed border-line px-5 py-2.5 text-[13px] sm:flex-nowrap sm:px-6"
                 >
                     <span class="num w-20 shrink-0 text-[12px] text-ink-3">{{
                         e.date ? niceDate(e.date, false) : t('তারিখ নেই')
@@ -260,18 +286,27 @@ async function removeMove(move: Move): Promise<void> {
                             money(e.amount, 'bdt', { sign: true, round: false })
                         }}</span
                     >
-                    <div v-if="can['bdt.edit']" class="w-32 shrink-0">
-                        <KSelect
-                            :model-value="null"
-                            :options="options.wallets"
-                            :placeholder="t('কোথায়?')"
-                            :searchable="false"
-                            size="sm"
-                            @update:model-value="(v) => tag(e.id, v)"
-                        />
+                    <div
+                        v-if="can['bdt.edit']"
+                        class="grid w-full shrink-0 grid-cols-3 gap-1 sm:flex sm:w-auto"
+                    >
+                        <button
+                            v-for="w in options.wallets"
+                            :key="String(w.value)"
+                            type="button"
+                            class="h-7 rounded-lg border border-line px-2.5 text-[12px] font-semibold hover:bg-sunken disabled:cursor-default"
+                            :class="
+                                busy === `${e.id}:${w.value}` && 'opacity-60'
+                            "
+                            :disabled="!!busy"
+                            @click="tag(e.id, w.value)"
+                        >
+                            {{ w.label }}
+                        </button>
                     </div>
                 </li>
             </ul>
+            <KPager :page="untagged" />
         </section>
 
         <section class="panel overflow-hidden">
@@ -286,14 +321,14 @@ async function removeMove(move: Move): Promise<void> {
                 </p>
             </div>
             <p
-                v-if="!moves.length"
+                v-if="!moves.data.length"
                 class="px-5 py-8 text-center text-[13px] text-ink-3 sm:px-6"
             >
                 {{ t('এখনো কিছু সরানো হয়নি।') }}
             </p>
             <ul v-else class="mt-3">
                 <li
-                    v-for="m in moves"
+                    v-for="m in moves.data"
                     :key="m.id"
                     class="flex items-center gap-3 border-t border-dashed border-line px-5 py-2.5 text-[13px] sm:px-6"
                 >
@@ -320,6 +355,7 @@ async function removeMove(move: Move): Promise<void> {
                     </button>
                 </li>
             </ul>
+            <KPager :page="moves" />
         </section>
     </div>
 

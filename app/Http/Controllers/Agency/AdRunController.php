@@ -10,6 +10,7 @@ use App\Services\Agency;
 use App\Support\ClientMessage;
 use App\Support\Lookups;
 use App\Support\Money;
+use App\Support\Paging;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class AdRunController extends Controller
         ]);
         $view = $filters['view'] ?? 'running';
 
-        $runs = AdRun::with(['client:id,name,phone', 'account:id,name', 'assignee:id,name'])
+        $query = AdRun::with(['client:id,name,phone', 'account:id,name', 'assignee:id,name'])
             ->withCount(['tasks as open_tasks' => fn ($q) => $q->whereNull('done_at')])
             ->when($filters['client_id'] ?? null, fn ($q, $id) => $q->where('client_id', $id))
             ->when($view === 'running', fn ($q) => $q->where('status', 'running'))
@@ -41,9 +42,14 @@ class AdRunController extends Controller
             ->when($view === 'ended', fn ($q) => $q->whereIn('status', ['ended', 'renewed', 'stopped']))
             ->orderByRaw("case when status = 'running' then 0 else 1 end")
             ->orderBy('end_on')
-            ->limit(300)
-            ->get()
-            ->map(fn (AdRun $run) => $this->present($run));
+            ->orderBy('id');
+
+        // A reminder link opens the page its run is on.
+        $page = $request->has('page') ? null : Paging::pageOf($query, $filters['focus'] ?? null, 30);
+
+        $runs = $query->paginate(30, ['*'], 'page', $page)
+            ->withQueryString()
+            ->through(fn (AdRun $run) => $this->present($run));
 
         return Inertia::render('agency/Runs', [
             'runs' => $runs,

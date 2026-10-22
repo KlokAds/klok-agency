@@ -5,12 +5,16 @@ import { computed } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
+import KPager from '@/components/k/KPager.vue';
+import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import { ago, money } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { useFilters } from '@/composables/useFilters';
+import type { Option, Paginated } from '@/types';
 
-defineProps<{
-    items: {
+const props = defineProps<{
+    items: Paginated<{
         type: string;
         type_label: string;
         id: number;
@@ -18,8 +22,12 @@ defineProps<{
         amount: number | null;
         currency: 'usd' | 'bdt';
         deleted_at: string;
-    }[];
+    }>;
+    filters: { type: string | null };
+    types: Option[];
 }>();
+
+const { filters } = useFilters('/trash', { type: props.filters.type });
 
 const can = computed(() => usePage().props.auth.can);
 
@@ -40,15 +48,27 @@ function restore(type: string, id: number): void {
         "
     />
 
+    <div class="mb-4 flex">
+        <KSelect
+            v-model="filters.type"
+            :options="types"
+            :placeholder="t('সব ধরন')"
+            :searchable="false"
+            clearable
+            size="sm"
+            class="w-48"
+        />
+    </div>
+
     <section class="panel overflow-hidden">
         <KEmpty
-            v-if="!items.length"
+            v-if="!items.data.length"
             :title="t('Trash খালি')"
             :body="t('কিছু মুছলে এখানে দেখা যাবে।')"
         />
         <ul v-else class="divide-y divide-dashed divide-line">
             <li
-                v-for="i in items"
+                v-for="i in items.data"
                 :key="i.type + i.id"
                 class="flex flex-wrap items-center gap-3 px-5 py-3.5 sm:px-6"
             >
@@ -69,5 +89,6 @@ function restore(type: string, id: number): void {
                 >
             </li>
         </ul>
+        <KPager :page="items" />
     </section>
 </template>

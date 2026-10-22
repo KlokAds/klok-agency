@@ -9,14 +9,16 @@ import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KMoney from '@/components/k/KMoney.vue';
+import KPager from '@/components/k/KPager.vue';
 import { money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import type { Paginated } from '@/types';
 
 const props = defineProps<{
     card: number;
     platform_due: number;
     business_usd: number;
-    history: {
+    history: Paginated<{
         id: number;
         date: string;
         app: number;
@@ -24,7 +26,7 @@ const props = defineProps<{
         difference: number;
         note: string | null;
         by: string | null;
-    }[];
+    }>;
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -150,7 +152,7 @@ const diff = computed(() =>
                 {{ t('আগের মিলানো') }}
             </h2>
             <KEmpty
-                v-if="!history.length"
+                v-if="!history.data.length"
                 :title="t('এখনো কোনো মিলানো নেই')"
                 :body="
                     t(
@@ -169,7 +171,7 @@ const diff = computed(() =>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="h in history" :key="h.id">
+                    <tr v-for="h in history.data" :key="h.id">
                         <td class="num text-[12.5px]">
                             {{ niceDate(h.date)
                             }}<span
@@ -194,6 +196,7 @@ const diff = computed(() =>
                     </tr>
                 </tbody>
             </table>
+            <KPager :page="history" />
         </section>
     </div>
 </template>

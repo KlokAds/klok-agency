@@ -11,10 +11,12 @@ import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KMoney from '@/components/k/KMoney.vue';
 import KMonth from '@/components/k/KMonth.vue';
+import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
+import { useFilters } from '@/composables/useFilters';
 import { confirmAction } from '@/lib/feedback';
 import { t } from '@/lib/i18n';
 import {
@@ -25,7 +27,7 @@ import {
     toInput,
     today,
 } from '@/lib/format';
-import type { Option } from '@/types';
+import type { Option, Paginated } from '@/types';
 
 type Employee = {
     id: number;
@@ -59,7 +61,9 @@ type Payment = {
 const props = defineProps<{
     employees: Employee[];
     months: string[];
-    payments: Payment[];
+    payments: Paginated<Payment>;
+    filters: { month: string | null; employee_id: number | null };
+    paid_months: string[];
     totals: {
         monthly: number;
         due: number;
@@ -71,6 +75,17 @@ const props = defineProps<{
 
 const can = computed(() => usePage().props.auth.can);
 const thisMonth = today().slice(0, 7);
+
+const { filters } = useFilters('/payroll', {
+    month: props.filters.month,
+    employee_id: props.filters.employee_id,
+});
+const monthOptions = computed<Option[]>(() =>
+    props.paid_months.map((m) => ({ value: m, label: monthLabel(m) })),
+);
+const employeeOptions = computed<Option[]>(() =>
+    props.employees.map((e) => ({ value: e.id, label: e.name })),
+);
 
 // Pay
 const payOpen = ref(false);
@@ -373,16 +388,39 @@ const shortMonth = (ym: string) =>
     </section>
 
     <section class="panel overflow-hidden">
-        <h2 class="px-5 pt-5 text-[16px] font-bold sm:px-6">
-            {{ t('বেতন দেওয়ার খাতা') }}
-        </h2>
+        <div
+            class="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 sm:px-6"
+        >
+            <h2 class="text-[16px] font-bold">
+                {{ t('বেতন দেওয়ার খাতা') }}
+            </h2>
+            <div class="flex flex-wrap gap-2">
+                <KSelect
+                    v-model="filters.month"
+                    :options="monthOptions"
+                    :placeholder="t('সব মাস')"
+                    :searchable="false"
+                    clearable
+                    size="sm"
+                    class="w-40"
+                />
+                <KSelect
+                    v-model="filters.employee_id"
+                    :options="employeeOptions"
+                    :placeholder="t('সব কর্মী')"
+                    clearable
+                    size="sm"
+                    class="w-44"
+                />
+            </div>
+        </div>
         <KEmpty
-            v-if="!payments.length"
+            v-if="!payments.data.length"
             :title="t('এখনো কোনো বেতন দেওয়া হয়নি')"
         />
         <ul v-else class="mt-2 px-5 pb-3 sm:px-6">
             <li
-                v-for="p in payments"
+                v-for="p in payments.data"
                 :key="p.id"
                 class="group flex flex-wrap items-center gap-3 border-b border-dashed border-line py-3 text-[13.5px] last:border-0"
             >
@@ -428,6 +466,7 @@ const shortMonth = (ym: string) =>
                 </button>
             </li>
         </ul>
+        <KPager :page="payments" />
     </section>
 
     <!-- Pay -->

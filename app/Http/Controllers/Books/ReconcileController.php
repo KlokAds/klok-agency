@@ -24,8 +24,8 @@ class ReconcileController extends Controller
             'card' => $summary['card'],
             'platform_due' => $summary['platform_due'],
             'business_usd' => $summary['business_usd'],
-            'history' => Reconciliation::with('author:id,name')->latest('checked_on')->latest('id')->limit(20)->get()
-                ->map(fn ($r) => [
+            'history' => Reconciliation::with('author:id,name')->latest('checked_on')->latest('id')->paginate(20)
+                ->through(fn ($r) => [
                     'id' => $r->id,
                     'date' => $r->checked_on->toDateString(),
                     'app' => $r->app_balance,

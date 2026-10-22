@@ -9,8 +9,11 @@ use App\Models\Employee;
 use App\Models\FxBatch;
 use App\Models\UsdEntry;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,12 +30,15 @@ class TrashController extends Controller
         'employee' => [Employee::class, 'কর্মী'], // i18n
     ];
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $items = collect(self::TYPES)->flatMap(function (array $meta, string $type): Collection {
+        $filters = $request->validate(['type' => ['nullable', Rule::in(array_keys(self::TYPES))]]);
+        $types = isset($filters['type']) ? [$filters['type'] => self::TYPES[$filters['type']]] : self::TYPES;
+
+        $items = collect($types)->flatMap(function (array $meta, string $type): Collection {
             [$model, $label] = $meta;
 
-            return $model::onlyTrashed()->latest('deleted_at')->limit(100)->get()->map(fn ($row) => [
+            return $model::onlyTrashed()->latest('deleted_at')->get()->map(fn ($row) => [
                 'type' => $type,
                 'type_label' => __($label),
                 'id' => $row->id,
@@ -43,7 +49,16 @@ class TrashController extends Controller
             ]);
         })->sortByDesc('deleted_at')->values();
 
-        return Inertia::render('admin/Trash', ['items' => $items]);
+        $page = LengthAwarePaginator::resolveCurrentPage();
+
+        return Inertia::render('admin/Trash', [
+            'items' => new LengthAwarePaginator(
+                $items->forPage($page, 40)->values(), $items->count(), 40, $page,
+                ['path' => $request->url(), 'query' => $request->query()],
+            ),
+            'filters' => ['type' => $filters['type'] ?? null],
+            'types' => collect(self::TYPES)->map(fn (array $meta, string $type) => ['value' => $type, 'label' => __($meta[1])])->values(),
+        ]);
     }
 
     public function restore(string $type, int $id): RedirectResponse

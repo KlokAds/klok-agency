@@ -23,24 +23,48 @@ use Inertia\Response;
 
 class ClientController extends Controller
 {
-    public function index(Books $books): Response
+    public function index(Request $request, Books $books): Response
     {
-        $figures = collect($books->clients())->keyBy('id');
-
-        $clients = Client::orderBy('name')->get()->map(fn ($c) => [
-            'id' => $c->id,
-            'name' => $c->name,
-            'type' => $c->type,
-            'status' => $c->status,
-            'phone' => $c->phone,
-            'email' => $c->email,
-            'company' => $c->company,
-            'notes' => $c->notes,
-            'figures' => $figures[$c->id] ?? null,
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', Rule::in([...array_keys(Client::STATUSES), 'all'])],
+            'type' => ['nullable', Rule::in(array_keys(Client::TYPES))],
         ]);
+        $filters['status'] ??= 'active';
+        $figures = collect($books->clients())->keyBy('id');
+        // The cards add up every client, not just this page (deleted ones left out).
+        $live = $figures->only(Client::pluck('id')->all());
+
+        $clients = Client::query()
+            ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q
+                ->where('name', 'like', "%{$term}%")
+                ->orWhere('company', 'like', "%{$term}%")
+                ->orWhere('notes', 'like', "%{$term}%")))
+            ->when($filters['status'] !== 'all', fn ($q) => $q->where('status', $filters['status']))
+            ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
+            ->orderBy('name')
+            ->paginate(30)
+            ->withQueryString()
+            ->through(fn (Client $c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'type' => $c->type,
+                'status' => $c->status,
+                'phone' => $c->phone,
+                'email' => $c->email,
+                'company' => $c->company,
+                'notes' => $c->notes,
+                'figures' => $figures[$c->id] ?? null,
+            ]);
 
         return Inertia::render('clients/Index', [
             'clients' => $clients,
+            'filters' => $filters,
+            'totals' => [
+                'margin' => $live->sum('margin'),
+                'spent' => $live->sum('usd_settled'),
+                'pending' => $live->sum('usd_pending'),
+            ],
             'options' => [
                 'types' => Lookups::options(Client::TYPES),
                 'statuses' => Lookups::options(Client::STATUSES),

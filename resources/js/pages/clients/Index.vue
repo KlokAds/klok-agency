@@ -7,12 +7,15 @@ import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
+import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
+import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
+import { useFilters } from '@/composables/useFilters';
 import { money } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import type { Option } from '@/types';
+import type { Option, Paginated } from '@/types';
 
 type Figures = {
     usd_settled: number;
@@ -36,32 +39,19 @@ type Client = {
 };
 
 const props = defineProps<{
-    clients: Client[];
+    clients: Paginated<Client>;
+    filters: { q?: string | null; status: string; type?: string | null };
+    totals: { margin: number; spent: number; pending: number };
     options: { types: Option[]; statuses: Option[] };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
-const query = ref('');
-const show = ref<'active' | 'all'>('active');
 
-const list = computed(() =>
-    props.clients
-        .filter((c) => show.value === 'all' || c.status === 'active')
-        .filter((c) =>
-            `${c.name} ${c.company ?? ''} ${c.notes ?? ''}`
-                .toLowerCase()
-                .includes(query.value.toLowerCase()),
-        ),
-);
-
-const totals = computed(() => ({
-    margin: props.clients.reduce((s, c) => s + (c.figures?.margin ?? 0), 0),
-    pending: props.clients.reduce(
-        (s, c) => s + (c.figures?.usd_pending ?? 0),
-        0,
-    ),
-    spent: props.clients.reduce((s, c) => s + (c.figures?.usd_settled ?? 0), 0),
-}));
+const { filters } = useFilters('/clients', {
+    q: props.filters.q ?? null,
+    status: props.filters.status,
+    type: props.filters.type ?? null,
+});
 
 const open = ref(false);
 const form = useForm({
@@ -82,7 +72,7 @@ function save(): void {
 }
 
 const showOptions = computed<Option[]>(() => [
-    { value: 'active', label: 'Active' },
+    ...props.options.statuses,
     { value: 'all', label: t('সব') },
 ]);
 </script>
@@ -129,19 +119,35 @@ const showOptions = computed<Option[]>(() => [
 
     <div class="mb-4 flex flex-wrap items-center gap-3">
         <KInput
-            v-model="query"
+            v-model="filters.q"
             type="search"
             icon="search"
             :placeholder="t('Client খুঁজুন')"
             size="sm"
             class="w-full max-w-xs"
         />
-        <KSegment v-model="show" :options="showOptions" size="sm" />
+        <KSegment v-model="filters.status" :options="showOptions" size="sm" />
+        <KSelect
+            v-model="filters.type"
+            :options="options.types"
+            :placeholder="t('সব ধরন')"
+            :searchable="false"
+            clearable
+            size="sm"
+            class="w-40"
+        />
     </div>
+
+    <p
+        v-if="!clients.data.length"
+        class="panel px-5 py-10 text-center text-[13px] text-ink-3"
+    >
+        {{ t('কোনো client পাওয়া যায়নি।') }}
+    </p>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Link
-            v-for="c in list"
+            v-for="c in clients.data"
             :key="c.id"
             :href="`/clients/${c.id}`"
             class="panel group flex flex-col p-5 transition-colors hover:border-line-2"
@@ -202,6 +208,7 @@ const showOptions = computed<Option[]>(() => [
             </p>
         </Link>
     </div>
+    <KPager :page="clients" class="mt-4" />
 
     <KModal
         v-model="open"

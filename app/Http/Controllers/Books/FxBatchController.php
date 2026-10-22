@@ -9,6 +9,7 @@ use App\Services\Postings;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -16,7 +17,7 @@ use Inertia\Response;
 
 class FxBatchController extends Controller
 {
-    public function index(Books $books): Response
+    public function index(Request $request, Books $books): Response
     {
         $fifo = $books->fifo();
 
@@ -36,8 +37,16 @@ class FxBatchController extends Controller
         $usd = $batches->sum('usd');
         $bdt = $batches->sum('bdt');
 
+        // Newest first in the table; the pool bar shows the latest batches in FIFO order.
+        $newest = $batches->reverse()->values();
+        $page = LengthAwarePaginator::resolveCurrentPage();
+
         return Inertia::render('books/FxBatches', [
-            'batches' => $batches,
+            'batches' => new LengthAwarePaginator(
+                $newest->forPage($page, 30)->values(), $newest->count(), 30, $page,
+                ['path' => $request->url(), 'query' => $request->query()],
+            ),
+            'pool' => $batches->take(-12)->values(),
             'totals' => [
                 'usd' => $usd,
                 'bdt' => $bdt,

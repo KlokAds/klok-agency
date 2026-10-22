@@ -11,6 +11,7 @@ use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -19,8 +20,12 @@ use Inertia\Response;
 
 class PayrollController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filters = $request->validate([
+            'month' => ['nullable', 'date_format:Y-m'],
+            'employee_id' => ['nullable', 'integer'],
+        ]);
         $months = collect(range(5, 0))->map(fn ($i) => now()->startOfMonth()->subMonths($i)->format('Y-m'));
         $payments = BdtEntry::where('category', 'salary')->with('employee')->ledgerOrder()->get();
 
@@ -46,10 +51,20 @@ class PayrollController extends Controller
             ];
         });
 
+        $shown = $payments->reverse()
+            ->when($filters['month'] ?? null, fn ($rows, $month) => $rows->where('salary_month', $month))
+            ->when($filters['employee_id'] ?? null, fn ($rows, $id) => $rows->where('employee_id', (int) $id))
+            ->values();
+        $page = LengthAwarePaginator::resolveCurrentPage('payments_page');
+        $history = new LengthAwarePaginator(
+            $shown->forPage($page, 30)->values(), $shown->count(), 30, $page,
+            ['path' => $request->url(), 'query' => $request->query(), 'pageName' => 'payments_page'],
+        );
+
         return Inertia::render('payroll/Index', [
             'employees' => $employees,
             'months' => $months,
-            'payments' => $payments->reverse()->take(30)->values()->map(fn ($p) => [
+            'payments' => $history->through(fn ($p) => [
                 'id' => $p->id,
                 'date' => $p->entry_date?->toDateString(),
                 'employee' => $p->employee?->name,
@@ -61,6 +76,11 @@ class PayrollController extends Controller
                 'description' => $p->description,
                 'notes' => $p->notes,
             ]),
+            'filters' => [
+                'month' => $filters['month'] ?? null,
+                'employee_id' => isset($filters['employee_id']) ? (int) $filters['employee_id'] : null,
+            ],
+            'paid_months' => $payments->pluck('salary_month')->filter()->unique()->sortDesc()->values(),
             'totals' => [
                 'monthly' => $employees->where('status', 'active')->sum('monthly_salary'),
                 'due' => $employees->sum(fn ($e) => max(0, $e['due'])),
