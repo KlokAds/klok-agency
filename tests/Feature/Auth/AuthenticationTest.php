@@ -65,6 +65,18 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_a_failed_login_says_so_in_words_not_a_message_key()
+    {
+        $this->post(route('login.store'), ['email' => 'nobody@example.com', 'password' => 'wrong-password'])
+            ->assertSessionHasErrors(['email' => 'এই email আর password মিলছে না।']);
+
+        $this->post(route('login.store'), ['email' => '', 'password' => ''])
+            ->assertSessionHasErrors(['email' => 'Email দিন।']);
+
+        $this->withCookie('locale', 'en')->post(route('login.store'), ['email' => 'nobody@example.com', 'password' => 'wrong-password'])
+            ->assertSessionHasErrors(['email' => 'These credentials do not match our records.']);
+    }
+
     public function test_users_can_logout()
     {
         $user = User::factory()->create();
