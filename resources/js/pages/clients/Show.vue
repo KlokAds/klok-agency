@@ -8,13 +8,14 @@ import KAmount from '@/components/k/KAmount.vue';
 import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { confirmAction } from '@/lib/feedback';
-import { money, niceDate } from '@/lib/format';
+import { ago, money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Option } from '@/types';
 
@@ -28,7 +29,6 @@ type Client = {
     company: string | null;
     notes: string | null;
     manager_id: number | null;
-    pilot_ad_account_id: number | null;
 };
 
 type Run = {
@@ -76,8 +76,64 @@ const props = defineProps<{
     }[];
     runs: Run[];
     tasks: OpenTask[];
-    options: { users: Option[]; ad_accounts: Option[] };
+    pilot: { days: number; accounts: PilotAccount[] } | null;
+    options: { users: Option[] };
 }>();
+
+// The client's ad accounts in Klok Pilot: last 1 / 7 / 30 days.
+type PilotAccount = {
+    id: number;
+    name: string;
+    external_id: string | null;
+    error: string | null;
+    currency: string;
+    synced_at: string | null;
+    totals: {
+        spend?: number;
+        results?: number;
+        cost_per_result?: number | null;
+        clicks?: number;
+    };
+    campaigns: {
+        name: string;
+        status: string | null;
+        spend: number;
+        results: number;
+        cost_per_result: number | null;
+        clicks: number;
+    }[];
+};
+
+const pilotDays = ref(String(props.pilot?.days ?? 7));
+const pilotLoading = ref(false);
+const dayOptions = computed<Option[]>(() => [
+    { value: '1', label: t('আজ') },
+    { value: '7', label: t('৭ দিন') },
+    { value: '30', label: t('৩০ দিন') },
+]);
+
+function loadPilot(days: string | number | null | undefined): void {
+    router.reload({
+        only: ['pilot'],
+        data: { pilot_days: days },
+        onStart: () => (pilotLoading.value = true),
+        onFinish: () => (pilotLoading.value = false),
+    });
+}
+
+function adMoney(value: number | null | undefined, currency: string): string {
+    if (value === null || value === undefined) {
+        return '—';
+    }
+
+    return (
+        (currency === 'BDT' ? String.fromCharCode(0x09f3) : '$') +
+        value.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })
+    );
+}
 
 const taskOpen = ref(false);
 const clientOptions = computed<Option[]>(() => [
@@ -198,6 +254,120 @@ function print(): void {
             </p>
         </div>
     </div>
+
+    <section v-if="pilot" class="no-print panel mb-6 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="flex items-center gap-2 text-[16px] font-bold">
+                <KIcon name="signal" class="text-brand" />{{
+                    t('Ad account (Klok Pilot)')
+                }}
+            </h2>
+            <KSegment
+                v-model="pilotDays"
+                :options="dayOptions"
+                size="sm"
+                @update:model-value="loadPilot"
+            />
+        </div>
+
+        <div
+            class="transition-opacity"
+            :class="pilotLoading ? 'opacity-50' : ''"
+        >
+            <div
+                v-for="a in pilot.accounts"
+                :key="a.id"
+                class="mt-5 border-t border-line pt-4 first:border-0 first:pt-0"
+            >
+                <p class="num truncate text-[13px] font-semibold">
+                    {{ a.name
+                    }}<span class="font-normal text-ink-3">
+                        <template v-if="a.external_id">
+                            · {{ a.external_id }}</template
+                        ><template v-if="a.synced_at">
+                            · sync {{ ago(a.synced_at) }}</template
+                        ></span
+                    >
+                </p>
+                <p v-if="a.error" class="mt-2 text-[13px] text-out">
+                    {{ a.error }}
+                </p>
+                <template v-else>
+                    <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div class="rounded-xl bg-sunken px-4 py-3">
+                            <p class="text-[12px] text-ink-3">
+                                {{ t('খরচ') }}
+                            </p>
+                            <p class="num mt-1 text-[17px] font-bold">
+                                {{ adMoney(a.totals.spend ?? 0, a.currency) }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-sunken px-4 py-3">
+                            <p class="text-[12px] text-ink-3">Result</p>
+                            <p class="num mt-1 text-[17px] font-bold">
+                                {{ a.totals.results ?? 0 }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-sunken px-4 py-3">
+                            <p class="text-[12px] text-ink-3">
+                                {{ t('প্রতি result খরচ') }}
+                            </p>
+                            <p class="num mt-1 text-[17px] font-bold">
+                                {{
+                                    adMoney(
+                                        a.totals.cost_per_result,
+                                        a.currency,
+                                    )
+                                }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-sunken px-4 py-3">
+                            <p class="text-[12px] text-ink-3">Click</p>
+                            <p class="num mt-1 text-[17px] font-bold">
+                                {{
+                                    (a.totals.clicks ?? 0).toLocaleString(
+                                        'en-US',
+                                    )
+                                }}
+                            </p>
+                        </div>
+                    </div>
+                    <p
+                        v-if="!a.campaigns.length"
+                        class="mt-3 text-[13px] text-ink-3"
+                    >
+                        {{ t('এই সময়ে কোনো campaign-এ খরচ হয়নি।') }}
+                    </p>
+                    <ul v-else class="mt-2">
+                        <li
+                            v-for="c in a.campaigns.slice(0, 8)"
+                            :key="c.name"
+                            class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                        >
+                            <span class="min-w-0 flex-1 truncate font-medium">{{
+                                c.name
+                            }}</span>
+                            <span class="num shrink-0">{{
+                                adMoney(c.spend, a.currency)
+                            }}</span>
+                            <span class="num w-20 shrink-0 text-right"
+                                >{{ c.results }} result</span
+                            >
+                            <span
+                                class="num hidden w-28 shrink-0 text-right text-ink-3 sm:block"
+                                >{{
+                                    c.cost_per_result !== null
+                                        ? 'CPR ' +
+                                          adMoney(c.cost_per_result, a.currency)
+                                        : '—'
+                                }}</span
+                            >
+                        </li>
+                    </ul>
+                </template>
+            </div>
+        </div>
+    </section>
 
     <div class="no-print mb-6 grid gap-6 lg:grid-cols-2">
         <section class="panel p-5 sm:p-6">
@@ -385,23 +555,6 @@ function print(): void {
                     v-model="form.manager_id"
                     :options="options.users"
                     :placeholder="t('কেউ না')"
-                    clearable
-            /></KField>
-            <KField
-                label="Klok Pilot ad account"
-                optional
-                :hint="
-                    options.ad_accounts.length
-                        ? t('দিনের শেষে এই ad account-এর ফলাফল আসবে।')
-                        : t(
-                              'Reminder ও Pilot-এ token দিলে ad account দেখা যাবে।',
-                          )
-                "
-                ><KSelect
-                    v-model="form.pilot_ad_account_id"
-                    :options="options.ad_accounts"
-                    :placeholder="t('যুক্ত নয়')"
-                    :disabled="!options.ad_accounts.length"
                     clearable
             /></KField>
             <KField label="Note" optional class="sm:col-span-2"

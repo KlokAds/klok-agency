@@ -145,5 +145,16 @@
     "২ দিন আগে": "2 days before",
     "৩ দিন আগে": "3 days before",
     "গতকালের ads আর কাজের সারসংক্ষেপ": "Summary of yesterday's ads and tasks",
-    "গতকাল খরচ ${spent} · {ending}টা ad শেষ হচ্ছে · {tasks}টা কাজ বাকি": "Spent yesterday ${spent} · {ending} ads ending · {tasks} tasks due"
+    "গতকাল খরচ ${spent} · {ending}টা ad শেষ হচ্ছে · {tasks}টা কাজ বাকি": "Spent yesterday ${spent} · {ending} ads ending · {tasks} tasks due",
+    "Klok Pilot-এ যুক্ত প্রতিটা ad account, তার campaign আর খরচ — কোন account কোন client-এর, সেটাও এখানে ঠিক করুন।": "Every ad account connected in Klok Pilot, with its campaigns and spend — and which client each account belongs to.",
+    "নতুন করে আনুন": "Refresh",
+    "Klok Pilot যুক্ত নয়": "Klok Pilot is not connected",
+    "Reminder ও Pilot পাতায় Klok Pilot যুক্ত করলে ad account এখানে আসবে।": "Connect Klok Pilot on the Reminders & Pilot page and the ad accounts will show here.",
+    "কোনো ad account নেই": "No ad accounts",
+    "Klok Pilot-এ ad account যুক্ত করলে এখানে দেখা যাবে।": "Ad accounts connected in Klok Pilot will show here.",
+    "কোন client-এর?": "Which client?",
+    "Client বাছা হয়নি": "No client chosen",
+    ":account এখন :client-এর।": ":account now belongs to :client.",
+    ":account কোনো client-এর সাথে যুক্ত নয়।": ":account is not linked to any client.",
+    "Klok Pilot থেকে নতুন করে আনা হয়েছে।": "Fetched fresh from Klok Pilot."
 }

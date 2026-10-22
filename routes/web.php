@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Agency\AdRunController;
 use App\Http\Controllers\Agency\AgencySettingsController;
 use App\Http\Controllers\Agency\NotificationController;
+use App\Http\Controllers\Agency\PilotAccountController;
 use App\Http\Controllers\Agency\TaskController;
 use App\Http\Controllers\Agency\TickController;
 use App\Http\Controllers\Books\BdtEntryController;
@@ -63,6 +64,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('runs/{run}/renew', [AdRunController::class, 'renew'])->middleware('can:runs.create')->name('runs.renew');
     Route::post('runs/{run}/stop', [AdRunController::class, 'stop'])->middleware('can:runs.edit')->name('runs.stop');
     Route::delete('runs/{run}', [AdRunController::class, 'destroy'])->middleware('can:runs.delete')->name('runs.destroy');
+
+    Route::get('ad-accounts', [PilotAccountController::class, 'index'])->middleware('can:runs.view')->name('ad-accounts.index');
+    Route::post('ad-accounts/refresh', [PilotAccountController::class, 'refresh'])->middleware('can:runs.view')->name('ad-accounts.refresh');
+    Route::put('ad-accounts/{account}/client', [PilotAccountController::class, 'link'])->middleware('can:clients.edit')->name('ad-accounts.link');
 
     Route::get('tasks', [TaskController::class, 'index'])->middleware('can:tasks.view')->name('tasks.index');
     Route::post('tasks', [TaskController::class, 'store'])->middleware('can:tasks.create')->name('tasks.store');

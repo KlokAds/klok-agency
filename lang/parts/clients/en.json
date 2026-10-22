@@ -95,5 +95,9 @@
     "হিসাব": "Accounts",
     "১. Revenue — client-ভিত্তিক margin (শুধু Settled)": "1. Revenue — margin by client (Settled only)",
     "২. Expenses": "2. Expenses",
-    "৩. ফলাফল": "3. Result"
+    "৩. ফলাফল": "3. Result",
+    "৭ দিন": "7 days",
+    "৩০ দিন": "30 days",
+    "প্রতি result খরচ": "Cost per result",
+    "এই সময়ে কোনো campaign-এ খরচ হয়নি।": "No campaign spent anything in this period."
 }

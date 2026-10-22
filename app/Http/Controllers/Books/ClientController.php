@@ -6,20 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\AdRun;
 use App\Models\BdtEntry;
 use App\Models\Client;
+use App\Models\PilotAccount;
 use App\Models\Task;
 use App\Models\UsdEntry;
 use App\Models\User;
 use App\Services\Books;
+use App\Services\PilotAccounts;
 use App\Services\PilotClient;
 use App\Support\Lookups;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use RuntimeException;
 
 class ClientController extends Controller
 {
@@ -48,7 +48,7 @@ class ClientController extends Controller
         ]);
     }
 
-    public function show(Client $client, Books $books): Response
+    public function show(Request $request, Client $client, Books $books): Response
     {
         $figures = collect($books->clients())->firstWhere('id', $client->id);
 
@@ -76,7 +76,7 @@ class ClientController extends Controller
         });
 
         return Inertia::render('clients/Show', [
-            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'pilot_ad_account_id']),
+            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id']),
             'figures' => $figures,
             'statement' => $statement,
             'runs' => AdRun::with('account:id,name')->where('client_id', $client->id)->latest('start_on')->limit(10)->get()
@@ -90,32 +90,36 @@ class ClientController extends Controller
                     'id' => $t->id, 'title' => $t->title, 'kind' => $t->kind, 'due_at' => $t->due_at?->format('Y-m-d\TH:i'),
                     'assignee' => $t->assignee?->name, 'overdue' => $t->due_at !== null && $t->due_at->isPast(),
                 ]),
+            'pilot' => $this->pilotReports($client, $request->integer('pilot_days', 7)),
             'options' => [
                 'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
-                'ad_accounts' => $this->pilotAdAccounts(),
             ],
         ]);
     }
 
     /**
-     * Klok Pilot ad accounts the agency token can see, for linking this client (cached briefly).
+     * Numbers from Klok Pilot for each ad account linked to this client.
      *
-     * @return array<int, array{value: int, label: string}>
+     * @return array{days: int, accounts: array<int, array<string, mixed>>}|null
      */
-    private function pilotAdAccounts(): array
+    private function pilotReports(Client $client, int $days): ?array
     {
-        if (! PilotClient::connected()) {
-            return [];
+        $accounts = $client->pilotAccounts()->orderBy('name')->get();
+
+        if ($accounts->isEmpty() || ! PilotClient::connected()) {
+            return null;
         }
 
-        return Cache::remember('pilot:ad-accounts', 600, function () {
-            try {
-                return collect(app(PilotClient::class)->adAccounts())
-                    ->map(fn ($a) => ['value' => $a['id'], 'label' => $a['name'].($a['shop'] ? ' · '.$a['shop'] : '')])->all();
-            } catch (RuntimeException) {
-                return [];
-            }
-        });
+        $pilot = app(PilotAccounts::class);
+        $days = in_array($days, PilotAccounts::DAYS, true) ? $days : 7;
+
+        return [
+            'days' => $days,
+            'accounts' => $accounts->map(fn (PilotAccount $a) => [
+                'id' => $a->id, 'name' => $a->name, 'external_id' => $a->external_id,
+                ...$pilot->report($a, $days),
+            ])->values()->all(),
+        ];
     }
 
     public function store(Request $request): RedirectResponse
@@ -158,7 +162,6 @@ class ClientController extends Controller
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'manager_id' => ['nullable', 'exists:users,id'],
-            'pilot_ad_account_id' => ['nullable', 'integer', 'min:1'],
         ], [], ['name' => __('নাম')]);
     }
 }

@@ -57,7 +57,7 @@ class PilotClient
     /**
      * One ad account's numbers over the last $days days (1 = today).
      *
-     * @return array{currency?: string, totals?: array<string, mixed>, campaigns?: list<array<string, mixed>>}
+     * @return array{currency?: string, from?: string, to?: string, last_synced_at?: string|null, totals?: array<string, mixed>, campaigns?: list<array<string, mixed>>}
      */
     public function performance(int $adAccountId, int $days = 1): array
     {

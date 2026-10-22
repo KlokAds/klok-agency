@@ -65,6 +65,12 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 perm: 'runs.view',
             }, // i18n
             {
+                label: 'Ad account',
+                href: '/ad-accounts',
+                icon: 'signal',
+                perm: 'runs.view',
+            },
+            {
                 label: 'কাজ ও reminder',
                 href: '/tasks',
                 icon: 'list',

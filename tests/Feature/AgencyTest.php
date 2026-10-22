@@ -3,6 +3,7 @@
 use App\Models\Account;
 use App\Models\AdRun;
 use App\Models\Client;
+use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\Task;
 use App\Models\User;
@@ -145,7 +146,7 @@ it('runs the tick from the secret URL only', function () {
 
 it('reads ad results from Klok Pilot for the daily summary', function () {
     Setting::put('pilot_token', Crypt::encryptString('agency-token'));
-    $this->client->update(['pilot_ad_account_id' => 7]);
+    PilotAccount::create(['pilot_id' => 7, 'name' => 'GFFS Ads', 'client_id' => $this->client->id]);
 
     Http::fake([
         'pilot.klokads.com/*' => Http::response([
@@ -160,7 +161,7 @@ it('reads ad results from Klok Pilot for the daily summary', function () {
 
     $summary = app(DailySummary::class)->build();
 
-    expect($summary['ads'][0])->toMatchArray(['client' => 'GFFS', 'spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
+    expect($summary['ads'][0])->toMatchArray(['client' => 'GFFS', 'account' => 'GFFS Ads', 'spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
 
     Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer agency-token')
         && $r['method'] === 'tools/call' && $r['params']['name'] === 'ad_account_performance' && $r['params']['arguments']['ad_account_id'] === 7);
@@ -186,7 +187,7 @@ it('sends a missed summary for yesterday the next morning, then today\'s in the 
 
 it('works out a past day from Pilot as the difference of two windows', function () {
     Setting::put('pilot_token', Crypt::encryptString('agency-token'));
-    $this->client->update(['pilot_ad_account_id' => 7]);
+    PilotAccount::create(['pilot_id' => 7, 'name' => 'GFFS Ads', 'client_id' => $this->client->id]);
 
     Http::fake(function ($request) {
         $days = $request['params']['arguments']['days'];
@@ -202,17 +203,38 @@ it('works out a past day from Pilot as the difference of two windows', function 
     expect($summary['ads'][0])->toMatchArray(['spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
 });
 
-it('lists Pilot ad accounts on the client page', function () {
+it('lists Pilot ad accounts with their campaigns and links them to clients', function () {
     Setting::put('pilot_token', Crypt::encryptString('agency-token'));
-    Http::fake(['pilot.klokads.com/*' => Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => [
-        'ad_accounts' => [['ad_account_id' => 7, 'external_id' => 'act_1', 'name' => 'GFFS Ads', 'platform' => 'meta', 'currency' => 'USD', 'shop' => 'Klok Ads']],
-    ]]])]);
+    Http::fake(function ($request) {
+        $content = $request['params']['name'] === 'list_ad_accounts'
+            ? ['ad_accounts' => [
+                ['ad_account_id' => 7, 'external_id' => 'act_1', 'name' => 'GFFS Ads', 'platform' => 'meta', 'currency' => 'USD', 'shop' => 'Klok Ads'],
+                ['ad_account_id' => 8, 'external_id' => 'act_2', 'name' => 'GFFS Page 2', 'platform' => 'meta', 'currency' => 'BDT', 'shop' => 'Klok Ads'],
+            ]]
+            : ['currency' => 'USD', 'totals' => ['spend' => 14.0, 'results' => 40], 'campaigns' => [
+                ['name' => 'Messages', 'status' => 'ACTIVE', 'spend' => 14.0, 'results' => 40, 'cost_per_result' => 0.35],
+                ['name' => 'Old', 'status' => 'PAUSED', 'spend' => 0, 'results' => 0],
+            ]];
+
+        return Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => $content]]);
+    });
+
+    $this->actingAs($this->owner)->get('/ad-accounts')->assertOk()
+        ->assertInertia(fn ($page) => $page->component('agency/AdAccounts')->has('accounts', 2)
+            ->where('accounts.0.name', 'GFFS Ads')
+            ->where('accounts.0.campaigns', fn ($c) => count($c) === 1 && $c[0]['name'] === 'Messages'));
+
+    // A client can have more than one ad account.
+    foreach (PilotAccount::all() as $account) {
+        $this->actingAs($this->owner)->put("/ad-accounts/{$account->id}/client", ['client_id' => $this->client->id])->assertRedirect();
+    }
 
     $this->actingAs($this->owner)->get('/clients/'.$this->client->id)->assertOk()
-        ->assertInertia(fn ($page) => $page->where('options.ad_accounts.0', ['value' => 7, 'label' => 'GFFS Ads · Klok Ads']));
+        ->assertInertia(fn ($page) => $page->has('pilot.accounts', 2)->where('pilot.accounts.0.totals.results', 40));
 
-    $this->actingAs($this->owner)->put('/clients/'.$this->client->id, ['name' => 'GFFS', 'type' => 'client', 'status' => 'active', 'pilot_ad_account_id' => 7])->assertRedirect();
-    expect($this->client->refresh()->pilot_ad_account_id)->toBe(7);
+    $viewer = User::factory()->create();
+    $viewer->assignRole('Viewer');
+    $this->actingAs($viewer)->put('/ad-accounts/'.PilotAccount::first()->id.'/client', ['client_id' => null])->assertForbidden();
 });
 
 it('logs a secret setting without its value, keyed by name', function () {

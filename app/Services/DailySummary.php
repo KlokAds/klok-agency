@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AdRun;
 use App\Models\Client;
+use App\Models\PilotAccount;
 use App\Models\Task;
 use App\Models\UsdEntry;
 use App\Models\User;
@@ -39,9 +40,12 @@ class DailySummary
         $pilotError = null;
 
         if (PilotClient::connected()) {
-            foreach (Client::whereNotNull('pilot_ad_account_id')->where('status', 'active')->get() as $client) {
+            $accounts = PilotAccount::with('client:id,name,status')->whereNotNull('client_id')->orderBy('name')->get()
+                ->filter(fn (PilotAccount $a) => $a->client?->status === 'active');
+
+            foreach ($accounts as $account) {
                 try {
-                    $report = $this->dayReport((int) $client->pilot_ad_account_id, $daysBack);
+                    $report = $this->dayReport($account->pilot_id, $daysBack);
                 } catch (Throwable $e) {
                     $pilotError = $e->getMessage();
 
@@ -53,7 +57,8 @@ class DailySummary
                 $spend = (float) ($totals['spend'] ?? 0);
 
                 $ads[] = [
-                    'client' => $client->name,
+                    'client' => $account->client?->name,
+                    'account' => $account->name,
                     'currency' => $report['currency'] ?? 'USD',
                     'spend' => round($spend, 2),
                     'results' => $results,
