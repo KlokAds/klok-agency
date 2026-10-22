@@ -95,7 +95,22 @@ const showTable = ref(false);
             <button type="button" class="font-semibold text-ink-2 hover:text-ink" @click="showTable = !showTable">{{ showTable ? 'Chart দেখুন' : 'Table দেখুন' }}</button>
         </div>
 
-        <table v-if="showTable" class="ledger mt-3">
+        <!-- Phone: one compact row per month instead of a five-column table -->
+        <ul v-if="showTable" class="mt-3 divide-y divide-dashed divide-line sm:hidden">
+            <li v-for="r in rows" :key="r.month" class="py-3">
+                <div class="flex items-baseline justify-between gap-3">
+                    <span class="font-bn text-[14px] font-semibold whitespace-nowrap">{{ monthLabel(r.month) }}</span>
+                    <span class="num font-semibold whitespace-nowrap" :class="r.result > 50 ? 'text-in' : r.result < -50 ? 'text-out' : 'text-ink-3'">{{ money(r.result, 'bdt', { sign: true }) }}</span>
+                </div>
+                <p v-if="r.received || r.cost || r.expense" class="mt-1 flex flex-wrap gap-x-3 text-[12px] text-ink-3">
+                    <span class="whitespace-nowrap">পেয়েছি <b class="num font-medium text-ink-2">{{ money(r.received, 'bdt') }}</b></span>
+                    <span class="whitespace-nowrap">cost <b class="num font-medium text-ink-2">{{ money(r.cost, 'bdt') }}</b></span>
+                    <span class="whitespace-nowrap">খরচ <b class="num font-medium text-ink-2">{{ money(r.expense, 'bdt') }}</b></span>
+                </p>
+            </li>
+        </ul>
+
+        <table v-if="showTable" class="ledger mt-3 hidden sm:table">
             <thead>
                 <tr><th>মাস</th><th class="r">পেয়েছি</th><th class="r">Cost</th><th class="r">খরচ</th><th class="r">ফলাফল</th></tr>
             </thead>

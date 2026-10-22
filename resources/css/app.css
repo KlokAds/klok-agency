@@ -310,6 +310,12 @@
     .ledger .r {
         text-align: right;
     }
+
+    /* Amounts never break between the sign and the number. */
+    .ledger .num,
+    .ledger .r {
+        white-space: nowrap;
+    }
 }
 
 @keyframes k-rise {

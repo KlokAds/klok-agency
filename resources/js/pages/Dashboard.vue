@@ -93,7 +93,7 @@ const greeting = hour < 12 ? 'শুভ সকাল' : hour < 17 ? 'শুভ �
                     <h2 class="text-[16px] font-bold">মাসে মাসে ফলাফল</h2>
                     <p class="text-[12.5px] text-ink-3">Client-এর টাকা − USD-এর FIFO cost − খরচ · শেষ ৬ মাস</p>
                 </div>
-                <Link href="/reports" class="text-[13px] font-semibold text-brand-ink hover:underline">P&L →</Link>
+                <Link href="/reports" class="shrink-0 text-[13px] font-semibold whitespace-nowrap text-brand-ink hover:underline">P&L →</Link>
             </div>
             <MonthlyChart :rows="monthly" />
         </section>
