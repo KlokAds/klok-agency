@@ -121,6 +121,7 @@ const blank = () => ({
     bdt: '' as string | null,
     status: 'pending',
     category: 'client_payment',
+    pay_via: 'mfs',
     direction: 'in',
     description: '' as string | null,
     notes: '' as string | null,
@@ -242,6 +243,11 @@ function submit(): void {
 const yesNo = computed<Option[]>(() => [
     { value: 'pending', label: t('Pending — টাকা পাইনি') },
     { value: 'settled', label: t('Settled — টাকা পেয়েছি') },
+]);
+const payVia = computed<Option[]>(() => [
+    { value: 'mfs', label: 'MFS (bKash / Nagad)' },
+    { value: 'bank', label: 'Bank' },
+    { value: 'cash', label: 'Cash' },
 ]);
 const incomeKinds = computed<Option[]>(() => [
     { value: 'client_payment', label: t('Ad-এর টাকা') },
@@ -409,6 +415,22 @@ const directions = computed<Option[]>(() => [
                             <KSegment
                                 v-model="form.category"
                                 :options="incomeKinds"
+                            />
+                        </KField>
+                        <KField
+                            :label="t('কীভাবে এলো')"
+                            :hint="
+                                form.pay_via === 'mfs'
+                                    ? t(
+                                          'MFS-এ এলে fee কাটা হবে (Settings-এর হারে)।',
+                                      )
+                                    : t('Bank বা cash-এ কোনো fee নেই।')
+                            "
+                            :error="form.errors.pay_via"
+                        >
+                            <KSegment
+                                v-model="form.pay_via"
+                                :options="payVia"
                             />
                         </KField>
                         <div

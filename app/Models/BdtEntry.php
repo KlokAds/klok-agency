@@ -40,8 +40,11 @@ class BdtEntry extends Model
 
     public const EXPENSE = ['expense', 'salary'];
 
+    /** How a client's money came in; only MFS carries the payment fee. */
+    public const PAY_VIA = ['mfs' => 'MFS (bKash / Nagad)', 'bank' => 'Bank', 'cash' => 'Cash'];
+
     protected $fillable = [
-        'entry_date', 'sequence', 'description', 'category', 'client_id', 'expense_head_id', 'employee_id',
+        'entry_date', 'sequence', 'description', 'category', 'client_id', 'pay_via', 'expense_head_id', 'employee_id',
         'salary_month', 'salary_kind', 'fx_batch_id', 'fee_for_id', 'amount', 'notes', 'review_note', 'created_by', 'updated_by',
     ];
 

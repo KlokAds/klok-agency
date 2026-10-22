@@ -29,37 +29,52 @@ function userWithRole(string $role): User
 }
 
 // The import itself fails unless the sheet's totals match before anything is added.
-it('imports the sheet, the 20 Oct GFFS payment and the 0.1% fees', function () {
+it('imports the sheet, the 20 Oct GFFS payment and the 1% MFS fees', function () {
     $summary = app(Books::class)->summary();
     $fees = -BdtEntry::whereNotNull('fee_for_id')->sum('amount');
 
     expect($summary['card'])->toBe(12066)
         ->and($summary['business_usd'])->toBe(9366)
         ->and($summary['platform_due'])->toBe(2700)
-        ->and($fees)->toBe(10103)
-        ->and($summary['bdt'])->toBe(1963300 + 210000 - 10103)
+        ->and($fees)->toBe(100991)
+        ->and($summary['bdt'])->toBe(1963300 + 210000 - 100991)
         ->and($summary['receivable_usd'])->toBe(410)
         ->and($summary['usd_check']['ok'])->toBeTrue()
         ->and($summary['equity_ok'])->toBeTrue();
 });
 
-it('takes 0.1% off a client payment as a locked fee row that follows it', function () {
+it('takes 1% off an MFS payment as a locked fee row that follows it, and nothing off bank or cash', function () {
     $gffs = Client::where('name', 'GFFS')->first();
 
     $this->actingAs($this->owner)->post('/quick/client-payment', [
-        'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'amount' => '5000',
+        'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'pay_via' => 'mfs', 'amount' => '5000',
     ])->assertRedirect();
 
     $payment = BdtEntry::where('client_id', $gffs->id)->latest('id')->first();
     $fee = $payment->fee;
 
-    expect($fee->amount)->toBe(-500)
+    expect($payment->pay_via)->toBe('mfs')
+        ->and($fee->amount)->toBe(-5000)
+        ->and($fee->description)->toStartWith('MFS fee 1%')
         ->and($fee->head->name)->toBe('Payment fee');
 
     $this->actingAs($this->owner)->delete("/bdt/{$fee->id}")->assertSessionHasErrors('entry');
 
-    $this->actingAs($this->owner)->delete("/bdt/{$payment->id}")->assertRedirect();
+    // Marked as a bank transfer instead: the fee goes.
+    $this->actingAs($this->owner)->put("/bdt/{$payment->id}", [
+        'entry_date' => now()->toDateString(), 'description' => $payment->description, 'category' => 'client_payment',
+        'client_id' => $gffs->id, 'pay_via' => 'bank', 'amount' => '5000',
+    ])->assertRedirect();
     expect($fee->fresh()->trashed())->toBeTrue();
+
+    foreach (['bank', 'cash'] as $via) {
+        $this->actingAs($this->owner)->post('/quick/client-payment', [
+            'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'pay_via' => $via, 'amount' => '3000',
+        ])->assertRedirect();
+        expect(BdtEntry::where('client_id', $gffs->id)->latest('id')->first()->fee)->toBeNull();
+    }
+
+    $this->actingAs($this->owner)->delete("/bdt/{$payment->id}")->assertRedirect();
 });
 
 it('opens every page for the owner', function (string $url) {
@@ -127,6 +142,7 @@ it('settles the chosen pending spend when a client pays', function () {
         'entry_date' => now()->toDateString(),
         'client_id' => $samir->id,
         'category' => 'client_payment',
+        'pay_via' => 'mfs',
         'amount' => '615',
         'settle_ids' => [$pending->id],
     ])->assertRedirect();

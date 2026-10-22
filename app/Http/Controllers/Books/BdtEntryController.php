@@ -32,6 +32,7 @@ class BdtEntryController extends Controller
                 'category_label' => BdtEntry::categoryLabel($e->category),
                 'client' => $e->client?->name,
                 'client_id' => $e->client_id,
+                'pay_via' => $e->pay_via,
                 'head' => $e->head?->name,
                 'expense_head_id' => $e->expense_head_id,
                 'employee' => $e->employee?->name,
@@ -155,6 +156,7 @@ class BdtEntryController extends Controller
             'description' => ['required', 'string', 'max:255'],
             'category' => ['required', Rule::in($categories)],
             'client_id' => ['nullable', Rule::requiredIf($request->input('category') === 'client_payment'), 'exists:clients,id'],
+            'pay_via' => ['nullable', Rule::requiredIf(in_array($request->input('category'), ['client_payment', 'service_income'], true)), Rule::in(array_keys(BdtEntry::PAY_VIA))],
             'expense_head_id' => ['nullable', 'exists:expense_heads,id'],
             'amount' => ['required', Money::RULE],
             'notes' => ['nullable', 'string', 'max:2000'],
@@ -170,6 +172,10 @@ class BdtEntryController extends Controller
 
         if ($data['category'] !== 'expense') {
             $data['expense_head_id'] = null;
+        }
+
+        if (! in_array($data['category'], ['client_payment', 'service_income'], true)) {
+            $data['pay_via'] = null;
         }
 
         return $data;

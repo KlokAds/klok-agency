@@ -100,5 +100,10 @@
     "সব খরচের খাত": "All expense heads",
     "সব ধরন": "All types",
     "সর্বশেষ card charge": "Latest card charges",
-    "সাধারণ কাজের জন্য উপরের “নতুন entry” সহজ।": "For everyday work, “New entry” at the top is easier."
+    "সাধারণ কাজের জন্য উপরের “নতুন entry” সহজ।": "For everyday work, “New entry” at the top is easier.",
+    "কীভাবে এলো": "Paid via",
+    "MFS-এ এলে fee কাটা হবে (Settings-এর হারে)।": "MFS payments have the fee taken off (at the rate in Settings).",
+    "Bank বা cash-এ কোনো fee নেই।": "No fee for bank or cash.",
+    "MFS payment থেকে fee (%)": "Fee on MFS payments (%)",
+    "MFS-এ (bKash, Nagad…) আসা client payment থেকে এই % কেটে আলাদা খরচ হিসেবে দেখানো হয়। Bank বা cash-এ fee নেই। নতুন হার শুধু এখন থেকে লেখা payment-এ লাগবে।": "This % is taken off client payments that come by MFS (bKash, Nagad…) and shown as its own expense. Bank and cash carry no fee. A new rate applies only to payments recorded from now on."
 }

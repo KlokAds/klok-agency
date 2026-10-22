@@ -87,6 +87,7 @@ class Postings
                 'description' => $data['description'] ?: "{$client->name} payment received",
                 'category' => $data['category'] ?? 'client_payment',
                 'client_id' => $client->id,
+                'pay_via' => $data['pay_via'] ?? 'mfs',
                 'amount' => $data['amount'],
                 'notes' => $data['notes'] ?? null,
             ]);

@@ -31,6 +31,7 @@ type Row = {
     category_label: string;
     client: string | null;
     client_id: number | null;
+    pay_via: string | null;
     head: string | null;
     expense_head_id: number | null;
     employee: string | null;
@@ -92,6 +93,7 @@ const form = useForm({
     description: '',
     category: 'expense',
     client_id: null as number | null,
+    pay_via: 'mfs' as string | null,
     expense_head_id: null as number | null,
     amount: '' as string | null,
     notes: '' as string | null,
@@ -105,6 +107,7 @@ function startNew(): void {
         description: '',
         category: 'expense',
         client_id: null,
+        pay_via: 'mfs',
         expense_head_id: null,
         amount: '',
         notes: '',
@@ -123,6 +126,7 @@ function startEdit(row: Row): void {
         description: row.description,
         category: row.category,
         client_id: row.client_id,
+        pay_via: row.pay_via ?? 'mfs',
         expense_head_id: row.expense_head_id,
         amount: toInput(row.amount),
         notes: row.notes ?? '',
@@ -161,6 +165,12 @@ async function remove(row: Row): Promise<void> {
         });
     }
 }
+
+const payVia = computed<Option[]>(() => [
+    { value: 'mfs', label: 'MFS (bKash / Nagad)' },
+    { value: 'bank', label: 'Bank' },
+    { value: 'cash', label: 'Cash' },
+]);
 
 const needsClient = computed(() =>
     ['client_payment', 'service_income'].includes(form.category),
@@ -475,6 +485,18 @@ const needsClient = computed(() =>
                     :options="options.clients"
                     :invalid="!!form.errors.client_id"
                 />
+            </KField>
+            <KField
+                v-if="needsClient"
+                :label="t('কীভাবে এলো')"
+                :hint="
+                    form.pay_via === 'mfs'
+                        ? t('MFS-এ এলে fee কাটা হবে (Settings-এর হারে)।')
+                        : t('Bank বা cash-এ কোনো fee নেই।')
+                "
+                :error="form.errors.pay_via"
+            >
+                <KSegment v-model="form.pay_via" :options="payVia" />
             </KField>
             <KField
                 v-if="form.category === 'expense'"

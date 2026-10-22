@@ -7,9 +7,10 @@ use App\Models\ExpenseHead;
 use App\Models\Setting;
 
 /**
- * Takes the transfer fee (0.1% by default, Settings → Payment fee) off every
- * client payment as its own expense row, so the BDT balance shows what really
- * arrived and the P&L shows the fee.
+ * Takes the MFS fee (1% by default, Settings → Payment fee) off every client
+ * payment that came by bKash, Nagad or the like, as its own expense row, so
+ * the BDT balance shows what really arrived and the P&L shows the fee. Bank
+ * transfers and cash carry no fee.
  */
 class PaymentFees
 {
@@ -18,13 +19,14 @@ class PaymentFees
 
     public static function percent(): float
     {
-        return (float) Setting::get('payment_fee_percent', '0.1');
+        return (float) Setting::get('payment_fee_percent', '1');
     }
 
     public static function appliesTo(BdtEntry $entry): bool
     {
         return in_array($entry->category, ['client_payment', 'service_income'], true)
             && $entry->client_id !== null
+            && $entry->pay_via === 'mfs'
             && $entry->amount > 0
             && $entry->fee_for_id === null;
     }
@@ -49,7 +51,7 @@ class PaymentFees
 
         $values = [
             'entry_date' => $payment->entry_date,
-            'description' => 'Payment fee '.self::label().' — '.$payment->description,
+            'description' => 'MFS fee '.self::label().' — '.$payment->description,
             'category' => 'expense',
             'client_id' => null,
             'expense_head_id' => ExpenseHead::firstOrCreate(['name' => 'Payment fee'])->id,
@@ -77,7 +79,10 @@ class PaymentFees
         ]);
     }
 
-    /** Adds the fee row to every client payment that does not have one yet. */
+    /**
+     * Brings every client payment's fee row in line with the current rate
+     * and how the money came in (adds, changes or removes it).
+     */
     public static function backfill(): int
     {
         $count = 0;
@@ -85,7 +90,6 @@ class PaymentFees
         BdtEntry::whereIn('category', ['client_payment', 'service_income'])
             ->whereNotNull('client_id')
             ->whereNull('fee_for_id')
-            ->whereDoesntHave('fee')
             ->orderBy('id')
             ->each(function (BdtEntry $payment) use (&$count) {
                 self::sync($payment);

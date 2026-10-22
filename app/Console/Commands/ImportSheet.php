@@ -110,6 +110,7 @@ class ImportSheet extends Command
                     'description' => $row['description'],
                     'category' => $row['category'],
                     'client_id' => $row['client'] ? $clients[$row['client']] : null,
+                    'pay_via' => $this->payVia($row['category'], $row['pay_via'] ?? null),
                     'expense_head_id' => isset($row['head']) ? $heads[$row['head']] : null,
                     'fx_batch_id' => isset($row['batch']) ? $batches[$row['batch']] : null,
                     'amount' => $this->cents($row['amount']),
@@ -126,12 +127,22 @@ class ImportSheet extends Command
             return self::FAILURE;
         }
 
-        // The sheet is checked; now what happened after it, and the 0.1% payment fees.
+        // The sheet is checked; now what happened after it, and the MFS payment fees.
         $this->applyAdditions();
         PaymentFees::$paused = false;
         $this->info('Payment fees added to '.PaymentFees::backfill().' client payments ('.PaymentFees::label().').');
 
         return self::SUCCESS;
+    }
+
+    /** The sheet does not say how money came in; client payments count as MFS unless a row says so. */
+    private function payVia(string $category, ?string $given): ?string
+    {
+        if (! in_array($category, ['client_payment', 'service_income'], true)) {
+            return null;
+        }
+
+        return in_array($given, array_keys(BdtEntry::PAY_VIA), true) ? $given : 'mfs';
     }
 
     /** Entries made after the sheet snapshot, kept in database/import/after-sheet.json. */
@@ -154,6 +165,7 @@ class ImportSheet extends Command
                     'description' => $row['payment_description'],
                     'category' => 'client_payment',
                     'client_id' => $clients[$row['client']],
+                    'pay_via' => $this->payVia('client_payment', $row['pay_via'] ?? null),
                     'amount' => $this->cents($row['bdt']),
                     'notes' => $row['notes'] ?? null,
                 ]);

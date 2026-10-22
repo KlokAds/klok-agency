@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Books;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdRun;
+use App\Models\BdtEntry;
 use App\Services\Agency;
 use App\Services\Postings;
 use App\Support\Money;
@@ -71,6 +72,7 @@ class QuickEntryController extends Controller
             'client-payment' => $this->run($request, $base + [
                 'client_id' => ['required', 'exists:clients,id'],
                 'category' => ['required', Rule::in(['client_payment', 'service_income'])],
+                'pay_via' => ['required', Rule::in(array_keys(BdtEntry::PAY_VIA))],
                 'amount' => ['required', Money::RULE],
                 'settle_ids' => ['array'],
                 'settle_ids.*' => ['integer'],

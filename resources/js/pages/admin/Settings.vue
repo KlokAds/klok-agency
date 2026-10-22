@@ -197,11 +197,11 @@ onMounted(() => {
             </KField>
 
             <KField
-                :label="t('Client payment থেকে fee (%)')"
+                :label="t('MFS payment থেকে fee (%)')"
                 :error="form.errors.payment_fee_percent"
                 :hint="
                     t(
-                        'প্রতিটা client payment থেকে এই % কেটে আলাদা খরচ হিসেবে দেখানো হয়। নতুন হার শুধু এখন থেকে লেখা payment-এ লাগবে।',
+                        'MFS-এ (bKash, Nagad…) আসা client payment থেকে এই % কেটে আলাদা খরচ হিসেবে দেখানো হয়। Bank বা cash-এ fee নেই। নতুন হার শুধু এখন থেকে লেখা payment-এ লাগবে।',
                     )
                 "
             >
