@@ -72,7 +72,7 @@ class TaskController extends Controller
             ],
             'options' => [
                 'clients' => Lookups::clients(),
-                'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
+                'users' => User::visible()->where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
                 'kinds' => Lookups::options(array_intersect_key(Task::KINDS, array_flip(['task', 'meeting', 'follow_up']))),
                 'repeats' => Lookups::options(Task::REPEATS),
             ],

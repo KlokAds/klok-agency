@@ -56,7 +56,7 @@ class AdRunController extends Controller
                 'clients' => Lookups::clients(),
                 'platforms' => Account::where('kind', 'platform')->where('is_active', true)->orderBy('sort')->get()
                     ->map(fn ($a) => ['value' => $a->id, 'label' => $a->name])->all(),
-                'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name'])
+                'users' => User::visible()->where('is_active', true)->orderBy('name')->get(['id', 'name'])
                     ->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
             ],
         ]);

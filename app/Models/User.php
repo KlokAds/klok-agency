@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -29,6 +30,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
  * @property bool $is_active
+ * @property bool $is_hidden the agency's own super admin: left out of lists and pickers
  * @property bool $must_change_password
  * @property CarbonImmutable|null $last_login_at
  * @property-read Collection<int, Role> $roles
@@ -44,8 +46,19 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 
     protected $attributes = [
         'is_active' => true,
+        'is_hidden' => false,
         'must_change_password' => false,
     ];
+
+    /**
+     * Everyone but hidden accounts, for lists and "who" pickers.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeVisible(Builder $query): void
+    {
+        $query->where('is_hidden', false);
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -60,6 +73,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'last_login_at' => 'datetime',
             'is_active' => 'boolean',
+            'is_hidden' => 'boolean',
             'must_change_password' => 'boolean',
         ];
     }

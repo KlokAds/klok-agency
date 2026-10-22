@@ -92,7 +92,7 @@ class ClientController extends Controller
                 ]),
             'pilot' => $this->pilotReports($client, $request->integer('pilot_days', 7)),
             'options' => [
-                'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
+                'users' => User::visible()->where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
             ],
         ]);
     }

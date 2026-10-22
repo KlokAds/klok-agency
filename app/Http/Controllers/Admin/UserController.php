@@ -20,10 +20,10 @@ use Spatie\Permission\Models\Role;
  */
 class UserController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('admin/Users', [
-            'users' => User::with('roles:id,name')->orderBy('name')->get()->map(fn ($u) => [
+            'users' => User::with('roles:id,name')->unless($request->user()->is_hidden, fn ($q) => $q->visible())->orderBy('name')->get()->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
                 'email' => $u->email,
@@ -77,6 +77,7 @@ class UserController extends Controller
             'password' => ['nullable', Password::defaults()],
         ]);
 
+        $this->guardHidden($request, $user);
         $this->guardOwnerRole($request, $data['role'], $user);
 
         if ($user->is($request->user()) && (! $data['is_active'] || $data['role'] !== $user->roles->first()?->name)) {
@@ -110,6 +111,8 @@ class UserController extends Controller
 
     public function resetTwoFactor(Request $request, User $user): RedirectResponse
     {
+        $this->guardHidden($request, $user);
+
         $user->forceFill([
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
@@ -124,6 +127,8 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
+        $this->guardHidden($request, $user);
+
         if ($user->is($request->user())) {
             throw ValidationException::withMessages(['user' => __('নিজের account নিজে মোছা যায় না।')]);
         }
@@ -135,6 +140,12 @@ class UserController extends Controller
         $this->toast(__('User মুছে ফেলা হয়েছে।'));
 
         return back();
+    }
+
+    /** A hidden account is not there for anyone who is not hidden themselves. */
+    private function guardHidden(Request $request, User $user): void
+    {
+        abort_if($user->is_hidden && ! $request->user()->is_hidden, 404);
     }
 
     /** Only an Owner can hand out, or take away, the Owner role. */
@@ -153,7 +164,8 @@ class UserController extends Controller
             return;
         }
 
-        $others = User::role(Access::OWNER)->where('is_active', true)->whereKeyNot($user->id)->count();
+        // A hidden super admin does not count: the agency must keep an Owner it can see.
+        $others = User::role(Access::OWNER)->visible()->where('is_active', true)->whereKeyNot($user->id)->count();
 
         if ($others === 0) {
             throw ValidationException::withMessages(['role' => __('অন্তত একজন সক্রিয় Owner থাকতে হবে।')]);

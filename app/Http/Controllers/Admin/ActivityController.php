@@ -35,7 +35,7 @@ class ActivityController extends Controller
         return Inertia::render('admin/Activity', [
             'activities' => $activities,
             'filters' => $filters,
-            'users' => User::orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name]),
+            'users' => User::visible()->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name]),
             'logs' => Activity::distinct()->orderBy('log_name')->pluck('log_name')->filter()->map(fn ($l) => ['value' => $l, 'label' => $l])->values(),
         ]);
     }
