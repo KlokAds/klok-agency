@@ -32,6 +32,7 @@ type Row = {
     client_id: number | null;
     client: string | null;
     bill_from: string | null;
+    start: string | null;
     suggested: { id: number; name: string } | null;
 };
 
@@ -79,13 +80,13 @@ const spend = (cents: number | null) =>
 const editing = ref<Row | null>(null);
 const linkOpen = ref(false);
 const linkClient = ref<number | string | null>(null);
-const linkFrom = ref<string | null>(today());
+const linkFrom = ref<string | null>(null);
 const saving = ref(false);
 
 function startLink(row: Row, clientId: number | string | null = null): void {
     editing.value = row;
     linkClient.value = clientId ?? row.client_id ?? row.suggested?.id ?? null;
-    linkFrom.value = row.bill_from ?? today();
+    linkFrom.value = row.bill_from;
     linkOpen.value = true;
 }
 
@@ -118,7 +119,7 @@ const suggestedCount = computed(
     () => props.campaigns.data.filter((c) => c.suggested).length,
 );
 const bulkOpen = ref(false);
-const bulkFrom = ref<string | null>(today());
+const bulkFrom = ref<string | null>(null);
 
 function linkSuggested(): void {
     router.post(
@@ -365,13 +366,24 @@ function sync(): void {
             </KField>
             <KField
                 :label="t('কোন দিন থেকে খরচ এই client-এর হিসাবে যাবে')"
+                optional
                 :hint="
                     t(
-                        'এর আগের খরচ যদি হাতে লেখা থাকে, তার পরের দিন দিন — তাহলে দুইবার যোগ হবে না।',
+                        'ফাঁকা রাখলে campaign শুরুর দিন থেকে ({start}) — আগের খরচ হাতে লেখা থাকলে তার পরের দিন থেকে, যাতে দুইবার যোগ না হয়।',
+                        {
+                            start: editing?.start
+                                ? niceDate(editing.start, false)
+                                : '—',
+                        },
                     )
                 "
             >
-                <KDate v-model="linkFrom" :max="today()" />
+                <KDate
+                    v-model="linkFrom"
+                    :max="today()"
+                    clearable
+                    :placeholder="t('Campaign শুরুর দিন থেকে')"
+                />
             </KField>
         </div>
         <template #footer>
@@ -388,7 +400,7 @@ function sync(): void {
             <KButton
                 variant="primary"
                 :loading="saving"
-                :disabled="!linkClient || !linkFrom"
+                :disabled="!linkClient"
                 @click="saveLink"
                 >{{ t('সংরক্ষণ') }}</KButton
             >
@@ -403,8 +415,18 @@ function sync(): void {
                 )
             }}
         </p>
-        <KField :label="t('কোন দিন থেকে খরচ হিসাবে যাবে')" class="mt-4">
-            <KDate v-model="bulkFrom" :max="today()" />
+        <KField
+            :label="t('কোন দিন থেকে খরচ হিসাবে যাবে')"
+            optional
+            class="mt-4"
+            :hint="t('ফাঁকা রাখলে প্রতিটা campaign তার নিজের শুরুর দিন থেকে।')"
+        >
+            <KDate
+                v-model="bulkFrom"
+                :max="today()"
+                clearable
+                :placeholder="t('Campaign শুরুর দিন থেকে')"
+            />
         </KField>
         <template #footer>
             <KButton variant="quiet" @click="bulkOpen = false">{{

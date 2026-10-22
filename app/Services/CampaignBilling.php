@@ -88,6 +88,29 @@ class CampaignBilling
         return count($hits) === 1 ? $hits[0] : null;
     }
 
+    /**
+     * The first day a campaign's spend goes to a client: the campaign's own
+     * start, unless that client's spend up to some later day was already
+     * written by hand — then the day after, so nothing is billed twice.
+     */
+    public function defaultBillFrom(Campaign $campaign, int $clientId): CarbonImmutable
+    {
+        $start = $campaign->start_at?->startOfDay()
+            ?? CampaignDay::where('campaign_id', $campaign->id)->min('day')
+            ?? $campaign->last_spend_day
+            ?? CarbonImmutable::now();
+        $start = CarbonImmutable::parse($start)->startOfDay();
+
+        $lastByHand = UsdEntry::where('client_id', $clientId)->where('category', 'client_spend')
+            ->whereNull('source')->max('entry_date');
+
+        if ($lastByHand !== null && CarbonImmutable::parse($lastByHand)->gte($start)) {
+            return CarbonImmutable::parse($lastByHand)->addDay()->startOfDay();
+        }
+
+        return $start;
+    }
+
     /** Runs the sync at most once an hour (the reminder tick calls this). */
     public function syncIfDue(): bool
     {
@@ -119,22 +142,36 @@ class CampaignBilling
             $account = $campaigns->first()->account;
             $this->refreshCampaigns($account);
 
-            $from = $campaigns->min(fn (Campaign $c) => $c->bill_from)->max($today->subDays(self::LOOKBACK_DAYS));
-            $report = $this->pilot->dailySpend($account->pilot_id, $from->toDateString(), $today->toDateString(), $campaigns->map(fn (Campaign $c) => $c->pilot_campaign_id)->values()->all());
+            // Recent days are read again (Meta adjusts them); a campaign seen for
+            // the first time is read in full from its bill-from day.
+            $from = $campaigns->map(function (Campaign $c) use ($today) {
+                $read = CampaignDay::where('campaign_id', $c->id)->exists()
+                    ? $today->subDays(self::LOOKBACK_DAYS)
+                    : CarbonImmutable::parse($c->bill_from);
+
+                return $read->max(CarbonImmutable::parse($c->bill_from));
+            })->min();
             $ids = $campaigns->pluck('id', 'pilot_campaign_id');
+            $pilotIds = $campaigns->map(fn (Campaign $c) => $c->pilot_campaign_id)->values()->all();
 
-            foreach ($report['rows'] ?? [] as $row) {
-                $campaignId = $ids[(int) $row['campaign_id']] ?? null;
+            // Pilot hands out at most 92 days at a time.
+            for ($chunk = $from; $chunk->lte($today); $chunk = $chunk->addDays(90)) {
+                $until = $chunk->addDays(89)->min($today);
+                $report = $this->pilot->dailySpend($account->pilot_id, $chunk->toDateString(), $until->toDateString(), $pilotIds);
 
-                if ($campaignId === null) {
-                    continue;
+                foreach ($report['rows'] ?? [] as $row) {
+                    $campaignId = $ids[(int) $row['campaign_id']] ?? null;
+
+                    if ($campaignId === null) {
+                        continue;
+                    }
+
+                    CampaignDay::updateOrCreate(
+                        ['campaign_id' => $campaignId, 'day' => $row['date']],
+                        ['spend' => (int) round((float) $row['spend'] * 100), 'results' => (int) ($row['results'] ?? 0), 'clicks' => (int) ($row['clicks'] ?? 0)],
+                    );
+                    $days++;
                 }
-
-                CampaignDay::updateOrCreate(
-                    ['campaign_id' => $campaignId, 'day' => $row['date']],
-                    ['spend' => (int) round((float) $row['spend'] * 100), 'results' => (int) ($row['results'] ?? 0), 'clicks' => (int) ($row['clicks'] ?? 0)],
-                );
-                $days++;
             }
         }
 

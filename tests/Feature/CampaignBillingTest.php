@@ -130,3 +130,24 @@ it('links every campaign whose name names one client', function () {
     expect(Campaign::where('pilot_campaign_id', 101)->value('client_id'))->toBe($this->gffs->id)
         ->and(Campaign::where('pilot_campaign_id', 102)->value('client_id'))->toBeNull();
 });
+
+it('bills from the campaign start when no day is given, or the day after spend already entered by hand', function () {
+    app(CampaignBilling::class)->refreshCampaigns($this->account);
+    $campaign = Campaign::where('pilot_campaign_id', 101)->sole();
+    // Started on day 1 (after GFFS's hand-written spend from the old sheet).
+    $campaign->update(['start_at' => $this->day1]);
+
+    $this->actingAs($this->owner)->put("/campaigns/{$campaign->id}/client", ['client_id' => $this->gffs->id])->assertRedirect();
+    expect($campaign->fresh()->bill_from->toDateString())->toBe($this->day1);
+
+    // GFFS's spend up to day 1 was written by hand: billing starts the day after.
+    UsdEntry::create([
+        'entry_date' => $this->day1, 'description' => 'GFFS - Meta ad spend', 'category' => 'client_spend',
+        'account_id' => Account::where('code', 'meta')->value('id'), 'client_id' => $this->gffs->id, 'amount' => -500, 'status' => 'pending',
+    ]);
+    $this->actingAs($this->owner)->put("/campaigns/{$campaign->id}/client", ['client_id' => $this->gffs->id])->assertRedirect();
+    expect($campaign->fresh()->bill_from->toDateString())->toBe($this->day2);
+
+    app(CampaignBilling::class)->sync();
+    expect(UsdEntry::where('source', 'pilot')->pluck('amount')->all())->toBe([-400]);
+});

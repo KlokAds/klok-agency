@@ -86,6 +86,7 @@ class CampaignController extends Controller
                 'client_id' => $c->client_id,
                 'client' => $c->client?->name,
                 'bill_from' => $c->bill_from?->toDateString(),
+                'start' => $c->start_at?->toDateString(),
                 'suggested' => $c->client_id ? null : CampaignBilling::suggestClient($c->name, $clients)?->only(['id', 'name']),
             ]);
 
@@ -115,13 +116,15 @@ class CampaignController extends Controller
     {
         $data = $request->validate([
             'client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')],
-            'bill_from' => ['nullable', 'required_with:client_id', 'date'],
+            'bill_from' => ['nullable', 'date'],
         ]);
 
         $before = $campaign->client_id;
         $campaign->update([
             'client_id' => $data['client_id'] ?? null,
-            'bill_from' => isset($data['client_id']) ? $data['bill_from'] : null,
+            'bill_from' => isset($data['client_id'])
+                ? ($data['bill_from'] ?? $billing->defaultBillFrom($campaign, (int) $data['client_id'])->toDateString())
+                : null,
         ]);
 
         $billing->rebuild(array_values(array_unique(array_filter([(int) $before, (int) $campaign->client_id]))));
@@ -137,7 +140,7 @@ class CampaignController extends Controller
     {
         $data = $request->validate([
             'account' => ['required', 'integer', Rule::exists('pilot_accounts', 'id')],
-            'bill_from' => ['required', 'date'],
+            'bill_from' => ['nullable', 'date'],
         ]);
 
         $clients = Client::where('status', 'active')->get(['id', 'name']);
@@ -147,7 +150,10 @@ class CampaignController extends Controller
             $client = CampaignBilling::suggestClient($campaign->name, $clients);
 
             if ($client) {
-                $campaign->update(['client_id' => $client->id, 'bill_from' => $data['bill_from']]);
+                $campaign->update([
+                    'client_id' => $client->id,
+                    'bill_from' => $data['bill_from'] ?? $billing->defaultBillFrom($campaign, $client->id)->toDateString(),
+                ]);
                 $touched[] = $client->id;
             }
         }

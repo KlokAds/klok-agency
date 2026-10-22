@@ -201,5 +201,8 @@
     "Bank charge খরচ হিসেবে যাবে": "entered as a Bank charge expense",
     "টাকা পাঠানো": "Money sent",
     "Fee টাকার পরিমাণের চেয়ে বেশি হতে পারে না।": "The fee cannot be more than the amount.",
-    ":from থেকে :to-তে :amount গেছে, fee :fee খরচ হিসেবে লেখা হলো।": ":amount moved from :from to :to; the :fee fee was entered as an expense."
+    ":from থেকে :to-তে :amount গেছে, fee :fee খরচ হিসেবে লেখা হলো।": ":amount moved from :from to :to; the :fee fee was entered as an expense.",
+    "ফাঁকা রাখলে campaign শুরুর দিন থেকে ({start}) — আগের খরচ হাতে লেখা থাকলে তার পরের দিন থেকে, যাতে দুইবার যোগ না হয়।": "Left empty: from the campaign's start ({start}) — or the day after any spend already entered by hand, so nothing is counted twice.",
+    "Campaign শুরুর দিন থেকে": "From the campaign's start",
+    "ফাঁকা রাখলে প্রতিটা campaign তার নিজের শুরুর দিন থেকে।": "Left empty: each campaign from its own start."
 }
