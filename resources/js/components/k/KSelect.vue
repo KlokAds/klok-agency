@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import { usePopover } from '@/composables/usePopover';
 import type { Option } from '@/types';
+import KIcon from './KIcon.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -100,7 +101,7 @@ function onKey(event: KeyboardEvent): void {
 </script>
 
 <template>
-    <div ref="anchor" class="relative">
+    <div ref="anchor" class="relative min-w-0">
         <button
             :id="id"
             type="button"
@@ -114,8 +115,10 @@ function onKey(event: KeyboardEvent): void {
             @click="toggle"
             @keydown="onKey"
         >
+            <KIcon v-if="selected?.icon" :name="String(selected.icon)" :size="18" class="text-brand-ink" />
             <span class="min-w-0 flex-1 truncate" :class="selected ? 'text-ink' : 'text-ink-3'">
-                {{ selected?.label ?? placeholder }}
+                <span :class="selected?.note && 'font-semibold'">{{ selected?.label ?? placeholder }}</span>
+                <span v-if="selected?.note" class="block truncate text-[12px] font-normal text-ink-3">{{ selected.note }}</span>
             </span>
             <span
                 v-if="clearable && selected"
@@ -153,7 +156,11 @@ function onKey(event: KeyboardEvent): void {
                         @mouseenter="active = index"
                         @click="choose(option)"
                     >
-                        <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
+                        <KIcon v-if="option.icon" :name="String(option.icon)" :size="18" :class="index === active ? 'text-brand-ink' : 'text-ink-3'" />
+                        <span class="min-w-0 flex-1">
+                            <span class="block truncate" :class="option.note && 'font-semibold'">{{ option.label }}</span>
+                            <span v-if="option.note" class="block truncate text-[12px] text-ink-3">{{ option.note }}</span>
+                        </span>
                         <span v-if="option.hint" class="shrink-0 text-[11.5px] text-ink-3">{{ option.hint }}</span>
                         <svg v-if="String(option.value) === String(model ?? '')" viewBox="0 0 16 16" class="size-4 shrink-0 text-brand" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7" /></svg>
                     </li>

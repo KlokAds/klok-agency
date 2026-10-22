@@ -192,7 +192,7 @@ const shortMonth = (ym: string) => BN_MONTHS[Number(ym.slice(5, 7)) - 1].slice(0
 
     <!-- Pay -->
     <KModal v-model="payOpen" title="বেতন দিন" subtitle="BDT খাতায় “বেতন” খরচ হিসেবে উঠবে।">
-        <form id="pay-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="savePay">
+        <form id="pay-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="savePay">
             <KField label="কর্মী" :error="pay.errors.employee_id" class="sm:col-span-2">
                 <KSelect v-model="pay.employee_id" :options="options.employees" :invalid="!!pay.errors.employee_id" />
             </KField>
@@ -210,7 +210,7 @@ const shortMonth = (ym: string) => BN_MONTHS[Number(ym.slice(5, 7)) - 1].slice(0
 
     <!-- Employee -->
     <KModal v-model="empOpen" :title="editing ? editing.name : 'নতুন কর্মী'">
-        <form id="emp-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="saveEmployee">
+        <form id="emp-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="saveEmployee">
             <KField label="নাম" :error="emp.errors.name"><KInput v-model="emp.name" :invalid="!!emp.errors.name" /></KField>
             <KField label="পদ" optional><KInput v-model="emp.designation" placeholder="যেমন Media Buyer" /></KField>
             <KField label="মাসিক বেতন" :error="emp.errors.monthly_salary"><KMoney v-model="emp.monthly_salary" currency="bdt" :invalid="!!emp.errors.monthly_salary" /></KField>

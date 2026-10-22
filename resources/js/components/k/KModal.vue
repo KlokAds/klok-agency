@@ -68,7 +68,7 @@ void props;
                 role="dialog"
                 aria-modal="true"
                 :aria-label="title"
-                class="k-rise relative flex max-h-[92vh] w-full flex-col rounded-t-[18px] border border-line bg-surface shadow-pop sm:rounded-[16px]"
+                class="k-rise relative flex max-h-[92vh] w-full min-w-0 flex-col rounded-t-[18px] border border-line bg-surface shadow-pop sm:rounded-[16px]"
                 :class="widths[width]"
             >
                 <header v-if="title || $slots.header" class="flex items-start gap-4 border-b border-line px-5 pt-4 pb-3.5 sm:px-6">
@@ -82,7 +82,7 @@ void props;
                         <svg viewBox="0 0 20 20" class="size-[18px]" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15" /></svg>
                     </button>
                 </header>
-                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                <div class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-5 py-5 sm:px-6">
                     <slot />
                 </div>
                 <footer v-if="$slots.footer" class="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2 px-5 py-3.5 sm:rounded-b-[16px] sm:px-6">

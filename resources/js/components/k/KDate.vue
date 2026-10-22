@@ -97,7 +97,7 @@ function onGridKey(event: KeyboardEvent): void {
 </script>
 
 <template>
-    <div ref="anchor" class="relative">
+    <div ref="anchor" class="relative min-w-0">
         <button
             :id="id"
             type="button"

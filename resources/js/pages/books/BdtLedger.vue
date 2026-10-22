@@ -228,7 +228,7 @@ const needsClient = computed(() => ['client_payment', 'service_income'].includes
     </section>
 
     <KModal v-model="open" :title="editing ? 'BDT row বদলান' : 'নতুন BDT row'" subtitle="USD কেনা FX Batch থেকে, বেতন Payroll থেকে দিন।">
-        <form id="bdt-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
+        <form id="bdt-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
             <KField label="তারিখ" :error="form.errors.entry_date">
                 <KDate v-model="form.entry_date" :invalid="!!form.errors.entry_date" />
             </KField>

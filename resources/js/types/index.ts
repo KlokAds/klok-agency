@@ -4,6 +4,8 @@ export type Option = {
     value: string | number;
     label: string;
     hint?: string | null;
+    note?: string;
+    icon?: string;
     [key: string]: unknown;
 };
 

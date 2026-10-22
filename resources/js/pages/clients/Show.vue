@@ -99,7 +99,7 @@ function print(): void {
     </section>
 
     <KModal v-model="open" :title="`${client.name} — বদলান`">
-        <form id="client-edit" class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
+        <form id="client-edit" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
             <KField label="নাম" :error="form.errors.name" class="sm:col-span-2"><KInput v-model="form.name" :invalid="!!form.errors.name" /></KField>
             <KField label="ধরন"><KSegment v-model="form.type" :options="types" /></KField>
             <KField label="অবস্থা"><KSegment v-model="form.status" :options="statuses" /></KField>

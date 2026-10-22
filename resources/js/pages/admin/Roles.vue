@@ -75,7 +75,7 @@ const count = (r: Role) => (r.is_owner ? 'সব' : r.permissions.length);
         <KButton v-if="can['roles.create']" variant="ink" icon="plus" @click="start()">নতুন role</KButton>
     </PageHeader>
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article v-for="r in roles" :key="r.id" class="panel flex flex-col p-5">
             <div class="flex items-start justify-between gap-3">
                 <div>

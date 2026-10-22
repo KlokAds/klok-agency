@@ -266,7 +266,7 @@ const needsDirection = computed(() => ['transfer', 'adjustment'].includes(form.c
 
     <!-- Add / edit -->
     <KModal v-model="open" :title="editing ? 'USD row বদলান' : 'নতুন USD row'" :subtitle="editing?.paired ? 'এটা transfer — অন্য দিকের row-ও একসাথে বদলাবে।' : 'সাধারণ কাজের জন্য উপরের “নতুন entry” সহজ।'">
-        <form id="usd-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
+        <form id="usd-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
             <KField label="তারিখ" :error="form.errors.entry_date">
                 <KDate v-model="form.entry_date" :invalid="!!form.errors.entry_date" />
             </KField>

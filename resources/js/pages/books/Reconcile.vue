@@ -42,7 +42,7 @@ const diff = computed(() => (Number.isNaN(typed.value) ? null : typed.value - pr
             </dl>
 
             <form v-if="can['reconcile.create']" class="mt-6 flex flex-col gap-4 border-t border-dashed border-line pt-6" @submit.prevent="form.post('/reconcile', { preserveScroll: true, onSuccess: () => form.reset('app_balance', 'note') })">
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <KField label="কবে দেখলেন" :error="form.errors.checked_on">
                         <KDate v-model="form.checked_on" :max="today()" />
                     </KField>

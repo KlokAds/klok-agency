@@ -9,13 +9,14 @@ const props = defineProps<{ rows: Row[] }>();
 // One series with polarity: each month's result above or below zero.
 // Drawn at the container's real width so text never scales up.
 const box = ref<HTMLElement | null>(null);
-const width = ref(640);
+// 0 until measured, so the chart never pushes a phone page wider than the screen.
+const width = ref(0);
 const W = computed(() => width.value);
 const H = 220;
 let observer: ResizeObserver | undefined;
 
 onMounted(() => {
-    observer = new ResizeObserver(([entry]) => (width.value = Math.max(280, entry.contentRect.width)));
+    observer = new ResizeObserver(([entry]) => (width.value = entry.contentRect.width));
     if (box.value) observer.observe(box.value);
 });
 
@@ -61,8 +62,8 @@ const showTable = ref(false);
 
 <template>
     <div>
-        <div ref="box" class="relative">
-            <svg :viewBox="`0 0 ${W} ${H}`" :width="W" :height="H" class="block overflow-visible" role="img" aria-label="মাসভিত্তিক ফলাফল" @mouseleave="hover = null">
+        <div ref="box" class="relative min-w-0" :style="{ height: `${H}px` }">
+            <svg v-if="W > 0" :viewBox="`0 0 ${W} ${H}`" :height="H" class="block w-full overflow-visible" role="img" aria-label="মাসভিত্তিক ফলাফল" @mouseleave="hover = null">
                 <line :x1="PAD.left" :x2="W - PAD.right" :y1="zeroY" :y2="zeroY" stroke="var(--line-2)" stroke-width="1" />
                 <g v-for="(b, i) in bars" :key="b.month">
                     <rect :x="PAD.left + slot * i" :y="0" :width="slot" :height="H - PAD.bottom + 4" fill="transparent" @mouseenter="hover = i" />

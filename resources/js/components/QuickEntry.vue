@@ -44,6 +44,7 @@ const JOBS = [
 type JobKey = (typeof JOBS)[number]['key'];
 
 const jobs = computed(() => JOBS.filter((j) => can.value[j.perm]));
+const jobOptions = computed<Option[]>(() => jobs.value.map((j) => ({ value: j.key, label: j.label, note: j.note, icon: j.icon })));
 const job = ref<JobKey>('ad-spend');
 
 const blank = () => ({
@@ -171,33 +172,34 @@ const directions: Option[] = [
             <h2 class="mt-0.5 text-[18px] font-bold tracking-tight">কী হলো?</h2>
         </template>
 
-        <div class="grid gap-5 md:grid-cols-[250px_1fr] md:gap-6">
-            <!-- What happened -->
-            <div class="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 md:mx-0 md:flex-col md:overflow-visible md:p-0">
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-[250px_minmax(0,1fr)] md:gap-6">
+            <!-- What happened: a dropdown on small screens, a list beside the form on wide ones -->
+            <KSelect :model-value="job" :options="jobOptions" @update:model-value="(v) => (job = v as JobKey)" :searchable="false" class="md:hidden" />
+            <div class="hidden flex-col gap-1.5 md:flex">
                 <button
                     v-for="j in jobs"
                     :key="j.key"
                     type="button"
-                    class="flex shrink-0 items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors md:shrink"
+                    class="flex items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors"
                     :class="job === j.key ? 'border-brand bg-brand-soft' : 'border-line hover:border-line-2 hover:bg-surface-2'"
                     @click="job = j.key"
                 >
                     <KIcon :name="j.icon" :size="18" :class="job === j.key ? 'mt-0.5 text-brand-ink' : 'mt-0.5 text-ink-3'" />
                     <span class="min-w-0">
-                        <span class="block text-[13.5px] font-semibold whitespace-nowrap md:whitespace-normal" :class="job === j.key && 'text-brand-ink'">{{ j.label }}</span>
-                        <span class="hidden text-[11.5px] text-ink-3 md:block">{{ j.note }}</span>
+                        <span class="block text-[13.5px] font-semibold" :class="job === j.key && 'text-brand-ink'">{{ j.label }}</span>
+                        <span class="block text-[11.5px] text-ink-3">{{ j.note }}</span>
                     </span>
                 </button>
             </div>
 
             <!-- The form for it -->
             <form class="flex min-w-0 flex-col gap-4" @submit.prevent="submit">
-                <div class="rounded-xl border border-dashed border-line-2 bg-surface-2 px-4 py-3 text-[13px] text-ink-2">
+                <div class="hidden rounded-xl border border-dashed border-line-2 bg-surface-2 px-4 py-3 text-[13px] text-ink-2 md:block">
                     <span class="font-semibold text-ink">{{ current.label }}</span> — {{ current.note }}
                     <span v-if="loading" class="ml-2 text-ink-3">লোড হচ্ছে…</span>
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <KField label="তারিখ" :error="form.errors.entry_date">
                         <KDate v-model="form.entry_date" :max="today()" :invalid="!!form.errors.entry_date" />
                     </KField>

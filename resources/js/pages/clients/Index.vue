@@ -63,7 +63,7 @@ const showOptions: Option[] = [
         <KSegment v-model="show" :options="showOptions" size="sm" />
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Link v-for="c in list" :key="c.id" :href="`/clients/${c.id}`" class="panel group flex flex-col p-5 transition-colors hover:border-line-2">
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -96,7 +96,7 @@ const showOptions: Option[] = [
     </div>
 
     <KModal v-model="open" title="নতুন client" subtitle="নাম দিলেই সব খাতায় এই client বেছে নেওয়া যাবে।">
-        <form id="client-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
+        <form id="client-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
             <KField label="নাম" :error="form.errors.name" class="sm:col-span-2">
                 <KInput v-model="form.name" :invalid="!!form.errors.name" />
             </KField>

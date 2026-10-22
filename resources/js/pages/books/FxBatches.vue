@@ -128,7 +128,7 @@ async function remove(batch: Batch): Promise<void> {
     </section>
 
     <KModal v-model="open" :title="`Batch ${editing?.number} বদলান`" subtitle="বদলালে এই batch থেকে নেওয়া সব খরচের FIFO cost নতুন করে হিসাব হবে।">
-        <form id="fx-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
+        <form id="fx-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
             <KField label="তারিখ" :error="form.errors.entry_date">
                 <KDate v-model="form.entry_date" clearable />
             </KField>

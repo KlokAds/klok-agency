@@ -95,7 +95,7 @@ async function remove(user: User): Promise<void> {
     </section>
 
     <KModal v-model="open" :title="editing ? editing.name : 'নতুন user'" :subtitle="editing ? undefined : 'প্রথম login-এ নিজের password দিতে বাধ্য হবে।'">
-        <form id="user-form" class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
+        <form id="user-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
             <KField label="নাম" :error="form.errors.name"><KInput v-model="form.name" :invalid="!!form.errors.name" /></KField>
             <KField label="Email (login)" :error="form.errors.email"><KInput v-model="form.email" type="email" autocomplete="off" :invalid="!!form.errors.email" /></KField>
             <KField label="Role" :error="form.errors.role" class="sm:col-span-2">
