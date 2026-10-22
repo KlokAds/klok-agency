@@ -220,17 +220,26 @@ class Books
         $fifo = $this->fifo();
         $rows = [];
 
+        $unbilled = $this->unbilledByClient();
+
         foreach (Client::withTrashed()->orderBy('id')->get() as $client) {
             $spend = $this->inPeriod($this->usdEntries(), $from, $to)
                 ->where('client_id', $client->id)
                 ->where('category', 'client_spend');
             $settled = $spend->where('status', 'settled');
             $pending = $spend->where('status', 'pending');
+            $prepaid = $this->prepaid($client->id);
 
+            // Payments without a USD credit are earned when paid (the old way);
+            // advance payments are earned as the campaign spends them.
             $received = $this->inPeriod($this->bdtEntries(), $from, $to)
                 ->where('client_id', $client->id)
                 ->whereIn('category', BdtEntry::REVENUE)
-                ->sum('amount');
+                ->whereNull('usd_credit')
+                ->sum('amount')
+                + $this->inPeriod($this->usdEntries(), $from, $to)
+                    ->whereIn('id', array_keys($prepaid['earned']))
+                    ->sum(fn ($e) => $prepaid['earned'][$e->id]);
 
             $settledCost = $settled->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0);
             $pendingCost = $pending->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0);
@@ -251,10 +260,120 @@ class Books
                 'usd_pending' => -$pending->sum('amount'),
                 'cost_pending' => $pendingCost,
                 'pending_count' => $pending->count(),
+                'credit_usd' => $prepaid['credit_usd'],
+                'campaign_usd' => $prepaid['spent_usd'],
+                'credit_left' => $prepaid['credit_usd'] - $prepaid['spent_usd'],
+                'unearned' => $prepaid['unearned'],
+                'daily_usd' => $prepaid['daily_usd'],
+                'days_left' => $prepaid['daily_usd'] > 0 ? (int) floor(max(0, $prepaid['credit_usd'] - $prepaid['spent_usd']) / $prepaid['daily_usd']) : null,
+                'unbilled_usd' => $unbilled[$client->id] ?? 0,
             ];
         }
 
         return $rows;
+    }
+
+    /** @var array<int, array{credit_usd: int, spent_usd: int, unearned: int, daily_usd: int, earned: array<int, int>}> */
+    private array $prepaid = [];
+
+    /**
+     * A client's advance payments as tranches of USD credit, spent oldest
+     * first by their campaign spend rows (source "pilot"). Each funded row
+     * earns the BDT its share of the tranche cost; what is not spent yet is
+     * the client's money held in advance (unearned).
+     *
+     * @return array{credit_usd: int, spent_usd: int, unearned: int, daily_usd: int, earned: array<int, int>}
+     */
+    public function prepaid(int $clientId): array
+    {
+        if (isset($this->prepaid[$clientId])) {
+            return $this->prepaid[$clientId];
+        }
+
+        $tranches = $this->bdtEntries()->where('client_id', $clientId)->whereNotNull('usd_credit')
+            ->map(fn (BdtEntry $e) => ['usd' => (int) $e->usd_credit, 'bdt' => (int) $e->amount])->values()->all();
+        $rows = $this->usdEntries()->where('client_id', $clientId)->where('source', 'pilot');
+
+        $credit = array_sum(array_column($tranches, 'usd'));
+        $paid = array_sum(array_column($tranches, 'bdt'));
+        $earned = [];
+        $t = 0;
+        $leftInTranche = $tranches[0]['usd'] ?? 0;
+        $used = 0;
+
+        foreach ($rows as $row) {
+            $need = -$row->amount;
+
+            if ($used + $need > $credit) {
+                break;
+            }
+
+            $used += $need;
+            $bdt = 0.0;
+
+            while ($need > 0 && isset($tranches[$t])) {
+                $take = min($need, $leftInTranche);
+                $bdt += $take * $tranches[$t]['bdt'] / max(1, $tranches[$t]['usd']);
+                $need -= $take;
+                $leftInTranche -= $take;
+
+                if ($leftInTranche <= 0) {
+                    $t++;
+                    $leftInTranche = $tranches[$t]['usd'] ?? 0;
+                }
+            }
+
+            $earned[$row->id] = (int) round($bdt);
+        }
+
+        $week = now()->subDays(7)->startOfDay();
+        $recent = $rows->filter(fn ($e) => $e->entry_date && $e->entry_date->gte($week))->sum('amount');
+
+        return $this->prepaid[$clientId] = [
+            'credit_usd' => $credit,
+            'spent_usd' => -(int) $rows->sum('amount'),
+            'unearned' => $paid - array_sum($earned),
+            'daily_usd' => (int) round(-$recent / 7),
+            'earned' => $earned,
+        ];
+    }
+
+    /**
+     * Spend the platforms have not charged to the card yet, per client
+     * (key 0 = the agency's own spend). Charges pay off the oldest spend
+     * first, so whatever is left at the end is still to be charged.
+     *
+     * @return array<int, int>
+     */
+    public function unbilledByClient(): array
+    {
+        $out = [];
+
+        foreach (Account::where('kind', 'platform')->get() as $account) {
+            $entries = $this->usdEntries()->where('account_id', $account->id);
+            $charged = -(int) $entries->where('category', 'card_charge')->sum('amount');
+            $due = -(int) $entries->where('category', '!=', 'card_charge')->sum('amount') - $charged;
+            $split = 0;
+
+            foreach ($entries->whereIn('category', UsdEntry::CONSUMING) as $row) {
+                $amount = -$row->amount;
+                $paid = max(0, min($charged, $amount));
+                $charged -= $paid;
+
+                if ($amount - $paid > 0) {
+                    $key = (int) ($row->client_id ?? 0);
+                    $out[$key] = ($out[$key] ?? 0) + $amount - $paid;
+                    $split += $amount - $paid;
+                }
+            }
+
+            // Adjustments and refunds on the platform belong to no client.
+            if ($due !== $split) {
+                $out[0] = ($out[0] ?? 0) + $due - $split;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -347,8 +466,10 @@ class Books
         $ownerDue = -(int) $this->bdtEntries()->whereIn('category', ['owner_loan', 'owner_repay'])->sum('amount');
 
         $pl = $this->profitAndLoss();
+        // Clients' advance money not spent yet is theirs, not profit.
+        $unearned = array_sum(array_column($pl['clients'], 'unearned'));
         $assets = $bdtBalance + $usdAtCost + $pl['pending_cost'] + $ownerDue;
-        $equity = $capital - $drawings + $pl['net'];
+        $equity = $capital - $drawings + $pl['net'] + $unearned;
 
         return [
             'card' => $card,
@@ -370,6 +491,8 @@ class Books
             'capital' => $capital,
             'drawings' => $drawings,
             'owner_due' => $ownerDue,
+            'unearned' => $unearned,
+            'card_after' => $card - $platformDue,
             'assets' => $assets,
             'equity' => $equity,
             // FIFO costs are rounded per row, so allow up to ৳1 of drift.

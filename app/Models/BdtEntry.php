@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Audited;
 use App\Models\Concerns\LedgerEntry;
+use App\Services\CampaignBilling;
 use App\Services\PaymentFees;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $sequence
  * @property string|null $pay_via mfs|bank|cash
  * @property string|null $wallet bank|bkash|cash
+ * @property int|null $usd_credit cents of ad credit a client's advance payment bought
  */
 class BdtEntry extends Model
 {
@@ -52,7 +54,7 @@ class BdtEntry extends Model
 
     protected $fillable = [
         'entry_date', 'sequence', 'description', 'category', 'client_id', 'pay_via', 'wallet', 'expense_head_id', 'employee_id',
-        'salary_month', 'salary_kind', 'fx_batch_id', 'fee_for_id', 'amount', 'notes', 'review_note', 'created_by', 'updated_by',
+        'salary_month', 'salary_kind', 'fx_batch_id', 'fee_for_id', 'amount', 'usd_credit', 'notes', 'review_note', 'created_by', 'updated_by',
     ];
 
     protected function casts(): array
@@ -66,6 +68,15 @@ class BdtEntry extends Model
         static::saved(fn (BdtEntry $entry) => PaymentFees::sync($entry));
         static::deleted(fn (BdtEntry $entry) => PaymentFees::sync($entry));
         static::restored(fn (BdtEntry $entry) => PaymentFees::sync($entry));
+
+        // An advance payment's credit funds the client's campaign spend.
+        foreach (['saved', 'deleted', 'restored'] as $event) {
+            static::$event(function (BdtEntry $entry) {
+                if ($entry->client_id && ($entry->usd_credit || $entry->getOriginal('usd_credit'))) {
+                    app(CampaignBilling::class)->fund($entry->client_id);
+                }
+            });
+        }
     }
 
     /**

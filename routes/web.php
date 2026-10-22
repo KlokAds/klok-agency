@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Agency\AdRunController;
 use App\Http\Controllers\Agency\AgencySettingsController;
+use App\Http\Controllers\Agency\CampaignController;
 use App\Http\Controllers\Agency\NotificationController;
 use App\Http\Controllers\Agency\PilotAccountController;
 use App\Http\Controllers\Agency\TaskController;
@@ -71,6 +72,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('runs/{run}/renew', [AdRunController::class, 'renew'])->middleware('can:runs.create')->name('runs.renew');
     Route::post('runs/{run}/stop', [AdRunController::class, 'stop'])->middleware('can:runs.edit')->name('runs.stop');
     Route::delete('runs/{run}', [AdRunController::class, 'destroy'])->middleware('can:runs.delete')->name('runs.destroy');
+
+    Route::get('campaigns', [CampaignController::class, 'index'])->middleware('can:runs.view')->name('campaigns.index');
+    Route::put('campaigns/{campaign}/client', [CampaignController::class, 'link'])->middleware('can:clients.edit')->name('campaigns.link');
+    Route::post('campaigns/link-suggested', [CampaignController::class, 'linkSuggested'])->middleware('can:clients.edit')->name('campaigns.link-suggested');
+    Route::post('campaigns/sync', [CampaignController::class, 'sync'])->middleware('can:runs.view')->name('campaigns.sync');
 
     Route::get('ad-accounts', [PilotAccountController::class, 'index'])->middleware('can:runs.view')->name('ad-accounts.index');
     Route::post('ad-accounts/refresh', [PilotAccountController::class, 'refresh'])->middleware('can:runs.view')->name('ad-accounts.refresh');

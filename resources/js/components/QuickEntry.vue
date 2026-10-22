@@ -122,6 +122,7 @@ const blank = () => ({
     status: 'pending',
     category: 'client_payment',
     pay_via: 'mfs',
+    usd_credit: '' as string | null,
     wallet: 'bank' as string | null,
     direction: 'loan',
     description: '' as string | null,
@@ -215,6 +216,14 @@ const settleTotal = computed(() =>
 const rate = computed(() => {
     const usd = parseFloat(form.usd || '0');
     const bdt = parseFloat(form.bdt || '0');
+
+    return usd > 0 && bdt > 0 ? (bdt / usd).toFixed(2) : null;
+});
+
+// An advance payment buys this much ad credit; the rate is shown as typed.
+const creditRate = computed(() => {
+    const usd = parseFloat(form.usd_credit || '0');
+    const bdt = parseFloat(form.amount || '0');
 
     return usd > 0 && bdt > 0 ? (bdt / usd).toFixed(2) : null;
 });
@@ -436,6 +445,30 @@ const directions = computed<Option[]>(() => [
                                 v-model="form.amount"
                                 currency="bdt"
                                 :invalid="!!form.errors.amount"
+                            />
+                        </KField>
+                        <KField
+                            v-if="form.category === 'client_payment'"
+                            :label="t('কত ডলারের ad-এর জন্য (USD)')"
+                            optional
+                            :error="form.errors.usd_credit"
+                            :hint="
+                                creditRate
+                                    ? t(
+                                          'Rate ৳{rate} / USD — এই credit থেকে campaign-এর খরচ কাটা যাবে।',
+                                          {
+                                              rate: creditRate,
+                                          },
+                                      )
+                                    : t(
+                                          'আগাম দিলে লিখুন — campaign-এর খরচ এই credit থেকে কাটা যাবে।',
+                                      )
+                            "
+                        >
+                            <KMoney
+                                v-model="form.usd_credit"
+                                currency="usd"
+                                :invalid="!!form.errors.usd_credit"
                             />
                         </KField>
                         <KField :label="t('কীসের টাকা')">

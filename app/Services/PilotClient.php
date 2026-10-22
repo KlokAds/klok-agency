@@ -9,8 +9,8 @@ use RuntimeException;
 
 /**
  * Reads ad performance from Klok Pilot through its MCP endpoint with an
- * agency token (Pilot → Agents). Read-only tools only: list_ad_accounts
- * and ad_account_performance.
+ * agency token (Pilot → Agents). Read-only tools only: ad accounts, their
+ * campaigns, and spend.
  */
 class PilotClient
 {
@@ -62,6 +62,29 @@ class PilotClient
     public function performance(int $adAccountId, int $days = 1): array
     {
         return $this->call('ad_account_performance', ['ad_account_id' => $adAccountId, 'days' => $days]);
+    }
+
+    /**
+     * Every campaign in one ad account, with its status and spend so far.
+     *
+     * @return array{currency?: string, last_synced_at?: string|null, campaigns?: list<array<string, mixed>>}
+     */
+    public function campaigns(int $adAccountId): array
+    {
+        return $this->call('ad_account_campaigns', ['ad_account_id' => $adAccountId]);
+    }
+
+    /**
+     * Day-by-day spend per campaign in one ad account (at most 92 days).
+     *
+     * @param  array<int, int>  $campaignIds
+     * @return array{currency?: string, rows?: list<array{date: string, campaign_id: int, spend: float|int, results?: int, clicks?: int}>}
+     */
+    public function dailySpend(int $adAccountId, string $from, string $to, array $campaignIds = []): array
+    {
+        return $this->call('campaign_daily_spend', array_filter([
+            'ad_account_id' => $adAccountId, 'from' => $from, 'to' => $to, 'campaign_ids' => $campaignIds ?: null,
+        ], fn ($v) => $v !== null));
     }
 
     /**

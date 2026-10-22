@@ -29,11 +29,22 @@ class Ticker
             $ended = $this->agency->closeEnded();
             $reminders = $this->dueReminders();
             $summary = $this->dailySummary();
+            $this->syncCampaignSpend();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
             return compact('ended', 'reminders', 'summary');
         } finally {
             $lock->release();
+        }
+    }
+
+    /** Campaign spend from Klok Pilot, at most once an hour; a Pilot hiccup must not stop reminders. */
+    private function syncCampaignSpend(): void
+    {
+        try {
+            app(CampaignBilling::class)->syncIfDue();
+        } catch (\Throwable $e) {
+            report($e);
         }
     }
 

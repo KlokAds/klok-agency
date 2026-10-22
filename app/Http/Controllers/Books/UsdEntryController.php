@@ -150,6 +150,10 @@ class UsdEntryController extends Controller
 
     private function ensureEditable(UsdEntry $entry): void
     {
+        if ($entry->source === 'pilot') {
+            throw ValidationException::withMessages(['entry' => __('এই খরচ Klok Pilot-এর campaign থেকে নিজে আসে — Campaign পাতায় client বা তারিখ বদলান।')]);
+        }
+
         if ($entry->fx_batch_id) {
             throw ValidationException::withMessages(['entry' => __('এই row একটা FX batch-এর অংশ — FX Batch পাতা থেকে বদলান।')]);
         }

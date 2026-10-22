@@ -90,6 +90,7 @@ class Postings
                 'pay_via' => $data['pay_via'] ?? 'mfs',
                 'wallet' => $data['wallet'] ?? null,
                 'amount' => $data['amount'],
+                'usd_credit' => ($data['usd_credit'] ?? 0) > 0 ? $data['usd_credit'] : null,
                 'notes' => $data['notes'] ?? null,
             ]);
 

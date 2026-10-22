@@ -3,55 +3,27 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import MonthlyChart from '@/components/MonthlyChart.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import CardStrip from '@/components/dashboard/CardStrip.vue';
+import ChecksPanel from '@/components/dashboard/ChecksPanel.vue';
+import ClientTable from '@/components/dashboard/ClientTable.vue';
+import type {
+    ClientRow,
+    Fx,
+    Summary,
+    Wallets,
+} from '@/components/dashboard/types';
 import KAmount from '@/components/k/KAmount.vue';
+import KButton from '@/components/k/KButton.vue';
 import KIcon from '@/components/k/KIcon.vue';
-import KTag from '@/components/k/KTag.vue';
 import { money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
-type Platform = {
-    id: number;
-    name: string;
-    spent: number;
-    charged: number;
-    due: number;
-};
-
 const props = defineProps<{
-    summary: {
-        card: number;
-        holding: number;
-        platforms: Platform[];
-        platform_due: number;
-        business_usd: number;
-        usd_check: {
-            bought: number;
-            consumed: number;
-            remaining: number;
-            ok: boolean;
-        };
-        overdrawn: boolean;
-        bdt: number;
-        usd_at_cost: number;
-        receivable_usd: number;
-        receivable_cost: number;
-        capital: number;
-        drawings: number;
-        owner_due: number;
-        assets: number;
-        equity: number;
-        equity_ok: boolean;
-        margin: number;
-        net: number;
-        review_count: number;
-        undated_count: number;
-    };
-    wallets: {
-        places: { key: string; label: string; balance: number }[];
-        untagged: number;
-        untagged_count: number;
-        total: number;
-    };
+    summary: Summary;
+    wallets: Wallets;
+    fx: Fx;
+    clients: ClientRow[];
+    month_net: number;
     monthly: {
         month: string;
         label: string;
@@ -60,23 +32,6 @@ const props = defineProps<{
         expense: number;
         result: number;
         usd_spent: number;
-    }[];
-    clients: {
-        id: number;
-        name: string;
-        margin: number;
-        received: number;
-        usd_settled: number;
-        usd_pending: number;
-        status: string;
-    }[];
-    pending: {
-        id: number;
-        date: string | null;
-        client: string;
-        description: string;
-        amount: number;
-        cost: number;
     }[];
     recent: {
         id: number;
@@ -90,11 +45,10 @@ const props = defineProps<{
     }[];
 }>();
 
-const user = usePage().props.auth.user;
+const page = usePage();
+const user = page.props.auth.user;
+const can = computed(() => page.props.auth.can);
 const s = computed(() => props.summary);
-const topMargin = computed(() =>
-    Math.max(1, ...props.clients.map((c) => Math.abs(c.margin))),
-);
 
 const hour = new Date().getHours();
 const greeting =
@@ -107,10 +61,25 @@ const greeting =
         :title="t('আজকের ডেস্ক')"
         :lead="
             t(
-                'Card, খাতা আর client — এক নজরে। সব সংখ্যা খাতা থেকে নিজে হিসাব হয়।',
+                'Card-এ কত আছে, Meta আর কত কাটবে, কোন client-এর কত বাকি — এক নজরে। সব সংখ্যা খাতা থেকে নিজে হিসাব হয়।',
             )
         "
-    />
+    >
+        <KButton
+            v-if="can['clients.view']"
+            href="/clients"
+            icon="people"
+            class="max-sm:hidden"
+            >Clients</KButton
+        >
+        <KButton
+            v-if="can['reports.view']"
+            href="/reports"
+            icon="chart"
+            class="max-sm:hidden"
+            >P&amp;L</KButton
+        >
+    </PageHeader>
 
     <!-- Data that still needs a human look -->
     <div
@@ -133,85 +102,140 @@ const greeting =
         >
     </div>
 
-    <!-- The four numbers that matter -->
+    <!-- USD: the card and the bought dollars -->
+    <h2 class="eyebrow mb-2.5 flex items-center gap-1.5">
+        <span
+            class="grid size-5 place-items-center rounded bg-sunken text-[11px] text-ink-2"
+            >$</span
+        >
+        {{ t('Dollar — card আর কেনা dollar') }}
+    </h2>
+    <CardStrip :summary="summary" :fx="fx" />
+
+    <div class="mt-6">
+        <ClientTable :clients="clients" :platform-due="s.platform_due" />
+    </div>
+
+    <!-- BDT -->
+    <h2 class="eyebrow mt-8 mb-2.5 flex items-center gap-1.5">
+        <span
+            class="grid size-5 place-items-center rounded bg-sunken text-[11px] text-ink-2"
+            >{{ '\u09F3' }}</span
+        >
+        {{ t('টাকা — কোথায় কত আছে') }}
+    </h2>
     <section
         class="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
-        <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p
-                class="text-[11px] font-bold tracking-[0.14em] text-rail-dim uppercase"
-            >
-                {{ t('ব্যবসার আসল USD') }}
+        <div class="bg-surface p-5 sm:p-6">
+            <p class="eyebrow">{{ t('BDT কোথায়') }}</p>
+            <p class="num mt-3 text-[30px] leading-none font-medium">
+                {{ money(wallets.total, 'bdt') }}
             </p>
-            <p class="num mt-3 text-[34px] leading-none font-medium text-white">
-                {{ money(s.business_usd, 'usd') }}
-            </p>
-            <p
-                class="mt-3 flex items-center gap-1.5 text-[12.5px]"
-                :class="s.usd_check.ok ? 'text-[#2dd4bf]' : 'text-[#f0875e]'"
+            <ul class="mt-3 space-y-1 text-[12.5px]">
+                <li
+                    v-for="p in wallets.places"
+                    :key="p.key"
+                    class="flex justify-between gap-3 text-ink-3"
+                >
+                    <span>{{ p.label }}</span>
+                    <span class="num font-semibold text-ink-2">{{
+                        money(p.balance, 'bdt')
+                    }}</span>
+                </li>
+                <li
+                    v-if="wallets.untagged_count"
+                    class="flex justify-between gap-3 text-ink-3"
+                >
+                    <span>{{
+                        t('জায়গা লেখা নেই ({n} row)', {
+                            n: wallets.untagged_count,
+                        })
+                    }}</span>
+                    <span class="num font-semibold text-ink-2">{{
+                        money(wallets.untagged, 'bdt')
+                    }}</span>
+                </li>
+            </ul>
+            <Link
+                href="/wallets"
+                class="no-print mt-2 inline-block text-[12.5px] font-semibold text-brand-ink hover:underline"
+                >{{ t('বিস্তারিত') }} →</Link
             >
-                <KIcon :name="s.usd_check.ok ? 'check' : 'warn'" :size="14" />
+        </div>
+        <div class="bg-surface p-5 sm:p-6">
+            <p class="eyebrow">{{ t('Client-দের আগাম টাকা') }}</p>
+            <p class="num mt-3 text-[30px] leading-none font-medium">
+                {{ money(s.unearned, 'bdt') }}
+            </p>
+            <p class="mt-3 text-[12.5px] text-ink-3">
                 {{
-                    s.usd_check.ok
-                        ? t('মিলেছে — কেনা − খরচ')
-                        : t('মেলেনি — কেনা − খরচ = {amount}', {
-                              amount: money(s.usd_check.remaining, 'usd'),
-                          })
+                    t(
+                        'Client আগাম দিয়েছে কিন্তু campaign-এ এখনো খরচ হয়নি। এটা client-দের টাকা — লাভ নয়।',
+                    )
                 }}
             </p>
         </div>
         <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('Card-এ এখন (app)') }}</p>
-            <p class="num mt-3 text-[30px] leading-none font-medium">
-                {{ money(s.card, 'usd') }}
-            </p>
-            <p class="mt-3 text-[12.5px] text-ink-3">
-                {{ t('Platform আরো কাটবে') }}
-                <span class="num font-semibold text-out">{{
-                    money(s.platform_due, 'usd')
-                }}</span>
-            </p>
+            <template v-if="s.owner_due > 0">
+                <p class="eyebrow">{{ t('Owner-এর কাছে পাওনা') }}</p>
+                <p class="num mt-3 text-[30px] leading-none font-medium">
+                    {{ money(s.owner_due, 'bdt') }}
+                </p>
+                <p class="mt-3 text-[12.5px] text-ink-3">
+                    {{
+                        t(
+                            'Owner কিছুদিনের জন্য নিয়েছেন, ফেরত দেবেন — এটা ব্যবসার টাকা।',
+                        )
+                    }}
+                </p>
+            </template>
+            <template v-else>
+                <p class="eyebrow">{{ t('Client দেবে') }}</p>
+                <p
+                    class="num mt-3 text-[30px] leading-none font-medium"
+                    :class="s.receivable_cost > 0 && 'text-wait'"
+                >
+                    {{ money(s.receivable_cost, 'bdt') }}
+                </p>
+                <p class="mt-3 text-[12.5px] text-ink-3">
+                    {{
+                        t(
+                            '{amount} খরচ হয়েছে, client এখনো টাকা দেয়নি (কেনা দামে)।',
+                            {
+                                amount: money(s.receivable_usd, 'usd'),
+                            },
+                        )
+                    }}
+                </p>
+            </template>
         </div>
         <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('BDT কোথায়') }}</p>
-            <p class="num mt-3 text-[30px] leading-none font-medium">
-                {{ money(s.bdt, 'bdt') }}
+            <p class="eyebrow">{{ t('এই মাসের লাভ') }}</p>
+            <p class="mt-3 text-[30px] leading-none font-medium">
+                <KAmount :value="month_net" currency="bdt" sign />
             </p>
-            <p
-                class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-ink-3"
-            >
-                <span v-for="p in wallets.places" :key="p.key"
-                    >{{ p.label }}
-                    <b class="num font-semibold text-ink-2">{{
-                        money(p.balance, 'bdt')
-                    }}</b></span
-                >
+            <p class="mt-3 text-[12.5px] text-ink-3">
+                {{ t('শুরু থেকে') }}
+                <KAmount
+                    :value="s.net"
+                    currency="bdt"
+                    sign
+                    class="font-semibold"
+                />
+                ·
                 <Link
-                    href="/wallets"
-                    class="font-semibold text-brand-ink hover:underline"
-                    >{{ t('বিস্তারিত') }} →</Link
+                    href="/reports?preset=this_month"
+                    class="no-print font-semibold text-brand-ink hover:underline"
+                    >P&amp;L →</Link
                 >
-            </p>
-        </div>
-        <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">Profit / (Loss)</p>
-            <p
-                class="num mt-3 text-[30px] leading-none font-medium"
-                :class="s.net < -50 ? 'text-out' : s.net > 50 ? 'text-in' : ''"
-            >
-                {{ money(s.net, 'bdt', { sign: true }) }}
-            </p>
-            <p class="mt-3 text-[12.5px] text-ink-3">
-                Client margin
-                <span class="num font-semibold text-ink-2">{{
-                    money(s.margin, 'bdt')
-                }}</span>
-                {{ t('− খরচ') }}
             </p>
         </div>
     </section>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+    <div class="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <ChecksPanel :summary="summary" />
+
         <!-- Month by month -->
         <section class="panel p-5 sm:p-6">
             <div class="mb-4 flex items-baseline justify-between gap-4">
@@ -235,248 +259,18 @@ const greeting =
             </div>
             <MonthlyChart :rows="monthly" />
         </section>
-
-        <!-- Where the money sits -->
-        <section class="panel p-5 sm:p-6">
-            <h2 class="text-[16px] font-bold">{{ t('লাভ-লসের হিসাব') }}</h2>
-            <p class="text-[12.5px] text-ink-3">
-                {{ t('যা আছে = যা দিয়েছেন − যা তুলেছেন + লাভ') }}
-            </p>
-            <dl class="mt-4 text-[14px]">
-                <div
-                    class="flex justify-between border-b border-dashed border-line py-2.5"
-                >
-                    <dt class="text-ink-2">{{ t('BDT হাতে') }}</dt>
-                    <dd class="num">{{ money(s.bdt, 'bdt') }}</dd>
-                </div>
-                <div
-                    class="flex justify-between border-b border-dashed border-line py-2.5"
-                >
-                    <dt class="text-ink-2">{{ t('USD (কেনা দামে)') }}</dt>
-                    <dd class="num">{{ money(s.usd_at_cost, 'bdt') }}</dd>
-                </div>
-                <div
-                    class="flex justify-between border-b border-dashed border-line py-2.5"
-                >
-                    <dt class="text-ink-2">
-                        {{ t('Client-দের কাছে পাওনা') }}
-                        <span class="text-ink-3"
-                            >({{ money(s.receivable_usd, 'usd') }})</span
-                        >
-                    </dt>
-                    <dd class="num">{{ money(s.receivable_cost, 'bdt') }}</dd>
-                </div>
-                <div
-                    v-if="s.owner_due"
-                    class="flex justify-between border-b border-dashed border-line py-2.5"
-                >
-                    <dt class="text-ink-2">{{ t('Owner-এর কাছে পাওনা') }}</dt>
-                    <dd class="num">{{ money(s.owner_due, 'bdt') }}</dd>
-                </div>
-                <div class="flex justify-between py-2.5 font-semibold">
-                    <dt>{{ t('মোট সম্পদ') }}</dt>
-                    <dd class="num">{{ money(s.assets, 'bdt') }}</dd>
-                </div>
-            </dl>
-            <dl class="mt-2 rounded-xl bg-surface-2 px-4 py-1 text-[13.5px]">
-                <div
-                    class="flex justify-between border-b border-dashed border-line py-2"
-                >
-                    <dt class="text-ink-2">{{ t('Capital দিয়েছেন') }}</dt>
-                    <dd class="num">{{ money(s.capital, 'bdt') }}</dd>
-                </div>
-                <div
-                    class="flex justify-between border-b border-dashed border-line py-2"
-                >
-                    <dt class="text-ink-2">{{ t('Owner তুলেছেন') }}</dt>
-                    <dd class="num">{{ money(-s.drawings, 'bdt') }}</dd>
-                </div>
-                <div
-                    class="flex justify-between border-b border-dashed border-line py-2"
-                >
-                    <dt class="text-ink-2">{{ t('লাভ / (লস)') }}</dt>
-                    <dd class="num">
-                        {{ money(s.net, 'bdt', { sign: true }) }}
-                    </dd>
-                </div>
-                <div
-                    class="flex items-center justify-between py-2 font-semibold"
-                >
-                    <dt class="flex items-center gap-1.5">
-                        <KIcon
-                            :name="s.equity_ok ? 'check' : 'warn'"
-                            :size="15"
-                            :class="s.equity_ok ? 'text-in' : 'text-out'"
-                        />
-                        {{ s.equity_ok ? t('মিলেছে') : t('মেলেনি') }}
-                    </dt>
-                    <dd class="num">{{ money(s.equity, 'bdt') }}</dd>
-                </div>
-            </dl>
-        </section>
-    </div>
-
-    <div class="mt-6 grid gap-6 lg:grid-cols-2">
-        <!-- Clients -->
-        <section class="panel">
-            <div class="flex items-baseline justify-between px-5 pt-5 sm:px-6">
-                <h2 class="text-[16px] font-bold">
-                    {{ t('Client-ভিত্তিক margin') }}
-                </h2>
-                <Link
-                    href="/clients"
-                    class="text-[13px] font-semibold text-brand-ink hover:underline"
-                    >{{ t('সব client →') }}</Link
-                >
-            </div>
-            <ul class="mt-3 px-5 pb-4 sm:px-6">
-                <li
-                    v-for="c in clients"
-                    :key="c.id"
-                    class="border-b border-dashed border-line py-3 last:border-0"
-                >
-                    <Link :href="`/clients/${c.id}`" class="group block">
-                        <div class="flex items-baseline justify-between gap-3">
-                            <span
-                                class="font-semibold group-hover:text-brand-ink"
-                                >{{ c.name }}</span
-                            >
-                            <KAmount
-                                :value="c.margin"
-                                currency="bdt"
-                                class="text-[14px] font-medium"
-                            />
-                        </div>
-                        <div class="mt-1.5 flex items-center gap-3">
-                            <span
-                                class="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken"
-                            >
-                                <span
-                                    class="block h-full rounded-full"
-                                    :class="
-                                        c.margin >= 0
-                                            ? 'bg-[var(--pos)]'
-                                            : 'bg-[var(--neg)]'
-                                    "
-                                    :style="{
-                                        width: `${(Math.abs(c.margin) / topMargin) * 100}%`,
-                                    }"
-                                />
-                            </span>
-                            <span
-                                class="num w-24 text-right text-[11.5px] text-ink-3"
-                                >{{
-                                    t('{amount} খরচ', {
-                                        amount: money(c.usd_settled, 'usd'),
-                                    })
-                                }}</span
-                            >
-                        </div>
-                    </Link>
-                </li>
-            </ul>
-        </section>
-
-        <div class="flex flex-col gap-6">
-            <!-- Platforms -->
-            <section class="panel p-5 sm:p-6">
-                <div class="flex items-baseline justify-between">
-                    <h2 class="text-[16px] font-bold">
-                        {{ t('Ad Platform — খরচ বনাম কাটা') }}
-                    </h2>
-                    <Link
-                        href="/platforms"
-                        class="text-[13px] font-semibold text-brand-ink hover:underline"
-                        >{{ t('বিস্তারিত →') }}</Link
-                    >
-                </div>
-                <table class="mt-3 w-full text-[13.5px]">
-                    <thead>
-                        <tr
-                            class="text-left text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase"
-                        >
-                            <th class="pb-2 font-bold">Platform</th>
-                            <th class="pb-2 text-right font-bold">
-                                {{ t('খরচ') }}
-                            </th>
-                            <th class="pb-2 text-right font-bold">
-                                {{ t('কেটেছে') }}
-                            </th>
-                            <th class="pb-2 text-right font-bold">
-                                {{ t('আরো কাটবে') }}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="p in s.platforms"
-                            :key="p.id"
-                            class="border-t border-dashed border-line"
-                        >
-                            <td class="py-2.5 font-medium">{{ p.name }}</td>
-                            <td class="num py-2.5 text-right">
-                                {{ p.spent ? money(p.spent, 'usd') : '–' }}
-                            </td>
-                            <td class="num py-2.5 text-right">
-                                {{ p.charged ? money(p.charged, 'usd') : '–' }}
-                            </td>
-                            <td
-                                class="num py-2.5 text-right font-semibold"
-                                :class="p.due > 0 && 'text-out'"
-                            >
-                                {{ p.due ? money(p.due, 'usd') : '–' }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-
-            <!-- Pending from clients -->
-            <section class="panel p-5 sm:p-6">
-                <div class="flex items-baseline justify-between">
-                    <h2 class="text-[16px] font-bold">
-                        {{ t('Client দেবে') }}
-                    </h2>
-                    <span class="num text-[14px] font-semibold text-wait">{{
-                        money(s.receivable_usd, 'usd')
-                    }}</span>
-                </div>
-                <ul v-if="pending.length" class="mt-2">
-                    <li
-                        v-for="p in pending"
-                        :key="p.id"
-                        class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13.5px] last:border-0"
-                    >
-                        <KTag tone="wait">Pending</KTag>
-                        <span class="min-w-0 flex-1 truncate"
-                            ><b class="font-semibold">{{ p.client }}</b> ·
-                            {{ p.description }}</span
-                        >
-                        <span class="text-[12px] text-ink-3">{{
-                            niceDate(p.date, false)
-                        }}</span>
-                        <span class="num font-medium">{{
-                            money(p.amount, 'usd')
-                        }}</span>
-                    </li>
-                </ul>
-                <p v-else class="mt-3 text-[13.5px] text-ink-3">
-                    {{ t('সব client টাকা দিয়ে দিয়েছে।') }}
-                </p>
-            </section>
-        </div>
     </div>
 
     <!-- Latest entries -->
-    <section class="panel mt-6">
+    <section v-if="recent.length" class="panel mt-6">
         <h2 class="px-5 pt-5 text-[16px] font-bold sm:px-6">
             {{ t('সর্বশেষ entry') }}
         </h2>
-        <ul class="mt-2 px-5 pb-3 sm:px-6">
+        <ul class="mt-2 grid px-5 pb-3 sm:px-6 lg:grid-cols-2 lg:gap-x-8">
             <li
                 v-for="r in recent"
                 :key="r.book + r.id"
-                class="flex items-center gap-3 border-b border-dashed border-line py-3 text-[13.5px] last:border-0"
+                class="flex items-center gap-3 border-b border-dashed border-line py-3 text-[13.5px]"
             >
                 <span
                     class="grid size-8 shrink-0 place-items-center rounded-lg bg-sunken text-[12px] font-bold text-ink-2"
@@ -486,7 +280,7 @@ const greeting =
                     <span class="block truncate font-medium">{{
                         r.description
                     }}</span>
-                    <span class="block text-[12px] text-ink-3"
+                    <span class="block truncate text-[12px] text-ink-3"
                         >{{ r.category
                         }}<template v-if="r.client"> · {{ r.client }}</template>
                         · {{ niceDate(r.date) }}</span

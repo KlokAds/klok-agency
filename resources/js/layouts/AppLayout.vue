@@ -66,6 +66,12 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 perm: 'clients.view',
             },
             {
+                label: 'Campaign',
+                href: '/campaigns',
+                icon: 'pulse',
+                perm: 'runs.view',
+            },
+            {
                 label: 'Ad চালানো',
                 href: '/runs',
                 icon: 'rocket',

@@ -18,16 +18,121 @@ class ReportController extends Controller
     public function index(Request $request, Books $books): Response
     {
         [$from, $to] = $this->period($request);
+        $preset = (string) $request->input('preset', 'all');
+        $summary = $books->summary();
+        $pl = $books->profitAndLoss($from, $to);
+
+        [$prevFrom, $prevTo] = $this->previous($preset, $from, $to);
+        $previous = null;
+        $previousPeriod = null;
+
+        if ($prevFrom && $prevTo) {
+            $previous = $this->kpis($books->profitAndLoss($prevFrom, $prevTo));
+            $previousPeriod = ['from' => $prevFrom->toDateString(), 'to' => $prevTo->toDateString()];
+        }
 
         return Inertia::render('reports/Index', [
-            'pl' => $books->profitAndLoss($from, $to),
-            'monthly' => $books->monthly(12),
+            'pl' => $pl,
+            'kpi' => $this->kpis($pl),
+            'previous' => $previous,
+            'previous_period' => $previousPeriod,
+            'trend' => $this->trend($books, $from, $to),
+            // Money that sits outside the profit, as of today.
+            'outside' => [
+                'unearned' => $summary['unearned'],
+                'owner_due' => $summary['owner_due'],
+            ],
             'period' => [
                 'from' => $from?->toDateString(),
                 'to' => $to?->toDateString(),
-                'preset' => $request->input('preset', 'all'),
+                'preset' => $preset,
             ],
         ]);
+    }
+
+    /**
+     * The headline numbers of a P&L.
+     *
+     * @param  array<string, mixed>  $pl
+     * @return array{revenue: int, ad_cost: int, gross: int, office: int, net: int}
+     */
+    private function kpis(array $pl): array
+    {
+        $revenue = (int) $pl['unlinked_income'];
+        $adCost = 0;
+
+        foreach ((array) $pl['clients'] as $c) {
+            $revenue += (int) $c['received'];
+            $adCost += (int) $c['cost_settled'];
+        }
+
+        return [
+            'revenue' => $revenue,
+            'ad_cost' => $adCost,
+            'gross' => $revenue - $adCost,
+            'office' => (int) $pl['total_expense'],
+            'net' => (int) $pl['net'],
+        ];
+    }
+
+    /**
+     * The period just before the chosen one, of the same kind: the month,
+     * the year, or the same number of days. None for "all time".
+     *
+     * @return array{0: ?CarbonImmutable, 1: ?CarbonImmutable}
+     */
+    private function previous(string $preset, ?CarbonImmutable $from, ?CarbonImmutable $to): array
+    {
+        if (! $from || ! $to) {
+            return [null, null];
+        }
+
+        return match ($preset) {
+            'this_month', 'last_month' => [$from->subMonthNoOverflow()->startOfMonth(), $from->subMonthNoOverflow()->endOfMonth()],
+            'this_year' => [$from->subYear()->startOfYear(), $from->subYear()->endOfYear()],
+            default => [
+                $from->subDays((int) $from->diffInDays($to->startOfDay()) + 1)->startOfDay(),
+                $from->subDay()->endOfDay(),
+            ],
+        };
+    }
+
+    /**
+     * Month by month across the chosen period (at least the 6 months up to
+     * its end, at most 12), worked out the same way as the P&L itself.
+     *
+     * @return list<array{month: string, label: string, revenue: int, ad_cost: int, office: int, net: int, in_period: bool}>
+     */
+    private function trend(Books $books, ?CarbonImmutable $from, ?CarbonImmutable $to): array
+    {
+        $end = ($to && $to->lt(now()) ? $to : now())->startOfMonth();
+        $start = $from ? $from->startOfMonth() : $end->subMonths(11);
+
+        if ($start->gt($end->subMonths(5))) {
+            $start = $end->subMonths(5);
+        }
+
+        if ($start->lt($end->subMonths(11))) {
+            $start = $end->subMonths(11);
+        }
+
+        $rows = [];
+
+        for ($month = $start; $month->lte($end); $month = $month->addMonth()) {
+            $k = $this->kpis($books->profitAndLoss($month, $month->endOfMonth()));
+
+            $rows[] = [
+                'month' => $month->format('Y-m'),
+                'label' => $month->format('M'),
+                'revenue' => $k['revenue'],
+                'ad_cost' => $k['ad_cost'],
+                'office' => $k['office'],
+                'net' => $k['net'],
+                'in_period' => (! $from || $month->endOfMonth()->gte($from)) && (! $to || $month->lte($to)),
+            ];
+        }
+
+        return $rows;
     }
 
     /** @return array{0: ?CarbonImmutable, 1: ?CarbonImmutable} */

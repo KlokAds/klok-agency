@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $entry_date
  * @property int $amount
  * @property int $sequence
+ * @property string|null $source pilot when the row comes from campaign spend
+ * @property string|null $source_key
  */
 class UsdEntry extends Model
 {

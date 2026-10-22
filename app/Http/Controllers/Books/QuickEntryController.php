@@ -74,6 +74,7 @@ class QuickEntryController extends Controller
                 'client_id' => ['required', 'exists:clients,id'],
                 'category' => ['required', Rule::in(['client_payment', 'service_income'])],
                 'pay_via' => ['required', Rule::in(array_keys(BdtEntry::PAY_VIA))],
+                'usd_credit' => ['nullable', Money::RULE],
                 ...$wallet,
                 'amount' => ['required', Money::RULE],
                 'settle_ids' => ['array'],
@@ -151,6 +152,10 @@ class QuickEntryController extends Controller
 
         // Optional fields left empty are not in the validated data.
         $data += ['description' => null, 'notes' => null];
+
+        if (! empty($data['usd_credit'])) {
+            $data['usd_credit'] = Money::toMinor($data['usd_credit']);
+        }
 
         foreach (['amount', 'usd', 'bdt'] as $key) {
             if (array_key_exists($key, $data)) {
