@@ -11,6 +11,7 @@ import KModal from '@/components/k/KModal.vue';
 import KMoney from '@/components/k/KMoney.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
+import KSwitch from '@/components/k/KSwitch.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -123,6 +124,7 @@ const blank = () => ({
     category: 'client_payment',
     pay_via: 'mfs',
     usd_credit: '' as string | null,
+    bank_fee: false,
     wallet: 'bank' as string | null,
     direction: 'loan',
     description: '' as string | null,
@@ -794,6 +796,22 @@ const directions = computed<Option[]>(() => [
                         </KField>
                     </template>
                 </div>
+
+                <KSwitch
+                    v-if="
+                        form.wallet === 'bank' &&
+                        (job === 'expense' ||
+                            (job === 'owner' &&
+                                ['out', 'loan'].includes(form.direction)))
+                    "
+                    v-model="form.bank_fee"
+                    :label="t('Bank transfer (NPSB/অন্য bank-এ পাঠানো)')"
+                    :hint="
+                        t(
+                            'চালু করলে transfer fee আলাদা Bank charge খরচ হিসেবে লেখা হবে।',
+                        )
+                    "
+                />
 
                 <KField label="Note" optional>
                     <KTextarea

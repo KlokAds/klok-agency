@@ -14,16 +14,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable $moved_on
  * @property string $from_wallet
  * @property string $to_wallet
- * @property int $amount
+ * @property int $amount what arrived
+ * @property int $fee what moving it cost (booked as a Bank charge)
+ * @property int|null $fee_entry_id
  */
 class WalletMove extends Model
 {
     use Audited, SoftDeletes;
 
-    protected $fillable = ['moved_on', 'from_wallet', 'to_wallet', 'amount', 'note', 'created_by'];
+    protected $fillable = ['moved_on', 'from_wallet', 'to_wallet', 'amount', 'fee', 'fee_entry_id', 'note', 'created_by'];
 
     protected function casts(): array
     {
-        return ['moved_on' => 'date', 'amount' => 'integer'];
+        return ['moved_on' => 'date', 'amount' => 'integer', 'fee' => 'integer', 'fee_entry_id' => 'integer'];
     }
 }

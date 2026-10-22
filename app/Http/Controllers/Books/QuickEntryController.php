@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdRun;
 use App\Models\BdtEntry;
 use App\Services\Agency;
+use App\Services\MoveFees;
 use App\Services\Postings;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
@@ -86,12 +87,14 @@ class QuickEntryController extends Controller
             ] + $base + [
                 'expense_head_id' => ['required', 'exists:expense_heads,id'],
                 ...$wallet,
+                'bank_fee' => ['boolean'],
                 'amount' => ['required', Money::RULE],
             ], fn ($d) => $postings->expense($d), __('খরচ লেখা হয়েছে।')),
 
             'owner' => $this->run($request, $base + [
                 'direction' => ['required', Rule::in(['in', 'out', 'loan', 'repay'])],
                 ...$wallet,
+                'bank_fee' => ['boolean'],
                 'amount' => ['required', Money::RULE],
             ], fn ($d) => $postings->owner($d), __('Owner-এর হিসাব লেখা হয়েছে।')),
 
@@ -168,6 +171,11 @@ class QuickEntryController extends Controller
         }
 
         $post($data);
+
+        // Paid by bank transfer: the transfer's own fee is a Bank charge from the bank.
+        if (! empty($data['bank_fee']) && ($data['wallet'] ?? null) === 'bank' && ($data['direction'] ?? 'out') !== 'in' && ($data['direction'] ?? null) !== 'repay') {
+            MoveFees::book(MoveFees::bankFee(), 'bank', $data['entry_date'], 'Bank transfer fee — '.($data['description'] ?: __('টাকা পাঠানো')));
+        }
 
         return $message;
     }

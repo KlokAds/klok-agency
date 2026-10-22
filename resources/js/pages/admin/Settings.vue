@@ -31,7 +31,8 @@ const props = defineProps<{
         lock_date: string | null;
         require_2fa: boolean;
         idle_minutes: number;
-        payment_fee_percent: string;
+        mfs_out_percent: string;
+        bank_transfer_fee: string;
     };
     heads: Head[];
     accounts: Account[];
@@ -170,28 +171,50 @@ onMounted(() => {
                     {{ t('Fee আর কোন মাস পর্যন্ত খাতা বন্ধ — সবার জন্য।') }}
                 </p>
             </div>
-            <KField
-                :label="t('MFS payment থেকে fee (%)')"
-                :error="form.errors.payment_fee_percent"
-                :hint="
-                    t(
-                        'MFS-এ (bKash, Nagad…) আসা client payment থেকে এই % কেটে আলাদা খরচ হিসেবে দেখানো হয়। Bank বা cash-এ fee নেই। নতুন হার শুধু এখন থেকে লেখা payment-এ লাগবে।',
-                    )
-                "
-            >
-                <KInput
-                    v-model="form.payment_fee_percent"
-                    inputmode="decimal"
-                    size="sm"
-                    class="max-w-[140px]"
+            <div class="grid gap-4 sm:grid-cols-2">
+                <KField
+                    :label="t('MFS থেকে বের করলে fee (%)')"
+                    :error="form.errors.mfs_out_percent"
+                    :hint="
+                        t('bKash থেকে bank বা cash-এ সরালে টাকার এই % কাটে।')
+                    "
                 >
-                    <template #trail
-                        ><span class="text-[13px] font-semibold text-ink-3"
-                            >%</span
-                        ></template
+                    <KInput
+                        v-model="form.mfs_out_percent"
+                        inputmode="decimal"
+                        size="sm"
+                        class="max-w-[140px]"
                     >
-                </KInput>
-            </KField>
+                        <template #trail
+                            ><span class="text-[13px] font-semibold text-ink-3"
+                                >%</span
+                            ></template
+                        >
+                    </KInput>
+                </KField>
+                <KField
+                    :label="t('Bank transfer fee (প্রতি transfer)')"
+                    :error="form.errors.bank_transfer_fee"
+                    :hint="
+                        t(
+                            'Bank থেকে NPSB/অন্য bank-এ পাঠালে উপরে এই টাকা কাটে।',
+                        )
+                    "
+                >
+                    <KInput
+                        v-model="form.bank_transfer_fee"
+                        inputmode="decimal"
+                        size="sm"
+                        class="max-w-[140px]"
+                    >
+                        <template #trail
+                            ><span class="text-[13px] font-semibold text-ink-3"
+                                >৳</span
+                            ></template
+                        >
+                    </KInput>
+                </KField>
+            </div>
 
             <KField
                 :label="t('খাতা বন্ধ (lock) — এই তারিখ পর্যন্ত')"

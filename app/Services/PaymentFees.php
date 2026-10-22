@@ -19,7 +19,7 @@ class PaymentFees
 
     public static function percent(): float
     {
-        return (float) Setting::get('payment_fee_percent', '1');
+        return (float) Setting::get('payment_fee_percent', '0');
     }
 
     /** Payments dated before this day were written down as what arrived, so they carry no fee. */

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\ExpenseHead;
 use App\Models\Setting;
-use App\Services\PaymentFees;
+use App\Services\MoveFees;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -22,7 +22,8 @@ class SettingController extends Controller
                 'lock_date' => Setting::get('lock_date'),
                 'require_2fa' => (bool) Setting::get('require_2fa', false),
                 'idle_minutes' => (int) Setting::get('idle_minutes', 30),
-                'payment_fee_percent' => (string) PaymentFees::percent(),
+                'mfs_out_percent' => (string) MoveFees::mfsPercent(),
+                'bank_transfer_fee' => (string) (MoveFees::bankFee() / 100),
             ],
             'heads' => ExpenseHead::orderBy('name')->get(['id', 'name', 'is_active']),
             'accounts' => Account::orderBy('sort')->get(['id', 'code', 'name', 'kind', 'is_active']),
@@ -36,7 +37,8 @@ class SettingController extends Controller
             'lock_date' => ['nullable', 'date', 'before_or_equal:today'],
             'require_2fa' => ['required', 'boolean'],
             'idle_minutes' => ['required', 'integer', 'min:5', 'max:240'],
-            'payment_fee_percent' => ['required', 'numeric', 'min:0', 'max:10'],
+            'mfs_out_percent' => ['required', 'numeric', 'min:0', 'max:10'],
+            'bank_transfer_fee' => ['required', 'numeric', 'min:0', 'max:1000'],
         ]);
 
         if ($data['require_2fa'] && ! $request->user()->two_factor_confirmed_at) {
@@ -46,8 +48,9 @@ class SettingController extends Controller
         Setting::put('lock_date', $data['lock_date']);
         Setting::put('require_2fa', $data['require_2fa'] ? '1' : '0');
         Setting::put('idle_minutes', (string) $data['idle_minutes']);
-        // Applies to payments saved from now on; earlier fee rows keep the rate they were made with.
-        Setting::put('payment_fee_percent', (string) round((float) $data['payment_fee_percent'], 3));
+        // What moving money costs: cashing out of MFS, and a bank transfer.
+        Setting::put('mfs_out_percent', (string) round((float) $data['mfs_out_percent'], 3));
+        Setting::put('bank_transfer_fee', (string) round((float) $data['bank_transfer_fee'], 2));
 
         $this->toast(__('Settings সংরক্ষণ হয়েছে।'));
 

@@ -22,6 +22,7 @@ type Move = {
     from: string;
     to: string;
     amount: number;
+    fee: number;
     note: string | null;
 };
 
@@ -46,6 +47,7 @@ const props = defineProps<{
     }>;
     moves: Paginated<Move>;
     options: { wallets: Option[] };
+    fees: { mfs_percent: number; bank_fee: number };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -103,7 +105,34 @@ const form = useForm({
     from_wallet: 'bkash' as string | null,
     to_wallet: 'bank' as string | null,
     amount: '' as string | null,
+    fee: '' as string | null,
     note: '' as string | null,
+});
+
+// The usual fee for a move: cashing out of MFS comes off the amount, a
+// bank transfer is charged on top. It can be changed before saving.
+const usualFee = computed(() => {
+    const amount = parseFloat(form.amount || '0');
+
+    if (form.from_wallet === 'bkash') {
+        return { fee: (amount * props.fees.mfs_percent) / 100, inside: true };
+    }
+
+    if (form.from_wallet === 'bank') {
+        return { fee: props.fees.bank_fee / 100, inside: false };
+    }
+
+    return { fee: 0, inside: false };
+});
+const feeShown = computed(() =>
+    form.fee !== '' && form.fee !== null
+        ? parseFloat(form.fee || '0')
+        : usualFee.value.fee,
+);
+const arrives = computed(() => {
+    const amount = parseFloat(form.amount || '0');
+
+    return usualFee.value.inside ? amount - feeShown.value : amount;
 });
 
 function openMove(): void {
@@ -341,9 +370,15 @@ async function removeMove(move: Move): Promise<void> {
                             · {{ m.note }}</span
                         ></span
                     >
-                    <span class="num shrink-0">{{
-                        money(m.amount, 'bdt', { round: false })
-                    }}</span>
+                    <span class="num shrink-0 text-right"
+                        >{{ money(m.amount, 'bdt', { round: false }) }}
+                        <span
+                            v-if="m.fee"
+                            class="block text-[11.5px] text-ink-3"
+                            >fee
+                            {{ money(m.fee, 'bdt', { round: false }) }}</span
+                        ></span
+                    >
                     <button
                         v-if="can['bdt.delete']"
                         type="button"
@@ -395,13 +430,63 @@ async function removeMove(move: Move): Promise<void> {
                     :placeholder="t('যেমন bKash থেকে cash out')"
                 />
             </KField>
-            <p class="text-[12.5px] text-ink-3 sm:col-span-2">
-                {{
-                    t(
-                        'সরাতে খরচ লাগলে (যেমন NPSB বা cash out fee) সেটা আলাদা ব্যবসার খরচ হিসেবে লিখুন।',
-                    )
-                }}
-            </p>
+            <KField
+                label="Fee"
+                optional
+                :error="form.errors.fee"
+                :hint="
+                    form.from_wallet === 'bkash'
+                        ? t('MFS থেকে বের করার fee {pct}% — টাকা থেকে কাটবে।', {
+                              pct: fees.mfs_percent,
+                          })
+                        : form.from_wallet === 'bank'
+                          ? t('Bank transfer fee — উপরে কাটবে।')
+                          : t('Cash সরাতে fee নেই।')
+                "
+            >
+                <KMoney
+                    v-model="form.fee"
+                    currency="bdt"
+                    :placeholder="usualFee.fee.toFixed(2)"
+                />
+            </KField>
+            <div
+                v-if="parseFloat(form.amount || '0') > 0"
+                class="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-sunken px-4 py-3 text-[13px] sm:col-span-2"
+            >
+                <span
+                    >{{ label(form.from_wallet ?? '') }} {{ t('থেকে যাবে') }}
+                    <b class="num">{{
+                        money(
+                            Math.round(
+                                (usualFee.inside
+                                    ? parseFloat(form.amount || '0')
+                                    : parseFloat(form.amount || '0') +
+                                      feeShown) * 100,
+                            ),
+                            'bdt',
+                            { round: false },
+                        )
+                    }}</b></span
+                >
+                <span
+                    >{{ label(form.to_wallet ?? '') }}-{{ t('এ পৌঁছাবে') }}
+                    <b class="num">{{
+                        money(Math.round(arrives * 100), 'bdt', {
+                            round: false,
+                        })
+                    }}</b></span
+                >
+                <span v-if="feeShown > 0" class="text-ink-3"
+                    >Fee
+                    <b class="num">{{
+                        money(Math.round(feeShown * 100), 'bdt', {
+                            round: false,
+                        })
+                    }}</b>
+                    — {{ t('Bank charge খরচ হিসেবে যাবে') }}</span
+                >
+            </div>
         </form>
         <template #footer>
             <KButton variant="quiet" @click="moveOpen = false">{{

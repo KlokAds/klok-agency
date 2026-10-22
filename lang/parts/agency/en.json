@@ -186,5 +186,20 @@
     ":campaign কোনো client-এর সাথে যুক্ত নয়।": ":campaign is not linked to any client.",
     ":countটা campaign নাম দেখে client-এর সাথে যুক্ত হলো।": ":count campaigns linked to clients by name.",
     "Klok Pilot থেকে আনা হলো — :countটা campaign-এর খরচ মিলানো হয়েছে।": "Fetched from Klok Pilot — spend synced for :count campaigns.",
-    "এই খরচ Klok Pilot-এর campaign থেকে নিজে আসে — Campaign পাতায় client বা তারিখ বদলান।": "This spend comes from a Klok Pilot campaign — change its client or date on the Campaign page."
+    "এই খরচ Klok Pilot-এর campaign থেকে নিজে আসে — Campaign পাতায় client বা তারিখ বদলান।": "This spend comes from a Klok Pilot campaign — change its client or date on the Campaign page.",
+    "Bank transfer (NPSB/অন্য bank-এ পাঠানো)": "Bank transfer (NPSB / to another bank)",
+    "চালু করলে transfer fee আলাদা Bank charge খরচ হিসেবে লেখা হবে।": "When on, the transfer fee is entered as a separate Bank charge expense.",
+    "MFS থেকে বের করলে fee (%)": "Fee for cashing out of MFS (%)",
+    "bKash থেকে bank বা cash-এ সরালে টাকার এই % কাটে।": "Moving from bKash to bank or cash takes this % of the amount.",
+    "Bank transfer fee (প্রতি transfer)": "Bank transfer fee (per transfer)",
+    "Bank থেকে NPSB/অন্য bank-এ পাঠালে উপরে এই টাকা কাটে।": "Sending from the bank by NPSB / to another bank costs this on top.",
+    "MFS থেকে বের করার fee {pct}% — টাকা থেকে কাটবে।": "MFS cash-out fee {pct}% — taken from the amount.",
+    "Bank transfer fee — উপরে কাটবে।": "Bank transfer fee — charged on top.",
+    "Cash সরাতে fee নেই।": "No fee for moving cash.",
+    "থেকে যাবে": "sends",
+    "এ পৌঁছাবে": "receives",
+    "Bank charge খরচ হিসেবে যাবে": "entered as a Bank charge expense",
+    "টাকা পাঠানো": "Money sent",
+    "Fee টাকার পরিমাণের চেয়ে বেশি হতে পারে না।": "The fee cannot be more than the amount.",
+    ":from থেকে :to-তে :amount গেছে, fee :fee খরচ হিসেবে লেখা হলো।": ":amount moved from :from to :to; the :fee fee was entered as an expense."
 }

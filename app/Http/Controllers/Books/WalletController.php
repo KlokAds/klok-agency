@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\BdtEntry;
 use App\Models\WalletMove;
 use App\Services\Books;
+use App\Services\MoveFees;
 use App\Support\Lookups;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -54,9 +56,10 @@ class WalletController extends Controller
                 ->withQueryString()
                 ->through(fn (WalletMove $m) => [
                     'id' => $m->id, 'date' => $m->moved_on->toDateString(), 'from' => $m->from_wallet,
-                    'to' => $m->to_wallet, 'amount' => $m->amount, 'note' => $m->note,
+                    'to' => $m->to_wallet, 'amount' => $m->amount, 'fee' => $m->fee, 'note' => $m->note,
                 ]),
             'options' => ['wallets' => Lookups::wallets()],
+            'fees' => ['mfs_percent' => MoveFees::mfsPercent(), 'bank_fee' => MoveFees::bankFee()],
         ]);
     }
 
@@ -94,6 +97,7 @@ class WalletController extends Controller
             'from_wallet' => ['required', Rule::in(array_keys(BdtEntry::WALLETS))],
             'to_wallet' => ['required', 'different:from_wallet', Rule::in(array_keys(BdtEntry::WALLETS))],
             'amount' => ['required', Money::RULE],
+            'fee' => ['nullable', Money::RULE],
             'note' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -103,17 +107,41 @@ class WalletController extends Controller
             throw ValidationException::withMessages(['amount' => __('পরিমাণ ০-এর বেশি হতে হবে।')]);
         }
 
-        WalletMove::create(['amount' => $amount, 'created_by' => $request->user()->id] + $data);
-        $this->toast(__(':from থেকে :to-তে টাকা সরানো লেখা হয়েছে।', [
-            'from' => BdtEntry::WALLETS[$data['from_wallet']], 'to' => BdtEntry::WALLETS[$data['to_wallet']],
-        ]));
+        // The usual fee unless one was typed: MFS out comes off the amount, a bank transfer is on top.
+        $usual = MoveFees::forMove($data['from_wallet'], $amount);
+        $fee = isset($data['fee']) && $data['fee'] !== '' ? Money::toMinor($data['fee']) : $usual['fee'];
+        $arrives = $usual['inside'] ? $amount - $fee : $amount;
+
+        if ($arrives <= 0) {
+            throw ValidationException::withMessages(['fee' => __('Fee টাকার পরিমাণের চেয়ে বেশি হতে পারে না।')]);
+        }
+
+        $from = BdtEntry::WALLETS[$data['from_wallet']];
+        $to = BdtEntry::WALLETS[$data['to_wallet']];
+
+        DB::transaction(function () use ($data, $arrives, $fee, $from, $to, $request) {
+            $entry = MoveFees::book($fee, $data['from_wallet'], $data['moved_on'], "{$from} → {$to} fee (".number_format($arrives / 100, 2).')');
+
+            WalletMove::create([
+                'moved_on' => $data['moved_on'], 'from_wallet' => $data['from_wallet'], 'to_wallet' => $data['to_wallet'],
+                'amount' => $arrives, 'fee' => $fee, 'fee_entry_id' => $entry?->id, 'note' => $data['note'] ?? null,
+                'created_by' => $request->user()->id,
+            ]);
+        });
+
+        $this->toast($fee > 0
+            ? __(':from থেকে :to-তে :amount গেছে, fee :fee খরচ হিসেবে লেখা হলো।', ['from' => $from, 'to' => $to, 'amount' => '৳'.number_format($arrives / 100, 2), 'fee' => '৳'.number_format($fee / 100, 2)])
+            : __(':from থেকে :to-তে টাকা সরানো লেখা হয়েছে।', ['from' => $from, 'to' => $to]));
 
         return back();
     }
 
     public function destroyMove(WalletMove $move): RedirectResponse
     {
-        $move->delete();
+        DB::transaction(function () use ($move) {
+            BdtEntry::find($move->fee_entry_id)?->delete();
+            $move->delete();
+        });
         $this->toast(__('টাকা সরানোর entry মুছে ফেলা হয়েছে।'));
 
         return back();

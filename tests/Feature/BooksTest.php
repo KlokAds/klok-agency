@@ -29,21 +29,22 @@ function userWithRole(string $role): User
 }
 
 // The import itself fails unless the sheet's totals match before anything is added.
-it('imports the sheet, the 20 Oct GFFS payment and the 1% MFS fees', function () {
+it('imports the sheet and the 20 Oct GFFS payment, with no fee on payments', function () {
     $summary = app(Books::class)->summary();
     $fees = -BdtEntry::whereNotNull('fee_for_id')->sum('amount');
 
     expect($summary['card'])->toBe(12066)
         ->and($summary['business_usd'])->toBe(9366)
         ->and($summary['platform_due'])->toBe(2700)
-        ->and($fees)->toBe(100991)
-        ->and($summary['bdt'])->toBe(1963300 + 210000 - 100991)
+        ->and($fees)->toBe(0)
+        ->and($summary['bdt'])->toBe(1963300 + 210000)
         ->and($summary['receivable_usd'])->toBe(410)
         ->and($summary['usd_check']['ok'])->toBeTrue()
         ->and($summary['equity_ok'])->toBeTrue();
 });
 
-it('takes 1% off an MFS payment as a locked fee row that follows it, and nothing off bank or cash', function () {
+it('can still take a fee off an MFS payment when a rate is set, and nothing off bank or cash', function () {
+    Setting::put('payment_fee_percent', '1');
     $gffs = Client::where('name', 'GFFS')->first();
 
     $this->actingAs($this->owner)->post('/quick/client-payment', [
