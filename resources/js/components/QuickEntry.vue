@@ -1,0 +1,340 @@
+<script setup lang="ts">
+import { router, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import KButton from '@/components/k/KButton.vue';
+import KCheck from '@/components/k/KCheck.vue';
+import KDate from '@/components/k/KDate.vue';
+import KField from '@/components/k/KField.vue';
+import KIcon from '@/components/k/KIcon.vue';
+import KInput from '@/components/k/KInput.vue';
+import KModal from '@/components/k/KModal.vue';
+import KMoney from '@/components/k/KMoney.vue';
+import KSegment from '@/components/k/KSegment.vue';
+import KSelect from '@/components/k/KSelect.vue';
+import KTextarea from '@/components/k/KTextarea.vue';
+import { money, niceDate, today } from '@/lib/format';
+import type { Option } from '@/types';
+
+const open = defineModel<boolean>({ default: false });
+const page = usePage();
+const can = computed(() => page.props.auth.can ?? {});
+
+type Lookups = {
+    clients: Option[];
+    accounts: Option[];
+    heads: Option[];
+    pending: { id: number; client_id: number; date: string | null; description: string; amount: number }[];
+};
+
+const lookups = computed(() => page.props.lookups as Lookups | undefined);
+const loading = ref(false);
+
+// The jobs, in the words the old sheet used ("কোথায় কী লিখব").
+const JOBS = [
+    { key: 'ad-spend', label: 'Client-এর ad চালালাম', note: 'USD খাতা · Client Spend · Pending', icon: 'signal', perm: 'usd.create' },
+    { key: 'client-payment', label: 'Client টাকা দিল', note: 'BDT খাতা · Pending → Settled', icon: 'taka', perm: 'bdt.create' },
+    { key: 'card-charge', label: 'Card থেকে কেটেছে', note: 'Meta/Google card charge', icon: 'wallet', perm: 'usd.create' },
+    { key: 'buy-usd', label: 'USD কিনলাম', note: 'USD +, BDT −, নতুন FX batch', icon: 'swap', perm: 'fx.create' },
+    { key: 'expense', label: 'ব্যবসার খরচ (BDT)', note: 'Domain, যাতায়াত, অফিস…', icon: 'bin', perm: 'bdt.create' },
+    { key: 'own-spend', label: 'নিজের USD খরচ', note: 'KlokAds-এর নিজের ad / research', icon: 'dollar', perm: 'usd.create' },
+    { key: 'transfer', label: 'USD এক account থেকে আরেকটায়', note: 'Card ↔ Other account', icon: 'arrow', perm: 'usd.create' },
+    { key: 'owner', label: 'Owner টাকা দিল / তুলল', note: 'Capital বা Owner drawing', icon: 'user', perm: 'bdt.create' },
+] as const;
+
+type JobKey = (typeof JOBS)[number]['key'];
+
+const jobs = computed(() => JOBS.filter((j) => can.value[j.perm]));
+const job = ref<JobKey>('ad-spend');
+
+const blank = () => ({
+    entry_date: today() as string | null,
+    client_id: null as number | null,
+    account_id: null as number | null,
+    from_id: null as number | null,
+    to_id: null as number | null,
+    expense_head_id: null as number | null,
+    amount: '' as string | null,
+    usd: '' as string | null,
+    bdt: '' as string | null,
+    status: 'pending',
+    category: 'client_payment',
+    direction: 'in',
+    description: '' as string | null,
+    notes: '' as string | null,
+    settle_ids: [] as number[],
+});
+
+const form = useForm(blank());
+
+watch(open, (value) => {
+    if (value) {
+        if (!jobs.value.some((j) => j.key === job.value)) {
+            job.value = jobs.value[0]?.key ?? 'ad-spend';
+        }
+
+        loading.value = true;
+        router.reload({ only: ['lookups'], onFinish: () => (loading.value = false) });
+    }
+});
+
+watch(job, () => {
+    const date = form.entry_date;
+    form.defaults(blank());
+    form.reset();
+    form.clearErrors();
+    form.entry_date = date;
+    applyDefaults();
+});
+
+const accounts = computed(() => lookups.value?.accounts ?? []);
+const platforms = computed(() => accounts.value.filter((a) => a.kind === 'platform'));
+const ownAccounts = computed(() => accounts.value.filter((a) => a.kind !== 'platform'));
+const spendAccounts = computed(() => accounts.value.filter((a) => a.kind !== 'holding'));
+
+function applyDefaults(): void {
+    const meta = platforms.value.find((a) => a.code === 'meta');
+
+    if (job.value === 'ad-spend' || job.value === 'card-charge') {
+        form.account_id = (meta?.value as number) ?? null;
+    }
+
+    if (job.value === 'own-spend') {
+        form.account_id = (meta?.value as number) ?? null;
+    }
+
+    if (job.value === 'transfer') {
+        form.from_id = (ownAccounts.value.find((a) => a.kind === 'card')?.value as number) ?? null;
+        form.to_id = (ownAccounts.value.find((a) => a.kind === 'holding')?.value as number) ?? null;
+    }
+}
+
+watch(lookups, applyDefaults);
+
+const clientPending = computed(() => (lookups.value?.pending ?? []).filter((p) => p.client_id === form.client_id));
+
+watch(
+    () => form.client_id,
+    () => (form.settle_ids = []),
+);
+
+function toggleSettle(id: number, on: boolean): void {
+    form.settle_ids = on ? [...form.settle_ids, id] : form.settle_ids.filter((x) => x !== id);
+}
+
+const settleTotal = computed(() => clientPending.value.filter((p) => form.settle_ids.includes(p.id)).reduce((sum, p) => sum + p.amount, 0));
+
+const rate = computed(() => {
+    const usd = parseFloat(form.usd || '0');
+    const bdt = parseFloat(form.bdt || '0');
+
+    return usd > 0 && bdt > 0 ? (bdt / usd).toFixed(2) : null;
+});
+
+const effectiveRate = computed(() => {
+    const bdt = parseFloat(form.amount || '0');
+
+    return settleTotal.value > 0 && bdt > 0 ? (bdt / (settleTotal.value / 100)).toFixed(2) : null;
+});
+
+const current = computed(() => JOBS.find((j) => j.key === job.value)!);
+
+function submit(): void {
+    form.post(`/quick/${job.value}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            open.value = false;
+            const date = form.entry_date;
+            form.reset();
+            form.entry_date = date;
+        },
+    });
+}
+
+const yesNo: Option[] = [
+    { value: 'pending', label: 'Pending — টাকা পাইনি' },
+    { value: 'settled', label: 'Settled — টাকা পেয়েছি' },
+];
+const incomeKinds: Option[] = [
+    { value: 'client_payment', label: 'Ad-এর টাকা' },
+    { value: 'service_income', label: 'Service fee' },
+];
+const directions: Option[] = [
+    { value: 'in', label: 'টাকা দিলাম (Capital)' },
+    { value: 'out', label: 'টাকা তুললাম (Drawing)' },
+];
+</script>
+
+<template>
+    <KModal v-model="open" width="xl">
+        <template #header>
+            <p class="eyebrow">নতুন entry</p>
+            <h2 class="mt-0.5 text-[18px] font-bold tracking-tight">কী হলো?</h2>
+        </template>
+
+        <div class="grid gap-5 md:grid-cols-[250px_1fr] md:gap-6">
+            <!-- What happened -->
+            <div class="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 md:mx-0 md:flex-col md:overflow-visible md:p-0">
+                <button
+                    v-for="j in jobs"
+                    :key="j.key"
+                    type="button"
+                    class="flex shrink-0 items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors md:shrink"
+                    :class="job === j.key ? 'border-brand bg-brand-soft' : 'border-line hover:border-line-2 hover:bg-surface-2'"
+                    @click="job = j.key"
+                >
+                    <KIcon :name="j.icon" :size="18" :class="job === j.key ? 'mt-0.5 text-brand-ink' : 'mt-0.5 text-ink-3'" />
+                    <span class="min-w-0">
+                        <span class="block text-[13.5px] font-semibold whitespace-nowrap md:whitespace-normal" :class="job === j.key && 'text-brand-ink'">{{ j.label }}</span>
+                        <span class="hidden text-[11.5px] text-ink-3 md:block">{{ j.note }}</span>
+                    </span>
+                </button>
+            </div>
+
+            <!-- The form for it -->
+            <form class="flex min-w-0 flex-col gap-4" @submit.prevent="submit">
+                <div class="rounded-xl border border-dashed border-line-2 bg-surface-2 px-4 py-3 text-[13px] text-ink-2">
+                    <span class="font-semibold text-ink">{{ current.label }}</span> — {{ current.note }}
+                    <span v-if="loading" class="ml-2 text-ink-3">লোড হচ্ছে…</span>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <KField label="তারিখ" :error="form.errors.entry_date">
+                        <KDate v-model="form.entry_date" :max="today()" :invalid="!!form.errors.entry_date" />
+                    </KField>
+
+                    <!-- Ad spend -->
+                    <template v-if="job === 'ad-spend'">
+                        <KField label="Client" :error="form.errors.client_id">
+                            <KSelect v-model="form.client_id" :options="lookups?.clients ?? []" placeholder="কোন client?" :invalid="!!form.errors.client_id" />
+                        </KField>
+                        <KField label="কোথায় চলেছে" :error="form.errors.account_id">
+                            <KSelect v-model="form.account_id" :options="spendAccounts" :invalid="!!form.errors.account_id" />
+                        </KField>
+                        <KField label="খরচ (USD)" :error="form.errors.amount">
+                            <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
+                        </KField>
+                        <KField label="Client টাকা দিয়েছে?" class="sm:col-span-2">
+                            <KSegment v-model="form.status" :options="yesNo" />
+                        </KField>
+                    </template>
+
+                    <!-- Client payment -->
+                    <template v-if="job === 'client-payment'">
+                        <KField label="Client" :error="form.errors.client_id">
+                            <KSelect v-model="form.client_id" :options="lookups?.clients ?? []" placeholder="কে দিল?" :invalid="!!form.errors.client_id" />
+                        </KField>
+                        <KField label="পেলাম (BDT)" :error="form.errors.amount">
+                            <KMoney v-model="form.amount" currency="bdt" :invalid="!!form.errors.amount" />
+                        </KField>
+                        <KField label="কীসের টাকা">
+                            <KSegment v-model="form.category" :options="incomeKinds" />
+                        </KField>
+                        <div v-if="form.client_id && form.category === 'client_payment'" class="sm:col-span-2">
+                            <p class="mb-2 text-[13px] font-semibold text-ink-2">কোন Pending খরচগুলো এই টাকায় শোধ হলো?</p>
+                            <div v-if="clientPending.length" class="divide-y divide-dashed divide-line rounded-xl border border-line">
+                                <div v-for="p in clientPending" :key="p.id" class="flex items-center gap-3 px-3.5 py-2.5">
+                                    <KCheck :model-value="form.settle_ids.includes(p.id)" @update:model-value="(v: boolean) => toggleSettle(p.id, v)">
+                                        <span class="text-[13.5px]">{{ p.description }}</span>
+                                        <span class="ml-2 text-[12px] text-ink-3">{{ niceDate(p.date) }}</span>
+                                    </KCheck>
+                                    <span class="num ml-auto text-[13.5px] font-medium">{{ money(p.amount, 'usd') }}</span>
+                                </div>
+                            </div>
+                            <p v-else class="rounded-xl bg-sunken px-3.5 py-3 text-[13px] text-ink-3">এই client-এর কোনো Pending খরচ নেই।</p>
+                            <p v-if="effectiveRate" class="mt-2 text-[12.5px] text-ink-2">
+                                বাছাই করা <span class="num font-semibold">{{ money(settleTotal, 'usd') }}</span> — client-এর rate দাঁড়াল <span class="num font-semibold text-brand-ink">৳{{ effectiveRate }}</span> / USD
+                            </p>
+                        </div>
+                    </template>
+
+                    <!-- Card charge -->
+                    <template v-if="job === 'card-charge'">
+                        <KField label="কে কেটেছে" :error="form.errors.account_id">
+                            <KSelect v-model="form.account_id" :options="platforms" :invalid="!!form.errors.account_id" />
+                        </KField>
+                        <KField label="কত কেটেছে (USD)" :error="form.errors.amount">
+                            <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
+                        </KField>
+                        <KField label="Card statement-এর লেখা" optional hint="যেমন FACEBK* S5LHCASSD4">
+                            <KInput v-model="form.description" placeholder="FACEBK* …" />
+                        </KField>
+                    </template>
+
+                    <!-- Buy USD -->
+                    <template v-if="job === 'buy-usd'">
+                        <KField label="পেলাম (USD)" :error="form.errors.usd">
+                            <KMoney v-model="form.usd" currency="usd" :invalid="!!form.errors.usd" />
+                        </KField>
+                        <KField label="দিলাম (BDT)" :error="form.errors.bdt">
+                            <KMoney v-model="form.bdt" currency="bdt" :invalid="!!form.errors.bdt" />
+                        </KField>
+                        <KField label="নাম" optional hint="না দিলে Deposit 4, 5… নিজে বসবে">
+                            <KInput v-model="form.description" placeholder="Deposit" />
+                        </KField>
+                        <div v-if="rate" class="flex items-center rounded-xl bg-brand-soft px-4 py-3 text-[13.5px] text-brand-ink sm:col-span-2">
+                            এই batch-এর rate: <span class="num ml-1.5 text-[16px] font-semibold">৳{{ rate }}</span>&nbsp;/ USD
+                        </div>
+                    </template>
+
+                    <!-- Expense -->
+                    <template v-if="job === 'expense'">
+                        <KField label="খরচের খাত" :error="form.errors.expense_head_id">
+                            <KSelect v-model="form.expense_head_id" :options="lookups?.heads ?? []" :invalid="!!form.errors.expense_head_id" />
+                        </KField>
+                        <KField label="কত (BDT)" :error="form.errors.amount">
+                            <KMoney v-model="form.amount" currency="bdt" :invalid="!!form.errors.amount" />
+                        </KField>
+                        <KField label="কীসের খরচ" :error="form.errors.description">
+                            <KInput v-model="form.description" placeholder="যেমন Domain renew" :invalid="!!form.errors.description" />
+                        </KField>
+                    </template>
+
+                    <!-- Own USD spend -->
+                    <template v-if="job === 'own-spend'">
+                        <KField label="কোথায়" :error="form.errors.account_id">
+                            <KSelect v-model="form.account_id" :options="spendAccounts" :invalid="!!form.errors.account_id" />
+                        </KField>
+                        <KField label="খরচ (USD)" :error="form.errors.amount">
+                            <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
+                        </KField>
+                        <KField label="কীসের খরচ" :error="form.errors.description">
+                            <KInput v-model="form.description" placeholder="যেমন KlokAds - own ad spend" :invalid="!!form.errors.description" />
+                        </KField>
+                    </template>
+
+                    <!-- Transfer -->
+                    <template v-if="job === 'transfer'">
+                        <KField label="কোথা থেকে" :error="form.errors.from_id">
+                            <KSelect v-model="form.from_id" :options="ownAccounts" :invalid="!!form.errors.from_id" />
+                        </KField>
+                        <KField label="কোথায়" :error="form.errors.to_id">
+                            <KSelect v-model="form.to_id" :options="ownAccounts" :invalid="!!form.errors.to_id" />
+                        </KField>
+                        <KField label="কত (USD)" :error="form.errors.amount">
+                            <KMoney v-model="form.amount" currency="usd" :invalid="!!form.errors.amount" />
+                        </KField>
+                    </template>
+
+                    <!-- Owner -->
+                    <template v-if="job === 'owner'">
+                        <KField label="কী হলো" class="sm:col-span-2">
+                            <KSegment v-model="form.direction" :options="directions" />
+                        </KField>
+                        <KField label="কত (BDT)" :error="form.errors.amount">
+                            <KMoney v-model="form.amount" currency="bdt" :invalid="!!form.errors.amount" />
+                        </KField>
+                    </template>
+                </div>
+
+                <KField label="Note" optional>
+                    <KTextarea v-model="form.notes" placeholder="দরকারি কিছু থাকলে লিখুন" />
+                </KField>
+
+                <div class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
+                    <KButton variant="quiet" @click="open = false">বাতিল</KButton>
+                    <KButton type="submit" variant="primary" icon="check" :loading="form.processing">খাতায় তুলুন</KButton>
+                </div>
+            </form>
+        </div>
+    </KModal>
+</template>

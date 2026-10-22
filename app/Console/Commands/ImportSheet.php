@@ -1,0 +1,152 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Models\Account;
+use App\Models\BdtEntry;
+use App\Models\Client;
+use App\Models\ExpenseHead;
+use App\Models\FxBatch;
+use App\Models\UsdEntry;
+use App\Services\Books;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+#[Signature('books:import-sheet {file=database/import/sheet-2026-10-22.json} {--fresh : Remove existing ledger rows first}')]
+#[Description('Import the old Google Sheet snapshot and check the totals against the sheet')]
+class ImportSheet extends Command
+{
+    public function handle(): int
+    {
+        $path = base_path($this->argument('file'));
+
+        if (! is_file($path)) {
+            $this->error("File not found: {$path}");
+
+            return self::FAILURE;
+        }
+
+        $data = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+
+        if (UsdEntry::withTrashed()->exists() || BdtEntry::withTrashed()->exists()) {
+            if (! $this->option('fresh')) {
+                $this->error('Ledgers already have rows. Run with --fresh to replace them.');
+
+                return self::FAILURE;
+            }
+        }
+
+        DB::transaction(function () use ($data) {
+            if ($this->option('fresh')) {
+                UsdEntry::withTrashed()->forceDelete();
+                BdtEntry::withTrashed()->forceDelete();
+                FxBatch::withTrashed()->forceDelete();
+            }
+
+            $clients = [];
+            foreach ($data['clients'] as $row) {
+                $clients[$row['name']] = Client::withTrashed()->updateOrCreate(['name' => $row['name']], $row)->id;
+            }
+
+            $batches = [];
+            foreach ($data['fx_batches'] as $row) {
+                $batches[$row['number']] = FxBatch::create([
+                    'number' => $row['number'],
+                    'description' => $row['description'],
+                    'usd' => $this->cents($row['usd']),
+                    'bdt' => $this->cents($row['bdt']),
+                ])->id;
+            }
+
+            $accounts = Account::pluck('id', 'code');
+            $pairs = [];
+            $sequence = 0;
+
+            foreach ($data['usd'] as $row) {
+                $pairKey = null;
+                if (isset($row['pair'])) {
+                    $pairKey = $pairs[$row['pair']] ??= (string) Str::uuid();
+                }
+
+                UsdEntry::create([
+                    'entry_date' => $row['date'],
+                    'sequence' => ++$sequence,
+                    'description' => $row['description'],
+                    'category' => $row['category'],
+                    'account_id' => $accounts[$row['account']],
+                    'client_id' => $row['client'] ? $clients[$row['client']] : null,
+                    'amount' => $this->cents($row['amount']),
+                    'status' => $row['status'],
+                    'fx_batch_id' => isset($row['batch']) ? $batches[$row['batch']] : null,
+                    'pair_key' => $pairKey,
+                    'notes' => $row['notes'],
+                    'review_note' => $row['review'] ?? null,
+                ]);
+            }
+
+            $heads = ExpenseHead::pluck('id', 'name');
+            $sequence = 0;
+
+            foreach ($data['bdt'] as $row) {
+                BdtEntry::create([
+                    'entry_date' => $row['date'],
+                    'sequence' => ++$sequence,
+                    'description' => $row['description'],
+                    'category' => $row['category'],
+                    'client_id' => $row['client'] ? $clients[$row['client']] : null,
+                    'expense_head_id' => isset($row['head']) ? $heads[$row['head']] : null,
+                    'fx_batch_id' => isset($row['batch']) ? $batches[$row['batch']] : null,
+                    'amount' => $this->cents($row['amount']),
+                    'notes' => $row['notes'],
+                    'review_note' => $row['review'] ?? null,
+                ]);
+            }
+        });
+
+        $this->info(sprintf('Imported %d clients, %d batches, %d USD rows, %d BDT rows.',
+            count($data['clients']), count($data['fx_batches']), count($data['usd']), count($data['bdt'])));
+
+        return $this->verify($data['expected']) ? self::SUCCESS : self::FAILURE;
+    }
+
+    private function verify(array $expected): bool
+    {
+        $books = app(Books::class);
+        $summary = $books->summary();
+
+        $checks = [
+            ['Card balance (USD)', $expected['card_balance_usd'], $summary['card']],
+            ['Business USD', $expected['business_usd'], $summary['business_usd']],
+            ['Platform due (USD)', $expected['platform_due_usd'], $summary['platform_due']],
+            ['Pending from clients (USD)', $expected['pending_usd'], $summary['receivable_usd']],
+            ['BDT balance', $expected['bdt_balance'], $summary['bdt']],
+            ['Client margin (BDT)', $expected['client_margin_bdt'], $summary['margin']],
+        ];
+
+        $ok = true;
+        $rows = [];
+
+        foreach ($checks as [$label, $sheet, $system]) {
+            $sheetMinor = $this->cents($sheet);
+            // The sheet shows BDT rounded to whole taka.
+            $match = abs($sheetMinor - $system) < 100;
+            $ok = $ok && $match;
+            $rows[] = [$label, $sheet, number_format($system / 100, 2), $match ? 'OK' : 'MISMATCH'];
+        }
+
+        $this->table(['Check', 'Sheet', 'System', ''], $rows);
+        $this->line(sprintf('Net result: %s BDT (sheet showed -20,500 with the drawing counted as expense)', number_format($summary['net'] / 100, 2)));
+        $this->line(sprintf('Assets %s = capital − drawings + net %s → %s',
+            number_format($summary['assets'] / 100, 2), number_format($summary['equity'] / 100, 2), $summary['equity_ok'] ? 'OK' : 'MISMATCH'));
+
+        return $ok;
+    }
+
+    private function cents(string $value): int
+    {
+        return (int) round(((float) $value) * 100);
+    }
+}
