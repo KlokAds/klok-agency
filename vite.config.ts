@@ -62,6 +62,8 @@ export default defineConfig({
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
             '.github/**',
+            // Built files are committed for the server (it has no Node); never format them.
+            'public/**',
             'composer.json',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
