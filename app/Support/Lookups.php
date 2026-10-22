@@ -58,6 +58,12 @@ class Lookups
         return collect(UsdEntry::CATEGORIES)->map(fn ($c, $k) => ['value' => $k, 'label' => __($c['label'])])->values()->all();
     }
 
+    /** @return array<int, array{value: string, label: string}> */
+    public static function wallets(): array
+    {
+        return collect(BdtEntry::WALLETS)->map(fn ($label, $key) => ['value' => $key, 'label' => $label])->values()->all();
+    }
+
     /** @return array<int, array<string, mixed>> */
     public static function bdtCategories(): array
     {

@@ -37,6 +37,7 @@ const props = defineProps<{
         receivable_cost: number;
         capital: number;
         drawings: number;
+        owner_due: number;
         assets: number;
         equity: number;
         equity_ok: boolean;
@@ -44,6 +45,12 @@ const props = defineProps<{
         net: number;
         review_count: number;
         undated_count: number;
+    };
+    wallets: {
+        places: { key: string; label: string; balance: number }[];
+        untagged: number;
+        untagged_count: number;
+        total: number;
     };
     monthly: {
         month: string;
@@ -166,12 +173,24 @@ const greeting =
             </p>
         </div>
         <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('BDT হাতে / Bank') }}</p>
+            <p class="eyebrow">{{ t('BDT কোথায়') }}</p>
             <p class="num mt-3 text-[30px] leading-none font-medium">
                 {{ money(s.bdt, 'bdt') }}
             </p>
-            <p class="mt-3 text-[12.5px] text-ink-3">
-                {{ t('BDT খাতার balance') }}
+            <p
+                class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-ink-3"
+            >
+                <span v-for="p in wallets.places" :key="p.key"
+                    >{{ p.label }}
+                    <b class="num font-semibold text-ink-2">{{
+                        money(p.balance, 'bdt')
+                    }}</b></span
+                >
+                <Link
+                    href="/wallets"
+                    class="font-semibold text-brand-ink hover:underline"
+                    >{{ t('বিস্তারিত') }} →</Link
+                >
             </p>
         </div>
         <div class="bg-surface p-5 sm:p-6">
@@ -246,6 +265,13 @@ const greeting =
                         >
                     </dt>
                     <dd class="num">{{ money(s.receivable_cost, 'bdt') }}</dd>
+                </div>
+                <div
+                    v-if="s.owner_due"
+                    class="flex justify-between border-b border-dashed border-line py-2.5"
+                >
+                    <dt class="text-ink-2">{{ t('Owner-এর কাছে পাওনা') }}</dt>
+                    <dd class="num">{{ money(s.owner_due, 'bdt') }}</dd>
                 </div>
                 <div class="flex justify-between py-2.5 font-semibold">
                     <dt>{{ t('মোট সম্পদ') }}</dt>

@@ -37,6 +37,7 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'summary' => $books->summary(),
+            'wallets' => $books->wallets(),
             'monthly' => $books->monthly(6),
             'clients' => collect($books->clients())->sortByDesc('margin')->values(),
             'pending' => $pending,

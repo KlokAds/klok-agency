@@ -7,6 +7,7 @@ use App\Models\BdtEntry;
 use App\Models\Client;
 use App\Models\FxBatch;
 use App\Models\UsdEntry;
+use App\Models\WalletMove;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -342,9 +343,11 @@ class Books
         $bdtBalance = (int) $this->bdtEntries()->sum('amount');
         $capital = (int) $this->bdtEntries()->where('category', 'capital')->sum('amount');
         $drawings = -(int) $this->bdtEntries()->where('category', 'owner_drawing')->sum('amount');
+        // Money the owner took for a while and gives back: still the business's.
+        $ownerDue = -(int) $this->bdtEntries()->whereIn('category', ['owner_loan', 'owner_repay'])->sum('amount');
 
         $pl = $this->profitAndLoss();
-        $assets = $bdtBalance + $usdAtCost + $pl['pending_cost'];
+        $assets = $bdtBalance + $usdAtCost + $pl['pending_cost'] + $ownerDue;
         $equity = $capital - $drawings + $pl['net'];
 
         return [
@@ -366,6 +369,7 @@ class Books
             'receivable_cost' => $pl['pending_cost'],
             'capital' => $capital,
             'drawings' => $drawings,
+            'owner_due' => $ownerDue,
             'assets' => $assets,
             'equity' => $equity,
             // FIFO costs are rounded per row, so allow up to ৳1 of drift.
@@ -374,6 +378,39 @@ class Books
             'net' => $pl['net'],
             'review_count' => UsdEntry::whereNotNull('review_note')->count() + BdtEntry::whereNotNull('review_note')->count(),
             'undated_count' => UsdEntry::whereNull('entry_date')->count() + BdtEntry::whereNull('entry_date')->count(),
+        ];
+    }
+
+    /**
+     * How much BDT sits in each place: rows tagged with it plus moves in and
+     * out. Rows not tagged yet are shown on their own so the total still
+     * matches the BDT balance.
+     *
+     * @return array{places: list<array{key: string, label: string, balance: int}>, untagged: int, untagged_count: int, total: int}
+     */
+    public function wallets(): array
+    {
+        $entries = $this->bdtEntries();
+        $moves = WalletMove::all();
+        $places = [];
+
+        foreach (BdtEntry::WALLETS as $key => $label) {
+            $places[] = [
+                'key' => $key,
+                'label' => $label,
+                'balance' => (int) $entries->where('wallet', $key)->sum('amount')
+                    + (int) $moves->where('to_wallet', $key)->sum('amount')
+                    - (int) $moves->where('from_wallet', $key)->sum('amount'),
+            ];
+        }
+
+        $untagged = $entries->whereNull('wallet');
+
+        return [
+            'places' => $places,
+            'untagged' => (int) $untagged->sum('amount'),
+            'untagged_count' => $untagged->count(),
+            'total' => (int) $entries->sum('amount'),
         ];
     }
 

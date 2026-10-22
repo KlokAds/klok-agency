@@ -32,6 +32,7 @@ type Row = {
     client: string | null;
     client_id: number | null;
     pay_via: string | null;
+    wallet: string | null;
     head: string | null;
     expense_head_id: number | null;
     employee: string | null;
@@ -47,7 +48,12 @@ const props = defineProps<{
     filters: Record<string, string | null>;
     totals: { in: number; out: number; count: number };
     summary: { balance: number };
-    options: { categories: Option[]; clients: Option[]; heads: Option[] };
+    options: {
+        categories: Option[];
+        clients: Option[];
+        heads: Option[];
+        wallets: Option[];
+    };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -78,6 +84,8 @@ const tone = (category: string) =>
     ({
         capital: 'brand',
         owner_drawing: 'wait',
+        owner_loan: 'wait',
+        owner_repay: 'in',
         usd_purchase: 'neutral',
         client_payment: 'in',
         service_income: 'in',
@@ -94,6 +102,7 @@ const form = useForm({
     category: 'expense',
     client_id: null as number | null,
     pay_via: 'mfs' as string | null,
+    wallet: null as string | null,
     expense_head_id: null as number | null,
     amount: '' as string | null,
     notes: '' as string | null,
@@ -108,6 +117,7 @@ function startNew(): void {
         category: 'expense',
         client_id: null,
         pay_via: 'mfs',
+        wallet: null,
         expense_head_id: null,
         amount: '',
         notes: '',
@@ -127,6 +137,7 @@ function startEdit(row: Row): void {
         category: row.category,
         client_id: row.client_id,
         pay_via: row.pay_via ?? 'mfs',
+        wallet: row.wallet,
         expense_head_id: row.expense_head_id,
         amount: toInput(row.amount),
         notes: row.notes ?? '',
@@ -354,6 +365,15 @@ const needsClient = computed(() =>
                                     row.head ??
                                     '—'
                                 }}
+                                <span
+                                    v-if="row.wallet"
+                                    class="ml-1.5 rounded-md bg-sunken px-1.5 py-0.5 text-[11px] text-ink-3"
+                                    >{{
+                                        options.wallets.find(
+                                            (w) => w.value === row.wallet,
+                                        )?.label
+                                    }}</span
+                                >
                             </td>
                             <td class="r">
                                 <KAmount
@@ -497,6 +517,13 @@ const needsClient = computed(() =>
                 :error="form.errors.pay_via"
             >
                 <KSegment v-model="form.pay_via" :options="payVia" />
+            </KField>
+            <KField
+                :label="t('কোন জায়গায়')"
+                optional
+                :error="form.errors.wallet"
+            >
+                <KSegment v-model="form.wallet" :options="options.wallets" />
             </KField>
             <KField
                 v-if="form.category === 'expense'"

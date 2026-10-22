@@ -22,8 +22,22 @@ class PaymentFees
         return (float) Setting::get('payment_fee_percent', '1');
     }
 
+    /** Payments dated before this day were written down as what arrived, so they carry no fee. */
+    public static function from(): ?string
+    {
+        $from = Setting::get('payment_fee_from');
+
+        return is_string($from) && $from !== '' ? $from : null;
+    }
+
     public static function appliesTo(BdtEntry $entry): bool
     {
+        $from = self::from();
+
+        if ($from !== null && ($entry->entry_date === null || $entry->entry_date->toDateString() < $from)) {
+            return false;
+        }
+
         return in_array($entry->category, ['client_payment', 'service_income'], true)
             && $entry->client_id !== null
             && $entry->pay_via === 'mfs'
@@ -54,6 +68,7 @@ class PaymentFees
             'description' => 'MFS fee '.self::label().' — '.$payment->description,
             'category' => 'expense',
             'client_id' => null,
+            'wallet' => $payment->wallet,
             'expense_head_id' => ExpenseHead::firstOrCreate(['name' => 'Payment fee'])->id,
             'amount' => -$amount,
         ];

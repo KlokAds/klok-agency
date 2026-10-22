@@ -40,6 +40,12 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 perm: 'usd.view',
             }, // i18n
             { label: 'BDT খাতা', href: '/bdt', icon: 'taka', perm: 'bdt.view' }, // i18n
+            {
+                label: 'টাকা কোথায়',
+                href: '/wallets',
+                icon: 'wallet',
+                perm: 'bdt.view',
+            }, // i18n
             { label: 'FX Batch', href: '/fx', icon: 'swap', perm: 'fx.view' },
             {
                 label: 'Card মেলানো',

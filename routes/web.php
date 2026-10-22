@@ -22,6 +22,7 @@ use App\Http\Controllers\Books\QuickEntryController;
 use App\Http\Controllers\Books\ReconcileController;
 use App\Http\Controllers\Books\ReportController;
 use App\Http\Controllers\Books\UsdEntryController;
+use App\Http\Controllers\Books\WalletController;
 use App\Http\Controllers\Settings\LocaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('bdt', [BdtEntryController::class, 'store'])->middleware('can:bdt.create')->name('bdt.store');
     Route::put('bdt/{bdt}', [BdtEntryController::class, 'update'])->middleware('can:bdt.edit')->name('bdt.update');
     Route::delete('bdt/{bdt}', [BdtEntryController::class, 'destroy'])->middleware('can:bdt.delete')->name('bdt.destroy');
+
+    Route::get('wallets', [WalletController::class, 'index'])->middleware('can:bdt.view')->name('wallets.index');
+    Route::put('wallets/tag/{entry}', [WalletController::class, 'tag'])->middleware('can:bdt.edit')->name('wallets.tag');
+    Route::post('wallets/moves', [WalletController::class, 'storeMove'])->middleware('can:bdt.create')->name('wallets.moves.store');
+    Route::delete('wallets/moves/{move}', [WalletController::class, 'destroyMove'])->middleware('can:bdt.delete')->name('wallets.moves.destroy');
 
     Route::get('fx', [FxBatchController::class, 'index'])->middleware('can:fx.view')->name('fx.index');
     Route::put('fx/{fx}', [FxBatchController::class, 'update'])->middleware('can:fx.edit')->name('fx.update');

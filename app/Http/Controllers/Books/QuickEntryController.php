@@ -41,6 +41,7 @@ class QuickEntryController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
+        $wallet = ['wallet' => ['required', Rule::in(array_keys(BdtEntry::WALLETS))]];
 
         $message = match ($type) {
             'ad-spend' => $this->run($request, $base + [
@@ -73,6 +74,7 @@ class QuickEntryController extends Controller
                 'client_id' => ['required', 'exists:clients,id'],
                 'category' => ['required', Rule::in(['client_payment', 'service_income'])],
                 'pay_via' => ['required', Rule::in(array_keys(BdtEntry::PAY_VIA))],
+                ...$wallet,
                 'amount' => ['required', Money::RULE],
                 'settle_ids' => ['array'],
                 'settle_ids.*' => ['integer'],
@@ -82,17 +84,20 @@ class QuickEntryController extends Controller
                 'description' => ['required', 'string', 'max:255'],
             ] + $base + [
                 'expense_head_id' => ['required', 'exists:expense_heads,id'],
+                ...$wallet,
                 'amount' => ['required', Money::RULE],
             ], fn ($d) => $postings->expense($d), __('খরচ লেখা হয়েছে।')),
 
             'owner' => $this->run($request, $base + [
-                'direction' => ['required', Rule::in(['in', 'out'])],
+                'direction' => ['required', Rule::in(['in', 'out', 'loan', 'repay'])],
+                ...$wallet,
                 'amount' => ['required', Money::RULE],
             ], fn ($d) => $postings->owner($d), __('Owner-এর হিসাব লেখা হয়েছে।')),
 
             'buy-usd' => $this->run($request, $base + [
                 'usd' => ['required', Money::RULE],
                 'bdt' => ['required', Money::RULE],
+                ...$wallet,
             ], fn ($d) => $postings->buyUsd($d), __('USD কেনা লেখা হয়েছে — নতুন FX batch তৈরি।')),
         };
 

@@ -88,6 +88,7 @@ class Postings
                 'category' => $data['category'] ?? 'client_payment',
                 'client_id' => $client->id,
                 'pay_via' => $data['pay_via'] ?? 'mfs',
+                'wallet' => $data['wallet'] ?? null,
                 'amount' => $data['amount'],
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -129,6 +130,10 @@ class Postings
             ]);
 
             $this->syncBatchEntries($batch);
+
+            if (! empty($data['wallet'])) {
+                BdtEntry::where('fx_batch_id', $batch->id)->first()?->update(['wallet' => $data['wallet']]);
+            }
 
             return $batch;
         });
@@ -209,25 +214,33 @@ class Postings
             'description' => $data['description'],
             'category' => 'expense',
             'expense_head_id' => $data['expense_head_id'] ?? null,
+            'wallet' => $data['wallet'] ?? null,
             'amount' => -$data['amount'],
             'notes' => $data['notes'] ?? null,
         ]);
     }
 
     /**
-     * Owner putting money in (capital) or taking it out (drawing).
+     * Owner money: putting money in (capital), taking it out for good
+     * (drawing), or taking it for a while and giving it back (loan, repay).
      *
      * @param  array<string, mixed>  $data
      */
     public function owner(array $data): BdtEntry
     {
-        $in = $data['direction'] === 'in';
+        [$category, $description] = match ($data['direction']) {
+            'in' => ['capital', 'Capital - own money in'],
+            'loan' => ['owner_loan', 'Owner took - to give back'],
+            'repay' => ['owner_repay', 'Owner gave back'],
+            default => ['owner_drawing', 'Owner drawing'],
+        };
 
         return BdtEntry::create([
             'entry_date' => $data['entry_date'],
-            'description' => $data['description'] ?: ($in ? 'Capital - own money in' : 'Owner drawing'),
-            'category' => $in ? 'capital' : 'owner_drawing',
-            'amount' => $in ? $data['amount'] : -$data['amount'],
+            'description' => $data['description'] ?: $description,
+            'category' => $category,
+            'wallet' => $data['wallet'] ?? null,
+            'amount' => BdtEntry::CATEGORIES[$category]['sign'] * $data['amount'],
             'notes' => $data['notes'] ?? null,
         ]);
     }

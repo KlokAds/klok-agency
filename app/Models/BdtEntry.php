@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $entry_date
  * @property int $amount
  * @property int $sequence
+ * @property string|null $pay_via mfs|bank|cash
+ * @property string|null $wallet bank|bkash|cash
  */
 class BdtEntry extends Model
 {
@@ -26,6 +28,8 @@ class BdtEntry extends Model
     public const CATEGORIES = [
         'capital' => ['label' => 'Capital জমা', 'sign' => 1, 'group' => 'owner'], // i18n
         'owner_drawing' => ['label' => 'Owner উত্তোলন', 'sign' => -1, 'group' => 'owner'], // i18n
+        'owner_loan' => ['label' => 'Owner নিল (ফেরত দেবে)', 'sign' => -1, 'group' => 'owner'], // i18n
+        'owner_repay' => ['label' => 'Owner ফেরত দিল', 'sign' => 1, 'group' => 'owner'], // i18n
         'usd_purchase' => ['label' => 'USD কেনা', 'sign' => -1, 'group' => 'fx'], // i18n
         'client_payment' => ['label' => 'Client পেমেন্ট', 'sign' => 1, 'group' => 'revenue'], // i18n
         'service_income' => ['label' => 'Service আয়', 'sign' => 1, 'group' => 'revenue'], // i18n
@@ -40,11 +44,14 @@ class BdtEntry extends Model
 
     public const EXPENSE = ['expense', 'salary'];
 
+    /** The places BDT sits in. */
+    public const WALLETS = ['bank' => 'Bank', 'bkash' => 'bKash', 'cash' => 'Cash'];
+
     /** How a client's money came in; only MFS carries the payment fee. */
     public const PAY_VIA = ['mfs' => 'MFS (bKash / Nagad)', 'bank' => 'Bank', 'cash' => 'Cash'];
 
     protected $fillable = [
-        'entry_date', 'sequence', 'description', 'category', 'client_id', 'pay_via', 'expense_head_id', 'employee_id',
+        'entry_date', 'sequence', 'description', 'category', 'client_id', 'pay_via', 'wallet', 'expense_head_id', 'employee_id',
         'salary_month', 'salary_kind', 'fx_batch_id', 'fee_for_id', 'amount', 'notes', 'review_note', 'created_by', 'updated_by',
     ];
 

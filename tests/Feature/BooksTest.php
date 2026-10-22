@@ -47,7 +47,7 @@ it('takes 1% off an MFS payment as a locked fee row that follows it, and nothing
     $gffs = Client::where('name', 'GFFS')->first();
 
     $this->actingAs($this->owner)->post('/quick/client-payment', [
-        'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'pay_via' => 'mfs', 'amount' => '5000',
+        'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'pay_via' => 'mfs', 'wallet' => 'bkash', 'amount' => '5000',
     ])->assertRedirect();
 
     $payment = BdtEntry::where('client_id', $gffs->id)->latest('id')->first();
@@ -69,7 +69,7 @@ it('takes 1% off an MFS payment as a locked fee row that follows it, and nothing
 
     foreach (['bank', 'cash'] as $via) {
         $this->actingAs($this->owner)->post('/quick/client-payment', [
-            'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'pay_via' => $via, 'amount' => '3000',
+            'entry_date' => now()->toDateString(), 'client_id' => $gffs->id, 'category' => 'client_payment', 'pay_via' => $via, 'wallet' => 'bank', 'amount' => '3000',
         ])->assertRedirect();
         expect(BdtEntry::where('client_id', $gffs->id)->latest('id')->first()->fee)->toBeNull();
     }
@@ -124,6 +124,7 @@ it('posts buying USD to both books and a new batch', function () {
         'entry_date' => now()->toDateString(),
         'usd' => '100',
         'bdt' => '12,800',
+        'wallet' => 'bank',
     ])->assertRedirect();
 
     $batch = FxBatch::orderByDesc('number')->first();
@@ -143,6 +144,7 @@ it('settles the chosen pending spend when a client pays', function () {
         'client_id' => $samir->id,
         'category' => 'client_payment',
         'pay_via' => 'mfs',
+        'wallet' => 'bkash',
         'amount' => '615',
         'settle_ids' => [$pending->id],
     ])->assertRedirect();

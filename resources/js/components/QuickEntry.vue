@@ -90,7 +90,7 @@ const JOBS = [
     {
         key: 'owner',
         label: 'Owner টাকা দিল / তুলল',
-        note: 'Capital বা Owner drawing',
+        note: 'নিল / ফেরত দিল · Capital · Drawing',
         icon: 'user',
         perm: 'bdt.create',
     }, // i18n
@@ -122,7 +122,8 @@ const blank = () => ({
     status: 'pending',
     category: 'client_payment',
     pay_via: 'mfs',
-    direction: 'in',
+    wallet: 'bank' as string | null,
+    direction: 'loan',
     description: '' as string | null,
     notes: '' as string | null,
     settle_ids: [] as number[],
@@ -244,6 +245,30 @@ const yesNo = computed<Option[]>(() => [
     { value: 'pending', label: t('Pending — টাকা পাইনি') },
     { value: 'settled', label: t('Settled — টাকা পেয়েছি') },
 ]);
+const walletOptions = computed<Option[]>(() => [
+    { value: 'bank', label: 'Bank' },
+    { value: 'bkash', label: 'bKash' },
+    { value: 'cash', label: 'Cash' },
+]);
+// A payment's place follows how it came: MFS lands in bKash, bank in the bank.
+watch(
+    () => form.pay_via,
+    (via) => {
+        if (job.value === 'client-payment') {
+            form.wallet =
+                via === 'mfs' ? 'bkash' : via === 'cash' ? 'cash' : 'bank';
+        }
+    },
+);
+watch(
+    () => job.value,
+    (value) => {
+        form.wallet =
+            value === 'client-payment' && form.pay_via === 'mfs'
+                ? 'bkash'
+                : 'bank';
+    },
+);
 const payVia = computed<Option[]>(() => [
     { value: 'mfs', label: 'MFS (bKash / Nagad)' },
     { value: 'bank', label: 'Bank' },
@@ -254,8 +279,10 @@ const incomeKinds = computed<Option[]>(() => [
     { value: 'service_income', label: 'Service fee' },
 ]);
 const directions = computed<Option[]>(() => [
+    { value: 'loan', label: t('নিলাম — ফেরত দেবো') },
+    { value: 'repay', label: t('ফেরত দিলাম') },
     { value: 'in', label: t('টাকা দিলাম (Capital)') },
-    { value: 'out', label: t('টাকা তুললাম (Drawing)') },
+    { value: 'out', label: t('একেবারে তুললাম (Drawing)') },
 ]);
 </script>
 
@@ -433,6 +460,15 @@ const directions = computed<Option[]>(() => [
                                 :options="payVia"
                             />
                         </KField>
+                        <KField
+                            :label="t('কোথায় এলো')"
+                            :error="form.errors.wallet"
+                        >
+                            <KSegment
+                                v-model="form.wallet"
+                                :options="walletOptions"
+                            />
+                        </KField>
                         <div
                             v-if="
                                 form.client_id &&
@@ -559,6 +595,15 @@ const directions = computed<Option[]>(() => [
                             />
                         </KField>
                         <KField
+                            :label="t('কোথা থেকে দিলাম')"
+                            :error="form.errors.wallet"
+                        >
+                            <KSegment
+                                v-model="form.wallet"
+                                :options="walletOptions"
+                            />
+                        </KField>
+                        <KField
                             :label="t('নাম')"
                             optional
                             :hint="t('না দিলে Deposit 4, 5… নিজে বসবে')"
@@ -599,6 +644,15 @@ const directions = computed<Option[]>(() => [
                                 v-model="form.amount"
                                 currency="bdt"
                                 :invalid="!!form.errors.amount"
+                            />
+                        </KField>
+                        <KField
+                            :label="t('কোথা থেকে দিলাম')"
+                            :error="form.errors.wallet"
+                        >
+                            <KSegment
+                                v-model="form.wallet"
+                                :options="walletOptions"
                             />
                         </KField>
                         <KField
@@ -684,6 +738,15 @@ const directions = computed<Option[]>(() => [
                             <KSegment
                                 v-model="form.direction"
                                 :options="directions"
+                            />
+                        </KField>
+                        <KField
+                            :label="t('কোন জায়গায়')"
+                            :error="form.errors.wallet"
+                        >
+                            <KSegment
+                                v-model="form.wallet"
+                                :options="walletOptions"
                             />
                         </KField>
                         <KField

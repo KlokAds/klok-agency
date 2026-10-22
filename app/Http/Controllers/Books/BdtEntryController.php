@@ -19,7 +19,7 @@ class BdtEntryController extends Controller
 {
     public function index(Request $request, Books $books): Response
     {
-        $filters = $request->only(['q', 'category', 'client_id', 'expense_head_id', 'from', 'to', 'order']);
+        $filters = $request->only(['q', 'category', 'client_id', 'expense_head_id', 'wallet', 'from', 'to', 'order']);
         $running = $books->bdtRunning();
 
         $rows = $books->bdtEntries()
@@ -33,6 +33,7 @@ class BdtEntryController extends Controller
                 'client' => $e->client?->name,
                 'client_id' => $e->client_id,
                 'pay_via' => $e->pay_via,
+                'wallet' => $e->wallet,
                 'head' => $e->head?->name,
                 'expense_head_id' => $e->expense_head_id,
                 'employee' => $e->employee?->name,
@@ -67,6 +68,7 @@ class BdtEntryController extends Controller
             'options' => [
                 'categories' => Lookups::bdtCategories(),
                 'clients' => Lookups::clients(),
+                'wallets' => Lookups::wallets(),
                 'heads' => Lookups::heads(),
             ],
         ]);
@@ -79,7 +81,7 @@ class BdtEntryController extends Controller
             return false;
         }
 
-        foreach (['category', 'client_id', 'expense_head_id'] as $key) {
+        foreach (['category', 'client_id', 'expense_head_id', 'wallet'] as $key) {
             if (! empty($f[$key]) && (string) $e->{$key} !== (string) $f[$key]) {
                 return false;
             }
@@ -158,6 +160,7 @@ class BdtEntryController extends Controller
             'client_id' => ['nullable', Rule::requiredIf($request->input('category') === 'client_payment'), 'exists:clients,id'],
             'pay_via' => ['nullable', Rule::requiredIf(in_array($request->input('category'), ['client_payment', 'service_income'], true)), Rule::in(array_keys(BdtEntry::PAY_VIA))],
             'expense_head_id' => ['nullable', 'exists:expense_heads,id'],
+            'wallet' => ['nullable', Rule::in(array_keys(BdtEntry::WALLETS))],
             'amount' => ['required', Money::RULE],
             'notes' => ['nullable', 'string', 'max:2000'],
         ], [], ['amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'client_id' => 'client']);
