@@ -9,8 +9,8 @@ use RuntimeException;
 
 /**
  * Reads ad performance from Klok Pilot through its MCP endpoint with an
- * agency token (Pilot → Agents). Read-only tools only: list_shops and
- * campaign_performance.
+ * agency token (Pilot → Agents). Read-only tools only: list_ad_accounts
+ * and ad_account_performance.
  */
 class PilotClient
 {
@@ -35,26 +35,33 @@ class PilotClient
         return self::token() !== null;
     }
 
-    /** @return list<array{id: int, name: string, currency?: string}> */
-    public function shops(): array
+    /**
+     * Ad accounts the agency token reaches, across all its shops.
+     *
+     * @return list<array{id: int, name: string, external_id: string|null, platform: string|null, currency: string|null, shop: string|null}>
+     */
+    public function adAccounts(): array
     {
-        $result = $this->call('list_shops');
+        $result = $this->call('list_ad_accounts');
 
-        return array_values(array_map(fn ($s) => [
-            'id' => (int) $s['id'],
-            'name' => (string) ($s['name'] ?? '#'.$s['id']),
-            'currency' => $s['currency'] ?? null,
-        ], $result['shops'] ?? $result['data'] ?? []));
+        return array_values(array_map(fn ($a) => [
+            'id' => (int) $a['ad_account_id'],
+            'name' => (string) ($a['name'] ?? '#'.$a['ad_account_id']),
+            'external_id' => $a['external_id'] ?? null,
+            'platform' => $a['platform'] ?? null,
+            'currency' => $a['currency'] ?? null,
+            'shop' => $a['shop'] ?? null,
+        ], $result['ad_accounts'] ?? []));
     }
 
     /**
-     * Per-campaign numbers for one shop over the last $days days.
+     * One ad account's numbers over the last $days days (1 = today).
      *
      * @return array{currency?: string, totals?: array<string, mixed>, campaigns?: list<array<string, mixed>>}
      */
-    public function performance(int $shopId, int $days = 1): array
+    public function performance(int $adAccountId, int $days = 1): array
     {
-        return $this->call('campaign_performance', ['shop_id' => $shopId, 'days' => $days]);
+        return $this->call('ad_account_performance', ['ad_account_id' => $adAccountId, 'days' => $days]);
     }
 
     /**

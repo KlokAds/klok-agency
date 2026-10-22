@@ -10,8 +10,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
- * The live server has no cron, so reminders also go out when someone uses
- * the app: after the response is sent, at most once every five minutes.
+ * The live server has no cron, so reminders go out whenever the site is
+ * visited (signed in or not, and every minute while the app is open thanks
+ * to the bell): after the response is sent, at most once every five minutes.
  */
 class TickOnTraffic
 {
@@ -22,7 +23,7 @@ class TickOnTraffic
 
     public function terminate(Request $request, Response $response): void
     {
-        if (! $request->user() || app()->runningUnitTests() || ! Cache::add('agency:tick:recent', true, 300)) {
+        if (app()->runningUnitTests() || ! Cache::add('agency:tick:recent', true, 300)) {
             return;
         }
 

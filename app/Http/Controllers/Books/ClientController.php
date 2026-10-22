@@ -76,7 +76,7 @@ class ClientController extends Controller
         });
 
         return Inertia::render('clients/Show', [
-            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'pilot_shop_id']),
+            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'pilot_ad_account_id']),
             'figures' => $figures,
             'statement' => $statement,
             'runs' => AdRun::with('account:id,name')->where('client_id', $client->id)->latest('start_on')->limit(10)->get()
@@ -92,25 +92,26 @@ class ClientController extends Controller
                 ]),
             'options' => [
                 'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
-                'shops' => $this->pilotShops(),
+                'ad_accounts' => $this->pilotAdAccounts(),
             ],
         ]);
     }
 
     /**
-     * Klok Pilot shops the agency token can see, for linking this client (cached briefly).
+     * Klok Pilot ad accounts the agency token can see, for linking this client (cached briefly).
      *
      * @return array<int, array{value: int, label: string}>
      */
-    private function pilotShops(): array
+    private function pilotAdAccounts(): array
     {
         if (! PilotClient::connected()) {
             return [];
         }
 
-        return Cache::remember('pilot:shops', 600, function () {
+        return Cache::remember('pilot:ad-accounts', 600, function () {
             try {
-                return collect(app(PilotClient::class)->shops())->map(fn ($s) => ['value' => $s['id'], 'label' => $s['name']])->all();
+                return collect(app(PilotClient::class)->adAccounts())
+                    ->map(fn ($a) => ['value' => $a['id'], 'label' => $a['name'].($a['shop'] ? ' · '.$a['shop'] : '')])->all();
             } catch (RuntimeException) {
                 return [];
             }
@@ -157,7 +158,7 @@ class ClientController extends Controller
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'manager_id' => ['nullable', 'exists:users,id'],
-            'pilot_shop_id' => ['nullable', 'integer', 'min:1'],
+            'pilot_ad_account_id' => ['nullable', 'integer', 'min:1'],
         ], [], ['name' => __('নাম')]);
     }
 }

@@ -36,7 +36,7 @@ export type DaySummary = {
         spend: number;
         results: number;
         cpr: number | null;
-        roas: number | null;
+        clicks?: number;
     }[];
     pilot_error: string | null;
 };
@@ -149,7 +149,7 @@ const tone = computed(() =>
                                 }}
                             </td>
                             <td class="num py-1.5 text-right text-ink-3">
-                                {{ a.roas !== null ? `ROAS ${a.roas}` : '' }}
+                                {{ a.clicks ? `${a.clicks} click` : '' }}
                             </td>
                         </tr>
                     </table>

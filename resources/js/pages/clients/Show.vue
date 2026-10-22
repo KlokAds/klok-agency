@@ -28,7 +28,7 @@ type Client = {
     company: string | null;
     notes: string | null;
     manager_id: number | null;
-    pilot_shop_id: number | null;
+    pilot_ad_account_id: number | null;
 };
 
 type Run = {
@@ -76,7 +76,7 @@ const props = defineProps<{
     }[];
     runs: Run[];
     tasks: OpenTask[];
-    options: { users: Option[]; shops: Option[] };
+    options: { users: Option[]; ad_accounts: Option[] };
 }>();
 
 const taskOpen = ref(false);
@@ -388,18 +388,20 @@ function print(): void {
                     clearable
             /></KField>
             <KField
-                label="Klok Pilot shop"
+                label="Klok Pilot ad account"
                 optional
                 :hint="
-                    options.shops.length
-                        ? t('দিনের শেষে এই shop-এর ads-এর ফলাফল আসবে।')
-                        : t('Reminder ও Pilot-এ token দিলে shop দেখা যাবে।')
+                    options.ad_accounts.length
+                        ? t('দিনের শেষে এই ad account-এর ফলাফল আসবে।')
+                        : t(
+                              'Reminder ও Pilot-এ token দিলে ad account দেখা যাবে।',
+                          )
                 "
                 ><KSelect
-                    v-model="form.pilot_shop_id"
-                    :options="options.shops"
+                    v-model="form.pilot_ad_account_id"
+                    :options="options.ad_accounts"
                     :placeholder="t('যুক্ত নয়')"
-                    :disabled="!options.shops.length"
+                    :disabled="!options.ad_accounts.length"
                     clearable
             /></KField>
             <KField label="Note" optional class="sm:col-span-2"

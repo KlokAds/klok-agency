@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Everything time-based, run every few minutes: by the scheduler, by the
- * ping URL (cron-job.org) or — since the server has no cron — piggy-backed
- * on normal use of the app. Running it twice in a row does nothing extra.
+ * ping URL, or — since the server has no cron — piggy-backed on any visit
+ * to the site and on the notification bell's once-a-minute check. Running it twice in a row does nothing extra.
  */
 class Ticker
 {
@@ -59,13 +59,26 @@ class Ticker
         return $count;
     }
 
-    /** Once a day, at the time set in Settings (21:00 by default). */
+    /**
+     * Once a day, at the time set in Settings (21:00 by default). With no
+     * cron, the first tick after that time sends it; if nobody came by all
+     * evening, yesterday's goes out with the first tick of the morning.
+     */
     private function dailySummary(): bool
     {
         $time = (string) (Setting::get('summary_time') ?: '21:00');
         $today = now()->toDateString();
+        $yesterday = now()->subDay()->toDateString();
+        $sentOn = Setting::get('summary_sent_on');
 
-        if (Setting::get('summary_sent_on') === $today || now()->format('H:i') < $time) {
+        if ($sentOn !== null && $sentOn < $yesterday && now()->format('H:i') < $time) {
+            Setting::putQuietly('summary_sent_on', $yesterday);
+            $this->summary->send(now()->subDay());
+
+            return true;
+        }
+
+        if ($sentOn === $today || now()->format('H:i') < $time) {
             return false;
         }
 

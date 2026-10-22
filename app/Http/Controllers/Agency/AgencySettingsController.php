@@ -63,11 +63,11 @@ class AgencySettingsController extends Controller
         return back();
     }
 
-    /** Tries the connection and lists the shops the token can see. */
+    /** Tries the connection and lists the ad accounts the token can see. */
     public function pilotTest(PilotClient $pilot): JsonResponse
     {
         try {
-            return response()->json(['ok' => true, 'shops' => $pilot->shops()]);
+            return response()->json(['ok' => true, 'accounts' => $pilot->adAccounts()]);
         } catch (RuntimeException $e) {
             return response()->json(['ok' => false, 'error' => $e->getMessage()]);
         }

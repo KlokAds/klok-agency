@@ -42,7 +42,14 @@ const times = computed<Option[]>(() =>
     ]),
 );
 
-const shops = ref<{ id: number; name: string }[] | null>(null);
+type PilotAccount = {
+    id: number;
+    name: string;
+    external_id: string | null;
+    shop: string | null;
+};
+
+const accounts = ref<PilotAccount[] | null>(null);
 const testing = ref(false);
 
 async function test(): Promise<void> {
@@ -58,19 +65,19 @@ async function test(): Promise<void> {
         });
         const result = (await response.json()) as {
             ok: boolean;
-            shops?: { id: number; name: string }[];
+            accounts?: PilotAccount[];
             error?: string;
         };
 
         if (result.ok) {
-            shops.value = result.shops ?? [];
+            accounts.value = result.accounts ?? [];
             toast(
-                t('Klok Pilot-এর সাথে যুক্ত — {n}টা shop দেখা যাচ্ছে।', {
-                    n: shops.value.length,
+                t('Klok Pilot-এর সাথে যুক্ত — {n}টা ad account দেখা যাচ্ছে।', {
+                    n: accounts.value.length,
                 }),
             );
         } else {
-            shops.value = null;
+            accounts.value = null;
             toast(result.error ?? 'Klok Pilot', 'error');
         }
     } finally {
@@ -155,7 +162,7 @@ function copy(text: string): void {
             <p class="text-[13px] text-ink-2">
                 {{
                     t(
-                        'Klok Pilot → Agents থেকে একটা agency token বানিয়ে এখানে দিন (শুধু পড়ার অনুমতি যথেষ্ট)। তারপর প্রতিটা client-এর পাতায় তার Pilot shop বেছে দিন।',
+                        'Klok Pilot → Agents থেকে একটা agency token বানিয়ে এখানে দিন (শুধু পড়ার অনুমতি যথেষ্ট)। তারপর প্রতিটা client-এর পাতায় তার Pilot ad account বেছে দিন।',
                     )
                 }}
             </p>
@@ -193,17 +200,26 @@ function copy(text: string): void {
                     >{{ t('Connection দেখুন') }}</KButton
                 >
             </div>
-            <ul v-if="shops" class="rounded-xl border border-line text-[13px]">
+            <ul
+                v-if="accounts"
+                class="rounded-xl border border-line text-[13px]"
+            >
                 <li
-                    v-for="s in shops"
-                    :key="s.id"
-                    class="flex justify-between border-b border-dashed border-line px-3 py-2 last:border-0"
+                    v-for="a in accounts"
+                    :key="a.id"
+                    class="flex justify-between gap-3 border-b border-dashed border-line px-3 py-2 last:border-0"
                 >
-                    <span>{{ s.name }}</span
-                    ><span class="num text-ink-3">#{{ s.id }}</span>
+                    <span
+                        >{{ a.name
+                        }}<span v-if="a.shop" class="text-ink-3">
+                            · {{ a.shop }}</span
+                        ></span
+                    ><span class="num text-ink-3">{{
+                        a.external_id ?? '#' + a.id
+                    }}</span>
                 </li>
-                <li v-if="!shops.length" class="px-3 py-2 text-ink-3">
-                    {{ t('এই token কোনো shop দেখতে পায় না।') }}
+                <li v-if="!accounts.length" class="px-3 py-2 text-ink-3">
+                    {{ t('এই token কোনো ad account দেখতে পায় না।') }}
                 </li>
             </ul>
         </section>

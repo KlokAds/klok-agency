@@ -144,25 +144,74 @@ it('runs the tick from the secret URL only', function () {
 
 it('reads ad results from Klok Pilot for the daily summary', function () {
     Setting::put('pilot_token', Crypt::encryptString('agency-token'));
-    $this->client->update(['pilot_shop_id' => 7]);
+    $this->client->update(['pilot_ad_account_id' => 7]);
 
     Http::fake([
         'pilot.klokads.com/*' => Http::response([
             'jsonrpc' => '2.0', 'id' => 1,
             'result' => ['content' => [['type' => 'text', 'text' => json_encode([
                 'currency' => 'USD',
-                'campaigns' => [['platform_conversions' => 30], ['platform_conversions' => 10]],
-                'totals' => ['spend' => 14.0, 'blended_real_roas' => 2.4],
+                'campaigns' => [['results' => 30], ['results' => 10]],
+                'totals' => ['spend' => 14.0, 'results' => 40, 'clicks' => 210],
             ])]]],
         ]),
     ]);
 
     $summary = app(DailySummary::class)->build();
 
-    expect($summary['ads'][0])->toMatchArray(['client' => 'GFFS', 'spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'roas' => 2.4]);
+    expect($summary['ads'][0])->toMatchArray(['client' => 'GFFS', 'spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
 
     Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer agency-token')
-        && $r['method'] === 'tools/call' && $r['params']['name'] === 'campaign_performance' && $r['params']['arguments']['shop_id'] === 7);
+        && $r['method'] === 'tools/call' && $r['params']['name'] === 'ad_account_performance' && $r['params']['arguments']['ad_account_id'] === 7);
+});
+
+it('sends a missed summary for yesterday the next morning, then today\'s in the evening', function () {
+    $this->travelTo(now()->setTime(8, 0));
+    Setting::putQuietly('summary_sent_on', now()->subDays(2)->toDateString());
+
+    app(Ticker::class)->run();
+
+    $first = $this->owner->notifications()->where('data->kind', 'summary')->sole();
+    expect($first->data['title'])->toBe('গতকালের ads আর কাজের সারসংক্ষেপ')
+        ->and($first->data['summary']['date'])->toBe(now()->subDay()->toDateString());
+
+    app(Ticker::class)->run();
+    expect($this->owner->notifications()->where('data->kind', 'summary')->count())->toBe(1);
+
+    $this->travelTo(now()->setTime(21, 5));
+    app(Ticker::class)->run();
+    expect($this->owner->notifications()->where('data->kind', 'summary')->count())->toBe(2);
+});
+
+it('works out a past day from Pilot as the difference of two windows', function () {
+    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
+    $this->client->update(['pilot_ad_account_id' => 7]);
+
+    Http::fake(function ($request) {
+        $days = $request['params']['arguments']['days'];
+
+        return Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => [
+            'currency' => 'USD',
+            'totals' => $days === 2 ? ['spend' => 20.0, 'results' => 50, 'clicks' => 300] : ['spend' => 6.0, 'results' => 10, 'clicks' => 90],
+        ]]]);
+    });
+
+    $summary = app(DailySummary::class)->build(now()->subDay());
+
+    expect($summary['ads'][0])->toMatchArray(['spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
+});
+
+it('lists Pilot ad accounts on the client page', function () {
+    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
+    Http::fake(['pilot.klokads.com/*' => Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => [
+        'ad_accounts' => [['ad_account_id' => 7, 'external_id' => 'act_1', 'name' => 'GFFS Ads', 'platform' => 'meta', 'currency' => 'USD', 'shop' => 'Klok Ads']],
+    ]]])]);
+
+    $this->actingAs($this->owner)->get('/clients/'.$this->client->id)->assertOk()
+        ->assertInertia(fn ($page) => $page->where('options.ad_accounts.0', ['value' => 7, 'label' => 'GFFS Ads · Klok Ads']));
+
+    $this->actingAs($this->owner)->put('/clients/'.$this->client->id, ['name' => 'GFFS', 'type' => 'client', 'status' => 'active', 'pilot_ad_account_id' => 7])->assertRedirect();
+    expect($this->client->refresh()->pilot_ad_account_id)->toBe(7);
 });
 
 it('opens the agency pages', function (string $url) {
