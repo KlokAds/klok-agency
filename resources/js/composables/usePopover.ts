@@ -9,7 +9,11 @@ import type { Ref } from 'vue';
 export function usePopover(
     anchor: Ref<HTMLElement | null>,
     panel: Ref<HTMLElement | null>,
-    opts: { matchWidth?: boolean; minWidth?: number; align?: 'start' | 'end' } = {},
+    opts: {
+        matchWidth?: boolean;
+        minWidth?: number;
+        align?: 'start' | 'end';
+    } = {},
 ) {
     const open = ref(false);
     const style = ref<Record<string, string>>({});
@@ -23,7 +27,9 @@ export function usePopover(
         }
 
         const rect = a.getBoundingClientRect();
-        const width = opts.matchWidth ? Math.max(rect.width, opts.minWidth ?? 0) : p.offsetWidth;
+        const width = opts.matchWidth
+            ? Math.max(rect.width, opts.minWidth ?? 0)
+            : p.offsetWidth;
         const height = p.offsetHeight;
         const gap = 6;
         const below = window.innerHeight - rect.bottom;
@@ -35,7 +41,9 @@ export function usePopover(
         style.value = {
             position: 'fixed',
             left: `${left}px`,
-            top: up ? `${Math.max(8, rect.top - height - gap)}px` : `${rect.bottom + gap}px`,
+            top: up
+                ? `${Math.max(8, rect.top - height - gap)}px`
+                : `${rect.bottom + gap}px`,
             ...(opts.matchWidth ? { width: `${width}px` } : {}),
             zIndex: '80',
         };

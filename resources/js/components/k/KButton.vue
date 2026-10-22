@@ -33,17 +33,45 @@ const classes = computed(() => [
         danger: 'border border-out/30 bg-out-soft text-out hover:border-out hover:bg-out hover:text-white',
     }[props.variant],
     props.block ? 'w-full' : '',
-    props.disabled || props.loading ? 'pointer-events-none opacity-55' : 'cursor-pointer',
+    props.disabled || props.loading
+        ? 'pointer-events-none opacity-55'
+        : 'cursor-pointer',
 ]);
 </script>
 
 <template>
-    <a v-if="href && external" :href="href" :class="classes"><KIcon v-if="icon" :name="icon" :size="16" /><slot /></a>
-    <Link v-else-if="href" :href="href" :class="classes"><KIcon v-if="icon" :name="icon" :size="16" /><slot /></Link>
-    <button v-else :type="type" :class="classes" :disabled="disabled || loading">
-        <svg v-if="loading" class="size-4 animate-spin" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-opacity=".25" stroke-width="2.5" />
-            <path d="M17 10a7 7 0 00-7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+    <a v-if="href && external" :href="href" :class="classes"
+        ><KIcon v-if="icon" :name="icon" :size="16" /><slot
+    /></a>
+    <Link v-else-if="href" :href="href" :class="classes"
+        ><KIcon v-if="icon" :name="icon" :size="16" /><slot
+    /></Link>
+    <button
+        v-else
+        :type="type"
+        :class="classes"
+        :disabled="disabled || loading"
+    >
+        <svg
+            v-if="loading"
+            class="size-4 animate-spin"
+            viewBox="0 0 20 20"
+            fill="none"
+        >
+            <circle
+                cx="10"
+                cy="10"
+                r="7"
+                stroke="currentColor"
+                stroke-opacity=".25"
+                stroke-width="2.5"
+            />
+            <path
+                d="M17 10a7 7 0 00-7-7"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+            />
         </svg>
         <KIcon v-else-if="icon" :name="icon" :size="16" />
         <slot />

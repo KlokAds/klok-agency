@@ -2,7 +2,13 @@
 import { computed } from 'vue';
 
 const props = withDefaults(
-    defineProps<{ currency: 'usd' | 'bdt'; invalid?: boolean; id?: string; placeholder?: string; size?: 'md' | 'sm' }>(),
+    defineProps<{
+        currency: 'usd' | 'bdt';
+        invalid?: boolean;
+        id?: string;
+        placeholder?: string;
+        size?: 'md' | 'sm';
+    }>(),
     { size: 'md' },
 );
 
@@ -25,14 +31,20 @@ function pretty(raw: string | null | undefined): string {
     }
 
     const [whole, fraction] = String(raw).split('.');
-    const grouped = whole.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const grouped = whole
+        .replace(/^0+(?=\d)/, '')
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
     return fraction !== undefined ? grouped + '.' + fraction : grouped;
 }
 </script>
 
 <template>
-    <div class="field-box" :class="size === 'sm' && 'min-h-9!'" :data-invalid="invalid">
+    <div
+        class="field-box"
+        :class="size === 'sm' && 'min-h-9!'"
+        :data-invalid="invalid"
+    >
         <span class="num text-[14px] font-medium text-ink-3">{{ symbol }}</span>
         <input
             :id="id"
@@ -44,6 +56,9 @@ function pretty(raw: string | null | undefined): string {
             class="num h-full min-w-0 flex-1 py-2 text-[15px]"
             @input="onInput"
         />
-        <span class="text-[10.5px] font-bold tracking-wider text-ink-3 uppercase">{{ currency }}</span>
+        <span
+            class="text-[10.5px] font-bold tracking-wider text-ink-3 uppercase"
+            >{{ currency }}</span
+        >
     </div>
 </template>

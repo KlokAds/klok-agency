@@ -61,21 +61,29 @@ const { filters, clear } = useFilters('/bdt', {
     order: props.filters.order ?? 'new',
 });
 
-const filtered = computed(() => Object.entries(filters).some(([k, v]) => k !== 'order' && v));
+const filtered = computed(() =>
+    Object.entries(filters).some(([k, v]) => k !== 'order' && v),
+);
 const orderOptions = computed<Option[]>(() => [
     { value: 'new', label: t('নতুন আগে') },
     { value: 'old', label: t('পুরনো আগে') },
 ]);
 
-const editableCategories = computed(() => props.options.categories.filter((c) => c.value !== 'usd_purchase'));
+const editableCategories = computed(() =>
+    props.options.categories.filter((c) => c.value !== 'usd_purchase'),
+);
 
 const tone = (category: string) =>
-    ({ capital: 'brand', owner_drawing: 'wait', usd_purchase: 'neutral', client_payment: 'in', service_income: 'in', other_income: 'in', expense: 'out', salary: 'out' })[category] as
-        | 'brand'
-        | 'neutral'
-        | 'in'
-        | 'out'
-        | 'wait';
+    ({
+        capital: 'brand',
+        owner_drawing: 'wait',
+        usd_purchase: 'neutral',
+        client_payment: 'in',
+        service_income: 'in',
+        other_income: 'in',
+        expense: 'out',
+        salary: 'out',
+    })[category] as 'brand' | 'neutral' | 'in' | 'out' | 'wait';
 
 const editing = ref<Row | null>(null);
 const open = ref(false);
@@ -92,7 +100,16 @@ const form = useForm({
 
 function startNew(): void {
     editing.value = null;
-    form.defaults({ entry_date: today(), description: '', category: 'expense', client_id: null, expense_head_id: null, amount: '', notes: '', clear_review: false });
+    form.defaults({
+        entry_date: today(),
+        description: '',
+        category: 'expense',
+        client_id: null,
+        expense_head_id: null,
+        amount: '',
+        notes: '',
+        clear_review: false,
+    });
     form.reset();
     form.clearErrors();
     open.value = true;
@@ -115,57 +132,162 @@ function startEdit(row: Row): void {
 }
 
 function save(): void {
-    const options = { preserveScroll: true, onSuccess: () => (open.value = false) };
-    editing.value ? form.put(`/bdt/${editing.value.id}`, options) : form.post('/bdt', options);
+    const options = {
+        preserveScroll: true,
+        onSuccess: () => (open.value = false),
+    };
+    if (editing.value) {
+        form.put(`/bdt/${editing.value.id}`, options);
+    } else {
+        form.post('/bdt', options);
+    }
 }
 
 async function remove(row: Row): Promise<void> {
     const ok = await confirmAction({
         title: t('Entry মুছবেন?'),
-        body: t('"{description}" ({amount}) Trash-এ যাবে। এই টাকায় যে খরচগুলো Settled হয়েছিল, সেগুলো আবার Pending হবে।', { description: row.description, amount: money(row.amount, 'bdt') }),
+        body: t(
+            '"{description}" ({amount}) Trash-এ যাবে। এই টাকায় যে খরচগুলো Settled হয়েছিল, সেগুলো আবার Pending হবে।',
+            { description: row.description, amount: money(row.amount, 'bdt') },
+        ),
         confirm: t('Trash-এ পাঠান'),
         danger: true,
     });
 
     if (ok) {
-        router.delete(`/bdt/${row.id}`, { preserveScroll: true, onSuccess: () => (open.value = false) });
+        router.delete(`/bdt/${row.id}`, {
+            preserveScroll: true,
+            onSuccess: () => (open.value = false),
+        });
     }
 }
 
-const needsClient = computed(() => ['client_payment', 'service_income'].includes(form.category));
+const needsClient = computed(() =>
+    ['client_payment', 'service_income'].includes(form.category),
+);
 </script>
 
 <template>
-    <PageHeader :eyebrow="t('খাতা')" :title="t('BDT খাতা')" :lead="t('Capital, USD কেনা, client-এর টাকা, খরচ আর বেতন — হাতে আর bank-এ কত টাকা।')">
-        <KButton v-if="can['reports.export']" href="/reports/export/bdt" external icon="down">CSV</KButton>
-        <KButton v-if="can['bdt.create']" variant="ink" icon="plus" @click="startNew">{{ t('নতুন row') }}</KButton>
+    <PageHeader
+        :eyebrow="t('খাতা')"
+        :title="t('BDT খাতা')"
+        :lead="
+            t(
+                'Capital, USD কেনা, client-এর টাকা, খরচ আর বেতন — হাতে আর bank-এ কত টাকা।',
+            )
+        "
+    >
+        <KButton
+            v-if="can['reports.export']"
+            href="/reports/export/bdt"
+            external
+            icon="down"
+            >CSV</KButton
+        >
+        <KButton
+            v-if="can['bdt.create']"
+            variant="ink"
+            icon="plus"
+            @click="startNew"
+            >{{ t('নতুন row') }}</KButton
+        >
     </PageHeader>
 
-    <section class="panel no-print mb-4 grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:p-4">
-        <KInput v-model="filters.q" type="search" icon="search" :placeholder="t('খুঁজুন — বিবরণ, note, client')" size="sm" />
-        <KSelect v-model="filters.category" :options="options.categories" :placeholder="t('সব ধরন')" clearable size="sm" />
-        <KSelect v-model="filters.client_id" :options="options.clients" :placeholder="t('সব client')" clearable size="sm" />
-        <KSelect v-model="filters.expense_head_id" :options="options.heads" :placeholder="t('সব খরচের খাত')" clearable size="sm" />
+    <section
+        class="panel no-print mb-4 grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:p-4"
+    >
+        <KInput
+            v-model="filters.q"
+            type="search"
+            icon="search"
+            :placeholder="t('খুঁজুন — বিবরণ, note, client')"
+            size="sm"
+        />
+        <KSelect
+            v-model="filters.category"
+            :options="options.categories"
+            :placeholder="t('সব ধরন')"
+            clearable
+            size="sm"
+        />
+        <KSelect
+            v-model="filters.client_id"
+            :options="options.clients"
+            :placeholder="t('সব client')"
+            clearable
+            size="sm"
+        />
+        <KSelect
+            v-model="filters.expense_head_id"
+            :options="options.heads"
+            :placeholder="t('সব খরচের খাত')"
+            clearable
+            size="sm"
+        />
         <div class="flex items-center gap-2 sm:col-span-2 lg:col-span-2">
-            <KDate v-model="filters.from" :placeholder="t('শুরু')" clearable size="sm" class="flex-1" />
+            <KDate
+                v-model="filters.from"
+                :placeholder="t('শুরু')"
+                clearable
+                size="sm"
+                class="flex-1"
+            />
             <span class="text-ink-3">—</span>
-            <KDate v-model="filters.to" :placeholder="t('শেষ')" clearable size="sm" class="flex-1" />
+            <KDate
+                v-model="filters.to"
+                :placeholder="t('শেষ')"
+                clearable
+                size="sm"
+                class="flex-1"
+            />
         </div>
         <div class="flex items-center gap-3 sm:col-span-2 lg:justify-end">
-            <KSegment v-model="filters.order" :options="orderOptions" size="sm" />
-            <button v-if="filtered" type="button" class="text-[13px] font-semibold text-ink-2 hover:text-out" @click="clear">{{ t('Filter মুছুন') }}</button>
+            <KSegment
+                v-model="filters.order"
+                :options="orderOptions"
+                size="sm"
+            />
+            <button
+                v-if="filtered"
+                type="button"
+                class="text-[13px] font-semibold text-ink-2 hover:text-out"
+                @click="clear"
+            >
+                {{ t('Filter মুছুন') }}
+            </button>
         </div>
     </section>
 
     <div class="mb-4 flex flex-wrap gap-x-8 gap-y-2 px-1 text-[13px]">
-        <span class="text-ink-3"><b class="num text-ink">{{ totals.count }}</b> row</span>
-        <span class="text-ink-3">{{ t('ঢুকেছে') }} <b class="num text-in">{{ money(totals.in, 'bdt') }}</b></span>
-        <span class="text-ink-3">{{ t('বেরিয়েছে') }} <b class="num text-out">{{ money(totals.out, 'bdt') }}</b></span>
-        <span class="ml-auto text-ink-3">Balance <b class="num text-ink">{{ money(summary.balance, 'bdt') }}</b></span>
+        <span class="text-ink-3"
+            ><b class="num text-ink">{{ totals.count }}</b> row</span
+        >
+        <span class="text-ink-3"
+            >{{ t('ঢুকেছে') }}
+            <b class="num text-in">{{ money(totals.in, 'bdt') }}</b></span
+        >
+        <span class="text-ink-3"
+            >{{ t('বেরিয়েছে') }}
+            <b class="num text-out">{{ money(totals.out, 'bdt') }}</b></span
+        >
+        <span class="ml-auto text-ink-3"
+            >Balance
+            <b class="num text-ink">{{
+                money(summary.balance, 'bdt')
+            }}</b></span
+        >
     </div>
 
     <section class="panel overflow-hidden">
-        <KEmpty v-if="!entries.data.length" :title="t('কোনো row নেই')" :body="filtered ? t('এই filter-এ কিছু মেলেনি।') : t('প্রথম entry দিয়ে শুরু করুন।')" />
+        <KEmpty
+            v-if="!entries.data.length"
+            :title="t('কোনো row নেই')"
+            :body="
+                filtered
+                    ? t('এই filter-এ কিছু মেলেনি।')
+                    : t('প্রথম entry দিয়ে শুরু করুন।')
+            "
+        />
 
         <template v-else>
             <div class="hidden overflow-x-auto lg:block">
@@ -181,24 +303,89 @@ const needsClient = computed(() => ['client_payment', 'service_income'].includes
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="row in entries.data" :key="row.id" class="group">
-                            <td class="num text-[12.5px] whitespace-nowrap text-ink-2">{{ row.date ? niceDate(row.date) : '—' }}</td>
+                        <tr
+                            v-for="row in entries.data"
+                            :key="row.id"
+                            class="group"
+                        >
+                            <td
+                                class="num text-[12.5px] whitespace-nowrap text-ink-2"
+                            >
+                                {{ row.date ? niceDate(row.date) : '—' }}
+                            </td>
                             <td class="min-w-[280px]">
                                 <p class="font-medium">{{ row.description }}</p>
-                                <p class="mt-1 flex flex-wrap items-center gap-1.5">
-                                    <KTag :tone="tone(row.category)">{{ row.category_label }}</KTag>
-                                    <KTag v-if="row.review_note" tone="wait" :title="row.review_note">{{ t('মিলিয়ে দেখুন') }} — {{ row.review_note }}</KTag>
-                                    <span v-if="row.notes" class="text-[12px] text-ink-3">{{ row.notes }}</span>
+                                <p
+                                    class="mt-1 flex flex-wrap items-center gap-1.5"
+                                >
+                                    <KTag :tone="tone(row.category)">{{
+                                        row.category_label
+                                    }}</KTag>
+                                    <KTag
+                                        v-if="row.review_note"
+                                        tone="wait"
+                                        :title="row.review_note"
+                                        >{{ t('মিলিয়ে দেখুন') }} —
+                                        {{ row.review_note }}</KTag
+                                    >
+                                    <span
+                                        v-if="row.notes"
+                                        class="text-[12px] text-ink-3"
+                                        >{{ row.notes }}</span
+                                    >
                                 </p>
                             </td>
-                            <td class="text-[13px] whitespace-nowrap text-ink-2">{{ row.client ?? row.employee ?? row.head ?? '—' }}</td>
-                            <td class="r"><KAmount :value="row.amount" currency="bdt" sign class="font-medium" /></td>
-                            <td class="r num text-ink-2">{{ money(row.balance, 'bdt') }}</td>
+                            <td
+                                class="text-[13px] whitespace-nowrap text-ink-2"
+                            >
+                                {{
+                                    row.client ??
+                                    row.employee ??
+                                    row.head ??
+                                    '—'
+                                }}
+                            </td>
+                            <td class="r">
+                                <KAmount
+                                    :value="row.amount"
+                                    currency="bdt"
+                                    sign
+                                    class="font-medium"
+                                />
+                            </td>
+                            <td class="r num text-ink-2">
+                                {{ money(row.balance, 'bdt') }}
+                            </td>
                             <td class="r whitespace-nowrap">
-                                <span v-if="row.locked" class="inline-flex text-ink-3" :title="row.category === 'salary' ? t('Payroll থেকে বদলান') : t('FX Batch থেকে বদলান')"><KIcon name="lock" :size="16" /></span>
+                                <span
+                                    v-if="row.locked"
+                                    class="inline-flex text-ink-3"
+                                    :title="
+                                        row.category === 'salary'
+                                            ? t('Payroll থেকে বদলান')
+                                            : t('FX Batch থেকে বদলান')
+                                    "
+                                    ><KIcon name="lock" :size="16"
+                                /></span>
                                 <template v-else>
-                                    <button v-if="can['bdt.edit']" type="button" class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-sunken hover:text-ink focus:opacity-100" :aria-label="t('বদলান')" @click="startEdit(row)"><KIcon name="pen" :size="16" /></button>
-                                    <button v-if="can['bdt.delete']" type="button" class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100" :aria-label="t('মুছুন')" @click="remove(row)"><KIcon name="bin" :size="16" /></button>
+                                    <button
+                                        v-if="can['bdt.edit']"
+                                        type="button"
+                                        class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-sunken hover:text-ink focus:opacity-100"
+                                        :aria-label="t('বদলান')"
+                                        @click="startEdit(row)"
+                                    >
+                                        <KIcon name="pen" :size="16" />
+                                    </button>
+                                    <button
+                                        v-if="can['bdt.delete']"
+                                        type="button"
+                                        class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100"
+                                        :aria-label="t('মুছুন')"
+                                        @click="remove(row)"
+                                    >
+                                        <KIcon name="bin" :size="16" />
+                                    </button>
                                 </template>
                             </td>
                         </tr>
@@ -208,17 +395,35 @@ const needsClient = computed(() => ['client_payment', 'service_income'].includes
 
             <ul class="divide-y divide-dashed divide-line lg:hidden">
                 <li v-for="row in entries.data" :key="row.id">
-                    <button type="button" class="flex w-full items-start gap-3 px-4 py-3.5 text-left" :disabled="row.locked || !can['bdt.edit']" @click="startEdit(row)">
+                    <button
+                        type="button"
+                        class="flex w-full items-start gap-3 px-4 py-3.5 text-left"
+                        :disabled="row.locked || !can['bdt.edit']"
+                        @click="startEdit(row)"
+                    >
                         <span class="min-w-0 flex-1">
-                            <span class="block font-medium">{{ row.description }}</span>
-                            <span class="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3">
+                            <span class="block font-medium">{{
+                                row.description
+                            }}</span>
+                            <span
+                                class="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3"
+                            >
                                 {{ niceDate(row.date) }}
-                                <KTag :tone="tone(row.category)">{{ row.category_label }}</KTag>
+                                <KTag :tone="tone(row.category)">{{
+                                    row.category_label
+                                }}</KTag>
                             </span>
                         </span>
                         <span class="text-right">
-                            <KAmount :value="row.amount" currency="bdt" sign class="block font-semibold" />
-                            <span class="num text-[11.5px] text-ink-3">{{ money(row.balance, 'bdt') }}</span>
+                            <KAmount
+                                :value="row.amount"
+                                currency="bdt"
+                                sign
+                                class="block font-semibold"
+                            />
+                            <span class="num text-[11.5px] text-ink-3">{{
+                                money(row.balance, 'bdt')
+                            }}</span>
                         </span>
                     </button>
                 </li>
@@ -228,38 +433,111 @@ const needsClient = computed(() => ['client_payment', 'service_income'].includes
         </template>
     </section>
 
-    <KModal v-model="open" :title="editing ? t('BDT row বদলান') : t('নতুন BDT row')" :subtitle="t('USD কেনা FX Batch থেকে, বেতন Payroll থেকে দিন।')">
-        <form id="bdt-form" class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save">
+    <KModal
+        v-model="open"
+        :title="editing ? t('BDT row বদলান') : t('নতুন BDT row')"
+        :subtitle="t('USD কেনা FX Batch থেকে, বেতন Payroll থেকে দিন।')"
+    >
+        <form
+            id="bdt-form"
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+            @submit.prevent="save"
+        >
             <KField :label="t('তারিখ')" :error="form.errors.entry_date">
-                <KDate v-model="form.entry_date" :invalid="!!form.errors.entry_date" />
+                <KDate
+                    v-model="form.entry_date"
+                    :invalid="!!form.errors.entry_date"
+                />
             </KField>
             <KField :label="t('ধরন')" :error="form.errors.category">
-                <KSelect v-model="form.category" :options="editableCategories" />
+                <KSelect
+                    v-model="form.category"
+                    :options="editableCategories"
+                />
             </KField>
-            <KField :label="t('বিবরণ')" :error="form.errors.description" class="sm:col-span-2">
-                <KInput v-model="form.description" :invalid="!!form.errors.description" />
+            <KField
+                :label="t('বিবরণ')"
+                :error="form.errors.description"
+                class="sm:col-span-2"
+            >
+                <KInput
+                    v-model="form.description"
+                    :invalid="!!form.errors.description"
+                />
             </KField>
-            <KField v-if="needsClient" label="Client" :error="form.errors.client_id">
-                <KSelect v-model="form.client_id" :options="options.clients" :invalid="!!form.errors.client_id" />
+            <KField
+                v-if="needsClient"
+                label="Client"
+                :error="form.errors.client_id"
+            >
+                <KSelect
+                    v-model="form.client_id"
+                    :options="options.clients"
+                    :invalid="!!form.errors.client_id"
+                />
             </KField>
-            <KField v-if="form.category === 'expense'" :label="t('খরচের খাত')" :error="form.errors.expense_head_id">
-                <KSelect v-model="form.expense_head_id" :options="options.heads" clearable />
+            <KField
+                v-if="form.category === 'expense'"
+                :label="t('খরচের খাত')"
+                :error="form.errors.expense_head_id"
+            >
+                <KSelect
+                    v-model="form.expense_head_id"
+                    :options="options.heads"
+                    clearable
+                />
             </KField>
-            <KField :label="t('পরিমাণ')" :error="form.errors.amount" :hint="t('শুধু সংখ্যা — যোগ না বিয়োগ, তা ধরন থেকে বোঝা যায়')">
-                <KMoney v-model="form.amount" currency="bdt" :invalid="!!form.errors.amount" />
+            <KField
+                :label="t('পরিমাণ')"
+                :error="form.errors.amount"
+                :hint="t('শুধু সংখ্যা — যোগ না বিয়োগ, তা ধরন থেকে বোঝা যায়')"
+            >
+                <KMoney
+                    v-model="form.amount"
+                    currency="bdt"
+                    :invalid="!!form.errors.amount"
+                />
             </KField>
             <KField label="Note" optional class="sm:col-span-2">
                 <KTextarea v-model="form.notes" />
             </KField>
-            <div v-if="editing?.review_note" class="rounded-xl bg-wait-soft px-4 py-3 sm:col-span-2">
-                <p class="text-[13px] font-medium text-wait">{{ t('পুরনো sheet থেকে: {note}', { note: editing.review_note }) }}</p>
-                <KCheck v-model="form.clear_review" :label="t('দেখেছি, ঠিক আছে — চিহ্ন সরিয়ে দাও')" class="mt-2" />
+            <div
+                v-if="editing?.review_note"
+                class="rounded-xl bg-wait-soft px-4 py-3 sm:col-span-2"
+            >
+                <p class="text-[13px] font-medium text-wait">
+                    {{
+                        t('পুরনো sheet থেকে: {note}', {
+                            note: editing.review_note,
+                        })
+                    }}
+                </p>
+                <KCheck
+                    v-model="form.clear_review"
+                    :label="t('দেখেছি, ঠিক আছে — চিহ্ন সরিয়ে দাও')"
+                    class="mt-2"
+                />
             </div>
         </form>
         <template #footer>
-            <KButton v-if="editing && can['bdt.delete']" variant="danger" icon="bin" class="mr-auto" @click="remove(editing)">{{ t('মুছুন') }}</KButton>
-            <KButton variant="quiet" @click="open = false">{{ t('বাতিল') }}</KButton>
-            <KButton type="submit" form="bdt-form" variant="primary" :loading="form.processing">{{ t('সংরক্ষণ') }}</KButton>
+            <KButton
+                v-if="editing && can['bdt.delete']"
+                variant="danger"
+                icon="bin"
+                class="mr-auto"
+                @click="remove(editing)"
+                >{{ t('মুছুন') }}</KButton
+            >
+            <KButton variant="quiet" @click="open = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                type="submit"
+                form="bdt-form"
+                variant="primary"
+                :loading="form.processing"
+                >{{ t('সংরক্ষণ') }}</KButton
+            >
         </template>
     </KModal>
 </template>

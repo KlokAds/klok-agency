@@ -20,7 +20,10 @@ export type Paginated<T> = {
     links: { url: string | null; label: string; active: boolean }[];
 };
 
-export type Toast = { type: 'success' | 'error' | 'warning' | 'info'; message: string };
+export type Toast = {
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+};
 
 export type Appearance = 'light' | 'dark' | 'system';
 

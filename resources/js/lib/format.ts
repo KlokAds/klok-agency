@@ -29,7 +29,11 @@ export function money(
     const body = round ? whole.format(shown) : grouping.format(shown);
     // A value that rounds to zero is shown without a sign.
     const negative = minor < 0 && shown !== 0;
-    const lead = negative ? '−' : opts.sign && minor > 0 && shown !== 0 ? '+' : '';
+    const lead = negative
+        ? '−'
+        : opts.sign && minor > 0 && shown !== 0
+          ? '+'
+          : '';
 
     return `${lead}${symbol}${body}`;
 }
@@ -63,7 +67,20 @@ export function monthNames(): string[] {
     return BN_MONTHS.map((name) => t(name));
 }
 
-const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const SHORT = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+];
 
 export function parseDate(value: string | null | undefined): Date | null {
     if (!value) {
@@ -87,7 +104,10 @@ export function today(): string {
 }
 
 /** "15 Oct 2026" — the way the old sheet wrote dates. */
-export function niceDate(value: string | null | undefined, withYear = true): string {
+export function niceDate(
+    value: string | null | undefined,
+    withYear = true,
+): string {
     const date = parseDate(value);
 
     if (!date) {

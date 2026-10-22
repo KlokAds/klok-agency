@@ -38,7 +38,9 @@ export function useIdleLogout() {
     }
 
     onMounted(() => {
-        events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+        events.forEach((e) =>
+            window.addEventListener(e, bump, { passive: true }),
+        );
         timer = window.setInterval(tick, 1000);
     });
 

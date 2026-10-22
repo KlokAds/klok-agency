@@ -7,7 +7,11 @@ function xsrf(): string {
 
 export async function getJson<T>(url: string): Promise<T> {
     const response = await fetch(url, {
-        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': xsrf() },
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-XSRF-TOKEN': xsrf(),
+        },
         credentials: 'same-origin',
     });
 

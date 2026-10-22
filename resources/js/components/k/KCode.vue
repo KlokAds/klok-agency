@@ -3,7 +3,10 @@ import { nextTick, ref } from 'vue';
 import { t } from '@/lib/i18n';
 
 // Six separate boxes for an authenticator code; paste fills all of them.
-const props = withDefaults(defineProps<{ length?: number; invalid?: boolean }>(), { length: 6 });
+const props = withDefaults(
+    defineProps<{ length?: number; invalid?: boolean }>(),
+    { length: 6 },
+);
 const model = defineModel<string>({ default: '' });
 const boxes = ref<HTMLInputElement[]>([]);
 

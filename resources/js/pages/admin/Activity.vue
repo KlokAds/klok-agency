@@ -16,21 +16,37 @@ type Activity = {
     event: string;
     subject_id: number | null;
     by: string;
-    changes: { attributes?: Record<string, unknown>; old?: Record<string, unknown> } | null;
+    changes: {
+        attributes?: Record<string, unknown>;
+        old?: Record<string, unknown>;
+    } | null;
     properties: Record<string, unknown> | null;
     at: string;
 };
 
-const props = defineProps<{ activities: Paginated<Activity>; filters: Record<string, string | null>; users: Option[]; logs: Option[] }>();
+const props = defineProps<{
+    activities: Paginated<Activity>;
+    filters: Record<string, string | null>;
+    users: Option[];
+    logs: Option[];
+}>();
 
-const filters = reactive({ user_id: props.filters.user_id ?? null, log: props.filters.log ?? null });
+const filters = reactive({
+    user_id: props.filters.user_id ?? null,
+    log: props.filters.log ?? null,
+});
 
 watch(filters, () => {
-    const query = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
+    const query = Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v),
+    );
     router.get('/activity', query, { preserveState: true, replace: true });
 });
 
-const events: Record<string, { label: string; tone: 'in' | 'out' | 'wait' | 'neutral' | 'brand' }> = {
+const events: Record<
+    string,
+    { label: string; tone: 'in' | 'out' | 'wait' | 'neutral' | 'brand' }
+> = {
     created: { label: 'নতুন', tone: 'in' }, // i18n
     updated: { label: 'বদল', tone: 'wait' }, // i18n
     deleted: { label: 'মোছা', tone: 'out' }, // i18n
@@ -39,7 +55,14 @@ const events: Record<string, { label: string; tone: 'in' | 'out' | 'wait' | 'neu
 };
 
 // Amount-like fields are stored in minor units.
-const MONEY = ['amount', 'usd', 'bdt', 'monthly_salary', 'app_balance', 'system_balance'];
+const MONEY = [
+    'amount',
+    'usd',
+    'bdt',
+    'monthly_salary',
+    'app_balance',
+    'system_balance',
+];
 
 function show(key: string, value: unknown): string {
     if (value === null || value === undefined || value === '') {
@@ -47,7 +70,9 @@ function show(key: string, value: unknown): string {
     }
 
     if (MONEY.includes(key) && typeof value === 'number') {
-        return (value / 100).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        return (value / 100).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+        });
     }
 
     return String(value).slice(0, 80);
@@ -59,38 +84,86 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
 
     return Object.keys(now)
         .filter((k) => !['sequence', 'created_by', 'id'].includes(k))
-        .map((k) => ({ key: k, from: k in old ? show(k, old[k]) : null, to: show(k, now[k]) }));
+        .map((k) => ({
+            key: k,
+            from: k in old ? show(k, old[k]) : null,
+            to: show(k, now[k]),
+        }));
 }
 </script>
 
 <template>
-    <PageHeader :eyebrow="t('নিয়ন্ত্রণ')" title="Activity log" :lead="t('কে, কখন, কী বদলেছে — আগের আর পরের মান সহ। এই log কেউ বদলাতে বা মুছতে পারে না।')" />
+    <PageHeader
+        :eyebrow="t('নিয়ন্ত্রণ')"
+        title="Activity log"
+        :lead="
+            t(
+                'কে, কখন, কী বদলেছে — আগের আর পরের মান সহ। এই log কেউ বদলাতে বা মুছতে পারে না।',
+            )
+        "
+    />
 
     <div class="mb-4 grid max-w-xl gap-3 sm:grid-cols-2">
-        <KSelect v-model="filters.user_id" :options="users" :placeholder="t('সব user')" clearable size="sm" />
-        <KSelect v-model="filters.log" :options="logs" :placeholder="t('সব ধরন')" clearable size="sm" />
+        <KSelect
+            v-model="filters.user_id"
+            :options="users"
+            :placeholder="t('সব user')"
+            clearable
+            size="sm"
+        />
+        <KSelect
+            v-model="filters.log"
+            :options="logs"
+            :placeholder="t('সব ধরন')"
+            clearable
+            size="sm"
+        />
     </div>
 
     <section class="panel overflow-hidden">
         <KEmpty v-if="!activities.data.length" :title="t('এখনো কিছু নেই')" />
         <ol v-else class="divide-y divide-dashed divide-line">
-            <li v-for="a in activities.data" :key="a.id" class="grid gap-2 px-5 py-4 sm:grid-cols-[180px_1fr] sm:px-6">
+            <li
+                v-for="a in activities.data"
+                :key="a.id"
+                class="grid gap-2 px-5 py-4 sm:grid-cols-[180px_1fr] sm:px-6"
+            >
                 <div>
                     <p class="text-[13.5px] font-semibold">{{ a.by }}</p>
-                    <p class="text-[12px] text-ink-3" :title="a.at">{{ ago(a.at) }}</p>
+                    <p class="text-[12px] text-ink-3" :title="a.at">
+                        {{ ago(a.at) }}
+                    </p>
                 </div>
                 <div class="min-w-0">
                     <p class="flex flex-wrap items-center gap-2 text-[13.5px]">
-                        <KTag :tone="events[a.event]?.tone ?? 'neutral'">{{ events[a.event] ? t(events[a.event].label) : a.event }}</KTag>
+                        <KTag :tone="events[a.event]?.tone ?? 'neutral'">{{
+                            events[a.event] ? t(events[a.event].label) : a.event
+                        }}</KTag>
                         <span class="font-medium">{{ a.log }}</span>
-                        <span v-if="a.subject_id" class="num text-[12px] text-ink-3">#{{ a.subject_id }}</span>
-                        <span v-if="a.properties?.ip" class="num text-[12px] text-ink-3">{{ a.properties.ip }}</span>
+                        <span
+                            v-if="a.subject_id"
+                            class="num text-[12px] text-ink-3"
+                            >#{{ a.subject_id }}</span
+                        >
+                        <span
+                            v-if="a.properties?.ip"
+                            class="num text-[12px] text-ink-3"
+                            >{{ a.properties.ip }}</span
+                        >
                     </p>
-                    <dl v-if="diff(a).length" class="mt-2 grid gap-x-4 gap-y-1 text-[12.5px] sm:grid-cols-[140px_1fr]">
+                    <dl
+                        v-if="diff(a).length"
+                        class="mt-2 grid gap-x-4 gap-y-1 text-[12.5px] sm:grid-cols-[140px_1fr]"
+                    >
                         <template v-for="d in diff(a)" :key="d.key">
                             <dt class="num text-ink-3">{{ d.key }}</dt>
                             <dd class="min-w-0 break-words">
-                                <template v-if="d.from !== null"><span class="text-out line-through">{{ d.from }}</span> → </template>
+                                <template v-if="d.from !== null"
+                                    ><span class="text-out line-through">{{
+                                        d.from
+                                    }}</span>
+                                    →
+                                </template>
                                 <span>{{ d.to }}</span>
                             </dd>
                         </template>

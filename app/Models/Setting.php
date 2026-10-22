@@ -30,4 +30,11 @@ class Setting extends Model
         static::updateOrCreate(['key' => $key], ['value' => $value]);
         Cache::forget('settings');
     }
+
+    /** For the system's own bookkeeping (last run times), which would only clutter the log. */
+    public static function putQuietly(string $key, mixed $value): void
+    {
+        static::query()->upsert([['key' => $key, 'value' => $value, 'created_at' => now(), 'updated_at' => now()]], ['key'], ['value', 'updated_at']);
+        Cache::forget('settings');
+    }
 }

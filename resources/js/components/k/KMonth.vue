@@ -14,7 +14,9 @@ const year = ref(new Date().getFullYear());
 
 watch(open, (value) => {
     if (value) {
-        year.value = model.value ? Number(model.value.slice(0, 4)) : new Date().getFullYear();
+        year.value = model.value
+            ? Number(model.value.slice(0, 4))
+            : new Date().getFullYear();
     }
 });
 
@@ -26,20 +28,76 @@ function pick(index: number): void {
 
 <template>
     <div ref="anchor">
-        <button :id="id" type="button" class="field-box cursor-pointer text-left text-[14.5px]" :data-open="open" :data-invalid="invalid" @click="toggle">
-            <svg viewBox="0 0 16 16" class="size-4 shrink-0 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2.5" y="3.5" width="11" height="10" rx="2" /><path d="M2.5 6.5h11M5.5 9h1M9.5 9h1M5.5 11h1" /></svg>
-            <span class="flex-1 font-bn" :class="model ? 'text-ink' : 'text-ink-3'">{{ model ? monthLabel(model) : t('মাস বেছে নিন') }}</span>
+        <button
+            :id="id"
+            type="button"
+            class="field-box cursor-pointer text-left text-[14.5px]"
+            :data-open="open"
+            :data-invalid="invalid"
+            @click="toggle"
+        >
+            <svg
+                viewBox="0 0 16 16"
+                class="size-4 shrink-0 text-ink-3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+            >
+                <rect x="2.5" y="3.5" width="11" height="10" rx="2" />
+                <path d="M2.5 6.5h11M5.5 9h1M9.5 9h1M5.5 11h1" />
+            </svg>
+            <span
+                class="flex-1 font-bn"
+                :class="model ? 'text-ink' : 'text-ink-3'"
+                >{{ model ? monthLabel(model) : t('মাস বেছে নিন') }}</span
+            >
         </button>
 
         <Teleport to="body">
-            <div v-if="open" ref="panel" :style="style" class="popover k-rise w-[264px] p-3">
+            <div
+                v-if="open"
+                ref="panel"
+                :style="style"
+                class="popover k-rise w-[264px] p-3"
+            >
                 <div class="mb-2 flex items-center justify-between">
-                    <button type="button" class="grid size-8 place-items-center rounded-lg hover:bg-sunken" :aria-label="t('আগের বছর')" @click="year--">
-                        <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M10 3.5L5.5 8l4.5 4.5" /></svg>
+                    <button
+                        type="button"
+                        class="grid size-8 place-items-center rounded-lg hover:bg-sunken"
+                        :aria-label="t('আগের বছর')"
+                        @click="year--"
+                    >
+                        <svg
+                            viewBox="0 0 16 16"
+                            class="size-4"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        >
+                            <path d="M10 3.5L5.5 8l4.5 4.5" />
+                        </svg>
                     </button>
-                    <span class="num text-[15px] font-semibold">{{ year }}</span>
-                    <button type="button" class="grid size-8 place-items-center rounded-lg hover:bg-sunken" :aria-label="t('পরের বছর')" @click="year++">
-                        <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 3.5L10.5 8 6 12.5" /></svg>
+                    <span class="num text-[15px] font-semibold">{{
+                        year
+                    }}</span>
+                    <button
+                        type="button"
+                        class="grid size-8 place-items-center rounded-lg hover:bg-sunken"
+                        :aria-label="t('পরের বছর')"
+                        @click="year++"
+                    >
+                        <svg
+                            viewBox="0 0 16 16"
+                            class="size-4"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        >
+                            <path d="M6 3.5L10.5 8 6 12.5" />
+                        </svg>
                     </button>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5">
@@ -48,7 +106,12 @@ function pick(index: number): void {
                         :key="name"
                         type="button"
                         class="rounded-lg py-2.5 font-bn text-[13px] hover:bg-sunken"
-                        :class="model === `${year}-${String(i + 1).padStart(2, '0')}` ? 'bg-brand font-semibold text-white hover:bg-brand' : ''"
+                        :class="
+                            model ===
+                            `${year}-${String(i + 1).padStart(2, '0')}`
+                                ? 'bg-brand font-semibold text-white hover:bg-brand'
+                                : ''
+                        "
                         @click="pick(i)"
                     >
                         {{ name }}

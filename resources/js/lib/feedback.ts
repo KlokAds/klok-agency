@@ -15,7 +15,10 @@ type ConfirmRequest = {
     resolve: (ok: boolean) => void;
 };
 
-export const feedback = reactive<{ toasts: LiveToast[]; confirm: ConfirmRequest | null }>({
+export const feedback = reactive<{
+    toasts: LiveToast[];
+    confirm: ConfirmRequest | null;
+}>({
     toasts: [],
     confirm: null,
 });
@@ -25,14 +28,19 @@ let seq = 0;
 export function toast(message: string, type: Toast['type'] = 'success'): void {
     const id = ++seq;
     feedback.toasts.push({ id, message, type });
-    setTimeout(() => dismiss(id), type === 'error' || type === 'warning' ? 7000 : 4200);
+    setTimeout(
+        () => dismiss(id),
+        type === 'error' || type === 'warning' ? 7000 : 4200,
+    );
 }
 
 export function dismiss(id: number): void {
     feedback.toasts = feedback.toasts.filter((item) => item.id !== id);
 }
 
-export function confirmAction(opts: Omit<ConfirmRequest, 'resolve'>): Promise<boolean> {
+export function confirmAction(
+    opts: Omit<ConfirmRequest, 'resolve'>,
+): Promise<boolean> {
     return new Promise((resolve) => {
         feedback.confirm = { ...opts, resolve };
     });
@@ -40,7 +48,9 @@ export function confirmAction(opts: Omit<ConfirmRequest, 'resolve'>): Promise<bo
 
 export function initializeFeedback(): void {
     router.on('flash', (event) => {
-        const data = (event as CustomEvent).detail?.flash?.toast as Toast | undefined;
+        const data = (event as CustomEvent).detail?.flash?.toast as
+            | Toast
+            | undefined;
 
         if (data) {
             toast(data.message, data.type);
@@ -49,7 +59,9 @@ export function initializeFeedback(): void {
 
     // Validation errors that are not tied to a form field (e.g. "this row is locked").
     router.on('error', (event) => {
-        const errors = (event as CustomEvent).detail?.errors as Record<string, string> | undefined;
+        const errors = (event as CustomEvent).detail?.errors as
+            | Record<string, string>
+            | undefined;
         const loose = ['entry', 'batch', 'client', 'employee', 'user', 'role'];
 
         for (const key of loose) {

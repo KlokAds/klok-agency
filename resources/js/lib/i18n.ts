@@ -10,24 +10,37 @@ import { ref } from 'vue';
  */
 export type Locale = 'bn' | 'en';
 
-const files = import.meta.glob<Record<string, string>>(['../../../lang/en.json', '../../../lang/parts/*/en.json'], {
-    eager: true,
-    import: 'default',
-});
+const files = import.meta.glob<Record<string, string>>(
+    ['../../../lang/en.json', '../../../lang/parts/*/en.json'],
+    {
+        eager: true,
+        import: 'default',
+    },
+);
 
-const english: Record<string, string> = Object.assign({}, ...Object.values(files));
+const english: Record<string, string> = Object.assign(
+    {},
+    ...Object.values(files),
+);
 
-export const locale = ref<Locale>((document.documentElement.lang as Locale) === 'en' ? 'en' : 'bn');
+export const locale = ref<Locale>(
+    (document.documentElement.lang as Locale) === 'en' ? 'en' : 'bn',
+);
 
 export function setLocale(value: Locale): void {
     locale.value = value;
     document.documentElement.lang = value;
 }
 
-export function t(text: string, params: Record<string, string | number | null | undefined> = {}): string {
+export function t(
+    text: string,
+    params: Record<string, string | number | null | undefined> = {},
+): string {
     const out = locale.value === 'en' ? (english[text] ?? text) : text;
 
-    return out.replace(/\{(\w+)\}/g, (_, key: string) => (params[key] ?? '').toString());
+    return out.replace(/\{(\w+)\}/g, (_, key: string) =>
+        (params[key] ?? '').toString(),
+    );
 }
 
 export function isEnglish(): boolean {
@@ -37,7 +50,9 @@ export function isEnglish(): boolean {
 /** Keeps the language in step with what the server says on every visit. */
 export function initializeLocale(): void {
     router.on('navigate', (event) => {
-        const value = (event as CustomEvent).detail?.page?.props?.locale as Locale | undefined;
+        const value = (event as CustomEvent).detail?.page?.props?.locale as
+            | Locale
+            | undefined;
 
         if (value && value !== locale.value) {
             setLocale(value);
@@ -47,5 +62,9 @@ export function initializeLocale(): void {
 
 export function switchLocale(value: Locale): void {
     setLocale(value);
-    router.post('/locale', { locale: value }, { preserveScroll: true, preserveState: false });
+    router.post(
+        '/locale',
+        { locale: value },
+        { preserveScroll: true, preserveState: false },
+    );
 }

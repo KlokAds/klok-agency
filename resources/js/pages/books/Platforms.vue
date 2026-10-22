@@ -11,7 +11,13 @@ defineProps<{
         spent: number;
         charged: number;
         due: number;
-        charges: { id: number; date: string | null; description: string; amount: number; notes: string | null }[];
+        charges: {
+            id: number;
+            date: string | null;
+            description: string;
+            amount: number;
+            notes: string | null;
+        }[];
     }[];
     card: number;
 }>();
@@ -21,7 +27,11 @@ defineProps<{
     <PageHeader
         :eyebrow="t('ব্যবসা')"
         title="Ad Platform"
-        :lead="t('Ad চললেই খরচ লেখা হয়, কিন্তু card থেকে টাকা কাটে পরে — threshold-এ বা invoice-এ। এখানে দেখা যায় কোন platform আর কত কাটবে।')"
+        :lead="
+            t(
+                'Ad চললেই খরচ লেখা হয়, কিন্তু card থেকে টাকা কাটে পরে — threshold-এ বা invoice-এ। এখানে দেখা যায় কোন platform আর কত কাটবে।',
+            )
+        "
     />
 
     <div class="grid gap-6 lg:grid-cols-3">
@@ -31,28 +41,62 @@ defineProps<{
                 <dl class="mt-4 grid grid-cols-3 gap-3">
                     <div>
                         <dt class="eyebrow">{{ t('খরচ') }}</dt>
-                        <dd class="num mt-1 text-[17px]">{{ money(p.spent, 'usd') }}</dd>
+                        <dd class="num mt-1 text-[17px]">
+                            {{ money(p.spent, 'usd') }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="eyebrow">{{ t('কেটেছে') }}</dt>
-                        <dd class="num mt-1 text-[17px]">{{ money(p.charged, 'usd') }}</dd>
+                        <dd class="num mt-1 text-[17px]">
+                            {{ money(p.charged, 'usd') }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="eyebrow">{{ t('আরো কাটবে') }}</dt>
-                        <dd class="num mt-1 text-[17px] font-semibold" :class="p.due > 0 ? 'text-out' : ''">{{ money(p.due, 'usd') }}</dd>
+                        <dd
+                            class="num mt-1 text-[17px] font-semibold"
+                            :class="p.due > 0 ? 'text-out' : ''"
+                        >
+                            {{ money(p.due, 'usd') }}
+                        </dd>
                     </div>
                 </dl>
-                <div v-if="p.spent > 0" class="mt-4 h-2 overflow-hidden rounded-full bg-sunken">
-                    <div class="h-full rounded-full bg-ink-2/70" :style="{ width: `${Math.min(100, (p.charged / p.spent) * 100)}%` }" />
+                <div
+                    v-if="p.spent > 0"
+                    class="mt-4 h-2 overflow-hidden rounded-full bg-sunken"
+                >
+                    <div
+                        class="h-full rounded-full bg-ink-2/70"
+                        :style="{
+                            width: `${Math.min(100, (p.charged / p.spent) * 100)}%`,
+                        }"
+                    />
                 </div>
             </div>
             <div class="mt-auto border-t border-line">
-                <p class="px-5 pt-4 text-[12px] font-bold tracking-[0.1em] text-ink-3 uppercase sm:px-6">{{ t('সর্বশেষ card charge') }}</p>
+                <p
+                    class="px-5 pt-4 text-[12px] font-bold tracking-[0.1em] text-ink-3 uppercase sm:px-6"
+                >
+                    {{ t('সর্বশেষ card charge') }}
+                </p>
                 <ul v-if="p.charges.length" class="px-5 pb-3 sm:px-6">
-                    <li v-for="c in p.charges" :key="c.id" class="flex items-baseline gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0">
-                        <span class="num w-14 shrink-0 text-[12px] text-ink-3">{{ niceDate(c.date, false) }}</span>
-                        <span class="min-w-0 flex-1 truncate" :title="c.notes ?? ''">{{ c.description }}</span>
-                        <span class="num font-medium">{{ money(c.amount, 'usd') }}</span>
+                    <li
+                        v-for="c in p.charges"
+                        :key="c.id"
+                        class="flex items-baseline gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                    >
+                        <span
+                            class="num w-14 shrink-0 text-[12px] text-ink-3"
+                            >{{ niceDate(c.date, false) }}</span
+                        >
+                        <span
+                            class="min-w-0 flex-1 truncate"
+                            :title="c.notes ?? ''"
+                            >{{ c.description }}</span
+                        >
+                        <span class="num font-medium">{{
+                            money(c.amount, 'usd')
+                        }}</span>
                     </li>
                 </ul>
                 <KEmpty v-else :title="t('এখনো কাটেনি')" />

@@ -1,84 +1,663 @@
 {
     "source": "Google Sheet Klok_Ads_Financial_Trakcer (1szDzbOh-vQfPfgdyYLDzNJ-MFyTJnQl0fZkdqMf_4CI), read 2026-10-22",
     "clients": [
-        {"name": "Edge", "type": "client", "status": "active", "notes": "Ad management — Singapore market"},
-        {"name": "Noman", "type": "associate", "status": "active", "notes": "Ad spend associate"},
-        {"name": "GFFS", "type": "client", "status": "active", "notes": "Ad management — Chittagong market"},
-        {"name": "Shahin", "type": "client", "status": "active", "notes": "Business Manager solution"},
-        {"name": "Samir", "type": "client", "status": "inactive", "notes": "Ads management — Rajshahi"},
-        {"name": "Mujaid", "type": "client", "status": "active", "notes": "Amount held in other account"}
+        {
+            "name": "Edge",
+            "type": "client",
+            "status": "active",
+            "notes": "Ad management — Singapore market"
+        },
+        {
+            "name": "Noman",
+            "type": "associate",
+            "status": "active",
+            "notes": "Ad spend associate"
+        },
+        {
+            "name": "GFFS",
+            "type": "client",
+            "status": "active",
+            "notes": "Ad management — Chittagong market"
+        },
+        {
+            "name": "Shahin",
+            "type": "client",
+            "status": "active",
+            "notes": "Business Manager solution"
+        },
+        {
+            "name": "Samir",
+            "type": "client",
+            "status": "inactive",
+            "notes": "Ads management — Rajshahi"
+        },
+        {
+            "name": "Mujaid",
+            "type": "client",
+            "status": "active",
+            "notes": "Amount held in other account"
+        }
     ],
     "fx_batches": [
-        {"number": 1, "description": "Deposit 1", "usd": "403.74", "bdt": "52100"},
-        {"number": 2, "description": "Deposit 2", "usd": "305.33", "bdt": "37950"},
-        {"number": 3, "description": "Deposit 3", "usd": "103.98", "bdt": "13500"}
+        {
+            "number": 1,
+            "description": "Deposit 1",
+            "usd": "403.74",
+            "bdt": "52100"
+        },
+        {
+            "number": 2,
+            "description": "Deposit 2",
+            "usd": "305.33",
+            "bdt": "37950"
+        },
+        {
+            "number": 3,
+            "description": "Deposit 3",
+            "usd": "103.98",
+            "bdt": "13500"
+        }
     ],
     "usd": [
-        {"date": null, "description": "Deposit 1 - bought USD", "category": "deposit", "account": "main", "client": null, "amount": "403.74", "status": "na", "notes": "৳52,100 — Batch 1", "batch": 1},
-        {"date": null, "description": "Edge - ad spend", "category": "client_spend", "account": "main", "client": "Edge", "amount": "-241.49", "status": "settled", "notes": "Reimbursed with next row"},
-        {"date": null, "description": "Edge - ad spend", "category": "client_spend", "account": "main", "client": "Edge", "amount": "-70.18", "status": "settled", "notes": "৳47,479 received — covers both Edge rows"},
-        {"date": null, "description": "Deposit 2 - bought USD", "category": "deposit", "account": "main", "client": null, "amount": "305.33", "status": "na", "notes": "৳37,950 — Batch 2", "batch": 2},
-        {"date": null, "description": "Noman - ad spend", "category": "client_spend", "account": "main", "client": "Noman", "amount": "-17.10", "status": "settled", "notes": "৳2,596 received"},
-        {"date": null, "description": "Noman - ad spend (1 of 2)", "category": "client_spend", "account": "main", "client": "Noman", "amount": "-9.00", "status": "settled", "notes": "Part of 12.41 due"},
-        {"date": null, "description": "KlokAds - own ad spend", "category": "business_spend", "account": "main", "client": null, "amount": "-8.00", "status": "na", "notes": null},
-        {"date": null, "description": "Research spend", "category": "business_spend", "account": "main", "client": null, "amount": "-18.58", "status": "na", "notes": null},
-        {"date": null, "description": "Noman - ad spend (2 of 2)", "category": "client_spend", "account": "main", "client": "Noman", "amount": "-3.41", "status": "settled", "notes": "Part of 12.41 due"},
-        {"date": null, "description": "KlokAds - own ad spend", "category": "business_spend", "account": "main", "client": null, "amount": "-12.06", "status": "na", "notes": null},
-        {"date": null, "description": "KlokAds - own ad spend", "category": "business_spend", "account": "main", "client": null, "amount": "-1.65", "status": "na", "notes": null},
-        {"date": null, "description": "GFFS - ad spend", "category": "client_spend", "account": "main", "client": "GFFS", "amount": "-70.38", "status": "settled", "notes": "৳10,550 received"},
-        {"date": null, "description": "Deposit 3 - bought USD", "category": "deposit", "account": "main", "client": null, "amount": "103.98", "status": "na", "notes": "৳13,500 — Batch 3", "batch": 3},
-        {"date": null, "description": "Samir - ad spend", "category": "client_spend", "account": "main", "client": "Samir", "amount": "-6.60", "status": "settled", "notes": "৳990 received"},
-        {"date": null, "description": "Samir - ad spend", "category": "client_spend", "account": "main", "client": "Samir", "amount": "-4.10", "status": "pending", "notes": null},
-        {"date": null, "description": "Moved to Other account (Mujaid hold)", "category": "transfer", "account": "main", "client": null, "amount": "-139.00", "status": "na", "notes": "টাকা খরচ হয়নি — অন্য account-এ আটকে আছে", "pair": "t1"},
-        {"date": null, "description": "Received in Other account (Mujaid hold)", "category": "transfer", "account": "other", "client": null, "amount": "139.00", "status": "na", "notes": "ফেরত পাওয়া যাবে", "pair": "t1"},
-        {"date": "2026-08-27", "description": "GFFS - ad spend", "category": "client_spend", "account": "main", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,100 received"},
-        {"date": "2026-09-03", "description": "GFFS - ad spend", "category": "client_spend", "account": "main", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,100 received"},
-        {"date": "2026-09-11", "description": "GFFS - ad spend", "category": "client_spend", "account": "main", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,100 received"},
-        {"date": "2026-09-17", "description": "GFFS - ad spend", "category": "client_spend", "account": "main", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,100 received"},
-        {"date": "2026-09-18", "description": "$139 ফেরত এলো (Other → Main)", "category": "transfer", "account": "other", "client": null, "amount": "-139.00", "status": "na", "notes": "Mujaid hold-এর টাকা card-এ ফেরত", "pair": "t2"},
-        {"date": "2026-09-18", "description": "$139 ফেরত এলো (Other → Main)", "category": "transfer", "account": "main", "client": null, "amount": "139.00", "status": "na", "notes": null, "pair": "t2"},
-        {"date": "2026-09-21", "description": "FACEBK* H26R87JTD4", "category": "card_charge", "account": "meta", "client": null, "amount": "-3.00", "status": "na", "notes": "Card থেকে Meta কাটলো"},
-        {"date": "2026-09-21", "description": "FACEBK* YFJCZ6SSD4", "category": "card_charge", "account": "meta", "client": null, "amount": "-3.66", "status": "na", "notes": null},
-        {"date": "2026-09-23", "description": "GFFS - ad spend", "category": "client_spend", "account": "meta", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,085 received"},
-        {"date": "2026-09-27", "description": "FACEBK* EBY37A6TD4", "category": "card_charge", "account": "meta", "client": null, "amount": "-12.18", "status": "na", "notes": null},
-        {"date": "2026-09-29", "description": "GFFS - ad spend", "category": "client_spend", "account": "meta", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,085 received"},
-        {"date": "2026-10-01", "description": "FACEBK* WV5RA9ATD4", "category": "card_charge", "account": "meta", "client": null, "amount": "-6.98", "status": "na", "notes": null},
-        {"date": "2026-10-06", "description": "GFFS - ad spend", "category": "client_spend", "account": "meta", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,100 received"},
-        {"date": "2026-10-10", "description": "FACEBK* QYQMU9JTD4", "category": "card_charge", "account": "meta", "client": null, "amount": "-19.00", "status": "na", "notes": "Meta invoice: 30/09 → 10/10 22:23 spend $19 (threshold)"},
-        {"date": "2026-10-11", "description": "Mujaid - Buy USD", "category": "client_spend", "account": "main", "client": "Mujaid", "amount": "-125.00", "status": "settled", "notes": "Card থেকে সরাসরি গেছে ($20 + $105) — ৳15,875"},
-        {"date": "2026-10-15", "description": "GFFS - Meta ad spend", "category": "client_spend", "account": "meta", "client": "GFFS", "amount": "-14.00", "status": "settled", "notes": "৳2,850 received (Meta 14 + Google 5)"},
-        {"date": "2026-10-15", "description": "GFFS - Google ad spend", "category": "client_spend", "account": "google", "client": "GFFS", "amount": "-5.00", "status": "settled", "notes": "একই ৳2,850-এর মধ্যে"},
-        {"date": "2026-10-15", "description": "Card balance মেলানো (salary বাকি + rewards)", "category": "adjustment", "account": "main", "client": null, "amount": "5.98", "status": "na", "notes": "পুরনো card বদলের পার্থক্য — একবারই", "pair": "a1"},
-        {"date": "2026-10-15", "description": "Meta পুরনো খরচ (খাতায় ছিল না)", "category": "adjustment", "account": "meta", "client": null, "amount": "-5.98", "status": "na", "notes": "উপরের row-এর সাথে কাটাকাটি", "pair": "a1"},
-        {"date": "2026-10-15", "description": "Meta বেশি কেটেছে — পুরনো পার্থক্য", "category": "business_spend", "account": "meta", "client": null, "amount": "-0.84", "status": "na", "notes": "GFFS-এর দেয়া টাকার চেয়ে 84¢ বেশি গেছে — ব্যবসার খরচ"},
-        {"date": "2026-10-15", "description": "FACEBK* S5LHCASSD4 (manual pay)", "category": "card_charge", "account": "meta", "client": null, "amount": "-10.00", "status": "na", "notes": "Meta invoice: 10/10 22:23 → 15/10 23:47 spend $10 (GFFS)"}
+        {
+            "date": null,
+            "description": "Deposit 1 - bought USD",
+            "category": "deposit",
+            "account": "main",
+            "client": null,
+            "amount": "403.74",
+            "status": "na",
+            "notes": "৳52,100 — Batch 1",
+            "batch": 1
+        },
+        {
+            "date": null,
+            "description": "Edge - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Edge",
+            "amount": "-241.49",
+            "status": "settled",
+            "notes": "Reimbursed with next row"
+        },
+        {
+            "date": null,
+            "description": "Edge - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Edge",
+            "amount": "-70.18",
+            "status": "settled",
+            "notes": "৳47,479 received — covers both Edge rows"
+        },
+        {
+            "date": null,
+            "description": "Deposit 2 - bought USD",
+            "category": "deposit",
+            "account": "main",
+            "client": null,
+            "amount": "305.33",
+            "status": "na",
+            "notes": "৳37,950 — Batch 2",
+            "batch": 2
+        },
+        {
+            "date": null,
+            "description": "Noman - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Noman",
+            "amount": "-17.10",
+            "status": "settled",
+            "notes": "৳2,596 received"
+        },
+        {
+            "date": null,
+            "description": "Noman - ad spend (1 of 2)",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Noman",
+            "amount": "-9.00",
+            "status": "settled",
+            "notes": "Part of 12.41 due"
+        },
+        {
+            "date": null,
+            "description": "KlokAds - own ad spend",
+            "category": "business_spend",
+            "account": "main",
+            "client": null,
+            "amount": "-8.00",
+            "status": "na",
+            "notes": null
+        },
+        {
+            "date": null,
+            "description": "Research spend",
+            "category": "business_spend",
+            "account": "main",
+            "client": null,
+            "amount": "-18.58",
+            "status": "na",
+            "notes": null
+        },
+        {
+            "date": null,
+            "description": "Noman - ad spend (2 of 2)",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Noman",
+            "amount": "-3.41",
+            "status": "settled",
+            "notes": "Part of 12.41 due"
+        },
+        {
+            "date": null,
+            "description": "KlokAds - own ad spend",
+            "category": "business_spend",
+            "account": "main",
+            "client": null,
+            "amount": "-12.06",
+            "status": "na",
+            "notes": null
+        },
+        {
+            "date": null,
+            "description": "KlokAds - own ad spend",
+            "category": "business_spend",
+            "account": "main",
+            "client": null,
+            "amount": "-1.65",
+            "status": "na",
+            "notes": null
+        },
+        {
+            "date": null,
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "GFFS",
+            "amount": "-70.38",
+            "status": "settled",
+            "notes": "৳10,550 received"
+        },
+        {
+            "date": null,
+            "description": "Deposit 3 - bought USD",
+            "category": "deposit",
+            "account": "main",
+            "client": null,
+            "amount": "103.98",
+            "status": "na",
+            "notes": "৳13,500 — Batch 3",
+            "batch": 3
+        },
+        {
+            "date": null,
+            "description": "Samir - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Samir",
+            "amount": "-6.60",
+            "status": "settled",
+            "notes": "৳990 received"
+        },
+        {
+            "date": null,
+            "description": "Samir - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Samir",
+            "amount": "-4.10",
+            "status": "pending",
+            "notes": null
+        },
+        {
+            "date": null,
+            "description": "Moved to Other account (Mujaid hold)",
+            "category": "transfer",
+            "account": "main",
+            "client": null,
+            "amount": "-139.00",
+            "status": "na",
+            "notes": "টাকা খরচ হয়নি — অন্য account-এ আটকে আছে",
+            "pair": "t1"
+        },
+        {
+            "date": null,
+            "description": "Received in Other account (Mujaid hold)",
+            "category": "transfer",
+            "account": "other",
+            "client": null,
+            "amount": "139.00",
+            "status": "na",
+            "notes": "ফেরত পাওয়া যাবে",
+            "pair": "t1"
+        },
+        {
+            "date": "2026-08-27",
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,100 received"
+        },
+        {
+            "date": "2026-09-03",
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,100 received"
+        },
+        {
+            "date": "2026-09-11",
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,100 received"
+        },
+        {
+            "date": "2026-09-17",
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "main",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,100 received"
+        },
+        {
+            "date": "2026-09-18",
+            "description": "$139 ফেরত এলো (Other → Main)",
+            "category": "transfer",
+            "account": "other",
+            "client": null,
+            "amount": "-139.00",
+            "status": "na",
+            "notes": "Mujaid hold-এর টাকা card-এ ফেরত",
+            "pair": "t2"
+        },
+        {
+            "date": "2026-09-18",
+            "description": "$139 ফেরত এলো (Other → Main)",
+            "category": "transfer",
+            "account": "main",
+            "client": null,
+            "amount": "139.00",
+            "status": "na",
+            "notes": null,
+            "pair": "t2"
+        },
+        {
+            "date": "2026-09-21",
+            "description": "FACEBK* H26R87JTD4",
+            "category": "card_charge",
+            "account": "meta",
+            "client": null,
+            "amount": "-3.00",
+            "status": "na",
+            "notes": "Card থেকে Meta কাটলো"
+        },
+        {
+            "date": "2026-09-21",
+            "description": "FACEBK* YFJCZ6SSD4",
+            "category": "card_charge",
+            "account": "meta",
+            "client": null,
+            "amount": "-3.66",
+            "status": "na",
+            "notes": null
+        },
+        {
+            "date": "2026-09-23",
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "meta",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,085 received"
+        },
+        {
+            "date": "2026-09-27",
+            "description": "FACEBK* EBY37A6TD4",
+            "category": "card_charge",
+            "account": "meta",
+            "client": null,
+            "amount": "-12.18",
+            "status": "na",
+            "notes": null
+        },
+        {
+            "date": "2026-09-29",
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "meta",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,085 received"
+        },
+        {
+            "date": "2026-10-01",
+            "description": "FACEBK* WV5RA9ATD4",
+            "category": "card_charge",
+            "account": "meta",
+            "client": null,
+            "amount": "-6.98",
+            "status": "na",
+            "notes": null
+        },
+        {
+            "date": "2026-10-06",
+            "description": "GFFS - ad spend",
+            "category": "client_spend",
+            "account": "meta",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,100 received"
+        },
+        {
+            "date": "2026-10-10",
+            "description": "FACEBK* QYQMU9JTD4",
+            "category": "card_charge",
+            "account": "meta",
+            "client": null,
+            "amount": "-19.00",
+            "status": "na",
+            "notes": "Meta invoice: 30/09 → 10/10 22:23 spend $19 (threshold)"
+        },
+        {
+            "date": "2026-10-11",
+            "description": "Mujaid - Buy USD",
+            "category": "client_spend",
+            "account": "main",
+            "client": "Mujaid",
+            "amount": "-125.00",
+            "status": "settled",
+            "notes": "Card থেকে সরাসরি গেছে ($20 + $105) — ৳15,875"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "GFFS - Meta ad spend",
+            "category": "client_spend",
+            "account": "meta",
+            "client": "GFFS",
+            "amount": "-14.00",
+            "status": "settled",
+            "notes": "৳2,850 received (Meta 14 + Google 5)"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "GFFS - Google ad spend",
+            "category": "client_spend",
+            "account": "google",
+            "client": "GFFS",
+            "amount": "-5.00",
+            "status": "settled",
+            "notes": "একই ৳2,850-এর মধ্যে"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "Card balance মেলানো (salary বাকি + rewards)",
+            "category": "adjustment",
+            "account": "main",
+            "client": null,
+            "amount": "5.98",
+            "status": "na",
+            "notes": "পুরনো card বদলের পার্থক্য — একবারই",
+            "pair": "a1"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "Meta পুরনো খরচ (খাতায় ছিল না)",
+            "category": "adjustment",
+            "account": "meta",
+            "client": null,
+            "amount": "-5.98",
+            "status": "na",
+            "notes": "উপরের row-এর সাথে কাটাকাটি",
+            "pair": "a1"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "Meta বেশি কেটেছে — পুরনো পার্থক্য",
+            "category": "business_spend",
+            "account": "meta",
+            "client": null,
+            "amount": "-0.84",
+            "status": "na",
+            "notes": "GFFS-এর দেয়া টাকার চেয়ে 84¢ বেশি গেছে — ব্যবসার খরচ"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "FACEBK* S5LHCASSD4 (manual pay)",
+            "category": "card_charge",
+            "account": "meta",
+            "client": null,
+            "amount": "-10.00",
+            "status": "na",
+            "notes": "Meta invoice: 10/10 22:23 → 15/10 23:47 spend $10 (GFFS)"
+        }
     ],
     "bdt": [
-        {"date": null, "description": "Capital - own money in", "category": "capital", "client": null, "amount": "52100", "notes": "Deposit 1 কেনার জন্য"},
-        {"date": null, "description": "Capital - own money in", "category": "capital", "client": null, "amount": "2500", "notes": "Domain / jatayat খরচের জন্য"},
-        {"date": null, "description": "Deposit 1 - bought 403.74 USD", "category": "usd_purchase", "client": null, "amount": "-52100", "notes": "Batch 1", "batch": 1},
-        {"date": null, "description": "Domain purchase", "category": "expense", "head": "Domain & Hosting", "client": null, "amount": "-2808", "notes": null},
-        {"date": null, "description": "Jatayat (transport)", "category": "expense", "head": "Transport", "client": null, "amount": "-500", "notes": null},
-        {"date": null, "description": "Salary", "category": "salary", "client": null, "amount": "-6500", "notes": "Sheet-এ কর্মীর নাম নেই"},
-        {"date": null, "description": "Edge reimbursement received", "category": "client_payment", "client": "Edge", "amount": "47479", "notes": "Covers 241.49 + 70.18 USD"},
-        {"date": null, "description": "Noman reimbursement received", "category": "client_payment", "client": "Noman", "amount": "2596", "notes": "Covers 17.10 USD"},
-        {"date": null, "description": "Deposit 2 - bought 305.33 USD", "category": "usd_purchase", "client": null, "amount": "-37950", "notes": "Batch 2", "batch": 2},
-        {"date": null, "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "10550", "notes": "Covers 70.38 USD"},
-        {"date": null, "description": "Deposit 3 - bought 103.98 USD", "category": "usd_purchase", "client": null, "amount": "-13500", "notes": "Batch 3 — GFFS-এর টাকা দিয়েই কেনা", "batch": 3},
-        {"date": null, "description": "Shahin reimbursement received", "category": "service_income", "client": "Shahin", "amount": "2000", "notes": "Business Manager solution"},
-        {"date": null, "description": "Samir reimbursement received", "category": "client_payment", "client": "Samir", "amount": "990", "notes": "Covers 6.60 USD"},
-        {"date": "2026-08-27", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2100", "notes": "Covers 14 USD"},
-        {"date": "2026-09-03", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2085", "notes": "Covers 14 USD", "review": "USD Ledger-এর note-এ ৳2,100 লেখা"},
-        {"date": "2026-09-11", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2085", "notes": "Covers 14 USD", "review": "USD Ledger-এর note-এ ৳2,100 লেখা"},
-        {"date": "2026-09-17", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2085", "notes": "Covers 14 USD", "review": "USD Ledger-এর note-এ ৳2,100 লেখা"},
-        {"date": "2026-09-23", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2085", "notes": "Covers 14 USD"},
-        {"date": "2026-09-23", "description": "Noman reimbursement received", "category": "client_payment", "client": "Noman", "amount": "1845", "notes": "Covers 12.41 usd"},
-        {"date": "2026-09-29", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2085", "notes": "Covers 14 USD"},
-        {"date": "2026-10-06", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2100", "notes": "Covers 14 USD"},
-        {"date": "2026-10-11", "description": "Mujaid Buy USD from the Agency", "category": "client_payment", "client": "Mujaid", "amount": "15875", "notes": "covers 125 usd"},
-        {"date": "2026-10-15", "description": "GFFS reimbursement received", "category": "client_payment", "client": "GFFS", "amount": "2850", "notes": "Covers 14 and For Google 5"},
-        {"date": "2026-10-15", "description": "Mujaid Lose fix", "category": "client_payment", "client": "Mujaid", "amount": "81", "notes": "Covers Lose 81"},
-        {"date": "2026-10-15", "description": "Mujaid Withdraw and Give to Mithu", "category": "owner_drawing", "client": null, "amount": "-20500", "notes": "Sheet-এ Business Expense ছিল — owner drawing হিসেবে ঠিক করা"}
+        {
+            "date": null,
+            "description": "Capital - own money in",
+            "category": "capital",
+            "client": null,
+            "amount": "52100",
+            "notes": "Deposit 1 কেনার জন্য"
+        },
+        {
+            "date": null,
+            "description": "Capital - own money in",
+            "category": "capital",
+            "client": null,
+            "amount": "2500",
+            "notes": "Domain / jatayat খরচের জন্য"
+        },
+        {
+            "date": null,
+            "description": "Deposit 1 - bought 403.74 USD",
+            "category": "usd_purchase",
+            "client": null,
+            "amount": "-52100",
+            "notes": "Batch 1",
+            "batch": 1
+        },
+        {
+            "date": null,
+            "description": "Domain purchase",
+            "category": "expense",
+            "head": "Domain & Hosting",
+            "client": null,
+            "amount": "-2808",
+            "notes": null
+        },
+        {
+            "date": null,
+            "description": "Jatayat (transport)",
+            "category": "expense",
+            "head": "Transport",
+            "client": null,
+            "amount": "-500",
+            "notes": null
+        },
+        {
+            "date": null,
+            "description": "Salary",
+            "category": "salary",
+            "client": null,
+            "amount": "-6500",
+            "notes": "Sheet-এ কর্মীর নাম নেই"
+        },
+        {
+            "date": null,
+            "description": "Edge reimbursement received",
+            "category": "client_payment",
+            "client": "Edge",
+            "amount": "47479",
+            "notes": "Covers 241.49 + 70.18 USD"
+        },
+        {
+            "date": null,
+            "description": "Noman reimbursement received",
+            "category": "client_payment",
+            "client": "Noman",
+            "amount": "2596",
+            "notes": "Covers 17.10 USD"
+        },
+        {
+            "date": null,
+            "description": "Deposit 2 - bought 305.33 USD",
+            "category": "usd_purchase",
+            "client": null,
+            "amount": "-37950",
+            "notes": "Batch 2",
+            "batch": 2
+        },
+        {
+            "date": null,
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "10550",
+            "notes": "Covers 70.38 USD"
+        },
+        {
+            "date": null,
+            "description": "Deposit 3 - bought 103.98 USD",
+            "category": "usd_purchase",
+            "client": null,
+            "amount": "-13500",
+            "notes": "Batch 3 — GFFS-এর টাকা দিয়েই কেনা",
+            "batch": 3
+        },
+        {
+            "date": null,
+            "description": "Shahin reimbursement received",
+            "category": "service_income",
+            "client": "Shahin",
+            "amount": "2000",
+            "notes": "Business Manager solution"
+        },
+        {
+            "date": null,
+            "description": "Samir reimbursement received",
+            "category": "client_payment",
+            "client": "Samir",
+            "amount": "990",
+            "notes": "Covers 6.60 USD"
+        },
+        {
+            "date": "2026-08-27",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2100",
+            "notes": "Covers 14 USD"
+        },
+        {
+            "date": "2026-09-03",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2085",
+            "notes": "Covers 14 USD",
+            "review": "USD Ledger-এর note-এ ৳2,100 লেখা"
+        },
+        {
+            "date": "2026-09-11",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2085",
+            "notes": "Covers 14 USD",
+            "review": "USD Ledger-এর note-এ ৳2,100 লেখা"
+        },
+        {
+            "date": "2026-09-17",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2085",
+            "notes": "Covers 14 USD",
+            "review": "USD Ledger-এর note-এ ৳2,100 লেখা"
+        },
+        {
+            "date": "2026-09-23",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2085",
+            "notes": "Covers 14 USD"
+        },
+        {
+            "date": "2026-09-23",
+            "description": "Noman reimbursement received",
+            "category": "client_payment",
+            "client": "Noman",
+            "amount": "1845",
+            "notes": "Covers 12.41 usd"
+        },
+        {
+            "date": "2026-09-29",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2085",
+            "notes": "Covers 14 USD"
+        },
+        {
+            "date": "2026-10-06",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2100",
+            "notes": "Covers 14 USD"
+        },
+        {
+            "date": "2026-10-11",
+            "description": "Mujaid Buy USD from the Agency",
+            "category": "client_payment",
+            "client": "Mujaid",
+            "amount": "15875",
+            "notes": "covers 125 usd"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "GFFS reimbursement received",
+            "category": "client_payment",
+            "client": "GFFS",
+            "amount": "2850",
+            "notes": "Covers 14 and For Google 5"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "Mujaid Lose fix",
+            "category": "client_payment",
+            "client": "Mujaid",
+            "amount": "81",
+            "notes": "Covers Lose 81"
+        },
+        {
+            "date": "2026-10-15",
+            "description": "Mujaid Withdraw and Give to Mithu",
+            "category": "owner_drawing",
+            "client": null,
+            "amount": "-20500",
+            "notes": "Sheet-এ Business Expense ছিল — owner drawing হিসেবে ঠিক করা"
+        }
     ],
     "expected": {
         "card_balance_usd": "120.66",

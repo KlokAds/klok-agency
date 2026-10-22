@@ -21,7 +21,7 @@
     --paper: #f3f1ea;
     --surface: #ffffff;
     --surface-2: #f9f8f4;
-    --sunken: #ecE9e0;
+    --sunken: #ece9e0;
     --ink: #15211f;
     --ink-2: #4a5653;
     --ink-3: #85908c;
@@ -43,7 +43,8 @@
     /* chart polarity marks — validated for CVD against the surface */
     --pos: #0f7a50;
     --neg: #b4441b;
-    --shadow-pop: 0 1px 2px rgb(21 33 31 / 0.06), 0 12px 32px -8px rgb(21 33 31 / 0.22);
+    --shadow-pop:
+        0 1px 2px rgb(21 33 31 / 0.06), 0 12px 32px -8px rgb(21 33 31 / 0.22);
 }
 
 .dark {

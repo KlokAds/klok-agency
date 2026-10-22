@@ -14,22 +14,47 @@ const form = useForm({ name: user.name });
     <PageHeader :eyebrow="t('আমার account')" title="Profile" />
 
     <div class="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <form class="panel flex flex-col gap-5 p-6" @submit.prevent="form.patch('/settings/profile', { preserveScroll: true })">
+        <form
+            class="panel flex flex-col gap-5 p-6"
+            @submit.prevent="
+                form.patch('/settings/profile', { preserveScroll: true })
+            "
+        >
             <KField :label="t('নাম')" :error="form.errors.name">
-                <KInput v-model="form.name" autocomplete="name" :invalid="!!form.errors.name" />
+                <KInput
+                    v-model="form.name"
+                    autocomplete="name"
+                    :invalid="!!form.errors.name"
+                />
             </KField>
-            <KField label="Email" :hint="t('Email বদলাতে Owner-কে বলুন — এটাই sign-in নাম।')">
-                <div class="field-box bg-sunken! text-[14.5px] text-ink-2">{{ user.email }}</div>
+            <KField
+                label="Email"
+                :hint="t('Email বদলাতে Owner-কে বলুন — এটাই sign-in নাম।')"
+            >
+                <div class="field-box bg-sunken! text-[14.5px] text-ink-2">
+                    {{ user.email }}
+                </div>
             </KField>
             <div class="flex justify-end">
-                <KButton type="submit" variant="primary" :loading="form.processing">{{ t('সংরক্ষণ') }}</KButton>
+                <KButton
+                    type="submit"
+                    variant="primary"
+                    :loading="form.processing"
+                    >{{ t('সংরক্ষণ') }}</KButton
+                >
             </div>
         </form>
 
         <aside class="panel p-6">
             <p class="eyebrow">Role</p>
             <p class="mt-1 text-[18px] font-bold">{{ user.role ?? '—' }}</p>
-            <p class="mt-3 text-[13px] text-ink-3">{{ t('কোন পাতায় কী করতে পারবেন, তা Role ঠিক করে। বদলাতে Owner-এর সাথে কথা বলুন।') }}</p>
+            <p class="mt-3 text-[13px] text-ink-3">
+                {{
+                    t(
+                        'কোন পাতায় কী করতে পারবেন, তা Role ঠিক করে। বদলাতে Owner-এর সাথে কথা বলুন।',
+                    )
+                }}
+            </p>
         </aside>
     </div>
 </template>

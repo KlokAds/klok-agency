@@ -30,9 +30,16 @@ defineExpose({ focus: () => input.value?.focus() });
 </script>
 
 <template>
-    <div class="field-box" :class="size === 'sm' && 'min-h-9!'" :data-invalid="invalid" @click="input?.focus()">
+    <div
+        class="field-box"
+        :class="size === 'sm' && 'min-h-9!'"
+        :data-invalid="invalid"
+        @click="input?.focus()"
+    >
         <KIcon v-if="icon" :name="icon" :size="16" class="text-ink-3" />
-        <span v-if="prefix" class="text-[13px] font-semibold text-ink-3">{{ prefix }}</span>
+        <span v-if="prefix" class="text-[13px] font-semibold text-ink-3">{{
+            prefix
+        }}</span>
         <input
             :id="id"
             ref="input"

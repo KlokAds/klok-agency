@@ -4,7 +4,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/(\w:)/, '$1')), '..');
+const root = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname.replace(/^\/(\w:)/, '$1')),
+    '..',
+);
 const filter = process.argv[2] ?? '';
 const BN = /[ঀ-৿]/;
 
@@ -18,20 +21,28 @@ function walk(dir, ext, out = []) {
 }
 
 const english = {};
-for (const file of [path.join(root, 'lang/en.json'), ...walk(path.join(root, 'lang/parts'), ['en.json'])]) {
-    if (fs.existsSync(file)) Object.assign(english, JSON.parse(fs.readFileSync(file, 'utf8')));
+for (const file of [
+    path.join(root, 'lang/en.json'),
+    ...walk(path.join(root, 'lang/parts'), ['en.json']),
+]) {
+    if (fs.existsSync(file))
+        Object.assign(english, JSON.parse(fs.readFileSync(file, 'utf8')));
 }
 
 // t('…') / __('…') with a plain string literal as the first argument.
 const CALL = /\b(?:t|__|trans)\(\s*(['"`])((?:\\.|(?!\1).)*)\1/gs;
 
-const unescape = (s, q) => s.replace(new RegExp('\\\\' + q, 'g'), q).replace(/\\\\/g, '\\');
+const unescape = (s, q) =>
+    s.replace(new RegExp('\\\\' + q, 'g'), q).replace(/\\\\/g, '\\');
 
 let loose = 0;
 let missing = 0;
 const report = [];
 
-const files = [...walk(path.join(root, 'resources/js'), ['.vue', '.ts']), ...walk(path.join(root, 'app'), ['.php'])]
+const files = [
+    ...walk(path.join(root, 'resources/js'), ['.vue', '.ts']),
+    ...walk(path.join(root, 'app'), ['.php']),
+]
     .filter((f) => !f.includes(`${path.sep}lib${path.sep}i18n.ts`))
     .filter((f) => f.replaceAll('\\', '/').includes(filter));
 
@@ -83,5 +94,7 @@ for (const file of files) {
 }
 
 console.log(report.join('\n\n') || 'clean');
-console.log(`\n${files.length} files · ${loose} lines with untranslated বাংলা · ${missing} keys without English`);
+console.log(
+    `\n${files.length} files · ${loose} lines with untranslated বাংলা · ${missing} keys without English`,
+);
 process.exit(loose || missing ? 1 : 0);
