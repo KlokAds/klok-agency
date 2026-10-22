@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\Audited;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Setting extends Model
 {
@@ -17,6 +18,20 @@ class Setting extends Model
     protected $keyType = 'string';
 
     protected $fillable = ['key', 'value'];
+
+    /** Keys whose value is a secret: the log notes the change, never the value. */
+    public const SECRETS = ['pilot_token', 'tick_token'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        $options = LogOptions::defaults()->logAll()->logOnlyDirty()->useLogName('Setting');
+
+        if (in_array($this->key, self::SECRETS, true)) {
+            return $options->logExcept(['value', 'created_at', 'updated_at'])->logEmptyChanges();
+        }
+
+        return $options->logExcept(['created_at', 'updated_at'])->dontLogEmptyChanges();
+    }
 
     public static function get(string $key, mixed $default = null): mixed
     {

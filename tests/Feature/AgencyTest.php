@@ -14,6 +14,7 @@ use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Spatie\Activitylog\Models\Activity;
 
 beforeEach(function () {
     $this->seed([AccessSeeder::class, BooksSeeder::class]);
@@ -212,6 +213,17 @@ it('lists Pilot ad accounts on the client page', function () {
 
     $this->actingAs($this->owner)->put('/clients/'.$this->client->id, ['name' => 'GFFS', 'type' => 'client', 'status' => 'active', 'pilot_ad_account_id' => 7])->assertRedirect();
     expect($this->client->refresh()->pilot_ad_account_id)->toBe(7);
+});
+
+it('logs a secret setting without its value, keyed by name', function () {
+    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
+    Setting::put('summary_time', '21:30');
+
+    $secret = Activity::where('subject_id', 'pilot_token')->sole();
+    $plain = Activity::where('subject_id', 'summary_time')->sole();
+
+    expect(json_encode($secret->attribute_changes))->not->toContain('eyJ')
+        ->and($plain->attribute_changes['attributes']['value'])->toBe('21:30');
 });
 
 it('opens the agency pages', function (string $url) {

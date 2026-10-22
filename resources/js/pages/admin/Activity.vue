@@ -14,7 +14,7 @@ type Activity = {
     id: number;
     log: string | null;
     event: string;
-    subject_id: number | null;
+    subject_id: number | string | null;
     by: string;
     changes: {
         attributes?: Record<string, unknown>;
