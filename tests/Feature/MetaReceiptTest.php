@@ -31,17 +31,16 @@ beforeEach(function () {
 function receiptText(string $amount = '20.00', string $currency = 'USD', string $tx = '7654321098765432-1234567'): string
 {
     return <<<TXT
-    Meta ads receipt
     Receipt for Your Payment
-    Account ID: 1234567890
+    This is not an invoice.
+    Transaction for. Anowar Hossain (KA) (1234567890).
     Amount billed
     \${$amount} {$currency}
     Payment date
     October 15, 2026, 11:47 PM
     Payment method
     Visa · 4242
-    Transaction ID
-    {$tx}
+    Transaction ID. {$tx}
     Campaigns
     GFFS 07/23/26 - Sales Campaign 2
     Oct 10, 2026 - Oct 15, 2026
@@ -55,7 +54,7 @@ function receiptText(string $amount = '20.00', string $currency = 'USD', string 
 }
 
 it('reads a Meta receipt whatever its layout: amount, day, card, transaction and each campaign', function () {
-    $parsed = MetaReceipts::parse(receiptText(), CarbonImmutable::parse('2026-10-16'), fn () => Campaign::all()->all());
+    $parsed = MetaReceipts::parse("Your Meta ads receipt (Account ID: 1234567890)\n".receiptText(), CarbonImmutable::parse('2026-10-16'), fn () => Campaign::all()->all());
 
     expect($parsed['amount'])->toBe(2000)
         ->and($parsed['currency'])->toBe('USD')
@@ -89,17 +88,19 @@ it('books a receipt once as a card charge with its campaign split, and keeps the
         ->and($receipts->take('<m1@meta>', 'x', 'y', CarbonImmutable::now())->id)->toBe($receipt->id)
         ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(1);
 
-    // Not USD: kept for a person, not booked.
-    expect($receipts->take('<m3@meta>', 'Your Meta ads receipt', receiptText('2,500.00', 'BDT', '111111111-2'), CarbonImmutable::now())->status)->toBe('unread');
+    // A BDT ad account's receipt: kept, quietly, not booked.
+    PilotAccount::create(['pilot_id' => 10, 'name' => 'EDGE Education Advertise', 'external_id' => 'act_1170923540578070', 'platform' => 'meta', 'currency' => 'BDT', 'seen_at' => now()]);
+    $edge = $receipts->take('<m3@meta>', 'Your Meta ads receipt (Account ID: 1170923540578070)', 'Transaction for. EDGE Education Advertise (1170923540578070). Transaction ID. 28867966246224-2886 Amount billed BDT 2,500.00 Meta', CarbonImmutable::now());
+    expect($edge->status)->toBe('ignored');
 
     // Other mail is left alone.
     expect($receipts->take('<m4@x>', 'Lunch?', 'See you at 1', CarbonImmutable::now())->status)->toBe('ignored');
 
     expect((new Books)->summary()['equity_ok'])->toBeTrue()
-        ->and($this->owner->notifications()->where('data->kind', 'meta_receipt')->count())->toBe(2);
+        ->and($this->owner->notifications()->where('data->kind', 'meta_receipt')->count())->toBe(1);
 
     $this->actingAs($this->owner)->get('/dollars/receipts')->assertOk()
-        ->assertInertia(fn ($page) => $page->component('books/MetaReceipts')->where('receipts.total', 3));
+        ->assertInertia(fn ($page) => $page->component('books/MetaReceipts')->where('receipts.total', 2));
 });
 
 it('keeps the split honest: what a receipt pays a campaign comes off that campaign', function () {

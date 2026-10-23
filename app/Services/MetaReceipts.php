@@ -116,7 +116,7 @@ class MetaReceipts
         }
 
         $account = null;
-        $parsed = self::parse($body, $sentAt, function (?string $ref) use (&$account) {
+        $parsed = self::parse($subject."\n".$body, $sentAt, function (?string $ref) use (&$account) {
             $account = $ref ? PilotAccount::where('external_id', 'act_'.$ref)->orWhere('external_id', $ref)->first() : null;
 
             return array_values(Campaign::query()->when($account, fn ($q) => $q->where('pilot_account_id', $account->id))->get(['id', 'name', 'client_id'])->all());
@@ -133,15 +133,16 @@ class MetaReceipts
             'campaigns' => $parsed['campaigns'],
         ]);
 
-        if ($parsed['amount'] === null || $parsed['amount'] <= 0) {
-            $receipt->fill(['status' => 'unread', 'problem' => __('টাকার অঙ্ক পাওয়া যায়নি।')])->save();
-            $this->tell($receipt, self::UNREAD_TITLE);
+        // A BDT ad account's receipts are not the card's dollars: kept, quietly.
+        $currency = strtoupper((string) ($account->currency ?? $parsed['currency'] ?? ''));
+        if ($currency !== '' && $currency !== 'USD') {
+            $receipt->fill(['status' => 'ignored', 'problem' => __(':currency account-এর receipt — card-এর USD খাতায় নেওয়া হয় না।', ['currency' => $currency])])->save();
 
             return $receipt;
         }
 
-        if (strtoupper((string) $parsed['currency']) !== 'USD') {
-            $receipt->fill(['status' => 'unread', 'problem' => __('এই receipt USD-এ নয় (:currency) — card-এর USD খাতায় নেওয়া হয়নি।', ['currency' => $parsed['currency']])])->save();
+        if ($parsed['amount'] === null || $parsed['amount'] <= 0) {
+            $receipt->fill(['status' => 'unread', 'problem' => __('টাকার অঙ্ক পাওয়া যায়নি।')])->save();
             $this->tell($receipt, self::UNREAD_TITLE);
 
             return $receipt;
@@ -207,7 +208,8 @@ class MetaReceipts
             ?? $find('/'.$money.'\s*USD/i')
             ?? $find('/'.$money.'/');
         $currency = $find('/\$\s?[0-9][0-9,]*\.[0-9]{2}\s*([A-Z]{3})\b/') ?? (str_contains($text, '$') ? 'USD' : null);
-        $ref = $find('/(?:ad\s+)?account\s+id\s*:?\s*([0-9]{6,})/i');
+        $ref = $find('/(?:ad\s+)?account\s+id\s*[:.]?\s*([0-9]{6,})/i')
+            ?? $find('/transaction\s+for\.?\s*[^()\n]{1,80}\(([0-9]{6,})\)/i');
         $date = $find('/(?:payment|billing|charge|receipt)\s+date\s*:?\s*([A-Za-z]{3,9}\.?\s+[0-9]{1,2},?\s+[0-9]{4}(?:,?\s+[0-9]{1,2}:[0-9]{2}\s*[AP]M)?)/i')
             ?? $find('/([A-Za-z]{3,9}\.?\s+[0-9]{1,2},\s+[0-9]{4}(?:,?\s+[0-9]{1,2}:[0-9]{2}\s*[AP]M)?)/');
 
@@ -239,7 +241,7 @@ class MetaReceipts
         usort($lines, fn ($a, $b) => $a['at'] <=> $b['at']);
 
         return [
-            'transaction_id' => $find('/transaction\s+id\s*:?\s*([0-9A-Z][0-9A-Z\-]{5,})/i'),
+            'transaction_id' => $find('/transaction\s+id\s*[:.]?\s*([0-9][0-9\-]{5,}[0-9])/i'),
             'account_ref' => $ref,
             'amount' => $amount !== null ? Money::toMinor($amount) : null,
             'currency' => $currency,
