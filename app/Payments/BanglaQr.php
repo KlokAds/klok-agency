@@ -104,6 +104,97 @@ class BanglaQr
     }
 
     /**
+     * The same picture as a PNG, for places that cannot show an SVG (a
+     * phone's gallery, WhatsApp). Drawn four times larger and scaled down,
+     * so the round dots come out smooth.
+     */
+    public static function png(string $text, int $size = 600): string
+    {
+        $size = max(64, $size);
+        $matrix = Encoder::encode($text, ErrorCorrectionLevel::H(), 'UTF-8')->getMatrix();
+        $count = $matrix->getWidth();
+        $quiet = 3;
+        $big = $size * 4;
+        $cell = $big / ($count + 2 * $quiet);
+
+        $img = imagecreatetruecolor($big, $big);
+        $channel = fn (string $hex, int $at): int => max(0, min(255, (int) hexdec(substr($hex, $at, 2))));
+        $rgb = fn (string $hex) => (int) imagecolorallocate($img, $channel($hex, 1), $channel($hex, 3), $channel($hex, 5));
+        $white = $rgb('#FFFFFF');
+        $ink = $rgb('#0F1F1C');
+        $brand = $rgb('#0D9488');
+        $markBg = $rgb('#11211E');
+        $markTeal = $rgb('#2DD4BF');
+        $markGrey = $rgb('#D5E2DE');
+        imagefill($img, 0, 0, $white);
+
+        $rounded = function (float $x, float $y, float $w, float $h, float $r, int $color) use ($img): void {
+            [$x, $y, $w, $h, $r] = array_map(fn ($v) => (int) round($v), [$x, $y, $w, $h, $r]);
+            imagefilledrectangle($img, $x + $r, $y, $x + $w - $r, $y + $h, $color);
+            imagefilledrectangle($img, $x, $y + $r, $x + $w, $y + $h - $r, $color);
+            foreach ([[$x + $r, $y + $r], [$x + $w - $r, $y + $r], [$x + $r, $y + $h - $r], [$x + $w - $r, $y + $h - $r]] as [$cx, $cy]) {
+                imagefilledellipse($img, $cx, $cy, 2 * $r, 2 * $r, $color);
+            }
+        };
+
+        $hole = (int) floor($count * 0.2);
+        $hole += ($count - $hole) % 2;
+        $from = intdiv($count - $hole, 2);
+        $to = $from + $hole;
+        $isEye = fn (int $x, int $y): bool => ($x < 7 && $y < 7) || ($x >= $count - 7 && $y < 7) || ($x < 7 && $y >= $count - 7);
+
+        for ($y = 0; $y < $count; $y++) {
+            for ($x = 0; $x < $count; $x++) {
+                if ($matrix->get($x, $y) !== 1 || $isEye($x, $y) || ($x >= $from && $x < $to && $y >= $from && $y < $to)) {
+                    continue;
+                }
+                $d = (int) round($cell * 0.92);
+                imagefilledellipse($img, (int) round(($x + $quiet + 0.5) * $cell), (int) round(($y + $quiet + 0.5) * $cell), $d, $d, $ink);
+            }
+        }
+
+        foreach ([[0, 0], [$count - 7, 0], [0, $count - 7]] as [$ex, $ey]) {
+            $ox = ($ex + $quiet) * $cell;
+            $oy = ($ey + $quiet) * $cell;
+            // A teal ring (outer rounded square with a white one cut out), then the dark centre.
+            $rounded($ox, $oy, $cell * 7, $cell * 7, $cell * 2.2, $brand);
+            $rounded($ox + $cell, $oy + $cell, $cell * 5, $cell * 5, $cell * 1.4, $white);
+            $rounded($ox + $cell * 2, $oy + $cell * 2, $cell * 3, $cell * 3, $cell, $ink);
+        }
+
+        // The Klok mark in the clear middle square (64-unit drawing, as in BrandMark.vue).
+        $u = (($hole - 1) * $cell) / 64;
+        $mx = ($from + $quiet + 0.5) * $cell;
+        $my = ($from + $quiet + 0.5) * $cell;
+        $rounded($mx, $my, 64 * $u, 64 * $u, 16 * $u, $markBg);
+        $stroke = function (array $points, float $width, int $color) use ($img, $mx, $my, $u): void {
+            imagesetthickness($img, max(1, (int) round($width * $u)));
+            for ($i = 0; $i < count($points) - 1; $i++) {
+                [$x1, $y1] = $points[$i];
+                [$x2, $y2] = $points[$i + 1];
+                imageline($img, (int) round($mx + $x1 * $u), (int) round($my + $y1 * $u), (int) round($mx + $x2 * $u), (int) round($my + $y2 * $u), $color);
+            }
+            foreach ($points as [$px, $py]) {
+                $d = (int) round($width * $u);
+                imagefilledellipse($img, (int) round($mx + $px * $u), (int) round($my + $py * $u), $d, $d, $color);
+            }
+        };
+        $stroke([[20, 16], [20, 48]], 6, $markTeal);
+        $stroke([[20, 34], [34, 16]], 6, $markTeal);
+        $stroke([[26, 27], [38, 48]], 6, $markTeal);
+        $stroke([[42, 40], [48, 40]], 4, $markGrey);
+        $stroke([[42, 32], [48, 32]], 4, $markGrey);
+        $stroke([[44, 24], [48, 24]], 4, $markGrey);
+
+        $out = imagecreatetruecolor($size, $size);
+        imagecopyresampled($out, $img, 0, 0, 0, 0, $size, $size, $big, $big);
+        ob_start();
+        imagepng($out);
+
+        return (string) ob_get_clean();
+    }
+
+    /**
      * The QR drawn as an SVG: round dots, the brand's teal eyes, and the
      * Klok mark in a clear square in the middle.
      */
