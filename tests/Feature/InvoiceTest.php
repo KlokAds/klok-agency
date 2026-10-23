@@ -79,7 +79,7 @@ it('creates a numbered invoice with campaign, advance and service lines and thei
     $invoice = Invoice::with('items')->sole();
 
     expect($invoice->number)->toBe('KA-0001')
-        ->and($invoice->status)->toBe('draft')
+        ->and($invoice->status)->toBe('sent')
         ->and($invoice->usd)->toBe(14000)
         ->and($invoice->total)->toBe(550000 + 1375000 + 120000)
         ->and($invoice->items[0]->results)->toBe(20)
@@ -99,7 +99,7 @@ it('defaults the client rate to the current FX batch plus the commission', funct
     expect(Invoices::fxRate())->toBe(122.5)->and(Invoices::clientRate())->toBe(147.0);
 });
 
-it('shows the public page by its token only, and hides drafts', function () {
+it('shows the public page by its token only, also to a cancelled invoice', function () {
     $invoice = sentInvoice($this->client);
 
     $this->get('/i/'.$invoice->public_token)->assertOk()
@@ -112,8 +112,8 @@ it('shows the public page by its token only, and hides drafts', function () {
     $this->get('/i/'.str_repeat('x', 40))->assertNotFound();
     $this->get('/i/short')->assertNotFound();
 
-    $invoice->forceFill(['status' => 'draft'])->save();
-    $this->get('/i/'.$invoice->public_token)->assertNotFound();
+    $invoice->forceFill(['status' => 'void'])->save();
+    $this->get('/i/'.$invoice->public_token)->assertOk()->assertInertia(fn ($page) => $page->where('state.due', 0));
 });
 
 it('reads incoming wallet and bank SMS and ignores fakes and outgoing money', function () {
@@ -287,12 +287,14 @@ it('lets the Owner give an unmatched SMS to an invoice', function () {
         ->and($invoice->fresh()->paid)->toBe(500000);
 });
 
-it('marks sent invoices past due as overdue and tells the Owner once', function () {
+it('shows sent invoices past due as overdue, keeps their status, and tells the Owner once', function () {
     $invoice = sentInvoice($this->client, ['due_date' => now()->subDays(2)->toDateString()]);
     $future = sentInvoice($this->client);
 
     expect(app(Invoices::class)->markOverdue())->toBe(1)
-        ->and($invoice->fresh()->status)->toBe('overdue')
+        ->and($invoice->fresh()->status)->toBe('sent')
+        ->and($invoice->fresh()->isOverdue())->toBeTrue()
+        ->and($future->fresh()->isOverdue())->toBeFalse()
         ->and($future->fresh()->status)->toBe('sent')
         ->and(app(Invoices::class)->markOverdue())->toBe(0)
         ->and($this->owner->notifications()->where('data->kind', 'invoice_overdue')->count())->toBe(1);
@@ -314,4 +316,29 @@ it('saves the payment settings and makes a forwarder URL shown once', function (
     expect(Hash::check(SMS_TOKEN, (string) Setting::get('sms_device_token')))->toBeFalse();
 
     $this->actingAs($this->owner)->get('/admin/payment')->assertOk()->assertInertia(fn ($page) => $page->component('admin/Payment'));
+});
+
+it('lists running campaigns with no client on the invoice, and links one to the client when billed', function () {
+    $this->seed(BooksSeeder::class);
+    $account = PilotAccount::create(['pilot_id' => 9, 'name' => 'Klok Ads Agency', 'platform' => 'meta', 'currency' => 'USD', 'seen_at' => now()]);
+    $mine = Campaign::create(['pilot_campaign_id' => 1, 'pilot_account_id' => $account->id, 'name' => 'GFFS - Sales', 'status' => 'ACTIVE', 'client_id' => $this->client->id, 'bill_from' => now()->subDays(5)->toDateString()]);
+    $free = Campaign::create(['pilot_campaign_id' => 2, 'pilot_account_id' => $account->id, 'name' => 'New page likes', 'status' => 'ACTIVE', 'stop_at' => now()->addDays(3)]);
+    Campaign::create(['pilot_campaign_id' => 3, 'pilot_account_id' => $account->id, 'name' => 'Ended long ago', 'status' => 'ACTIVE', 'stop_at' => now()->subMonth()]);
+    CampaignDay::create(['campaign_id' => $free->id, 'day' => now()->subDay()->toDateString(), 'spend' => 700, 'results' => 3, 'clicks' => 9]);
+
+    $list = $this->actingAs($this->owner)->getJson('/invoices/campaigns?'.http_build_query(['client' => $this->client->id, 'from' => now()->subDays(10)->toDateString(), 'to' => now()->toDateString()]))
+        ->assertOk()->json('campaigns');
+
+    expect(array_column($list, 'name'))->toBe(['GFFS - Sales', 'New page likes'])
+        ->and($list[1]['linked'])->toBeFalse()
+        ->and($list[1]['usd'])->toBe(700)
+        ->and($free->fresh()->isLive())->toBeTrue()
+        ->and(Campaign::where('pilot_campaign_id', 3)->first()->isLive())->toBeFalse();
+
+    $this->actingAs($this->owner)->post('/invoices', [
+        'client_id' => $this->client->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null,
+        'items' => [['kind' => 'ad_spend', 'description' => 'New page likes', 'campaign_id' => $free->id, 'period_from' => $list[1]['from'], 'period_to' => $list[1]['to'], 'results' => 3, 'clicks' => 9, 'usd' => '7', 'rate' => '150', 'amount' => '']],
+    ])->assertRedirect();
+
+    expect($free->fresh()->client_id)->toBe($this->client->id);
 });

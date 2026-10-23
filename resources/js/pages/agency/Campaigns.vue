@@ -14,7 +14,7 @@ import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import KField from '@/components/k/KField.vue';
 import { useFilters } from '@/composables/useFilters';
-import { ago, money, niceDate, today } from '@/lib/format';
+import { ago, endsAt, money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Option, Paginated } from '@/types';
 
@@ -32,6 +32,8 @@ type Row = {
     renewal: { id: number; status: string } | null;
     start_at: string | null;
     stop_at: string | null;
+    ends_at: string | null;
+    ended: boolean;
     spend_total: number;
     spend_7d: number;
     last_spend_day: string | null;
@@ -312,16 +314,20 @@ function sync(): void {
                                     }}</span>
                                 </p>
                                 <p class="mt-0.5 pl-4 text-[12px] text-ink-3">
-                                    {{ c.live ? t('চালু') : t('বন্ধ') }}
+                                    {{
+                                        c.live
+                                            ? t('চালু')
+                                            : c.ended
+                                              ? t('শেষ হয়েছে')
+                                              : t('বন্ধ')
+                                    }}
                                     <template v-if="c.daily_budget">
                                         · {{ t('দিনে') }}
                                         {{ spend(c.daily_budget) }}</template
                                     >
-                                    <template v-if="c.stop_at">
-                                        · {{ t('শেষ') }}
-                                        {{
-                                            niceDate(c.stop_at, false)
-                                        }}</template
+                                    <template v-if="c.ends_at">
+                                        · {{ c.ended ? '' : t('শেষ') + ' '
+                                        }}{{ endsAt(c.ends_at) }}</template
                                     >
                                     <template v-if="c.spend_cap">
                                         · cap {{ spend(c.spend_cap) }}</template

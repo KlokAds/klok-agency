@@ -13,6 +13,8 @@ use App\Notifications\AgencyAlert;
 use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
 use App\Support\Money;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -45,7 +47,7 @@ class Invoices
                 $invoice = new Invoice([
                     'seq' => $seq,
                     'number' => Invoice::numberFor($seq),
-                    'status' => 'draft',
+                    'status' => 'sent',
                     'public_token' => Str::random(40),
                 ]);
             }
@@ -101,12 +103,10 @@ class Invoices
         });
     }
 
-    /** The invoice is with the client now; an overdue one stays overdue. */
+    /** The invoice is with the client now (shared by link, WhatsApp or email). */
     public function markSent(Invoice $invoice): void
     {
-        if ($invoice->status === 'draft') {
-            $invoice->forceFill(['status' => 'sent', 'sent_at' => now()])->save();
-        } elseif ($invoice->sent_at === null) {
+        if ($invoice->sent_at === null) {
             $invoice->forceFill(['sent_at' => now()])->save();
         }
     }
@@ -177,7 +177,7 @@ class Invoices
             $full = $paid >= $invoice->total;
             $invoice->forceFill([
                 'paid' => $paid,
-                'status' => $full ? 'paid' : ($invoice->due_date !== null && $invoice->due_date->lt(now()->startOfDay()) ? 'overdue' : 'partial'),
+                'status' => $full ? 'paid' : 'partial',
                 'paid_at' => $full ? now() : $invoice->paid_at,
                 'sent_at' => $invoice->sent_at ?? now(),
             ])->save();
@@ -243,14 +243,14 @@ class Invoices
     }
 
     /**
-     * Sent invoices past their due date become overdue; the Owner and the
-     * client's manager hear about each one once.
+     * Unpaid invoices past their due date: the Owner and the client's
+     * manager hear about each one once (the status stays as it is).
      */
     public function markOverdue(): int
     {
         $count = 0;
         $late = Invoice::with('client')
-            ->whereIn('status', ['sent', 'partial', 'overdue'])
+            ->whereIn('status', Invoice::PAYABLE)
             ->whereNotNull('due_date')
             ->where('due_date', '<', now()->toDateString())
             ->whereNull('overdue_notified_at')
@@ -258,7 +258,7 @@ class Invoices
             ->get();
 
         foreach ($late as $invoice) {
-            $invoice->forceFill(['status' => 'overdue', 'overdue_notified_at' => now()])->saveQuietly();
+            $invoice->forceFill(['overdue_notified_at' => now()])->saveQuietly();
 
             $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_overdue', self::OVERDUE_TITLE, '{client} · {number} · {amount}', [
                 'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($invoice->due()),
@@ -300,16 +300,35 @@ class Invoices
     }
 
     /**
-     * Each of the client's linked campaigns with its spend, results and
-     * clicks between two days (only days it is billed for, from bill_from on).
+     * The campaigns an invoice can bill, with their spend, results and
+     * clicks between two days: the client's own (only days billed to them,
+     * from bill_from on) and running ones no client has yet. Spend is read
+     * fresh from Pilot first, so a campaign linked a minute ago shows too.
      *
-     * @return list<array{id: int, name: string, usd: int, results: int, clicks: int, days: int, from: string, to: string}>
+     * @return list<array{id: int, name: string, usd: int, results: int, clicks: int, days: int, from: string, to: string, linked: bool, live: bool, ended: bool, account: ?string}>
      */
     public static function campaignSpend(int $clientId, string $from, string $to): array
     {
         $rows = [];
+        $campaigns = Campaign::with('account')
+            ->where(fn ($q) => $q->where('client_id', $clientId)->orWhere(fn (Builder $w) => $w->whereNull('client_id')->running()))
+            ->orderByRaw('case when client_id is null then 1 else 0 end')->orderBy('name')->get();
 
-        foreach (Campaign::where('client_id', $clientId)->orderBy('name')->get() as $campaign) {
+        if (PilotClient::connected()) {
+            $billing = app(CampaignBilling::class);
+            $start = CarbonImmutable::parse($from);
+            $end = CarbonImmutable::parse($to)->min(CarbonImmutable::now()->startOfDay());
+
+            foreach ($campaigns->groupBy('pilot_account_id') as $group) {
+                try {
+                    $billing->readDays($group->first()->account, $group, $start, $end);
+                } catch (\RuntimeException $e) {
+                    report($e); // the days already stored still show
+                }
+            }
+        }
+
+        foreach ($campaigns as $campaign) {
             $start = $campaign->bill_from !== null && $campaign->bill_from->toDateString() > $from ? $campaign->bill_from->toDateString() : $from;
             $days = CampaignDay::where('campaign_id', $campaign->id)->whereBetween('day', [$start, $to])->get();
 
@@ -320,8 +339,12 @@ class Invoices
                 'results' => (int) $days->sum('results'),
                 'clicks' => (int) $days->sum('clicks'),
                 'days' => $days->where('spend', '>', 0)->count(),
-                'from' => $from,
+                'from' => $start,
                 'to' => $to,
+                'linked' => $campaign->client_id !== null,
+                'live' => $campaign->isLive(),
+                'ended' => $campaign->hasEnded(),
+                'account' => $campaign->account?->name,
             ];
         }
 

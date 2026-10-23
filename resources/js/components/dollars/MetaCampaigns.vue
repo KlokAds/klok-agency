@@ -6,7 +6,7 @@ import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KTag from '@/components/k/KTag.vue';
-import { money, niceDate } from '@/lib/format';
+import { endsAt, money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
 export type ForecastCampaign = {
@@ -16,6 +16,8 @@ export type ForecastCampaign = {
     paused_for_credit: boolean;
     pending: number;
     end: string | null;
+    ends_at: string | null;
+    ended: boolean;
     days_left: number | null;
     budget: number | null;
     to_spend: number | null;
@@ -302,11 +304,20 @@ const extendCost = computed(() => {
                                 </span>
                             </td>
                             <td class="px-3 py-3 whitespace-nowrap">
-                                <template v-if="!row.campaign.live">{{
+                                <template v-if="row.campaign.ended">
+                                    {{ t('শেষ হয়েছে') }}
+                                    <span
+                                        class="block text-[11.5px] text-ink-3"
+                                        >{{
+                                            endsAt(row.campaign.ends_at)
+                                        }}</span
+                                    >
+                                </template>
+                                <template v-else-if="!row.campaign.live">{{
                                     t('বন্ধ')
                                 }}</template>
-                                <template v-else-if="row.campaign.end">
-                                    {{ niceDate(row.campaign.end, false) }}
+                                <template v-else-if="row.campaign.ends_at">
+                                    {{ endsAt(row.campaign.ends_at) }}
                                     <span
                                         class="block text-[11.5px] text-ink-3"
                                         >{{

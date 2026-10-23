@@ -7,6 +7,7 @@ use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\UsdEntry;
@@ -151,34 +152,7 @@ class CampaignBilling
 
                 return $read->max(CarbonImmutable::parse($c->bill_from));
             })->min();
-            $ids = $campaigns->pluck('id', 'pilot_campaign_id');
-            $pilotIds = $campaigns->map(fn (Campaign $c) => $c->pilot_campaign_id)->values()->all();
-
-            // Pilot hands out at most 92 days at a time.
-            for ($chunk = $from; $chunk->lte($today); $chunk = $chunk->addDays(90)) {
-                $until = $chunk->addDays(89)->min($today);
-                $report = $this->pilot->dailySpend($account->pilot_id, $chunk->toDateString(), $until->toDateString(), $pilotIds);
-
-                foreach ($report['rows'] ?? [] as $row) {
-                    $campaignId = $ids[(int) $row['campaign_id']] ?? null;
-
-                    if ($campaignId === null) {
-                        continue;
-                    }
-
-                    $day = CampaignDay::updateOrCreate(
-                        ['campaign_id' => $campaignId, 'day' => $row['date']],
-                        ['spend' => (int) round((float) $row['spend'] * 100), 'results' => (int) ($row['results'] ?? 0), 'clicks' => (int) ($row['clicks'] ?? 0)],
-                    );
-
-                    // The budget is known only as it is now, so only recent days keep it.
-                    $budget = $campaigns->firstWhere('id', $campaignId)?->dailyBudget();
-                    if ($day->budget === null && $budget !== null && $row['date'] >= $today->subDay()->toDateString()) {
-                        $day->forceFill(['budget' => $budget])->save();
-                    }
-                    $days++;
-                }
-            }
+            $days += $this->readDays($account, $campaigns, $from, $today);
         }
 
         $clients = $linked->map(fn (Campaign $c) => (int) $c->client_id)->unique()->values()->all();
@@ -186,6 +160,73 @@ class CampaignBilling
         Setting::putQuietly('pilot_spend_synced_at', now()->toIso8601String());
 
         return ['campaigns' => $linked->count(), 'days' => $days, 'clients' => count($clients)];
+    }
+
+    /**
+     * Stores the day-by-day spend of some campaigns of one ad account
+     * between two days, as Pilot reports it (at most 92 days a call).
+     *
+     * @param  iterable<Campaign>  $campaigns
+     *
+     * @throws RuntimeException when Pilot cannot be reached
+     */
+    public function readDays(PilotAccount $account, iterable $campaigns, CarbonImmutable $from, CarbonImmutable $to): int
+    {
+        $campaigns = collect($campaigns);
+        $ids = $campaigns->pluck('id', 'pilot_campaign_id');
+        $pilotIds = $campaigns->map(fn (Campaign $c) => $c->pilot_campaign_id)->values()->all();
+        $yesterday = CarbonImmutable::now()->subDay()->toDateString();
+        $days = 0;
+
+        for ($chunk = $from; $chunk->lte($to); $chunk = $chunk->addDays(90)) {
+            $until = $chunk->addDays(89)->min($to);
+            $report = $this->pilot->dailySpend($account->pilot_id, $chunk->toDateString(), $until->toDateString(), $pilotIds);
+
+            foreach ($report['rows'] ?? [] as $row) {
+                $campaignId = $ids[(int) $row['campaign_id']] ?? null;
+
+                if ($campaignId === null) {
+                    continue;
+                }
+
+                $day = CampaignDay::updateOrCreate(
+                    ['campaign_id' => $campaignId, 'day' => $row['date']],
+                    ['spend' => (int) round((float) $row['spend'] * 100), 'results' => (int) ($row['results'] ?? 0), 'clicks' => (int) ($row['clicks'] ?? 0)],
+                );
+
+                // The budget is known only as it is now, so only recent days keep it.
+                $budget = $campaigns->firstWhere('id', $campaignId)?->dailyBudget();
+                if ($day->budget === null && $budget !== null && $row['date'] >= $yesterday) {
+                    $day->forceFill(['budget' => $budget])->save();
+                }
+                $days++;
+            }
+        }
+
+        return $days;
+    }
+
+    /**
+     * Campaigns an invoice bills that belong to no client yet now belong to
+     * the invoice's client, billed from the line's first day.
+     */
+    public function linkFromInvoice(Invoice $invoice): void
+    {
+        $lines = $invoice->items()->where('kind', 'ad_spend')->whereNotNull('campaign_id')->get();
+        $linked = false;
+
+        foreach ($lines as $line) {
+            $campaign = Campaign::find($line->campaign_id);
+
+            if ($campaign !== null && $campaign->client_id === null) {
+                $campaign->update(['client_id' => $invoice->client_id, 'bill_from' => ($line->period_from ?? $this->defaultBillFrom($campaign, $invoice->client_id))->toDateString()]);
+                $linked = true;
+            }
+        }
+
+        if ($linked) {
+            $this->rebuild([$invoice->client_id]);
+        }
     }
 
     /**

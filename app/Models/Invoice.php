@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $client_id
  * @property CarbonImmutable $issue_date
  * @property CarbonImmutable|null $due_date
- * @property string $status draft|sent|partial|paid|overdue|void
+ * @property string $status sent|partial|paid|void (past its due date is shown, not a status)
  * @property string|null $notes
  * @property string $public_token
  * @property int $total
@@ -37,16 +37,14 @@ class Invoice extends Model
     use Audited;
 
     public const STATUSES = [
-        'draft' => 'Draft',
-        'sent' => 'পাঠানো হয়েছে', // i18n
-        'partial' => 'আংশিক পরিশোধ', // i18n
-        'paid' => 'পরিশোধিত', // i18n
-        'overdue' => 'মেয়াদ পার', // i18n
-        'void' => 'বাতিল', // i18n
+        'sent' => 'Sent',
+        'partial' => 'Partial',
+        'paid' => 'Paid',
+        'void' => 'Cancel',
     ];
 
     /** Statuses a client can still pay against. */
-    public const PAYABLE = ['sent', 'partial', 'overdue'];
+    public const PAYABLE = ['sent', 'partial'];
 
     public const PREFIX = 'KA-';
 
@@ -102,7 +100,13 @@ class Invoice extends Model
     /** Can still be changed: nothing has been paid on it yet. */
     public function isEditable(): bool
     {
-        return in_array($this->status, ['draft', 'sent', 'overdue'], true) && $this->paid === 0;
+        return $this->status === 'sent' && $this->paid === 0;
+    }
+
+    /** Still to pay, and its due date has passed. */
+    public function isOverdue(): bool
+    {
+        return in_array($this->status, self::PAYABLE, true) && $this->due_date !== null && $this->due_date->lt(now()->startOfDay());
     }
 
     public function publicUrl(): string

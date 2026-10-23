@@ -116,7 +116,7 @@ class PublicInvoiceController extends Controller
 
         $invoice = Invoice::with(['client:id,name,company', 'items', 'payments'])->where('public_token', $token)->first();
 
-        abort_if($invoice === null || $invoice->status === 'draft', 404);
+        abort_if($invoice === null, 404);
 
         return $invoice;
     }

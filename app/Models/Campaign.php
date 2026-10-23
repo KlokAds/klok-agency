@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Audited;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -111,8 +112,26 @@ class Campaign extends Model
             : CarbonImmutable::parse($this->stop_at)->setTimezone(config('app.timezone'))->subSecond()->startOfDay();
     }
 
+    /** Switched on and not past its end (Meta keeps an ended campaign ACTIVE). */
     public function isLive(): bool
     {
-        return in_array(strtoupper((string) $this->status), self::LIVE, true);
+        return in_array(strtoupper((string) $this->status), self::LIVE, true)
+            && ($this->stop_at === null || CarbonImmutable::parse($this->stop_at)->isFuture());
+    }
+
+    /** Ended on Meta's clock, whatever its status says. */
+    public function hasEnded(): bool
+    {
+        return $this->stop_at !== null && CarbonImmutable::parse($this->stop_at)->isPast();
+    }
+
+    /**
+     * Campaigns running now: switched on and not past their end.
+     *
+     * @param  Builder<Campaign>  $query
+     */
+    public function scopeRunning(Builder $query): void
+    {
+        $query->whereIn('status', self::LIVE)->where(fn ($q) => $q->whereNull('stop_at')->orWhere('stop_at', '>', now()));
     }
 }

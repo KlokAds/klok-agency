@@ -104,6 +104,37 @@ export function today(): string {
 }
 
 /** "15 Oct 2026" — the way the old sheet wrote dates. */
+/**
+ * A campaign's end as Meta shows it, in Dhaka time: "26 Oct, 12:00 AM".
+ * (Ending at 12:00 AM means it runs through the day before.)
+ */
+export function endsAt(iso: string | null | undefined): string {
+    if (!iso) {
+        return '—';
+    }
+
+    const date = new Date(iso);
+
+    if (Number.isNaN(date.getTime())) {
+        return '—';
+    }
+
+    const parts = Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Dhaka',
+            day: 'numeric',
+            month: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        })
+            .formatToParts(date)
+            .map((p) => [p.type, p.value]),
+    );
+
+    return `${parts.day} ${parts.month}, ${parts.hour}:${parts.minute} ${parts.dayPeriod}`;
+}
+
 export function niceDate(
     value: string | null | undefined,
     withYear = true,

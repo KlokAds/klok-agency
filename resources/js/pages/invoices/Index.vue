@@ -24,6 +24,7 @@ type Row = {
     issue_date: string;
     due_date: string | null;
     status: string;
+    overdue: boolean;
     total: number;
     paid: number;
     due: number;
@@ -65,17 +66,16 @@ const statuses = computed<Option[]>(() => [
     { value: '', label: t('সব') },
     { value: 'unpaid', label: t('বাকি') },
     { value: 'overdue', label: t('মেয়াদ পার') },
-    { value: 'paid', label: t('পরিশোধিত') },
-    { value: 'draft', label: 'Draft' },
-    { value: 'void', label: t('বাতিল') },
+    { value: 'sent', label: 'Sent' },
+    { value: 'partial', label: 'Partial' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'void', label: 'Cancel' },
 ]);
 
 const TONES: Record<string, 'neutral' | 'brand' | 'in' | 'out' | 'wait'> = {
-    draft: 'neutral',
     sent: 'brand',
     partial: 'wait',
     paid: 'in',
-    overdue: 'out',
     void: 'neutral',
 };
 
@@ -214,9 +214,7 @@ function ignore(sms: Sms): void {
                             <td class="num">{{ niceDate(i.issue_date) }}</td>
                             <td
                                 class="num"
-                                :class="
-                                    i.status === 'overdue' ? 'text-out' : ''
-                                "
+                                :class="i.overdue ? 'text-out' : ''"
                             >
                                 {{ i.due_date ? niceDate(i.due_date) : '—' }}
                             </td>
@@ -228,6 +226,12 @@ function ignore(sms: Sms): void {
                                 <KTag :tone="TONES[i.status] ?? 'neutral'">{{
                                     statusLabel(i.status)
                                 }}</KTag>
+                                <KTag
+                                    v-if="i.overdue"
+                                    tone="out"
+                                    class="ml-1"
+                                    >{{ t('মেয়াদ পার') }}</KTag
+                                >
                             </td>
                         </tr>
                     </tbody>

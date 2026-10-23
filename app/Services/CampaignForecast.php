@@ -75,7 +75,7 @@ class CampaignForecast
         $rate = Invoices::clientRate();
         $today = CarbonImmutable::now()->startOfDay();
         $campaigns = Campaign::with(['account', 'renewals' => fn ($q) => $q->whereIn('status', ['open', 'invoiced', 'paid', 'declined'])->latest('id')])->whereNotNull('client_id')
-            ->where(fn ($q) => $q->whereIn('status', Campaign::LIVE)->orWhereIn('id', array_keys($byCampaign)))
+            ->where(fn ($q) => $q->running()->orWhereIn('id', array_keys($byCampaign)))
             ->get()
             ->filter(fn (Campaign $c) => $c->account?->platform === 'meta' || isset($byCampaign[$c->id]));
         $clientIds = $campaigns->pluck('client_id')->merge(array_keys($byClientLoose))->unique()->values();
@@ -96,6 +96,8 @@ class CampaignForecast
                     'paused_for_credit' => $c->paused_for_credit_at !== null,
                     'pending' => (int) ($byCampaign[$c->id] ?? 0),
                     'end' => $end?->toDateString(),
+                    'ends_at' => $c->stop_at?->toIso8601String(),
+                    'ended' => $c->hasEnded(),
                     'days_left' => $daysLeft,
                     'budget' => $budget,
                     'to_spend' => $budget !== null && $daysLeft !== null ? $budget * $daysLeft : null,

@@ -62,8 +62,8 @@ class CampaignController extends Controller
         $campaigns = Campaign::with(['client:id,name', 'account', 'renewals' => fn ($q) => $q->whereNotIn('status', ['approved', 'expired'])->latest('id')])
             ->where('pilot_account_id', $account->id ?? 0)
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where('name', 'like', '%'.$term.'%'))
-            ->when($status === 'live', fn ($q) => $q->whereIn('status', Campaign::LIVE))
-            ->when($status === 'off', fn ($q) => $q->where(fn ($w) => $w->whereNull('status')->orWhereNotIn('status', Campaign::LIVE)))
+            ->when($status === 'live', fn ($q) => $q->running())
+            ->when($status === 'off', fn ($q) => $q->whereNot(fn ($w) => $w->running()))
             ->when($status === 'linked', fn ($q) => $q->whereNotNull('client_id'))
             ->when($status === 'unlinked', fn ($q) => $q->whereNull('client_id'))
             ->orderByRaw('case when last_spend_day is null then 1 else 0 end')
@@ -86,6 +86,8 @@ class CampaignController extends Controller
                 'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
                 'start_at' => $c->start_at?->toDateString(),
                 'stop_at' => $c->lastDay()?->toDateString(),
+                'ends_at' => $c->stop_at?->toIso8601String(),
+                'ended' => $c->hasEnded(),
                 'spend_total' => $c->spend_total,
                 'spend_7d' => $c->spend_7d,
                 'last_spend_day' => $c->last_spend_day?->toDateString(),

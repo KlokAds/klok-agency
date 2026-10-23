@@ -7,6 +7,7 @@ import KCheck from '@/components/k/KCheck.vue';
 import KDate from '@/components/k/KDate.vue';
 import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
+import KTag from '@/components/k/KTag.vue';
 import KInput from '@/components/k/KInput.vue';
 import KMoney from '@/components/k/KMoney.vue';
 import KSelect from '@/components/k/KSelect.vue';
@@ -38,6 +39,10 @@ type CampaignSpend = {
     days: number;
     from: string;
     to: string;
+    linked: boolean;
+    live: boolean;
+    ended: boolean;
+    account: string | null;
 };
 
 // Writing an invoice: campaign spend for a period (picked from what Klok
@@ -147,7 +152,7 @@ async function loadCampaigns(): Promise<void> {
         );
         spend.value = result.campaigns;
         picked.value = Object.fromEntries(
-            result.campaigns.map((c) => [c.id, c.usd > 0]),
+            result.campaigns.map((c) => [c.id, c.linked && c.usd > 0]),
         );
     } catch {
         loadError.value = t('Campaign আনা গেল না।');
@@ -314,7 +319,7 @@ const errorAt = (index: number, field: string) =>
                     >
                         {{
                             t(
-                                'এই client-এর সাথে কোনো campaign যুক্ত নেই। Campaign পাতা থেকে যুক্ত করুন।',
+                                'এই client-এর কোনো campaign নেই, আর এখন চালু কোনো campaign কোনো client ছাড়াও নেই।',
                             )
                         }}
                     </p>
@@ -333,8 +338,22 @@ const errorAt = (index: number, field: string) =>
                                 class="mt-0.5"
                             />
                             <div class="min-w-0 flex-1">
-                                <p class="font-semibold break-words">
+                                <p
+                                    class="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold break-words"
+                                >
+                                    <span
+                                        class="size-1.5 shrink-0 rounded-full"
+                                        :class="c.live ? 'bg-in' : 'bg-line-2'"
+                                    />
                                     {{ c.name }}
+                                    <KTag v-if="c.ended" tone="neutral">{{
+                                        t('শেষ হয়েছে')
+                                    }}</KTag>
+                                    <KTag v-if="!c.linked" tone="wait">{{
+                                        t(
+                                            'কোনো client-এর নয় — বাছলে এই client-এর হবে',
+                                        )
+                                    }}</KTag>
                                 </p>
                                 <p class="mt-0.5 text-[12px] text-ink-3">
                                     {{

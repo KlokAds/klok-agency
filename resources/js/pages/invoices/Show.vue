@@ -69,7 +69,7 @@ const isVoid = computed(() => props.invoice.status === 'void');
 const shareOpen = ref(false);
 
 function markSent(): void {
-    if (props.invoice.status === 'draft') {
+    if (!props.invoice.sent_at) {
         router.post(
             `/invoices/${props.invoice.id}/send`,
             {},
@@ -400,12 +400,6 @@ const PAY_STATUS: Record<
                     class="num mt-2 truncate rounded-lg bg-sunken px-3 py-2 text-[12px]"
                 >
                     {{ invoice.url }}
-                </p>
-                <p
-                    v-if="invoice.status === 'draft'"
-                    class="mt-2 text-[12px] text-wait"
-                >
-                    {{ t('Draft — পাঠানোর পরই link খুলবে।') }}
                 </p>
                 <div class="mt-3 flex flex-wrap gap-2">
                     <KButton size="sm" :href="invoice.url" external>{{

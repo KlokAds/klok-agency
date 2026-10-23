@@ -93,6 +93,7 @@ const props = defineProps<{
         number: string;
         issue_date: string;
         status: string;
+        overdue: boolean;
         total: number;
         due: number;
     }[];
@@ -430,7 +431,7 @@ function print(): void {
                         <span
                             class="block text-[11px]"
                             :class="
-                                i.status === 'overdue'
+                                i.overdue
                                     ? 'text-out'
                                     : i.due
                                       ? 'text-wait'
@@ -443,9 +444,7 @@ function print(): void {
                                       ? t('বাকি {amount}', {
                                             amount: money(i.due, 'bdt'),
                                         })
-                                      : i.status === 'draft'
-                                        ? 'Draft'
-                                        : t('পরিশোধিত')
+                                      : 'Paid'
                             }}</span
                         ></span
                     >

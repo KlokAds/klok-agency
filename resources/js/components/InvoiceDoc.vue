@@ -24,6 +24,7 @@ export type InvoiceDocument = {
     issue_date: string;
     due_date: string | null;
     status: string;
+    overdue?: boolean;
     notes: string | null;
     total: number;
     usd: number;
@@ -48,12 +49,10 @@ const STATUS: Record<
     string,
     { label: string; tone: 'neutral' | 'brand' | 'in' | 'out' | 'wait' }
 > = {
-    draft: { label: 'Draft', tone: 'neutral' },
-    sent: { label: 'পরিশোধ বাকি', tone: 'brand' }, // i18n
-    partial: { label: 'আংশিক পরিশোধ', tone: 'wait' }, // i18n
-    paid: { label: 'পরিশোধিত', tone: 'in' }, // i18n
-    overdue: { label: 'মেয়াদ পার', tone: 'out' }, // i18n
-    void: { label: 'বাতিল', tone: 'neutral' }, // i18n
+    sent: { label: 'Sent', tone: 'brand' },
+    partial: { label: 'Partial', tone: 'wait' },
+    paid: { label: 'Paid', tone: 'in' },
+    void: { label: 'Cancel', tone: 'neutral' },
 };
 
 const status = computed(() => STATUS[props.invoice.status] ?? STATUS.sent);
@@ -167,6 +166,9 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                 </p>
                 <div class="mt-3">
                     <KTag :tone="status.tone">{{ t(status.label) }}</KTag>
+                    <KTag v-if="invoice.overdue" tone="out" class="ml-1.5">{{
+                        t('মেয়াদ পার')
+                    }}</KTag>
                 </div>
             </div>
         </header>
@@ -194,7 +196,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                 <p class="eyebrow">{{ t('শেষ তারিখ') }}</p>
                 <p
                     class="num mt-1 font-medium"
-                    :class="invoice.status === 'overdue' ? 'text-out' : ''"
+                    :class="invoice.overdue ? 'text-out' : ''"
                 >
                     {{
                         invoice.due_date

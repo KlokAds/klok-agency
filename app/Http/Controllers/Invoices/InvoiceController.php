@@ -12,6 +12,7 @@ use App\Models\Wallet;
 use App\Payments\PaymentMatcher;
 use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
+use App\Services\CampaignBilling;
 use App\Services\Invoices;
 use App\Support\Access;
 use App\Support\ClientMessage;
@@ -38,12 +39,16 @@ class InvoiceController extends Controller
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', Rule::in([...array_keys(Invoice::STATUSES), 'unpaid'])],
+            'status' => ['nullable', Rule::in([...array_keys(Invoice::STATUSES), 'unpaid', 'overdue'])],
             'client' => ['nullable', 'integer'],
         ]);
 
         $invoices = Invoice::with('client:id,name')
-            ->when($filters['status'] ?? null, fn ($q, $status) => $status === 'unpaid' ? $q->whereIn('status', Invoice::PAYABLE) : $q->where('status', $status))
+            ->when($filters['status'] ?? null, fn ($q, $status) => match ($status) {
+                'unpaid' => $q->whereIn('status', Invoice::PAYABLE),
+                'overdue' => $q->whereIn('status', Invoice::PAYABLE)->whereNotNull('due_date')->where('due_date', '<', now()->toDateString()),
+                default => $q->where('status', $status),
+            })
             ->when($filters['client'] ?? null, fn ($q, $client) => $q->where('client_id', $client))
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q
                 ->where('number', 'like', "%{$term}%")
@@ -55,6 +60,7 @@ class InvoiceController extends Controller
             ->through(fn (Invoice $i) => InvoiceView::row($i));
 
         $open = Invoice::whereIn('status', Invoice::PAYABLE);
+        $late = Invoice::whereIn('status', Invoice::PAYABLE)->whereNotNull('due_date')->where('due_date', '<', now()->toDateString());
         $owner = $request->user()->hasRole(Access::OWNER);
 
         return Inertia::render('invoices/Index', [
@@ -62,8 +68,8 @@ class InvoiceController extends Controller
             'filters' => $filters + ['q' => null, 'status' => null, 'client' => null],
             'totals' => [
                 'unpaid' => (int) (clone $open)->selectRaw('coalesce(sum(total - paid), 0) as due')->value('due'),
-                'overdue' => (int) Invoice::where('status', 'overdue')->selectRaw('coalesce(sum(total - paid), 0) as due')->value('due'),
-                'overdue_count' => Invoice::where('status', 'overdue')->count(),
+                'overdue' => (int) (clone $late)->selectRaw('coalesce(sum(total - paid), 0) as due')->value('due'),
+                'overdue_count' => (clone $late)->count(),
                 'paid_month' => (int) InvoicePayment::where('status', 'verified')->where('paid_on', '>=', now()->startOfMonth()->toDateString())->sum('amount'),
                 'claims' => InvoicePayment::where('status', 'pending')->whereNull('expires_at')->count(),
             ],
@@ -97,19 +103,20 @@ class InvoiceController extends Controller
         return $this->form($invoice->load('items'), $invoice->client_id);
     }
 
-    public function store(Request $request, Invoices $invoices): RedirectResponse
+    public function store(Request $request, Invoices $invoices, CampaignBilling $billing): RedirectResponse
     {
         $invoice = $invoices->save($this->validated($request));
+        $billing->linkFromInvoice($invoice);
         $this->toast(__('Invoice :number তৈরি হয়েছে।', ['number' => $invoice->number]));
 
         return redirect()->route('invoices.show', $invoice);
     }
 
-    public function update(Request $request, Invoice $invoice, Invoices $invoices): RedirectResponse
+    public function update(Request $request, Invoice $invoice, Invoices $invoices, CampaignBilling $billing): RedirectResponse
     {
         abort_unless($invoice->isEditable(), 422);
 
-        $invoices->save($this->validated($request), $invoice);
+        $billing->linkFromInvoice($invoices->save($this->validated($request), $invoice));
         $this->toast(__('Invoice আপডেট হয়েছে।'));
 
         return redirect()->route('invoices.show', $invoice);
@@ -329,7 +336,8 @@ class InvoiceController extends Controller
             'items.*.usd' => ['nullable', "required_if:items.*.kind,{$usdKinds}", Money::RULE],
             'items.*.rate' => ['nullable', "required_if:items.*.kind,{$usdKinds}", 'numeric', 'min:1', 'max:1000'],
             'items.*.amount' => ['nullable', "required_unless:items.*.kind,{$usdKinds}", Money::RULE],
-            'items.*.campaign_id' => ['nullable', 'integer', Rule::exists('campaigns', 'id')->where('client_id', $request->integer('client_id'))],
+            // The client's own campaign, or one no client has yet (the invoice links it).
+            'items.*.campaign_id' => ['nullable', 'integer', Rule::exists('campaigns', 'id')->where(fn ($q) => $q->where('client_id', $request->integer('client_id'))->orWhereNull('client_id'))],
             'items.*.period_from' => ['nullable', 'date'],
             'items.*.period_to' => ['nullable', 'date'],
             'items.*.results' => ['nullable', 'integer', 'min:0'],
