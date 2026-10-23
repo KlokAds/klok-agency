@@ -3,9 +3,9 @@ import { router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import SettingsNav from '@/components/SettingsNav.vue';
+import SettingsSection from '@/components/SettingsSection.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
-import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSwitch from '@/components/k/KSwitch.vue';
@@ -139,14 +139,14 @@ const wallets = [
         "
     />
 
-    <form class="grid gap-6 lg:grid-cols-2" @submit.prevent="save">
-        <!-- Business -->
-        <section class="panel flex flex-col gap-4 p-5 sm:p-6">
-            <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                <KIcon name="desk" class="text-brand" />{{
-                    t('Invoice-এ আপনার তথ্য')
-                }}
-            </h2>
+    <form class="max-w-5xl" @submit.prevent="save">
+        <SettingsSection
+            :title="t('Invoice-এ আপনার তথ্য')"
+            :description="
+                t('Invoice-এর মাথায় এই নাম, ঠিকানা আর logo ছাপা হয়।')
+            "
+            icon="desk"
+        >
             <KField :label="t('নাম')" :error="err('pay_business_name')">
                 <KInput v-model="values['pay_business_name']" />
             </KField>
@@ -157,7 +157,7 @@ const wallets = [
             >
                 <KTextarea v-model="values['pay_business_address']" :rows="2" />
             </KField>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid gap-5 sm:grid-cols-2">
                 <KField
                     :label="t('ফোন')"
                     optional
@@ -192,7 +192,7 @@ const wallets = [
                     <input
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
-                        class="min-w-0 text-[12.5px]"
+                        class="max-w-full min-w-0 text-[12.5px]"
                         @change="pick('logo', $event)"
                     />
                     <KButton
@@ -204,59 +204,29 @@ const wallets = [
                     >
                 </div>
             </KField>
-        </section>
+            <template v-if="editable" #footer>
+                <KButton variant="primary" :loading="saving" @click="save">{{
+                    t('সংরক্ষণ')
+                }}</KButton>
+            </template>
+        </SettingsSection>
 
-        <!-- Rates -->
-        <section class="panel flex flex-col gap-4 p-5 sm:p-6">
-            <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                <KIcon name="dollar" class="text-brand" />{{ t('Rate') }}
-            </h2>
-            <KField
-                :label="t('Commission (%)')"
-                :hint="
-                    t(
-                        'Client-এর rate = চলতি FX batch-এর rate + এই %। প্রতি invoice-এ বদলানো যায়।',
-                    )
-                "
-                :error="err('commission_percent')"
-            >
-                <KInput
-                    v-model="values['commission_percent']"
-                    inputmode="decimal"
-                    class="max-w-[140px]"
-                />
-            </KField>
-            <KField
-                :label="t('Bangla QR fee (%)')"
-                :hint="
-                    t(
-                        'QR-এ টাকা এলে এই fee ব্যাংক থেকে Bank charge খরচ হিসেবে লেখা হয় — client-এর কাছ থেকে নেওয়া হয় না।',
-                    )
-                "
-                :error="err('qr_fee_percent')"
-            >
-                <KInput
-                    v-model="values['qr_fee_percent']"
-                    inputmode="decimal"
-                    class="max-w-[140px]"
-                />
-            </KField>
-        </section>
-
-        <!-- Wallets -->
-        <section class="panel flex flex-col gap-5 p-5 sm:p-6">
-            <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                <KIcon name="wallet" class="text-brand" />{{
-                    t('Mobile wallet')
-                }}
-            </h2>
+        <SettingsSection
+            :title="t('Mobile wallet')"
+            :description="
+                t(
+                    'Client যে নম্বরে টাকা পাঠাবেন — চালু থাকলে invoice-এ দেখায়।',
+                )
+            "
+            icon="wallet"
+        >
             <div
                 v-for="w in wallets"
                 :key="w.key"
-                class="rounded-xl border border-line p-4"
+                class="border-t border-line pt-5 first:border-0 first:pt-0"
             >
                 <KSwitch v-model="flags[`pay_${w.key}_on`]" :label="w.label" />
-                <div v-if="flags[`pay_${w.key}_on`]" class="mt-3 grid gap-3">
+                <div v-if="flags[`pay_${w.key}_on`]" class="mt-4 grid gap-3">
                     <KField
                         :label="t('নম্বর')"
                         :error="err(`pay_${w.key}_number`)"
@@ -276,154 +246,232 @@ const wallets = [
                     />
                 </div>
             </div>
-        </section>
+            <template v-if="editable" #footer>
+                <KButton variant="primary" :loading="saving" @click="save">{{
+                    t('সংরক্ষণ')
+                }}</KButton>
+            </template>
+        </SettingsSection>
 
-        <!-- QR + bank -->
-        <section class="panel flex flex-col gap-5 p-5 sm:p-6">
-            <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                <KIcon name="scale" class="text-brand" />{{
-                    t('Bangla QR ও ব্যাংক')
-                }}
-            </h2>
-            <div class="rounded-xl border border-line p-4">
-                <KSwitch v-model="flags['pay_qr_on']" label="Bangla QR" />
-                <div v-if="flags['pay_qr_on']" class="mt-3 grid gap-3">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <img
-                            v-if="images.qr"
-                            :src="images.qr"
-                            alt="Bangla QR"
-                            class="size-24 rounded-lg border border-line bg-white p-1"
-                        />
-                        <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            class="min-w-0 text-[12.5px]"
-                            @change="pick('qr', $event)"
-                        />
-                        <KButton
-                            v-if="images.qr && editable"
-                            size="sm"
-                            variant="quiet"
-                            @click="removeImage('qr')"
-                            >{{ t('সরান') }}</KButton
-                        >
-                    </div>
-                    <p v-if="err('qr')" class="text-[12px] text-out">
-                        {{ err('qr') }}
-                    </p>
-                    <KField :label="t('Merchant-এর নাম')" optional>
-                        <KInput v-model="values['pay_qr_merchant']" />
-                    </KField>
-                </div>
-            </div>
-            <div class="rounded-xl border border-line p-4">
-                <KSwitch v-model="flags['pay_bank_on']" label="Bank / NPSB" />
-                <div
-                    v-if="flags['pay_bank_on']"
-                    class="mt-3 grid gap-3 sm:grid-cols-2"
-                >
-                    <KField :label="t('ব্যাংক')" :error="err('pay_bank_name')">
-                        <KInput v-model="values['pay_bank_name']" />
-                    </KField>
-                    <KField :label="t('শাখা')" optional>
-                        <KInput v-model="values['pay_bank_branch']" />
-                    </KField>
-                    <KField
-                        :label="t('Account-এর নাম')"
-                        :error="err('pay_bank_account_name')"
-                    >
-                        <KInput v-model="values['pay_bank_account_name']" />
-                    </KField>
-                    <KField
-                        :label="t('Account নম্বর')"
-                        :error="err('pay_bank_account_number')"
-                    >
-                        <KInput v-model="values['pay_bank_account_number']" />
-                    </KField>
-                    <KField label="Routing" optional>
-                        <KInput v-model="values['pay_bank_routing']" />
-                    </KField>
-                    <KField
-                        :label="t('ব্যাংকের SMS sender')"
-                        optional
-                        :hint="
-                            t(
-                                'যেমন DBBL, BRAC BANK — কমা দিয়ে। শুধু এই নাম থেকে আসা credit SMS বিশ্বাস করা হবে।',
-                            )
-                        "
-                    >
-                        <KInput v-model="values['pay_bank_sms_senders']" />
-                    </KField>
-                </div>
-            </div>
-        </section>
-
-        <div v-if="editable" class="flex justify-end lg:col-span-2">
-            <KButton type="submit" variant="primary" :loading="saving">{{
-                t('সংরক্ষণ')
-            }}</KButton>
-        </div>
-    </form>
-
-    <!-- SMS forwarder -->
-    <section class="panel mt-6 flex flex-col gap-4 p-5 sm:p-6">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-            <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                <KIcon name="signal" class="text-brand" />{{
-                    t('SMS forwarder (নিজে থেকে মেলানো)')
-                }}
-            </h2>
-            <KTag :tone="forwarder.connected ? 'in' : 'neutral'">{{
-                forwarder.connected ? t('চালু') : t('বন্ধ')
-            }}</KTag>
-        </div>
-        <p class="max-w-3xl text-[13px] text-ink-2">
-            {{
-                t(
-                    'যে Android phone-এ bKash/Nagad-এর SIM আছে, তাতে একটা SMS forwarder app বসিয়ে নিচের URL-এ POST করতে দিন (from আর text field)। Klok Ads website-এ যে phone চলে, সেটাই এই URL-এও পাঠাতে পারে।',
-                )
-            }}
-        </p>
-        <div
-            v-if="forwarder.url"
-            class="rounded-xl border border-wait/40 bg-wait-soft p-4"
+        <SettingsSection
+            title="Bangla QR"
+            :description="
+                t('QR-এর ছবি দিলে invoice-এ দেখায় — client scan করে টাকা দেন।')
+            "
+            icon="scale"
         >
-            <p class="text-[12.5px] font-semibold text-wait">
+            <KSwitch v-model="flags['pay_qr_on']" label="Bangla QR" />
+            <template v-if="flags['pay_qr_on']">
+                <div class="flex flex-wrap items-center gap-3">
+                    <img
+                        v-if="images.qr"
+                        :src="images.qr"
+                        alt="Bangla QR"
+                        class="size-24 rounded-lg border border-line bg-white p-1"
+                    />
+                    <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        class="max-w-full min-w-0 text-[12.5px]"
+                        @change="pick('qr', $event)"
+                    />
+                    <KButton
+                        v-if="images.qr && editable"
+                        size="sm"
+                        variant="quiet"
+                        @click="removeImage('qr')"
+                        >{{ t('সরান') }}</KButton
+                    >
+                </div>
+                <p v-if="err('qr')" class="-mt-3 text-[12px] text-out">
+                    {{ err('qr') }}
+                </p>
+                <KField :label="t('Merchant-এর নাম')" optional>
+                    <KInput v-model="values['pay_qr_merchant']" />
+                </KField>
+            </template>
+            <template v-if="editable" #footer>
+                <KButton variant="primary" :loading="saving" @click="save">{{
+                    t('সংরক্ষণ')
+                }}</KButton>
+            </template>
+        </SettingsSection>
+
+        <SettingsSection
+            title="Bank / NPSB"
+            :description="
+                t('যে account-এ client bank transfer বা NPSB-তে টাকা পাঠাবেন।')
+            "
+            icon="dollar"
+        >
+            <KSwitch v-model="flags['pay_bank_on']" label="Bank / NPSB" />
+            <div v-if="flags['pay_bank_on']" class="grid gap-5 sm:grid-cols-2">
+                <KField :label="t('ব্যাংক')" :error="err('pay_bank_name')">
+                    <KInput v-model="values['pay_bank_name']" />
+                </KField>
+                <KField :label="t('শাখা')" optional>
+                    <KInput v-model="values['pay_bank_branch']" />
+                </KField>
+                <KField
+                    :label="t('Account-এর নাম')"
+                    :error="err('pay_bank_account_name')"
+                >
+                    <KInput v-model="values['pay_bank_account_name']" />
+                </KField>
+                <KField
+                    :label="t('Account নম্বর')"
+                    :error="err('pay_bank_account_number')"
+                >
+                    <KInput v-model="values['pay_bank_account_number']" />
+                </KField>
+                <KField label="Routing" optional>
+                    <KInput v-model="values['pay_bank_routing']" />
+                </KField>
+                <KField
+                    :label="t('ব্যাংকের SMS sender')"
+                    optional
+                    :hint="
+                        t(
+                            'যেমন DBBL, BRAC BANK — কমা দিয়ে। শুধু এই নাম থেকে আসা credit SMS বিশ্বাস করা হবে।',
+                        )
+                    "
+                >
+                    <KInput v-model="values['pay_bank_sms_senders']" />
+                </KField>
+            </div>
+            <template v-if="editable" #footer>
+                <KButton variant="primary" :loading="saving" @click="save">{{
+                    t('সংরক্ষণ')
+                }}</KButton>
+            </template>
+        </SettingsSection>
+
+        <SettingsSection
+            :title="t('Rate')"
+            :description="
+                t('Client-এর dollar rate-এর উপর commission, আর QR-এর fee।')
+            "
+            icon="chart"
+        >
+            <div class="grid gap-5 sm:grid-cols-2">
+                <KField
+                    :label="t('Commission (%)')"
+                    :hint="
+                        t(
+                            'Client-এর rate = চলতি FX batch-এর rate + এই %। প্রতি invoice-এ বদলানো যায়।',
+                        )
+                    "
+                    :error="err('commission_percent')"
+                >
+                    <KInput
+                        v-model="values['commission_percent']"
+                        inputmode="decimal"
+                    >
+                        <template #trail
+                            ><span class="text-[13px] font-semibold text-ink-3"
+                                >%</span
+                            ></template
+                        >
+                    </KInput>
+                </KField>
+                <KField
+                    :label="t('Bangla QR fee (%)')"
+                    :hint="
+                        t(
+                            'QR-এ টাকা এলে এই fee ব্যাংক থেকে Bank charge খরচ হিসেবে লেখা হয় — client-এর কাছ থেকে নেওয়া হয় না।',
+                        )
+                    "
+                    :error="err('qr_fee_percent')"
+                >
+                    <KInput
+                        v-model="values['qr_fee_percent']"
+                        inputmode="decimal"
+                    >
+                        <template #trail
+                            ><span class="text-[13px] font-semibold text-ink-3"
+                                >%</span
+                            ></template
+                        >
+                    </KInput>
+                </KField>
+            </div>
+            <template v-if="editable" #footer>
+                <KButton variant="primary" :loading="saving" @click="save">{{
+                    t('সংরক্ষণ')
+                }}</KButton>
+            </template>
+        </SettingsSection>
+
+        <SettingsSection
+            :title="t('SMS forwarder (নিজে থেকে মেলানো)')"
+            :description="
+                t(
+                    'Wallet-এ টাকা এলে তার SMS দেখে invoice-এর পেমেন্ট নিজে থেকে মিলে যায়।',
+                )
+            "
+            icon="signal"
+        >
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <span class="text-[13.5px] font-medium">{{ t('অবস্থা') }}</span>
+                <KTag :tone="forwarder.connected ? 'in' : 'neutral'">{{
+                    forwarder.connected ? t('চালু') : t('বন্ধ')
+                }}</KTag>
+            </div>
+            <p class="text-[13px] leading-relaxed text-ink-2">
                 {{
                     t(
-                        'এই URL শুধু এখন একবার দেখানো হচ্ছে — এখনই copy করে phone-এ বসান।',
+                        'যে Android phone-এ bKash/Nagad-এর SIM আছে, তাতে একটা SMS forwarder app বসিয়ে নিচের URL-এ POST করতে দিন (from আর text field)। Klok Ads website-এ যে phone চলে, সেটাই এই URL-এও পাঠাতে পারে।',
                     )
                 }}
             </p>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-                <code
-                    class="num min-w-0 flex-1 rounded-lg bg-surface px-3 py-2 text-[12px] break-all"
-                    >{{ forwarder.url }}</code
-                >
-                <KButton size="sm" @click="copy(forwarder.url)">Copy</KButton>
+            <div
+                v-if="forwarder.url"
+                class="rounded-lg border border-wait/40 bg-wait-soft p-4"
+            >
+                <p class="text-[12.5px] font-semibold text-wait">
+                    {{
+                        t(
+                            'এই URL শুধু এখন একবার দেখানো হচ্ছে — এখনই copy করে phone-এ বসান।',
+                        )
+                    }}
+                </p>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <code
+                        class="num min-w-0 flex-1 rounded-lg bg-surface px-3 py-2 text-[12px] break-all"
+                        >{{ forwarder.url }}</code
+                    >
+                    <KButton size="sm" @click="copy(forwarder.url)"
+                        >Copy</KButton
+                    >
+                </div>
             </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-3 text-[12.5px] text-ink-3">
-            <span
-                >{{ t('শেষ সাড়া') }}:
-                {{ forwarder.last_seen ? ago(forwarder.last_seen) : '—' }}</span
+            <div
+                class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line pt-4 text-[12.5px] text-ink-3"
             >
-            <span v-if="forwarder.unmatched"
-                >· {{ t('{n}টা SMS মেলেনি', { n: forwarder.unmatched }) }}</span
-            >
-            <template v-if="editable">
-                <KButton size="sm" @click="newToken">{{
-                    forwarder.connected ? t('নতুন URL বানান') : t('URL বানান')
-                }}</KButton>
+                <span
+                    >{{ t('শেষ সাড়া') }}:
+                    {{
+                        forwarder.last_seen ? ago(forwarder.last_seen) : '—'
+                    }}</span
+                >
+                <span v-if="forwarder.unmatched"
+                    >·
+                    {{
+                        t('{n}টা SMS মেলেনি', { n: forwarder.unmatched })
+                    }}</span
+                >
+            </div>
+            <template v-if="editable" #footer>
                 <KButton
                     v-if="forwarder.connected"
-                    size="sm"
                     variant="quiet"
                     @click="disconnect"
                     >{{ t('বন্ধ করুন') }}</KButton
                 >
+                <KButton @click="newToken">{{
+                    forwarder.connected ? t('নতুন URL বানান') : t('URL বানান')
+                }}</KButton>
             </template>
-        </div>
-    </section>
+        </SettingsSection>
+    </form>
 </template>

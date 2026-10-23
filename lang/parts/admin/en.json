@@ -157,5 +157,8 @@
     "অফিস": "Office",
     "খাতার নিয়ম": "Rules of the books",
     "Fee আর কোন মাস পর্যন্ত খাতা বন্ধ — সবার জন্য।": "The fee, and up to when the books are closed — for everyone.",
-    "Login আর sign out-এর নিয়ম — সবার জন্য।": "Rules for signing in and out — for everyone."
+    "Login আর sign out-এর নিয়ম — সবার জন্য।": "Rules for signing in and out — for everyone.",
+    "টাকা সরাতে কত fee কাটে, আর কোন তারিখ পর্যন্ত খাতা বন্ধ — সবার জন্য একই।": "What moving money costs, and up to which date the books are closed — the same for everyone.",
+    "GitHub-এর সাথে মেলানো হচ্ছে…": "Checking with GitHub…",
+    "অবস্থা জানতে “আবার দেখুন” চাপুন।": "Press “Check again” to see the status."
 }

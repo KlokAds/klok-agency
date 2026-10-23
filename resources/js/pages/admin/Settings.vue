@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SettingsSection from '@/components/SettingsSection.vue';
 import SettingsNav from '@/components/SettingsNav.vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
@@ -31,6 +32,10 @@ const can = computed(() => usePage().props.auth.can);
 const editable = computed(() => !!can.value['settings.edit']);
 
 const form = useForm({ ...props.settings });
+function save(): void {
+    form.put('/admin/settings', { preserveScroll: true });
+}
+
 const idleOptions = computed<Option[]>(() =>
     [15, 30, 60, 120].map((m) => ({
         value: m,
@@ -92,25 +97,17 @@ onMounted(() => {
     <SettingsNav />
     <PageHeader eyebrow="Settings" title="Settings" />
 
-    <div class="grid max-w-3xl gap-6">
-        <!-- Rules of the books, then security -->
-        <form
-            class="panel flex flex-col gap-6 p-6"
-            @submit.prevent="
-                form.put('/admin/settings', { preserveScroll: true })
+    <div class="max-w-5xl">
+        <SettingsSection
+            :title="t('খাতার নিয়ম')"
+            :description="
+                t(
+                    'টাকা সরাতে কত fee কাটে, আর কোন তারিখ পর্যন্ত খাতা বন্ধ — সবার জন্য একই।',
+                )
             "
+            icon="scale"
         >
-            <div>
-                <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                    <KIcon name="scale" class="text-brand" />{{
-                        t('খাতার নিয়ম')
-                    }}
-                </h2>
-                <p class="mt-1 text-[13px] text-ink-3">
-                    {{ t('Fee আর কোন মাস পর্যন্ত খাতা বন্ধ — সবার জন্য।') }}
-                </p>
-            </div>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid gap-5 sm:grid-cols-2">
                 <KField
                     :label="t('MFS থেকে বের করলে fee (%)')"
                     :error="form.errors.mfs_out_percent"
@@ -121,8 +118,7 @@ onMounted(() => {
                     <KInput
                         v-model="form.mfs_out_percent"
                         inputmode="decimal"
-                        size="sm"
-                        class="max-w-[140px]"
+                        :disabled="!editable"
                     >
                         <template #trail
                             ><span class="text-[13px] font-semibold text-ink-3"
@@ -143,8 +139,7 @@ onMounted(() => {
                     <KInput
                         v-model="form.bank_transfer_fee"
                         inputmode="decimal"
-                        size="sm"
-                        class="max-w-[140px]"
+                        :disabled="!editable"
                     >
                         <template #trail
                             ><span class="text-[13px] font-semibold text-ink-3"
@@ -154,7 +149,6 @@ onMounted(() => {
                     </KInput>
                 </KField>
             </div>
-
             <KField
                 :label="t('খাতা বন্ধ (lock) — এই তারিখ পর্যন্ত')"
                 :error="form.errors.lock_date"
@@ -171,19 +165,21 @@ onMounted(() => {
                     :placeholder="t('Lock নেই')"
                 />
             </KField>
+            <template v-if="editable" #footer>
+                <KButton
+                    variant="primary"
+                    :loading="form.processing"
+                    @click="save"
+                    >{{ t('সংরক্ষণ') }}</KButton
+                >
+            </template>
+        </SettingsSection>
 
-            <hr class="border-dashed border-line" />
-
-            <div>
-                <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                    <KIcon name="shield" class="text-brand" />{{
-                        t('নিরাপত্তা')
-                    }}
-                </h2>
-                <p class="mt-1 text-[13px] text-ink-3">
-                    {{ t('Login আর sign out-এর নিয়ম — সবার জন্য।') }}
-                </p>
-            </div>
+        <SettingsSection
+            :title="t('নিরাপত্তা')"
+            :description="t('Login আর sign out-এর নিয়ম — সবার জন্য।')"
+            icon="shield"
+        >
             <KSwitch
                 v-model="form.require_2fa"
                 :label="t('সবার জন্য 2FA বাধ্যতামূলক')"
@@ -195,11 +191,10 @@ onMounted(() => {
             />
             <p
                 v-if="form.errors.require_2fa"
-                class="-mt-4 text-[12.5px] font-medium text-out"
+                class="-mt-3 text-[12.5px] font-medium text-out"
             >
                 {{ form.errors.require_2fa }}
             </p>
-
             <KField
                 :label="t('কাজ না করলে নিজে sign out')"
                 :hint="t('শেষ ১ মিনিটে সতর্ক করা হবে।')"
@@ -210,119 +205,114 @@ onMounted(() => {
                     size="sm"
                 />
             </KField>
-
-            <div v-if="editable" class="flex justify-end">
+            <template v-if="editable" #footer>
                 <KButton
-                    type="submit"
                     variant="primary"
                     :loading="form.processing"
+                    @click="save"
                     >{{ t('সংরক্ষণ') }}</KButton
                 >
-            </div>
-        </form>
-    </div>
+            </template>
+        </SettingsSection>
 
-    <!-- App update -->
-    <section v-if="isOwner" class="panel mt-6 p-6">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                    <KIcon name="down" class="text-brand" />{{
-                        t('App update')
-                    }}
-                </h2>
-                <p class="mt-1 max-w-xl text-[13px] text-ink-3">
-                    {{
-                        t(
-                            'GitHub-এ নতুন code push হলে এখান থেকে এক click-এ live server-এ নিয়ে আসুন। Server নিজে pull, migrate আর cache করে নেবে।',
-                        )
-                    }}
-                </p>
+        <SettingsSection
+            v-if="isOwner"
+            :title="t('App update')"
+            :description="
+                t(
+                    'GitHub-এ নতুন code push হলে এখান থেকে এক click-এ live server-এ নিয়ে আসুন। Server নিজে pull, migrate আর cache করে নেবে।',
+                )
+            "
+            icon="down"
+        >
+            <p v-if="!update" class="text-[13px] text-ink-3">
+                {{
+                    checking
+                        ? t('GitHub-এর সাথে মেলানো হচ্ছে…')
+                        : t('অবস্থা জানতে “আবার দেখুন” চাপুন।')
+                }}
+            </p>
+            <div v-if="update" class="grid gap-3 sm:grid-cols-2">
+                <div class="rounded-lg border border-line px-4 py-3">
+                    <p class="eyebrow">{{ t('এখন চলছে') }}</p>
+                    <p v-if="update.current" class="mt-1 text-[13.5px]">
+                        <span class="num font-semibold">{{
+                            update.current.sha.slice(0, 7)
+                        }}</span>
+                        <span class="ml-2 text-ink-3">{{
+                            niceDate(update.current.date)
+                        }}</span>
+                    </p>
+                    <p
+                        v-if="update.current"
+                        class="mt-0.5 truncate text-[12.5px] text-ink-2"
+                        :title="update.current.subject"
+                    >
+                        {{ update.current.subject }}
+                    </p>
+                    <p
+                        v-if="!update.available"
+                        class="mt-1 text-[13px] text-ink-3"
+                    >
+                        {{ t('এটা git checkout নয় (local)') }}
+                    </p>
+                </div>
+                <div class="rounded-lg border border-line px-4 py-3">
+                    <p class="eyebrow">GitHub · {{ update.branch }}</p>
+                    <p class="num mt-1 text-[13.5px] font-semibold">
+                        {{ update.latest ? update.latest.slice(0, 7) : '—' }}
+                    </p>
+                    <p
+                        class="mt-0.5 flex items-center gap-1.5 text-[12.5px] font-medium"
+                        :class="update.behind ? 'text-wait' : 'text-in'"
+                    >
+                        <KIcon
+                            :name="update.behind ? 'warn' : 'check'"
+                            :size="14"
+                        />
+                        {{
+                            update.behind
+                                ? t('নতুন version আছে')
+                                : update.behind === false
+                                  ? t('সর্বশেষ version চলছে')
+                                  : t('GitHub-এর সাথে মেলানো যায়নি')
+                        }}
+                    </p>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <KButton
-                    size="sm"
-                    icon="undo"
-                    :loading="checking"
-                    @click="checkUpdate"
-                    >{{ t('আবার দেখুন') }}</KButton
+
+            <details
+                v-if="update?.last_run"
+                class="rounded-lg border border-line"
+            >
+                <summary
+                    class="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-[13px] font-semibold"
                 >
+                    <KTag :tone="update.last_run.ok ? 'in' : 'out'">{{
+                        update.last_run.ok ? t('সফল') : t('ব্যর্থ')
+                    }}</KTag>
+                    {{ t('শেষ update') }} ·
+                    {{ niceDate(update.last_run.at.slice(0, 10)) }}
+                </summary>
+                <pre
+                    class="max-h-72 overflow-auto border-t border-line bg-sunken px-4 py-3 font-mono text-[11.5px] leading-relaxed whitespace-pre-wrap"
+                    >{{ update.last_run.log.join('\n\n') }}</pre>
+            </details>
+
+            <template #footer>
+                <KButton icon="undo" :loading="checking" @click="checkUpdate">{{
+                    t('আবার দেখুন')
+                }}</KButton>
                 <KButton
-                    size="sm"
                     variant="primary"
                     icon="down"
-                    :disabled="!update?.available"
+                    :disabled="!update?.available || !update?.behind"
                     @click="updateOpen = true"
                     >{{ t('এখনই update করুন') }}</KButton
                 >
-            </div>
-        </div>
-
-        <div v-if="update" class="mt-5 grid gap-4 sm:grid-cols-3">
-            <div class="rounded-xl bg-surface-2 px-4 py-3">
-                <p class="eyebrow">{{ t('এখন চলছে') }}</p>
-                <p v-if="update.current" class="mt-1 text-[13.5px]">
-                    <span class="num font-semibold">{{
-                        update.current.sha.slice(0, 7)
-                    }}</span>
-                    <span class="ml-2 text-ink-3">{{
-                        niceDate(update.current.date)
-                    }}</span>
-                </p>
-                <p
-                    v-if="update.current"
-                    class="mt-0.5 truncate text-[12.5px] text-ink-2"
-                    :title="update.current.subject"
-                >
-                    {{ update.current.subject }}
-                </p>
-                <p v-if="!update.available" class="mt-1 text-[13px] text-ink-3">
-                    {{ t('এটা git checkout নয় (local)') }}
-                </p>
-            </div>
-            <div class="rounded-xl bg-surface-2 px-4 py-3">
-                <p class="eyebrow">GitHub · {{ update.branch }}</p>
-                <p class="num mt-1 text-[13.5px] font-semibold">
-                    {{ update.latest ? update.latest.slice(0, 7) : '—' }}
-                </p>
-            </div>
-            <div
-                class="flex items-center rounded-xl px-4 py-3"
-                :class="
-                    update.behind
-                        ? 'bg-wait-soft text-wait'
-                        : 'bg-in-soft text-in'
-                "
-            >
-                <KIcon :name="update.behind ? 'warn' : 'check'" class="mr-2" />
-                <span class="text-[13.5px] font-semibold">{{
-                    update.behind
-                        ? t('নতুন version আছে')
-                        : update.behind === false
-                          ? t('সর্বশেষ version চলছে')
-                          : t('GitHub-এর সাথে মেলানো যায়নি')
-                }}</span>
-            </div>
-        </div>
-
-        <details
-            v-if="update?.last_run"
-            class="mt-4 rounded-xl border border-line"
-        >
-            <summary
-                class="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-[13px] font-semibold"
-            >
-                <KTag :tone="update.last_run.ok ? 'in' : 'out'">{{
-                    update.last_run.ok ? t('সফল') : t('ব্যর্থ')
-                }}</KTag>
-                {{ t('শেষ update') }} ·
-                {{ niceDate(update.last_run.at.slice(0, 10)) }}
-            </summary>
-            <pre
-                class="num max-h-72 overflow-auto border-t border-line bg-sunken px-4 py-3 text-[11.5px] leading-relaxed whitespace-pre-wrap"
-                >{{ update.last_run.log.join('\n\n') }}</pre>
-        </details>
-    </section>
+            </template>
+        </SettingsSection>
+    </div>
 
     <KModal
         v-model="updateOpen"

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import SettingsNav from '@/components/SettingsNav.vue';
+import SettingsSection from '@/components/SettingsSection.vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
-import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
@@ -31,6 +31,10 @@ const form = useForm({
     pilot_url: props.settings.pilot_url,
 });
 const tokenForm = useForm({ pilot_token: '' });
+
+function save(): void {
+    form.put('/admin/agency', { preserveScroll: true });
+}
 
 const times = computed<Option[]>(() =>
     Array.from({ length: 16 }, (_, i) => {
@@ -104,34 +108,23 @@ function copy(text: string): void {
         "
     />
 
-    <div class="grid gap-6 lg:grid-cols-2">
-        <!-- Daily summary + Pilot -->
-        <form
-            class="panel flex flex-col gap-5 p-6"
-            @submit.prevent="
-                form.put('/admin/agency', { preserveScroll: true })
-            "
+    <div class="max-w-5xl">
+        <SettingsSection
+            :title="t('দিনের শেষের সারসংক্ষেপ')"
+            :description="t('Owner আর client-দের manager-রা পাবেন।')"
+            icon="chart"
         >
-            <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                <KIcon name="chart" class="text-brand" />{{
-                    t('দিনের শেষের সারসংক্ষেপ')
-                }}
-            </h2>
-            <KField
-                :label="t('কখন পাঠাবে')"
-                :hint="t('Owner আর client-দের manager-রা পাবেন।')"
-            >
-                <KSelect
-                    v-model="form.summary_time"
-                    :options="times"
-                    :searchable="false"
-                    class="max-w-[160px]"
-                />
-            </KField>
-            <KField label="Klok Pilot URL" :error="form.errors.pilot_url">
-                <KInput v-model="form.pilot_url" />
-            </KField>
-            <div v-if="editable" class="flex flex-wrap justify-end gap-2">
+            <form @submit.prevent="save">
+                <KField :label="t('কখন পাঠাবে')">
+                    <KSelect
+                        v-model="form.summary_time"
+                        :options="times"
+                        :searchable="false"
+                        class="max-w-[160px]"
+                    />
+                </KField>
+            </form>
+            <template v-if="editable" #footer>
                 <KButton
                     icon="bell"
                     @click="
@@ -144,33 +137,36 @@ function copy(text: string): void {
                     >{{ t('এখনই একবার পাঠান') }}</KButton
                 >
                 <KButton
-                    type="submit"
                     variant="primary"
                     :loading="form.processing"
+                    @click="save"
                     >{{ t('সংরক্ষণ') }}</KButton
                 >
-            </div>
-        </form>
+            </template>
+        </SettingsSection>
 
-        <section class="panel flex flex-col gap-5 p-6">
-            <div class="flex items-start justify-between gap-3">
-                <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                    <KIcon name="signal" class="text-brand" />Klok Pilot
-                </h2>
+        <SettingsSection
+            title="Klok Pilot"
+            :description="
+                t(
+                    'Klok Pilot → Agents থেকে একটা agency token বানিয়ে এখানে দিন (শুধু পড়ার অনুমতি যথেষ্ট)। তারপর প্রতিটা client-এর পাতায় তার Pilot ad account বেছে দিন।',
+                )
+            "
+            icon="signal"
+        >
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <span class="text-[13.5px] font-medium">{{ t('অবস্থা') }}</span>
                 <KTag :tone="settings.pilot_connected ? 'in' : 'neutral'">{{
                     settings.pilot_connected ? t('যুক্ত') : t('যুক্ত নয়')
                 }}</KTag>
             </div>
-            <p class="text-[13px] text-ink-2">
-                {{
-                    t(
-                        'Klok Pilot → Agents থেকে একটা agency token বানিয়ে এখানে দিন (শুধু পড়ার অনুমতি যথেষ্ট)। তারপর প্রতিটা client-এর পাতায় তার Pilot ad account বেছে দিন।',
-                    )
-                }}
-            </p>
+            <form @submit.prevent="save">
+                <KField label="Klok Pilot URL" :error="form.errors.pilot_url">
+                    <KInput v-model="form.pilot_url" />
+                </KField>
+            </form>
             <form
                 v-if="editable"
-                class="flex gap-2"
                 @submit.prevent="
                     tokenForm.put('/admin/agency/pilot-token', {
                         preserveScroll: true,
@@ -178,45 +174,42 @@ function copy(text: string): void {
                     })
                 "
             >
-                <KInput
-                    v-model="tokenForm.pilot_token"
-                    type="password"
-                    autocomplete="off"
-                    :placeholder="
-                        settings.pilot_connected
-                            ? t('নতুন token দিলে আগেরটা বদলাবে')
-                            : 'Agency token'
-                    "
-                    class="flex-1"
-                />
-                <KButton type="submit" :loading="tokenForm.processing">{{
-                    t('রাখুন')
-                }}</KButton>
+                <KField label="Agency token">
+                    <div class="flex gap-2">
+                        <KInput
+                            v-model="tokenForm.pilot_token"
+                            type="password"
+                            autocomplete="off"
+                            :placeholder="
+                                settings.pilot_connected
+                                    ? t('নতুন token দিলে আগেরটা বদলাবে')
+                                    : 'Agency token'
+                            "
+                            class="min-w-0 flex-1"
+                        />
+                        <KButton
+                            type="submit"
+                            :loading="tokenForm.processing"
+                            >{{ t('রাখুন') }}</KButton
+                        >
+                    </div>
+                </KField>
             </form>
-            <div class="flex flex-wrap items-center gap-2">
-                <KButton
-                    size="sm"
-                    :loading="testing"
-                    :disabled="!settings.pilot_connected"
-                    @click="test"
-                    >{{ t('Connection দেখুন') }}</KButton
-                >
-            </div>
             <ul
                 v-if="accounts"
-                class="rounded-xl border border-line text-[13px]"
+                class="rounded-lg border border-line text-[13px]"
             >
                 <li
                     v-for="a in accounts"
                     :key="a.id"
                     class="flex justify-between gap-3 border-b border-line px-3 py-2 last:border-0"
                 >
-                    <span
+                    <span class="min-w-0"
                         >{{ a.name
                         }}<span v-if="a.shop" class="text-ink-3">
                             · {{ a.shop }}</span
                         ></span
-                    ><span class="num text-ink-3">{{
+                    ><span class="num shrink-0 text-ink-3">{{
                         a.external_id ?? '#' + a.id
                     }}</span>
                 </li>
@@ -224,22 +217,32 @@ function copy(text: string): void {
                     {{ t('এই token কোনো ad account দেখতে পায় না।') }}
                 </li>
             </ul>
-        </section>
+            <template #footer>
+                <KButton
+                    :loading="testing"
+                    :disabled="!settings.pilot_connected"
+                    @click="test"
+                    >{{ t('Connection দেখুন') }}</KButton
+                >
+                <KButton
+                    v-if="editable"
+                    variant="primary"
+                    :loading="form.processing"
+                    @click="save"
+                    >{{ t('সংরক্ষণ') }}</KButton
+                >
+            </template>
+        </SettingsSection>
 
-        <!-- Reminders on time -->
-        <section class="panel flex flex-col gap-4 p-6 lg:col-span-2">
-            <h2 class="flex items-center gap-2 text-[17px] font-bold">
-                <KIcon name="clock" class="text-brand" />{{
-                    t('Reminder সময়মতো পাঠানো')
-                }}
-            </h2>
-            <p class="max-w-3xl text-[13px] text-ink-2">
-                {{
-                    t(
-                        'কেউ app খুললে প্রতি ৫ মিনিটে reminder নিজে যায়। কেউ না খুললেও সময়মতো পেতে cron-job.org-এ নিচের URL-টা প্রতি ৫ মিনিটে চালাতে দিন।',
-                    )
-                }}
-            </p>
+        <SettingsSection
+            :title="t('Reminder সময়মতো পাঠানো')"
+            :description="
+                t(
+                    'কেউ app খুললে প্রতি ৫ মিনিটে reminder নিজে যায়। কেউ না খুললেও সময়মতো পেতে cron-job.org-এ নিচের URL-টা প্রতি ৫ মিনিটে চালাতে দিন।',
+                )
+            "
+            icon="clock"
+        >
             <div v-if="tick.url" class="flex flex-wrap items-center gap-2">
                 <code
                     class="num min-w-0 flex-1 truncate rounded-lg bg-sunken px-3 py-2 text-[12.5px]"
@@ -247,17 +250,12 @@ function copy(text: string): void {
                 >
                 <KButton size="sm" @click="copy(tick.url)">Copy</KButton>
             </div>
-            <div
-                class="flex flex-wrap items-center gap-3 text-[12.5px] text-ink-3"
-            >
-                <span
-                    >{{ t('শেষ চলেছে') }}:
-                    {{ tick.last ? ago(tick.last) : '—' }}</span
-                >
+            <p class="text-[13px] text-ink-3">
+                {{ t('শেষ চলেছে') }}:
+                {{ tick.last ? ago(tick.last) : '—' }}
+            </p>
+            <template v-if="editable" #footer>
                 <KButton
-                    v-if="editable"
-                    size="sm"
-                    variant="quiet"
                     @click="
                         router.post(
                             '/admin/agency/tick-token',
@@ -269,7 +267,7 @@ function copy(text: string): void {
                         tick.url ? t('নতুন URL বানান') : t('URL বানান')
                     }}</KButton
                 >
-            </div>
-        </section>
+            </template>
+        </SettingsSection>
     </div>
 </template>

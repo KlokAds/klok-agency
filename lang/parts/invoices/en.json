@@ -167,5 +167,11 @@
     "সময় শেষ": "Expired",
     "সরান": "Remove",
     "হাতে লেখা": "Entered by hand",
-    "১১ সংখ্যার নম্বর দিন, যেমন 01712345678।": "Enter an 11-digit number, e.g. 01712345678."
+    "১১ সংখ্যার নম্বর দিন, যেমন 01712345678।": "Enter an 11-digit number, e.g. 01712345678.",
+    "Invoice-এর মাথায় এই নাম, ঠিকানা আর logo ছাপা হয়।": "This name, address and logo are printed at the top of invoices.",
+    "Client যে নম্বরে টাকা পাঠাবেন — চালু থাকলে invoice-এ দেখায়।": "The numbers clients send money to — shown on the invoice when switched on.",
+    "QR-এর ছবি দিলে invoice-এ দেখায় — client scan করে টাকা দেন।": "Upload the QR image and it shows on the invoice — clients scan it to pay.",
+    "যে account-এ client bank transfer বা NPSB-তে টাকা পাঠাবেন।": "The account clients pay into by bank transfer or NPSB.",
+    "Client-এর dollar rate-এর উপর commission, আর QR-এর fee।": "The commission on top of the client's dollar rate, and the QR fee.",
+    "Wallet-এ টাকা এলে তার SMS দেখে invoice-এর পেমেন্ট নিজে থেকে মিলে যায়।": "When money reaches a wallet, its SMS matches the invoice payment automatically."
 }
