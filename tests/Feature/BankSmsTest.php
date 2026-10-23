@@ -35,6 +35,11 @@ it('reads the credit alerts, and leaves debits, OTPs and offers alone', function
     $cellfin = $parser->parse('IslamiBank', "Islami Bank CellFin\nBDT 1,015.00 Received from 01712345678. Balance BDT 2,030.00");
     expect($cellfin['amount'])->toBe(101500);
 
+    Setting::put('pay_bank_sms_senders', 'IslamiBank, IBBL, 01844-242613, UCB');
+    $ucb = $parser->parse('UCB', 'Your A/C (***1603) has been credited BDT 5,000.00 by NPSB Transfer. Avl Bal BDT 13,500.00');
+    expect($ucb['amount'])->toBe(500000);
+    Setting::put('pay_bank_sms_senders', 'IslamiBank, IBBL, 01844-242613');
+
     expect($parser->parse('IslamiBank', 'Your A/C (***1603) has been debited BDT 8,500.00 for I Banking NPSB Transfer Debit.'))->toBeNull()
         ->and($parser->parse('IBBL', 'CellFin OTP is 513420. Never share it.'))->toBeNull()
         ->and($parser->parse('UCB', 'Tk 8,500.00 has been credited to your A/C'))->toBeNull(); // UCB is not in the list

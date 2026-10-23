@@ -95,7 +95,8 @@ class SmsParser
             // "BDT 1,015.00 Received" (Islami Bank CellFin), "Tk 500 received".
             "/(?:Tk|BDT)\\.?\\s*{$number}\\s+received/i",
             "/Cash In\\s+Tk\\.?\\s*{$number}/i",
-            "/credited\\s+(?:with|by|for)\\s+(?:Tk|BDT)\\.?\\s*{$number}/i",
+            // "credited with Tk …", and UCB's "has been credited BDT 5,000.00".
+            "/credited\\s+(?:(?:with|by|for)\\s+)?(?:Tk|BDT)\\.?\\s*{$number}/i",
             "/(?:Tk|BDT)\\.?\\s*{$number}\\s+(?:has been\\s+|is\\s+)?(?:credited|deposited)/i",
         ];
 
