@@ -30,11 +30,25 @@ class PlatformDue
         $charges = $entries->where('category', 'card_charge');
         $pieces = $this->pieces($entries->whereIn('category', UsdEntry::CONSUMING));
 
-        // What charges said they paid for, key by key, oldest spend first.
+        // What charges said they paid for, key by key, oldest spend first, and only
+        // spend from before the charge. A campaign whose spend then was still written
+        // by hand (before Pilot billing began) pays its client's hand-written spend.
         $free = -(int) $charges->sum('amount');
+        $keys = [];
         foreach ($charges as $charge) {
+            foreach (array_keys((array) ($charge->allocations ?? [])) as $key) {
+                $keys[] = (string) $key;
+            }
+        }
+        $owners = Campaign::whereIn('id', $this->campaignIds(array_values(array_unique($keys))))->pluck('client_id', 'id');
+        foreach ($charges as $charge) {
+            $until = $charge->entry_date?->toDateString();
             foreach ((array) ($charge->allocations ?? []) as $key => $cents) {
-                $paid = $this->pay($pieces, (int) $cents, (string) $key);
+                $paid = $this->pay($pieces, (int) $cents, (string) $key, $until);
+                $client = str_starts_with((string) $key, 'c:') ? ($owners[(int) substr((string) $key, 2)] ?? null) : null;
+                if ($paid < (int) $cents && $client !== null) {
+                    $paid += $this->pay($pieces, (int) $cents - $paid, 'l:'.$client, $until);
+                }
                 $free -= $paid;
             }
         }
@@ -152,7 +166,7 @@ class PlatformDue
      * between the client's campaigns by what each spent that day.
      *
      * @param  iterable<UsdEntry>  $rows
-     * @return list<array{key: string, left: int}>
+     * @return list<array{key: string, left: int, date: ?string}>
      */
     private function pieces(iterable $rows): array
     {
@@ -166,7 +180,7 @@ class PlatformDue
             }
 
             if ($row->client_id === null) {
-                $pieces[] = ['key' => 'o', 'left' => $amount];
+                $pieces[] = ['key' => 'o', 'left' => $amount, 'date' => $row->entry_date?->toDateString()];
 
                 continue;
             }
@@ -181,7 +195,7 @@ class PlatformDue
             $total = (int) $days->sum('spend');
 
             if ($total <= 0) {
-                $pieces[] = ['key' => 'l:'.$row->client_id, 'left' => $amount];
+                $pieces[] = ['key' => 'l:'.$row->client_id, 'left' => $amount, 'date' => $row->entry_date?->toDateString()];
 
                 continue;
             }
@@ -190,7 +204,7 @@ class PlatformDue
             foreach ($days as $i => $day) {
                 $share = $i === $days->count() - 1 ? $amount - $given : (int) round($amount * $day->spend / $total);
                 $given += $share;
-                $pieces[] = ['key' => 'c:'.$day->campaign_id, 'left' => $share];
+                $pieces[] = ['key' => 'c:'.$day->campaign_id, 'left' => $share, 'date' => $row->entry_date?->toDateString()];
             }
         }
 
@@ -217,10 +231,10 @@ class PlatformDue
     /**
      * Pays up to $cents of the pieces (of one key, or any), oldest first.
      *
-     * @param  list<array{key: string, left: int}>  $pieces
+     * @param  list<array{key: string, left: int, date: ?string}>  $pieces
      * @return int what was paid
      */
-    private function pay(array &$pieces, int $cents, ?string $key = null): int
+    private function pay(array &$pieces, int $cents, ?string $key = null, ?string $until = null): int
     {
         $paid = 0;
 
@@ -229,7 +243,7 @@ class PlatformDue
                 break;
             }
 
-            if ($key !== null && $piece['key'] !== $key) {
+            if (($key !== null && $piece['key'] !== $key) || ($until !== null && $piece['date'] !== null && $piece['date'] > $until)) {
                 continue;
             }
 

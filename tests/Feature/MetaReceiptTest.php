@@ -183,3 +183,18 @@ it('dates a charge at the end of the billed period, as on a real receipt', funct
         ->and($parsed['transaction_id'])->toBe('28843656451987316-29221893927496905')
         ->and($parsed['campaigns'])->toBe([['name' => 'GFFS 07/23/26 - Sales Campaign', 'cents' => 1000, 'campaign_id' => $this->sales->id]]);
 });
+
+it('pays a campaign\'s spend from before the charge only; before Pilot billing began it pays the client\'s hand-written spend', function () {
+    $meta = Account::where('code', 'meta')->first();
+    // 10–15 Oct written by hand; Pilot billing from 19 Oct.
+    UsdEntry::create(['entry_date' => '2026-10-15', 'description' => 'GFFS - Meta ad spend', 'category' => 'client_spend', 'account_id' => $meta->id, 'client_id' => $this->gffs->id, 'amount' => -1000, 'status' => 'settled']);
+    CampaignDay::create(['campaign_id' => $this->sales->id, 'day' => '2026-10-19', 'spend' => 800, 'results' => 1, 'clicks' => 1]);
+    app(CampaignBilling::class)->rebuild([$this->gffs->id]);
+
+    // The 15 Oct receipt says $10 for the campaign.
+    UsdEntry::create(['entry_date' => '2026-10-15', 'description' => 'Meta receipt', 'category' => 'card_charge', 'account_id' => $meta->id, 'amount' => -1000, 'status' => 'na', 'allocations' => ["c:{$this->sales->id}" => 1000]]);
+
+    $pending = (new PlatformDue(new Books))->pending($meta);
+    expect($pending["l:{$this->gffs->id}"] ?? 0)->toBe(0)
+        ->and($pending["c:{$this->sales->id}"] ?? 0)->toBe(800);
+});
