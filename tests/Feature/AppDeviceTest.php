@@ -136,6 +136,12 @@ test('GitHub hands over a new APK and the app finds it', function () {
     expect($this->get($plain)->streamedContent())->toBe('plain apk')
         ->and($this->get($sms)->streamedContent())->toBe('sms apk');
 
+    // The Owner's phone refreshes its sender list from here; nobody else gets one.
+    Setting::put('pay_bank_sms_senders', 'IBBL, 01844-242613');
+    expect($this->actingAs($this->owner)->getJson(route('app.latest', ['flavor' => 'sms']))->json('senders'))
+        ->toContain('bkash', 'ibbl', '01844242613', '+8801844242613')
+        ->and($this->actingAs($this->accountant)->getJson(route('app.latest', ['flavor' => 'plain']))->json('senders'))->toBe([]);
+
     // Nobody but the Owner gets a link to the SMS app.
     expect($this->actingAs($this->accountant)->getJson(route('app.latest', ['flavor' => 'sms']))->json('url'))->toBeNull();
 

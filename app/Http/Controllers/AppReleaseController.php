@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Payments\PaySettings;
 use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -89,6 +90,9 @@ class AppReleaseController extends Controller
             'url' => $flavor === 'sms' && ! $owner ? null : self::downloadUrl($flavor),
             // The SMS app turns forwarding on by itself only for the Owner.
             'owner' => $owner,
+            // The senders to forward, as Settings has them now: the phone refreshes its list
+            // each time it opens, so a bank added later is never filtered out on the phone.
+            'senders' => $owner ? PaySettings::senderForms() : [],
         ]);
     }
 

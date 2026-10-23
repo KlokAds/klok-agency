@@ -733,14 +733,22 @@ class _SitePageState extends State<SitePage> {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getString('sms.url') != null && prefs.getString('sms.error') == null) {
-      return;
-    }
     if (prefs.getBool('sms.off') == true) {
       return;
     }
     final latest = await request('GET', '/app/latest?flavor=$flavor');
     final body = latest?.body;
+
+    // Already forwarding: only bring the sender list up to date (a bank added in Settings
+    // after forwarding was turned on would otherwise be filtered out here on the phone).
+    if (prefs.getString('sms.url') != null && prefs.getString('sms.error') == null) {
+      final senders = body is Map ? body['senders'] : null;
+      if (senders is List && senders.isNotEmpty) {
+        await prefs.setString('sms.senders', senders.join(','));
+      }
+      return;
+    }
+
     if (body is Map && body['owner'] == true) {
       await step('sms', () async {
         final why = await enableSms();
