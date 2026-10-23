@@ -328,14 +328,19 @@ class Books
             $earned[$row->id] = (int) round($bdt);
         }
 
+        // A day's average over the last week's full days that spent: a campaign
+        // that started three days ago is not spread over seven, and today
+        // (still running) does not pull the average down.
         $week = now()->subDays(7)->startOfDay();
-        $recent = $rows->filter(fn ($e) => $e->entry_date && $e->entry_date->gte($week))->sum('amount');
+        $today = now()->startOfDay();
+        $full = $rows->filter(fn ($e) => $e->entry_date && $e->entry_date->gte($week) && $e->entry_date->lt($today));
+        $days = max(1, $full->map(fn ($e) => $e->entry_date->toDateString())->unique()->count());
 
         return $this->prepaid[$clientId] = [
             'credit_usd' => $credit,
             'spent_usd' => -(int) $rows->sum('amount'),
             'unearned' => $paid - array_sum($earned),
-            'daily_usd' => (int) round(-$recent / 7),
+            'daily_usd' => (int) round(-$full->sum('amount') / $days),
             'earned' => $earned,
         ];
     }
