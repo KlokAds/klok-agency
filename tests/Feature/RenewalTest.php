@@ -8,7 +8,9 @@ use App\Models\Invoice;
 use App\Models\PilotAccount;
 use App\Models\Renewal;
 use App\Models\Setting;
+use App\Models\UsdEntry;
 use App\Models\User;
+use App\Services\Books;
 use App\Services\CampaignBilling;
 use App\Services\CampaignLimits;
 use App\Services\Renewals;
@@ -222,4 +224,26 @@ it('reads a midnight end as the day before', function () {
 
     $this->campaign->update(['stop_at' => '2026-10-30T23:59:00+06:00']);
     expect($this->campaign->fresh()->lastDay()->toDateString())->toBe('2026-10-30');
+});
+
+it('puts spend not paid for yet on the renewal invoice first, so the new money clears it before the days', function () {
+    $this->campaign->update(['budget' => 200]);
+    app(Renewals::class)->openDue();
+    $renewal = Renewal::sole();
+
+    // No money in yet: the $4.04 already spent is due.
+    $this->get("/r/{$renewal->token}")->assertInertia(fn ($page) => $page->where('renewal.due', 404));
+    $this->post("/r/{$renewal->token}/choose", ['days' => 7])->assertRedirect();
+
+    $invoice = Invoice::with('items')->sole();
+    expect($invoice->usd)->toBe(404 + 1400)
+        ->and($invoice->items->pluck('usd')->all())->toBe([404, 1400]);
+
+    // Paid: the old spend is settled first, and the 7 days are what is left.
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/pay", [
+        'method' => 'bank', 'wallet' => 'bank', 'paid_on' => now()->toDateString(), 'amount' => (string) ($invoice->total / 100),
+    ])->assertRedirect();
+    $client = collect(app(Books::class)->clients())->firstWhere('id', $this->gffs->id);
+    expect($client['credit_left'])->toBe(1400)
+        ->and(UsdEntry::where('source', 'pilot')->pluck('status')->unique()->all())->toBe(['settled']);
 });

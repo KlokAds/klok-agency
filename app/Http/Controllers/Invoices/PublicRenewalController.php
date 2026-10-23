@@ -24,7 +24,7 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
  */
 class PublicRenewalController extends Controller
 {
-    public function show(string $token): Response
+    public function show(string $token, Renewals $renewals): Response
     {
         $renewal = $this->find($token);
         $campaign = $renewal->campaign;
@@ -51,6 +51,7 @@ class PublicRenewalController extends Controller
                 'results' => (int) $results->sum('results'),
                 'clicks' => (int) $results->sum('clicks'),
                 'choices' => Renewal::DAY_CHOICES,
+                'due' => $renewals->dueOf($renewal->client_id),
                 'from' => CarbonImmutable::parse($renewal->ends_on)->max(CarbonImmutable::now()->startOfDay())->addDay()->toDateString(),
             ],
         ]);

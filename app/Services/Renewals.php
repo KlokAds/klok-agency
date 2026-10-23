@@ -36,7 +36,18 @@ class Renewals
 
     public const PAID_TITLE = 'Renewal-এর টাকা এসেছে — approve করুন'; // i18n
 
-    public function __construct(private Invoices $invoices, private CampaignLimits $limits, private Notifier $notifier) {}
+    public function __construct(private Invoices $invoices, private CampaignLimits $limits, private Notifier $notifier, private Books $books) {}
+
+    /**
+     * Campaign spend the client has not paid for yet (cents): a renewal
+     * invoice carries it first, so the new money clears it before the days.
+     */
+    public function dueOf(int $clientId): int
+    {
+        $figure = collect($this->books->clients())->firstWhere('id', $clientId);
+
+        return max(0, -(int) ($figure['credit_left'] ?? 0));
+    }
 
     /** The address admin emails go to. */
     public static function adminEmail(): string
@@ -93,7 +104,9 @@ class Renewals
     {
         $rate = Invoices::clientRate() ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
 
-        return DB::transaction(function () use ($renewal, $days, $rate) {
+        $due = $this->dueOf($renewal->client_id);
+
+        return DB::transaction(function () use ($renewal, $days, $rate, $due) {
             $renewal = Renewal::with(['campaign', 'invoice'])->lockForUpdate()->findOrFail($renewal->id);
 
             if (! in_array($renewal->status, ['open', 'invoiced', 'declined'], true) || ($renewal->invoice !== null && $renewal->invoice->paid > 0)) {
@@ -106,12 +119,17 @@ class Renewals
 
             $usd = (int) $renewal->budget * $days;
             $from = CarbonImmutable::parse($renewal->ends_on)->max(CarbonImmutable::now()->startOfDay())->addDay();
+            $line = fn (string $description, int $cents) => [
+                'kind' => 'ad_budget', 'description' => $description, 'usd' => $cents, 'rate' => $rate, 'amount' => null,
+                'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null,
+            ];
+            $items = $due > 0 ? [$line('Previous ad spend not yet paid', $due)] : [];
             $invoice = $this->invoices->save([
                 'client_id' => $renewal->client_id,
                 'issue_date' => now()->toDateString(),
                 'due_date' => CarbonImmutable::parse($renewal->ends_on)->toDateString(),
                 'notes' => "Renewal: {$renewal->campaign->name}",
-                'items' => [[
+                'items' => [...$items, [
                     'kind' => 'ad_budget',
                     'description' => "{$renewal->campaign->name} — {$days} days ({$from->format('j M')} – {$from->addDays($days - 1)->format('j M Y')})",
                     'usd' => $usd,

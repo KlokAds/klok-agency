@@ -74,7 +74,7 @@ class CampaignForecast
         $figures = collect($this->books->clients())->keyBy('id');
         $rate = Invoices::clientRate();
         $today = CarbonImmutable::now()->startOfDay();
-        $campaigns = Campaign::with('account')->whereNotNull('client_id')
+        $campaigns = Campaign::with(['account', 'renewals' => fn ($q) => $q->whereIn('status', ['open', 'invoiced', 'paid', 'declined'])->latest('id')])->whereNotNull('client_id')
             ->where(fn ($q) => $q->whereIn('status', Campaign::LIVE)->orWhereIn('id', array_keys($byCampaign)))
             ->get()
             ->filter(fn (Campaign $c) => $c->account?->platform === 'meta' || isset($byCampaign[$c->id]));
@@ -99,6 +99,7 @@ class CampaignForecast
                     'days_left' => $daysLeft,
                     'budget' => $budget,
                     'to_spend' => $budget !== null && $daysLeft !== null ? $budget * $daysLeft : null,
+                    'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
                 ];
             })->sortByDesc('pending')->values();
 
@@ -110,6 +111,12 @@ class CampaignForecast
             // after: what they owe for spend so far plus the spend to come.
             $owed = (int) ($figure['usd_pending'] ?? 0);
             $balance = $prepaid ? $credit - $toSpend : -($owed + $toSpend);
+            // Right now: what they owe for spend already run, or what is left of their money.
+            $dueNow = $prepaid ? max(0, -$credit) : $owed;
+            $creditNow = $prepaid ? max(0, $credit) : 0;
+            $daily = (int) $lines->where('live', true)->sum('budget');
+            $lastsUntil = $creditNow > 0 && $daily > 0 ? $today->addDays(intdiv($creditNow, $daily) - 1) : null;
+            $endsOn = $lines->where('live', true)->pluck('end')->filter()->max();
             $last = BdtEntry::where('client_id', $client->id)->whereIn('category', BdtEntry::REVENUE)->latest('entry_date')->latest('id')->first();
 
             $out[] = [
@@ -124,6 +131,13 @@ class CampaignForecast
                 'to_spend' => $toSpend,
                 'balance' => $balance,
                 'due_bdt' => $balance < 0 && $rate ? (int) round(-$balance * $rate) : null,
+                'due_now' => $dueNow,
+                'due_now_bdt' => $dueNow > 0 && $rate ? (int) round($dueNow * $rate) : null,
+                'credit_now' => $creditNow,
+                'daily' => $daily,
+                'lasts_until' => $lastsUntil && $lastsUntil->gte($today->subDay()) ? $lastsUntil->toDateString() : null,
+                'ends_on' => $endsOn,
+                'needed' => max(0, -$balance),
                 'campaigns' => $lines->all(),
             ];
         }

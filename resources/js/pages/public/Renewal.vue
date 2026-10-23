@@ -27,6 +27,7 @@ type Renewal = {
     clicks: number;
     choices: number[];
     from: string;
+    due: number;
 };
 
 // The client's renewal page: how the campaign has done, and a choice —
@@ -49,7 +50,9 @@ const chosenDays = computed(() => {
 
     return custom.value !== '' && n > 0 ? Math.min(n, 90) : days.value;
 });
-const usd = computed(() => (r.value.budget ?? 0) * chosenDays.value);
+const usd = computed(
+    () => (r.value.budget ?? 0) * chosenDays.value + r.value.due,
+);
 const bdt = computed(() =>
     r.value.rate ? Math.round(usd.value * r.value.rate) : null,
 );
@@ -304,7 +307,18 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             </p>
                             <p class="num font-semibold">
                                 {{ money(r.budget, 'usd') }} ×
-                                {{ chosenDays }} = {{ money(usd, 'usd') }}
+                                {{ chosenDays }} =
+                                {{ money(usd - r.due, 'usd') }}
+                            </p>
+                            <p
+                                v-if="r.due"
+                                class="num mt-1 text-[12px] text-out"
+                            >
+                                {{
+                                    t('+ আগের বাকি {amount}', {
+                                        amount: money(r.due, 'usd'),
+                                    })
+                                }}
                             </p>
                         </div>
                         <div>
