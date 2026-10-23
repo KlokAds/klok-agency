@@ -134,18 +134,27 @@ class BdtEntryController extends Controller
 
     public function destroy(BdtEntry $bdt): RedirectResponse
     {
-        $this->ensureEditable($bdt);
+        $this->ensureEditable($bdt, true);
 
         // Spend this payment settled goes back to pending.
         $bdt->settles()->get()->each->update(['status' => 'pending', 'settled_by_id' => null]);
         $bdt->delete();
+
+        // A payment or refund carrying ad credit: the client's spend is funded again.
+        if ($bdt->usd_credit !== null && $bdt->client_id !== null) {
+            app(CampaignBilling::class)->fund($bdt->client_id);
+        }
         $this->toast(__('Entry Trash-এ গেছে। দরকার হলে Trash থেকে ফেরত আনা যাবে।'));
 
         return back();
     }
 
-    private function ensureEditable(BdtEntry $entry): void
+    private function ensureEditable(BdtEntry $entry, bool $deleting = false): void
     {
+        if ($entry->category === 'client_refund' && ! $deleting) {
+            throw ValidationException::withMessages(['entry' => __('এটা client-এর পাতা থেকে করা credit ফেরত — বদলাতে হলে মুছে আবার করুন।')]);
+        }
+
         if ($entry->fx_batch_id) {
             throw ValidationException::withMessages(['entry' => __('এই row একটা FX batch-এর অংশ — FX Batch পাতা থেকে বদলান।')]);
         }
@@ -162,7 +171,7 @@ class BdtEntryController extends Controller
     /** @return array<string, mixed> */
     private function validated(Request $request, ?BdtEntry $entry = null): array
     {
-        $categories = array_diff(array_keys(BdtEntry::CATEGORIES), ['usd_purchase']);
+        $categories = array_diff(array_keys(BdtEntry::CATEGORIES), ['usd_purchase', 'client_refund']);
 
         $data = $request->validate([
             'entry_date' => [$entry && ! $entry->entry_date ? 'nullable' : 'required', 'date'],

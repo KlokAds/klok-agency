@@ -6,6 +6,7 @@ import TaskForm from '@/components/TaskForm.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KAmount from '@/components/k/KAmount.vue';
 import KButton from '@/components/k/KButton.vue';
+import KDate from '@/components/k/KDate.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
@@ -76,6 +77,7 @@ const props = defineProps<{
         credit_left: number;
         daily_usd: number;
         days_left: number | null;
+        unearned: number;
     } | null;
     budget_days: {
         days: {
@@ -98,7 +100,7 @@ const props = defineProps<{
         due: number;
     }[];
     pilot: { days: number; accounts: PilotAccount[] } | null;
-    options: { users: Option[] };
+    options: { users: Option[]; wallets: Option[] };
 }>();
 
 // The client's ad accounts in Klok Pilot: last 1 / 7 / 30 days.
@@ -162,6 +164,23 @@ const clientOptions = computed<Option[]>(() => [
 ]);
 
 const can = computed(() => usePage().props.auth.can);
+
+// Unspent advance given back: the money goes out, the credit is 0.
+const refundOpen = ref(false);
+const refund = useForm({
+    entry_date: new Date().toISOString().slice(0, 10),
+    wallet: (props.options.wallets[0]?.value as string) ?? 'bank',
+    note: '',
+});
+const refundError = computed(
+    () => (refund.errors as Record<string, string | undefined>).refund,
+);
+function sendRefund(): void {
+    refund.post(`/clients/${props.client.id}/refund`, {
+        preserveScroll: true,
+        onSuccess: () => (refundOpen.value = false),
+    });
+}
 const f = computed(
     () =>
         props.figures ?? {
@@ -489,6 +508,19 @@ function print(): void {
                     </p>
                 </div>
             </div>
+            <div
+                v-if="
+                    credit &&
+                    credit.credit_left > 0 &&
+                    credit.unearned > 0 &&
+                    can['bdt.create']
+                "
+                class="mt-2 flex justify-end"
+            >
+                <KButton size="sm" variant="quiet" @click="refundOpen = true">{{
+                    t('বাকি credit ফেরত দিন')
+                }}</KButton>
+            </div>
             <p
                 v-if="credit && credit.credit_usd && credit.daily_usd"
                 class="mt-2 text-[12.5px] text-ink-3"
@@ -797,4 +829,43 @@ function print(): void {
         :client-id="client.id"
         :options="{ clients: clientOptions, users: options.users }"
     />
+    <KModal v-model="refundOpen" :title="t('বাকি credit ফেরত দিন')">
+        <p v-if="credit" class="text-[13.5px] text-ink-2">
+            {{
+                t(
+                    '{client}-এর {usd} credit খরচ হয়নি — যে দামে দিয়েছিল সেই দামে {bdt} ফেরত যাবে, আর credit হবে ০।',
+                    {
+                        client: client.name,
+                        usd: money(credit.credit_left, 'usd'),
+                        bdt: money(credit.unearned, 'bdt'),
+                    },
+                )
+            }}
+        </p>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <KField :label="t('তারিখ')" :error="refund.errors.entry_date">
+                <KDate v-model="refund.entry_date" />
+            </KField>
+            <KField :label="t('কোথা থেকে দিলেন')" :error="refund.errors.wallet">
+                <KSelect v-model="refund.wallet" :options="options.wallets" />
+            </KField>
+        </div>
+        <KField :label="t('Note')" optional class="mt-4">
+            <KInput v-model="refund.note" />
+        </KField>
+        <p v-if="refundError" class="mt-3 text-[12.5px] text-out">
+            {{ refundError }}
+        </p>
+        <template #footer>
+            <KButton variant="quiet" @click="refundOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                variant="primary"
+                :loading="refund.processing"
+                @click="sendRefund"
+                >{{ t('ফেরত লিখুন') }}</KButton
+            >
+        </template>
+    </KModal>
 </template>

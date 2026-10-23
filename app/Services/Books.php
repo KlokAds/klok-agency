@@ -318,8 +318,25 @@ class Books
             return $this->prepaid[$clientId];
         }
 
-        $tranches = $this->bdtEntries()->where('client_id', $clientId)->whereNotNull('usd_credit')
+        $withCredit = $this->bdtEntries()->where('client_id', $clientId)->whereNotNull('usd_credit');
+        $tranches = $withCredit->where('usd_credit', '>', 0)
             ->map(fn (BdtEntry $e) => ['usd' => (int) $e->usd_credit, 'bdt' => (int) $e->amount])->values()->all();
+
+        // Refunds give back unspent advance: the newest money first, at its own rate.
+        $refund = -(int) $withCredit->where('usd_credit', '<', 0)->sum('usd_credit');
+        $kept = [];
+        foreach (array_reverse($tranches) as $tranche) {
+            $take = min($refund, $tranche['usd']);
+            $refund -= $take;
+
+            if ($tranche['usd'] - $take > 0) {
+                array_unshift($kept, [
+                    'usd' => $tranche['usd'] - $take,
+                    'bdt' => $tranche['bdt'] - (int) round($tranche['bdt'] * $take / max(1, $tranche['usd'])),
+                ]);
+            }
+        }
+        $tranches = $kept;
         $rows = $this->usdEntries()->where('client_id', $clientId)->where('source', 'pilot');
 
         $credit = array_sum(array_column($tranches, 'usd'));

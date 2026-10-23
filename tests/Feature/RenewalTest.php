@@ -2,6 +2,7 @@
 
 use App\Mail\RenewalMail;
 use App\Models\Account;
+use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
@@ -315,4 +316,23 @@ it('extends a campaign from an ordinary invoice\'s advance line: its USD buys th
 
     $this->actingAs($this->owner)->post("/renewals/{$renewal->id}/approve")->assertRedirect();
     expect(collect($this->limits)->last()['new_end'])->toBe(now()->addDay()->addDays(7)->toDateString());
+});
+
+it('refunds the unspent advance at the rate it was paid, and the credit is 0', function () {
+    payGffs($this, '1500', '10');
+    $books = fn () => collect(app(Books::class)->clients())->firstWhere('id', $this->gffs->id);
+    expect($books()['credit_left'])->toBe(596)
+        ->and($books()['unearned'])->toBe(89400);
+
+    $this->actingAs($this->owner)->post("/clients/{$this->gffs->id}/refund", ['entry_date' => now()->toDateString(), 'wallet' => 'bank'])->assertRedirect();
+
+    $row = BdtEntry::where('category', 'client_refund')->sole();
+    expect($row->amount)->toBe(-89400)
+        ->and($row->usd_credit)->toBe(-596)
+        ->and($books()['credit_left'])->toBe(0)
+        ->and($books()['unearned'])->toBe(0)
+        ->and(app(Books::class)->summary()['equity_ok'])->toBeTrue();
+
+    // Nothing left: a second refund is refused; the ledger can't rewrite the row.
+    $this->actingAs($this->owner)->post("/clients/{$this->gffs->id}/refund", ['entry_date' => now()->toDateString(), 'wallet' => 'bank'])->assertSessionHasErrors('refund');
 });

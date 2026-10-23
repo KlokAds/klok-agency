@@ -119,6 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clients', [ClientController::class, 'index'])->middleware('can:clients.view')->name('clients.index');
     Route::get('clients/{client}', [ClientController::class, 'show'])->middleware('can:clients.view')->name('clients.show');
     Route::post('clients', [ClientController::class, 'store'])->middleware('can:clients.create')->name('clients.store');
+    Route::post('clients/{client}/refund', [ClientController::class, 'refund'])->middleware(['can:bdt.create', 'throttle:10,1'])->name('clients.refund');
     Route::put('clients/{client}', [ClientController::class, 'update'])->middleware('can:clients.edit')->name('clients.update');
     Route::delete('clients/{client}', [ClientController::class, 'destroy'])->middleware('can:clients.delete')->name('clients.destroy');
 

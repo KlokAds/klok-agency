@@ -12,11 +12,14 @@ use App\Models\PilotAccount;
 use App\Models\Task;
 use App\Models\UsdEntry;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Services\Books;
+use App\Services\CampaignBilling;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
 use App\Support\InvoiceView;
 use App\Support\Lookups;
+use App\Support\Money;
 use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -125,6 +128,7 @@ class ClientController extends Controller
             'pilot' => $this->pilotReports($client, $request->integer('pilot_days', 7)),
             'options' => [
                 'users' => User::visible()->where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
+                'wallets' => Lookups::wallets(),
             ],
         ]);
     }
@@ -183,6 +187,42 @@ class ClientController extends Controller
                 ...$pilot->report($a, $days),
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Gives the client back the advance their campaigns did not spend: the
+     * taka it was paid at leaves a money place, and their credit is 0.
+     */
+    public function refund(Request $request, Client $client, Books $books, CampaignBilling $billing): RedirectResponse
+    {
+        $data = $request->validate([
+            'entry_date' => ['required', 'date', 'before_or_equal:today'],
+            'wallet' => ['required', Rule::in(Wallet::keys())],
+            'note' => ['nullable', 'string', 'max:300'],
+        ]);
+        $figure = collect($books->clients())->firstWhere('id', $client->id);
+        $left = (int) ($figure['credit_left'] ?? 0);
+        $bdt = (int) ($figure['unearned'] ?? 0);
+
+        if ($left <= 0 || $bdt <= 0) {
+            throw ValidationException::withMessages(['refund' => __('ফেরত দেওয়ার মতো credit বাকি নেই।')]);
+        }
+
+        BdtEntry::create([
+            'entry_date' => $data['entry_date'],
+            'description' => $client->name.' — unspent ad credit refunded',
+            'category' => 'client_refund',
+            'client_id' => $client->id,
+            'wallet' => $data['wallet'],
+            'amount' => -$bdt,
+            'usd_credit' => -$left,
+            'notes' => $data['note'] ?? null,
+        ]);
+        $billing->fund($client->id);
+
+        $this->toast(__(':client-কে :amount ফেরত লেখা হয়েছে — credit এখন ০।', ['client' => $client->name, 'amount' => Money::bdt($bdt)]));
+
+        return back();
     }
 
     public function store(Request $request): RedirectResponse

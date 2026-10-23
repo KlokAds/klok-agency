@@ -36,13 +36,15 @@ class BdtEntry extends Model
         'client_payment' => ['label' => 'Client পেমেন্ট', 'sign' => 1, 'group' => 'revenue'], // i18n
         'service_income' => ['label' => 'Service আয়', 'sign' => 1, 'group' => 'revenue'], // i18n
         'other_income' => ['label' => 'অন্যান্য আয়', 'sign' => 1, 'group' => 'revenue'], // i18n
+        // Unspent advance given back: the money and the client's dollars both come down.
+        'client_refund' => ['label' => 'Client-কে ফেরত', 'sign' => -1, 'group' => 'revenue'], // i18n
         'expense' => ['label' => 'ব্যবসার খরচ', 'sign' => -1, 'group' => 'expense'], // i18n
         'salary' => ['label' => 'বেতন', 'sign' => -1, 'group' => 'expense'], // i18n
     ];
 
     public const SALARY_KINDS = ['salary' => 'বেতন', 'advance' => 'Advance', 'bonus' => 'Bonus']; // i18n
 
-    public const REVENUE = ['client_payment', 'service_income', 'other_income'];
+    public const REVENUE = ['client_payment', 'service_income', 'other_income', 'client_refund'];
 
     public const EXPENSE = ['expense', 'salary'];
 
