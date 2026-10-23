@@ -105,7 +105,7 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
         "
     />
 
-    <div class="mb-4 grid max-w-xl gap-3 sm:grid-cols-2">
+    <div class="mb-4 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
         <KSelect
             v-model="filters.user_id"
             :options="users"
@@ -128,7 +128,7 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
             <li
                 v-for="a in activities.data"
                 :key="a.id"
-                class="grid gap-2 px-5 py-4 sm:grid-cols-[180px_1fr] sm:px-6"
+                class="grid grid-cols-1 gap-2 px-5 py-4 sm:grid-cols-[180px_1fr] sm:px-6"
             >
                 <div>
                     <p class="text-[13.5px] font-semibold">{{ a.by }}</p>
@@ -155,7 +155,7 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
                     </p>
                     <dl
                         v-if="diff(a).length"
-                        class="mt-2 grid gap-x-4 gap-y-1 text-[12.5px] sm:grid-cols-[140px_1fr]"
+                        class="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[12.5px] sm:grid-cols-[140px_1fr]"
                     >
                         <template v-for="d in diff(a)" :key="d.key">
                             <dt class="num text-ink-3">{{ d.key }}</dt>

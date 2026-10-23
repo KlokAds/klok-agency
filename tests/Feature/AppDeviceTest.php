@@ -50,7 +50,7 @@ test('only the owner can make a phone the SMS forwarder', function () {
         ->assertJson(['status' => 'ignored']);
 });
 
-test('a payment SMS no invoice takes tells the owners', function () {
+test('a payment SMS no invoice takes tells whoever keeps the money book, not the Owner', function () {
     Setting::put('sms_device_token', Hash::make('device-secret-0123456789'));
 
     $this->postJson(route('hooks.sms', 'device-secret-0123456789'), [
@@ -58,9 +58,9 @@ test('a payment SMS no invoice takes tells the owners', function () {
         'text' => 'You have received Tk 777.00 from 01712345678. TrxID NOMATCH777 at 20/10/2026 14:23',
     ])->assertOk();
 
-    expect($this->owner->notifications()->count())->toBe(1)
-        ->and($this->owner->notifications()->first()->data['title'] ?? null)->toBe(SmsHookController::UNMATCHED_TITLE)
-        ->and($this->accountant->notifications()->count())->toBe(0);
+    expect($this->accountant->notifications()->count())->toBe(1)
+        ->and($this->accountant->notifications()->first()->data['title'] ?? null)->toBe(SmsHookController::UNMATCHED_TITLE)
+        ->and($this->owner->notifications()->count())->toBe(0);
 });
 
 test('signing in in one place signs that person out everywhere else', function () {

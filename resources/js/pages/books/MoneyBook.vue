@@ -230,7 +230,7 @@ function saveRename(): void {
 
     <!-- Totals -->
     <section
-        class="mb-4 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
+        class="mb-4 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">
@@ -342,7 +342,7 @@ function saveRename(): void {
         </div>
     </section>
 
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <!-- Rows -->
         <section class="panel min-w-0 overflow-hidden">
             <KEmpty

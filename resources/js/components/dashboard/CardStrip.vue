@@ -52,7 +52,9 @@ const meter = computed(() => {
 
 <template>
     <section class="panel overflow-hidden">
-        <div class="grid lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        <div
+            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"
+        >
             <!-- The card: one hero figure and how it splits -->
             <div class="p-5 sm:p-7">
                 <div class="flex items-center justify-between gap-3">
@@ -105,7 +107,9 @@ const meter = computed(() => {
                     />
                 </div>
 
-                <dl class="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                <dl
+                    class="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2"
+                >
                     <div>
                         <dt
                             class="flex items-center gap-2 text-[13px] text-ink-2"

@@ -37,7 +37,9 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                 />
                 {{ t('USD: কেনা − খরচ = হাতে থাকা dollar') }}
             </p>
-            <div class="mt-2 grid gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2">
+            <div
+                class="mt-2 grid grid-cols-1 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2"
+            >
                 <dl class="space-y-1">
                     <div class="flex justify-between gap-3">
                         <dt class="text-ink-2">{{ t('মোট কেনা') }}</dt>
@@ -125,7 +127,9 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                     )
                 }}
             </p>
-            <div class="mt-2 grid gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2">
+            <div
+                class="mt-2 grid grid-cols-1 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2"
+            >
                 <dl class="space-y-1">
                     <div class="flex justify-between gap-3">
                         <dt class="text-ink-2">{{ t('BDT হাতে') }}</dt>

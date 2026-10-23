@@ -333,7 +333,7 @@ onMounted(() => {
         "
     />
 
-    <div v-else class="grid gap-4 lg:grid-cols-2">
+    <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <article
             v-for="run in runs.data"
             :id="`run-${run.id}`"

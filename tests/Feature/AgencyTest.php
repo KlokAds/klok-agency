@@ -120,7 +120,7 @@ it('brings a repeating task back after it is done', function () {
         ->and($next->due_at->toDateString())->toBe(now()->addHour()->addWeek()->toDateString());
 });
 
-it('reminds the person a task is given to and the owner', function () {
+it('reminds the person a task is given to, and the owner only when they follow tasks', function () {
     $staff = User::factory()->create();
     $staff->assignRole('Accountant');
 
@@ -130,7 +130,7 @@ it('reminds the person a task is given to and the owner', function () {
     app(Ticker::class)->run();
 
     expect($staff->notifications()->where('data->kind', 'task')->count())->toBe(1)
-        ->and($this->owner->notifications()->where('data->kind', 'task')->count())->toBe(1);
+        ->and($this->owner->notifications()->where('data->kind', 'task')->count())->toBe(0);
 
     $this->actingAs($staff)->getJson('/notifications/feed')->assertJsonPath('items.0.kind', 'task');
     $this->actingAs($staff)->post('/notifications/read-all')->assertRedirect();

@@ -299,7 +299,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                     </div>
 
                     <div
-                        class="mt-6 grid gap-3 rounded-xl bg-sunken px-5 py-4 text-[13.5px] sm:grid-cols-3"
+                        class="mt-6 grid grid-cols-1 gap-3 rounded-xl bg-sunken px-5 py-4 text-[13.5px] sm:grid-cols-3"
                     >
                         <div>
                             <p class="text-[12px] text-ink-3">

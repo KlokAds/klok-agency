@@ -200,7 +200,7 @@ const needsDirection = computed(() =>
 
     <!-- Filters -->
     <section
-        class="panel no-print mb-4 grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:p-4"
+        class="panel no-print mb-4 grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:p-4"
     >
         <KInput
             v-model="filters.q"

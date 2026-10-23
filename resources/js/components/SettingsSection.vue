@@ -8,7 +8,7 @@ defineProps<{ title: string; description?: string; icon?: string }>();
 
 <template>
     <section
-        class="grid gap-4 border-b border-line py-8 first:pt-2 last:border-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10"
+        class="grid grid-cols-1 gap-4 border-b border-line py-8 first:pt-2 last:border-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10"
     >
         <div>
             <h2 class="flex items-center gap-2 text-[15px] font-semibold">

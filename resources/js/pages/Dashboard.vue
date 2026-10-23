@@ -223,7 +223,7 @@ const greeting =
         </div>
     </section>
 
-    <div class="mt-5 grid gap-5 xl:grid-cols-[1fr_1fr]">
+    <div class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
         <ChecksPanel :summary="summary" />
 
         <!-- Month by month -->

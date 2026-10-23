@@ -34,7 +34,7 @@ defineProps<{
         "
     />
 
-    <div class="grid gap-6 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <section v-for="p in platforms" :key="p.id" class="panel flex flex-col">
             <div class="p-5 sm:p-6">
                 <h2 class="text-[17px] font-bold">{{ p.name }}</h2>

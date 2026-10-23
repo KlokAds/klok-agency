@@ -261,7 +261,7 @@ function print(): void {
     </PageHeader>
 
     <div
-        class="mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
+        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('Ad খরচ (settled)') }}</p>
@@ -472,7 +472,7 @@ function print(): void {
             </li>
         </ul>
     </section>
-    <div class="no-print mb-6 grid gap-6 lg:grid-cols-2">
+    <div class="no-print mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section class="panel p-5 sm:p-6">
             <div class="flex items-baseline justify-between">
                 <h2 class="text-[16px] font-bold">Campaign</h2>
@@ -843,7 +843,7 @@ function print(): void {
                 )
             }}
         </p>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <KField :label="t('তারিখ')" :error="refund.errors.entry_date">
                 <KDate v-model="refund.entry_date" />
             </KField>

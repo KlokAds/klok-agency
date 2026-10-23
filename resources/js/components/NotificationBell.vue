@@ -87,11 +87,17 @@ function opened(item: Notice): void {
 }
 
 let timer: number | undefined;
+// Read or removed elsewhere (the notifications page, a tap on the phone): count again now.
+const refresh = () => void load();
 onMounted(() => {
     void load();
     timer = window.setInterval(() => void load(), 60_000);
+    window.addEventListener('notifications:changed', refresh);
 });
-onBeforeUnmount(() => window.clearInterval(timer));
+onBeforeUnmount(() => {
+    window.clearInterval(timer);
+    window.removeEventListener('notifications:changed', refresh);
+});
 
 const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
 </script>

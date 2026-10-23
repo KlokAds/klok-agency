@@ -58,6 +58,12 @@ class MailSettings
         ];
     }
 
+    /** Whether a mailbox to send from is saved (email notifications need one). */
+    public static function ready(): bool
+    {
+        return (string) Setting::get('smtp_username', '') !== '' && filled(Setting::get('smtp_password'));
+    }
+
     /** Points Laravel's mailer at the saved mailbox, if one is saved. */
     public static function apply(): void
     {

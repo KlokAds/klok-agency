@@ -13,6 +13,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { useIdleLogout } from '@/composables/useIdleLogout';
 import { usePopover } from '@/composables/usePopover';
 import { locale, switchLocale, t } from '@/lib/i18n';
+import { postJson } from '@/lib/http';
 import { drop, forgetPages, offline, startOffline } from '@/lib/offline';
 import { quickOpen } from '@/lib/quick-entry';
 import { sectionOf } from '@/lib/sections';
@@ -166,12 +167,37 @@ async function logout(): Promise<void> {
 }
 
 // No internet: pages already opened still open; quick entries wait on the phone.
-onMounted(() =>
+onMounted(() => {
     startOffline(
         () => user.value?.id ?? null,
         () => router.reload(),
-    ),
-);
+    );
+    markOpenedNotice();
+});
+router.on('navigate', () => markOpenedNotice());
+
+/**
+ * Opened from a phone notification (…?n=<id>): that notification is read here
+ * too, and the address loses the n= again.
+ */
+function markOpenedNotice(): void {
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get('n');
+
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+        return;
+    }
+
+    url.searchParams.delete('n');
+    window.history.replaceState(
+        window.history.state,
+        '',
+        url.pathname + url.search + url.hash,
+    );
+    void postJson(`/notifications/${id}/read`)
+        .then(() => window.dispatchEvent(new Event('notifications:changed')))
+        .catch(() => undefined);
+}
 const mine = computed(() =>
     offline.waiting.filter((w) => w.user === user.value?.id),
 );

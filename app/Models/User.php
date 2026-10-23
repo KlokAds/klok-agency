@@ -31,6 +31,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $remember_token
  * @property bool $is_active
  * @property bool $is_hidden the agency's own super admin: left out of lists and pickers
+ * @property array<string, array{on?: bool, push?: bool, email?: bool}>|null $notify_prefs how each notification group comes (Notifier)
  * @property bool $must_change_password
  * @property CarbonImmutable|null $last_login_at
  * @property-read Collection<int, Role> $roles
@@ -74,6 +75,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'last_login_at' => 'datetime',
             'is_active' => 'boolean',
             'is_hidden' => 'boolean',
+            'notify_prefs' => 'array',
             'must_change_password' => 'boolean',
         ];
     }

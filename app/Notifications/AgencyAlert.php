@@ -2,8 +2,12 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
 use App\Notifications\Channels\AppChannel;
 use App\Services\MetaReceipts;
+use App\Services\Notifier;
+use App\Support\MailSettings;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -30,10 +34,42 @@ class AgencyAlert extends Notification
         public array $extra = [],
     ) {}
 
-    /** @return list<string> */
+    /**
+     * The bell always; the phone and email as the reader chose for this group
+     * (an important one rings the phone of whoever gets it). Who gets it at all
+     * is Notifier's business.
+     *
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
-        return ['database', AppChannel::class];
+        $channels = ['database'];
+
+        if (! $notifiable instanceof User) {
+            return [...$channels, AppChannel::class];
+        }
+
+        $prefs = Notifier::prefs($notifiable, $this->group());
+        if ($prefs['push'] || ! empty($this->extra['important'])) {
+            $channels[] = AppChannel::class;
+        }
+        if ($prefs['email'] && filled($notifiable->email) && MailSettings::ready()) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    /** The same notification as a short email, in the reader's language, with a link to act on it. */
+    public function toMail(object $notifiable): MailMessage
+    {
+        $app = $this->toApp($notifiable);
+
+        return (new MailMessage)
+            ->subject($app['title'])
+            ->greeting($app['title'])
+            ->line((string) ($app['body'] ?? ''))
+            ->action(__('Klok Finance-এ দেখুন', [], (string) ($notifiable->locale ?? 'bn')), url($app['url'] ?? '/notifications'));
     }
 
     /** @return array<string, mixed> */
@@ -60,11 +96,30 @@ class AgencyAlert extends Notification
         return [
             'title' => $fill(__($this->title, [], $locale)),
             'body' => $this->body !== null ? $fill(__($this->body, [], $locale)) : null,
-            'url' => isset($this->extra['url']) ? (string) $this->extra['url'] : null,
+            // Tapping it on the phone opens the page and marks this one read on the web too (?n=).
+            'url' => self::withId(isset($this->extra['url']) ? (string) $this->extra['url'] : '/notifications', $this->id),
             'level' => $this->level(),
             'tag' => $this->kind.':'.md5($this->title.json_encode($this->params)),
             'kind' => $this->kind,
         ];
+    }
+
+    /** Which group of Notifier::GROUPS this kind belongs to (who acts on it). */
+    public function group(): string
+    {
+        return match (true) {
+            in_array($this->kind, ['invoice_paid', 'invoice_claim', 'invoice_overdue', 'sms_unmatched'], true) => 'money',
+            in_array($this->kind, ['credit_out', 'ended', 'pilot_down', 'campaign_changed'], true), str_starts_with($this->kind, 'renewal') => 'ads',
+            str_starts_with($this->kind, 'did_') => 'activity',
+            in_array($this->kind, ['card_low', 'meta_receipt'], true) => 'dollars',
+            $this->kind === 'summary' => 'summary',
+            default => 'tasks',
+        };
+    }
+
+    public static function withId(string $url, string $id): string
+    {
+        return $url.(str_contains($url, '?') ? '&' : '?').'n='.$id;
     }
 
     public function level(): string

@@ -381,7 +381,7 @@ const clients = computed(() => {
             <TrendChart :rows="trend" />
         </section>
 
-        <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_1.25fr]">
+        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.25fr]">
             <!-- Expense breakdown -->
             <section class="panel p-5 sm:p-6">
                 <div class="flex items-baseline justify-between gap-3">
@@ -532,7 +532,7 @@ const clients = computed(() => {
         <!-- Not profit -->
         <h2 class="eyebrow mt-8 mb-2.5">{{ t('লাভ নয় — মনে রাখুন') }}</h2>
         <section
-            class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
+            class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
         >
             <div class="bg-surface p-5">
                 <p class="eyebrow">{{ t('Client-দের আগাম টাকা') }}</p>

@@ -186,7 +186,7 @@ const wallets = [
             >
                 <KTextarea v-model="values['pay_business_address']" :rows="2" />
             </KField>
-            <div class="grid gap-5 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <KField
                     :label="t('ফোন')"
                     optional
@@ -354,7 +354,10 @@ const wallets = [
             icon="dollar"
         >
             <KSwitch v-model="flags['pay_bank_on']" label="Bank / NPSB" />
-            <div v-if="flags['pay_bank_on']" class="grid gap-5 sm:grid-cols-2">
+            <div
+                v-if="flags['pay_bank_on']"
+                class="grid grid-cols-1 gap-5 sm:grid-cols-2"
+            >
                 <KField :label="t('ব্যাংক')" :error="err('pay_bank_name')">
                     <KInput v-model="values['pay_bank_name']" />
                 </KField>
@@ -520,7 +523,7 @@ const wallets = [
             "
             icon="chart"
         >
-            <div class="grid gap-5 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <KField
                     :label="t('Commission (%)')"
                     :hint="

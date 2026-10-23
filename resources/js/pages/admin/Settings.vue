@@ -153,7 +153,7 @@ onMounted(() => {
             "
             icon="scale"
         >
-            <div class="grid gap-5 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <KField
                     :label="t('MFS থেকে বের করলে fee (%)')"
                     :error="form.errors.mfs_out_percent"
@@ -270,7 +270,9 @@ onMounted(() => {
             "
             icon="mail"
         >
-            <div class="grid gap-5 sm:grid-cols-[minmax(0,1fr)_160px]">
+            <div
+                class="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_160px]"
+            >
                 <KField label="SMTP host" :error="mailForm.errors.host">
                     <KInput v-model="mailForm.host" :disabled="!editable" />
                 </KField>
@@ -282,7 +284,7 @@ onMounted(() => {
                     />
                 </KField>
             </div>
-            <div class="grid gap-5 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <KField
                     :label="t('Mailbox (email)')"
                     :error="mailForm.errors.username"
@@ -346,7 +348,7 @@ onMounted(() => {
                         )
                     }}
                 </p>
-                <div class="mt-4 grid gap-5 sm:grid-cols-2">
+                <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <KField
                         :label="t('Mailbox (email)')"
                         optional
@@ -423,7 +425,7 @@ onMounted(() => {
                         : t('অবস্থা জানতে “আবার দেখুন” চাপুন।')
                 }}
             </p>
-            <div v-if="update" class="grid gap-3 sm:grid-cols-2">
+            <div v-if="update" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="rounded-lg border border-line px-4 py-3">
                     <p class="eyebrow">{{ t('এখন চলছে') }}</p>
                     <p v-if="update.current" class="mt-1 text-[13.5px]">

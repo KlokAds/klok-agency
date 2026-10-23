@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Models\Task;
 use App\Notifications\AgencyAlert;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Everything time-based, run every few minutes: by the scheduler, by the
@@ -41,6 +42,7 @@ class Ticker
             $this->metaReceipts();
             $this->overdueInvoices();
             $this->cardLow();
+            $this->pruneNotifications();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
             return compact('ended', 'reminders', 'summary');
@@ -68,6 +70,14 @@ class Ticker
                     'error' => mb_substr($e->getMessage(), 0, 160),
                 ], ['url' => '/campaigns']));
             }
+        }
+    }
+
+    /** Once a day: notifications read more than 60 days ago go (the activity log keeps the record). */
+    private function pruneNotifications(): void
+    {
+        if (Cache::add('notifications-pruned:'.now()->toDateString(), true, 86400)) {
+            rescue(fn () => DB::table('notifications')->whereNotNull('read_at')->where('read_at', '<', now()->subDays(60))->delete());
         }
     }
 

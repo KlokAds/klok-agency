@@ -97,7 +97,7 @@ const showOptions = computed<Option[]>(() => [
     </PageHeader>
 
     <div
-        class="mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
+        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('মোট margin') }}</p>

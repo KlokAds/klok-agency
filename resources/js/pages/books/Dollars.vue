@@ -142,7 +142,7 @@ function saveAccount(): void {
 
     <!-- The card -->
     <section
-        class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
+        class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
             <p class="text-[12.5px] font-medium text-rail-dim">
@@ -230,7 +230,7 @@ function saveAccount(): void {
         >
     </div>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-2">
+    <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <!-- FX batches -->
         <section class="panel min-w-0 p-5 sm:p-6">
             <div class="flex items-baseline justify-between gap-3">
@@ -380,7 +380,7 @@ function saveAccount(): void {
                     >{{ t('যোগ') }}</KButton
                 >
             </div>
-            <ul class="mt-3 grid gap-x-8 sm:grid-cols-2">
+            <ul class="mt-3 grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                 <li
                     v-for="a in accounts"
                     :key="a.id"

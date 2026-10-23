@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\UsdEntry;
+use App\Notifications\AgencyAlert;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,43 @@ class CampaignBilling
     /** How far back each sync re-reads spend (Meta adjusts recent days). */
     public const LOOKBACK_DAYS = 35;
 
+    public const CHANGED_TITLE = 'Campaign বদলেছে — budget, শেষের তারিখ বা চালু/বন্ধ'; // i18n
+
     public function __construct(private PilotClient $pilot) {}
+
+    /**
+     * What changed on a campaign Pilot just reported, in plain words: the daily
+     * budget, the end date (an extension), on or off. Pauses the credit guard
+     * made itself are left out — they have their own notification.
+     *
+     * @return list<string>
+     */
+    public static function changes(Campaign $campaign): array
+    {
+        $out = [];
+        $usd = fn (?int $cents) => $cents === null ? '—' : '$'.number_format($cents / 100, 2);
+        $day = fn ($at) => $at === null ? __('শেষ নেই') : CarbonImmutable::parse($at)->format('j M');
+
+        if ($campaign->isDirty('daily_budget')) {
+            $out[] = __('দৈনিক budget :from → :to', ['from' => $usd($campaign->getOriginal('daily_budget')), 'to' => $usd($campaign->daily_budget)]);
+        }
+
+        if ($campaign->isDirty('stop_at') && $day($campaign->getOriginal('stop_at')) !== $day($campaign->stop_at)) {
+            $out[] = __('শেষ :from → :to', ['from' => $day($campaign->getOriginal('stop_at')), 'to' => $day($campaign->stop_at)]);
+        }
+
+        if ($campaign->isDirty('status')) {
+            $was = in_array($campaign->getOriginal('status'), Campaign::LIVE, true);
+            $now = in_array($campaign->status, Campaign::LIVE, true);
+            $byGuard = $campaign->paused_for_credit_at !== null && $campaign->paused_for_credit_at->gt(now()->subHours(2));
+
+            if ($was !== $now && ! (! $now && $byGuard)) {
+                $out[] = $now ? __('আবার চালু') : __('বন্ধ (paused)');
+            }
+        }
+
+        return $out;
+    }
 
     /**
      * Copies one ad account's campaigns in from Pilot (name, status, spend so far).
@@ -58,8 +95,21 @@ class CampaignBilling
                 'last_spend_day' => $c['last_spend_day'] ?? null,
             ]);
 
+            $changes = $campaign->exists ? self::changes($campaign) : [];
+
             if ($campaign->isDirty()) {
                 $campaign->saveQuietly();
+            }
+
+            // A client's campaign changed on Meta (budget, end date, on/off): the people who run
+            // the ads and keep the client's money hear what changed.
+            if ($changes !== [] && $campaign->client_id !== null) {
+                $campaign->loadMissing('client');
+                app(Notifier::class)->send($campaign->client?->manager_id, new AgencyAlert('campaign_changed', self::CHANGED_TITLE, '{client} · {campaign}: {changes}', [
+                    'client' => $campaign->client?->name,
+                    'campaign' => $campaign->name,
+                    'changes' => implode(' · ', $changes),
+                ], ['url' => '/campaigns']));
             }
 
             $count++;

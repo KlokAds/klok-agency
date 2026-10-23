@@ -331,7 +331,9 @@ const errorAt = (index: number, field: string) =>
         @submit.prevent="save"
     >
         <div class="flex min-w-0 flex-col gap-6">
-            <section class="panel grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
+            <section
+                class="panel grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:p-6"
+            >
                 <KField
                     label="Client"
                     :error="form.errors.client_id"
@@ -375,7 +377,7 @@ const errorAt = (index: number, field: string) =>
                     }}
                 </p>
                 <div
-                    class="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+                    class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
                 >
                     <KField :label="t('থেকে')">
                         <KDate v-model="period.from" :max="period.to" />

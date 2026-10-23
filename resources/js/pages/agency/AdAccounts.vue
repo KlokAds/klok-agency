@@ -163,7 +163,7 @@ function live(status: string | null): boolean {
 
     <div
         v-else
-        class="grid gap-6 transition-opacity xl:grid-cols-2"
+        class="grid grid-cols-1 gap-6 transition-opacity xl:grid-cols-2"
         :class="loading ? 'opacity-50' : ''"
     >
         <section

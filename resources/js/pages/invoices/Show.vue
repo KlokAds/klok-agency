@@ -459,7 +459,7 @@ const PAY_STATUS: Record<
         >
             {{ share.text }}
         </p>
-        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+        <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <a
                 :href="share.whatsapp"
                 target="_blank"
@@ -497,7 +497,7 @@ const PAY_STATUS: Record<
         :title="pay.payment_id ? t('দাবি মিলিয়ে নিন') : t('পেমেন্ট লিখুন')"
         :subtitle="invoice.number"
     >
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <KField :label="t('কীভাবে')" :error="pay.errors.method">
                 <KSelect v-model="pay.method" :options="options.methods" />
             </KField>

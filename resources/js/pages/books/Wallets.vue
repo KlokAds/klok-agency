@@ -331,7 +331,7 @@ async function removeMove(move: Move): Promise<void> {
     </PageHeader>
 
     <section
-        class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
+        class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
         <div
             v-for="p in wallets.places"
@@ -422,7 +422,7 @@ async function removeMove(move: Move): Promise<void> {
         </span>
     </div>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+    <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
         <section class="panel overflow-hidden">
             <div class="px-5 pt-5 sm:px-6">
                 <div class="flex flex-wrap items-center justify-between gap-3">

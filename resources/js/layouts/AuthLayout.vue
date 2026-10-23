@@ -7,7 +7,7 @@ defineProps<{ title?: string; description?: string }>();
 </script>
 
 <template>
-    <div class="grid min-h-dvh bg-paper lg:grid-cols-[1.05fr_1fr]">
+    <div class="grid min-h-dvh grid-cols-1 bg-paper lg:grid-cols-[1.05fr_1fr]">
         <!-- Ledger panel -->
         <section
             class="relative hidden overflow-hidden bg-rail p-12 text-rail-ink lg:flex lg:flex-col"

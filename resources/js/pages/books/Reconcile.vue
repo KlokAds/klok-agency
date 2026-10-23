@@ -57,7 +57,7 @@ const diff = computed(() =>
         "
     />
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.2fr]">
         <section class="panel p-5 sm:p-6">
             <dl class="grid grid-cols-2 gap-4">
                 <div>

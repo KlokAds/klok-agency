@@ -216,7 +216,7 @@ function sync(): void {
     <template v-else>
         <section class="panel mb-4 p-4 sm:p-5">
             <div
-                class="grid gap-3 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]"
+                class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]"
             >
                 <KSelect
                     v-model="filters.account"

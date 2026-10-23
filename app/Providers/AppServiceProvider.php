@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\ActivityAlerts;
 use App\Support\Access;
 use App\Support\MailSettings;
 use Carbon\CarbonImmutable;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
 
         // The mailbox saved in Settings, once something is about to send mail.
         $this->app->resolving('mail.manager', fn () => rescue(fn () => MailSettings::apply(), report: false));
+
+        // Every change a person makes is in the activity log; the ones worth knowing become
+        // quiet notifications for whoever follows them (see ActivityAlerts).
+        Activity::created(fn (Activity $activity) => app(ActivityAlerts::class)->handle($activity));
 
         // The Owner role can do everything; other roles go through permissions.
         Gate::before(fn ($user) => $user->hasRole(Access::OWNER) ? true : null);

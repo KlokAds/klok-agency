@@ -92,14 +92,18 @@ object SmsForwarder {
         WorkManager.getInstance(context).enqueueUniqueWork(WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
-    /** @return true when the queue is empty afterwards. */
-    fun flush(context: Context): Boolean {
+    /**
+     * @param quick the try made the moment an SMS arrives: short timeouts, to finish inside the
+     *              few seconds Android gives a receiver.
+     * @return true when the queue is empty afterwards.
+     */
+    fun flush(context: Context, quick: Boolean = false): Boolean {
         val target = url(context) ?: return true
         val items = read(context)
         for (i in 0 until items.length()) {
             val item = items.getJSONObject(i)
             val status = try {
-                post(target, JSONObject()
+                post(target, quick, JSONObject()
                     .put("from", item.getString("from"))
                     .put("text", item.getString("text"))
                     .put("receivedStamp", item.getLong("at")))
@@ -122,12 +126,12 @@ object SmsForwarder {
         return read(context).length() == 0
     }
 
-    private fun post(target: String, body: JSONObject): Int {
+    private fun post(target: String, quick: Boolean, body: JSONObject): Int {
         val connection = URL(target).openConnection() as HttpURLConnection
         try {
             connection.requestMethod = "POST"
-            connection.connectTimeout = 15000
-            connection.readTimeout = 20000
+            connection.connectTimeout = if (quick) 4000 else 15000
+            connection.readTimeout = if (quick) 5000 else 20000
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Accept", "application/json")
@@ -163,8 +167,22 @@ class SmsReceiver : BroadcastReceiver() {
         for ((from, text) in bySender) {
             queued = SmsForwarder.enqueue(context, from, text.toString(), at) || queued
         }
-        if (queued) {
-            SmsForwarder.schedule(context)
+        if (!queued) {
+            return
         }
+        // Sent at once, while Android lets this receiver run (about ten seconds); whatever
+        // could not go — no internet, server slow — waits for WorkManager, so nothing is lost.
+        // WorkManager first, so even if Android stops us mid-way it still goes; the server books
+        // each SMS once, so sending it twice does no harm.
+        SmsForwarder.schedule(context)
+        val pending = goAsync()
+        Thread {
+            try {
+                SmsForwarder.flush(context, quick = true)
+            } catch (_: Throwable) {
+            } finally {
+                pending.finish()
+            }
+        }.start()
     }
 }

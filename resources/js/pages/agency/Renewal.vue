@@ -94,7 +94,9 @@ const willEnd = computed(() => {
         >
     </PageHeader>
 
-    <div class="grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div
+        class="grid max-w-5xl grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
+    >
         <div class="flex flex-col gap-5">
             <!-- Waiting for the OK -->
             <section

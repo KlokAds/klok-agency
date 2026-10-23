@@ -179,6 +179,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notifications/feed', [NotificationController::class, 'feed'])->middleware('throttle:60,1')->name('notifications.feed');
     Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('notifications/clear', [NotificationController::class, 'clear'])->name('notifications.clear');
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('platforms', PlatformController::class)->middleware('can:platforms.view')->name('platforms.index');
 
