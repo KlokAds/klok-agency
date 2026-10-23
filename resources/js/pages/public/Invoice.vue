@@ -22,7 +22,8 @@ type Method = {
     label: string;
     number?: string;
     type?: string;
-    image?: string;
+    image?: string | null;
+    dynamic?: boolean;
     merchant?: string;
     bank?: string;
     branch?: string;
@@ -38,9 +39,11 @@ type State = {
     due: number;
     payable: boolean;
     auto: boolean;
+    allow_partial: boolean;
     session: {
         method: string;
         amount: number;
+        qr: string | null;
         extra: number;
         seconds_left: number;
     } | null;
@@ -135,6 +138,11 @@ onBeforeUnmount(() => {
 });
 
 const payer = ref('');
+// An invoice that allows part payments: how much to pay now (taka; empty = all that is due).
+const payNow = ref('');
+// The taka sign, from its code (the file keeps Bangla text only inside t()).
+const takaSign = String.fromCharCode(0x09f3);
+const payNowError = ref<string | null>(null);
 
 async function start(key: string): Promise<void> {
     chosen.value = key;
@@ -146,15 +154,26 @@ async function start(key: string): Promise<void> {
 
     busy.value = true;
     try {
+        payNowError.value = null;
         state.value = await postJson<State>(`${base}/pay`, {
             method: key,
             payer: payer.value || null,
+            amount:
+                state.value.allow_partial && payNow.value.trim() !== ''
+                    ? payNow.value.replace(/,/g, '')
+                    : null,
         });
     } catch (e) {
+        if (e instanceof HttpError && e.errors.amount) {
+            payNowError.value = e.errors.amount[0];
+            chosen.value = null;
+        }
         error.value =
             e instanceof HttpError && e.errors.payer
                 ? e.errors.payer[0]
-                : t('এখন শুরু করা গেল না — একটু পরে আবার চেষ্টা করুন।');
+                : e instanceof HttpError && e.errors.amount
+                  ? null
+                  : t('এখন শুরু করা গেল না — একটু পরে আবার চেষ্টা করুন।');
     } finally {
         busy.value = false;
     }
@@ -367,14 +386,29 @@ const STATUS_WORD: Record<string, string> = {
                         >
                     </div>
                     <div
-                        v-else-if="sessionMethod.image"
+                        v-else-if="state.session.qr || sessionMethod.image"
                         class="mt-3 rounded-xl border border-line p-4 text-center"
                     >
+                        <!-- Made for this payment: the amount is in the QR and the payer's app locks it. -->
                         <img
-                            :src="sessionMethod.image"
+                            :src="state.session.qr ?? sessionMethod.image ?? ''"
                             alt="Bangla QR"
-                            class="mx-auto w-full max-w-[240px] rounded-lg bg-white p-2"
+                            class="mx-auto w-full max-w-[260px] rounded-xl bg-white"
+                            :class="state.session.qr ? '' : 'p-2'"
                         />
+                        <p
+                            v-if="state.session.qr"
+                            class="mt-2 flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-brand-ink"
+                        >
+                            <KIcon name="lock" :size="13" />{{
+                                t(
+                                    'QR-এ {amount} বসানো আছে — scan করলে নিজে থেকে আসবে',
+                                    {
+                                        amount: bdt(state.session.amount),
+                                    },
+                                )
+                            }}
+                        </p>
                         <p
                             v-if="sessionMethod.merchant"
                             class="mt-2 text-[12.5px] text-ink-2"
@@ -553,7 +587,29 @@ const STATUS_WORD: Record<string, string> = {
                         }}
                     </p>
 
-                    <div v-else class="mt-4 grid grid-cols-2 gap-2">
+                    <!-- Part payment, when the invoice allows it: the client says how much first. -->
+                    <div v-if="state.allow_partial && keys.length" class="mt-4">
+                        <KField
+                            :label="t('এখন কত দেবেন?')"
+                            :hint="
+                                t('খালি রাখলে পুরো বাকি {due}। কমপক্ষে ৳10।', {
+                                    due: bdt(state.due),
+                                })
+                            "
+                            :error="payNowError ?? undefined"
+                        >
+                            <KInput
+                                v-model="payNow"
+                                inputmode="decimal"
+                                :placeholder="
+                                    String(Math.ceil(state.due / 100))
+                                "
+                                :prefix="takaSign"
+                            />
+                        </KField>
+                    </div>
+
+                    <div v-if="keys.length" class="mt-4 grid grid-cols-2 gap-2">
                         <button
                             v-for="key in [
                                 ...wallets,

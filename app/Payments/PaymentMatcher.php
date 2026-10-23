@@ -37,9 +37,16 @@ class PaymentMatcher
      * open session on the same wallet expects the same amount, this one asks
      * for ৳1 more (and again) so each payment stays identifiable.
      */
-    public function startSession(Invoice $invoice, PaymentMethod $method, ?string $payerNumber = null): InvoicePayment
+    /**
+     * @param  int|null  $wanted  poisha the client chose to pay now (an invoice that allows
+     *                            part payments); null pays everything due.
+     */
+    public function startSession(Invoice $invoice, PaymentMethod $method, ?string $payerNumber = null, ?int $wanted = null): InvoicePayment
     {
         $this->expireStale();
+
+        // Whole taka, so the client can type it exactly.
+        $base = (int) ceil(($wanted !== null ? min($wanted, $invoice->due()) : $invoice->due()) / 100) * 100;
 
         $existing = $invoice->payments()
             ->where('status', 'pending')
@@ -48,16 +55,16 @@ class PaymentMatcher
             ->where('expires_at', '>', now())
             ->first();
 
-        if ($existing !== null) {
+        // The same payment again (a reload) keeps its amount; a new amount is a new payment.
+        if ($existing !== null && $existing->amount >= $base && $existing->amount < $base + 100 * 50) {
             return $existing;
         }
 
         // One open session per invoice: switching wallets closes the other.
         $invoice->payments()->where('status', 'pending')->whereNotNull('expires_at')->update(['status' => 'expired']);
 
-        return DB::transaction(function () use ($invoice, $method, $payerNumber): InvoicePayment {
-            // Whole taka, so the client can type it exactly.
-            $amount = (int) ceil($invoice->due() / 100) * 100;
+        return DB::transaction(function () use ($invoice, $method, $payerNumber, $base): InvoicePayment {
+            $amount = $base;
 
             while ($this->openSessions($method)->where('amount', $amount)->lockForUpdate()->exists()) {
                 $amount += 100;

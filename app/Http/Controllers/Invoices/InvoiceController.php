@@ -134,6 +134,7 @@ class InvoiceController extends Controller
                 'url' => $invoice->publicUrl(),
                 'editable' => $invoice->isEditable(),
                 'payable' => $invoice->isPayable(),
+                'allow_partial' => $invoice->allow_partial,
                 'created_at' => $invoice->created_at?->toIso8601String(),
                 'sent_at' => $invoice->sent_at?->toIso8601String(),
                 'voided_at' => $invoice->voided_at?->toIso8601String(),
@@ -222,6 +223,21 @@ class InvoiceController extends Controller
         $payment->forceFill(['status' => 'rejected', 'expires_at' => null, 'verified_by' => $request->user()->id, 'verified_at' => now()])->save();
         activity('Invoice')->performedOn($invoice)->causedBy($request->user())->withProperties(['payment_id' => $payment->id, 'reference' => $payment->reference])->log('payment rejected');
         $this->toast(__('দাবিটা বাতিল করা হয়েছে।'));
+
+        return back();
+    }
+
+    /**
+     * Lock the amount (the client pays everything due in one go) or let the
+     * client choose how much to pay now. Changeable after sending: it is how
+     * the invoice is paid, not what it says.
+     */
+    public function partial(Request $request, Invoice $invoice): RedirectResponse
+    {
+        $on = $request->validate(['allow_partial' => ['required', 'boolean']])['allow_partial'];
+        $invoice->forceFill(['allow_partial' => (bool) $on])->save();
+        activity('Invoice')->causedBy($request->user())->performedOn($invoice)->log($on ? 'part payments allowed' : 'amount locked');
+        $this->toast($on ? __('Client এখন অল্প অল্প করে দিতে পারবেন।') : __('Client-কে পুরো বাকি একবারে দিতে হবে।'));
 
         return back();
     }

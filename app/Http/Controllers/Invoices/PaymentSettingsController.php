@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Invoices;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentSms;
 use App\Models\Setting;
+use App\Payments\BanglaQr;
 use App\Payments\PaySettings;
 use App\Payments\SmsParser;
 use App\Support\Money;
@@ -80,6 +81,14 @@ class PaymentSettingsController extends Controller
             'pay_rocket_number' => ['nullable', 'required_if_accepted:pay_rocket_on', self::NUMBER],
             'pay_qr_on' => ['boolean'],
             'pay_qr_merchant' => ['nullable', 'string', 'max:120'],
+            // The text inside the bank's QR (a QR reader shows it): checked before it is kept.
+            'pay_qr_payload' => ['nullable', 'string', 'max:600', function (string $attribute, mixed $value, \Closure $fail): void {
+                try {
+                    BanglaQr::parse(trim((string) $value));
+                } catch (\InvalidArgumentException $e) {
+                    $fail(__('এটা ঠিক Bangla QR-এর লেখা নয়।').' '.$e->getMessage());
+                }
+            }],
             'pay_bank_on' => ['boolean'],
             'pay_bank_name' => ['nullable', 'required_if_accepted:pay_bank_on', 'string', 'max:120'],
             'pay_bank_branch' => ['nullable', 'string', 'max:120'],
@@ -118,7 +127,7 @@ class PaymentSettingsController extends Controller
             }
         }
 
-        if ($request->hasFile('qr') && ! PaySettings::on('pay_qr_on')) {
+        if (($request->hasFile('qr') || filled($data['pay_qr_payload'] ?? null)) && ! PaySettings::on('pay_qr_on')) {
             Setting::put('pay_qr_on', '1');
         }
 

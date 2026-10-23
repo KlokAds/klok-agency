@@ -62,6 +62,7 @@ Route::post('hooks/app-release/{token}', [AppReleaseController::class, 'upload']
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('i/{token}', [PublicInvoiceController::class, 'show'])->name('invoice.public');
     Route::get('i/{token}/status', [PublicInvoiceController::class, 'status'])->name('invoice.public.status');
+    Route::get('i/{token}/qr.svg', [PublicInvoiceController::class, 'qr'])->name('invoice.public.qr');
     Route::get('r/{token}', [PublicRenewalController::class, 'show'])->name('renewal.public');
     Route::get('pay/media/{kind}', [PaymentSettingsController::class, 'media'])->name('pay.media');
 });
@@ -90,6 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->middleware('can:clients.edit')->name('invoices.update');
     Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->middleware('can:clients.edit')->name('invoices.send');
     Route::post('invoices/{invoice}/email', [InvoiceController::class, 'email'])->middleware(['can:clients.edit', 'throttle:10,1'])->name('invoices.email');
+    Route::post('invoices/{invoice}/partial', [InvoiceController::class, 'partial'])->middleware('can:clients.edit')->name('invoices.partial');
     Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void'])->middleware('can:clients.edit')->name('invoices.void');
     Route::post('invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->middleware('can:bdt.create')->name('invoices.pay');
     Route::post('invoices/{invoice}/payments/{payment}/reject', [InvoiceController::class, 'reject'])->middleware('can:bdt.create')->name('invoices.payments.reject');

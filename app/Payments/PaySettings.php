@@ -14,7 +14,7 @@ class PaySettings
     public const TEXT_KEYS = [
         'pay_business_name', 'pay_business_address', 'pay_business_phone', 'pay_business_email',
         'pay_bkash_number', 'pay_bkash_type', 'pay_nagad_number', 'pay_nagad_type', 'pay_rocket_number',
-        'pay_qr_merchant', 'pay_bank_name', 'pay_bank_branch', 'pay_bank_account_name', 'pay_bank_account_number',
+        'pay_qr_merchant', 'pay_qr_payload', 'pay_bank_name', 'pay_bank_branch', 'pay_bank_account_name', 'pay_bank_account_number',
         'pay_bank_routing', 'pay_bank_sms_senders', 'qr_fee_percent', 'commission_percent',
     ];
 
@@ -52,7 +52,7 @@ class PaySettings
     /**
      * What the client sees for each method that is ready to use.
      *
-     * @return array<string, array<string, string|null>>
+     * @return array<string, array<string, string|bool|null>>
      */
     public static function methods(): array
     {
@@ -70,8 +70,16 @@ class PaySettings
             }
         }
 
-        if (self::on('pay_qr_on') && Setting::get('pay_qr_image')) {
-            $methods['qr'] = ['label' => PaymentMethod::BanglaQr->label(), 'image' => route('pay.media', 'qr'), 'merchant' => self::text('pay_qr_merchant')];
+        // With the QR's own text the page draws a QR per payment, amount filled in and locked;
+        // with only a picture the payer types the amount.
+        $qr = self::banglaQr();
+        if (self::on('pay_qr_on') && ($qr !== null || Setting::get('pay_qr_image'))) {
+            $methods['qr'] = [
+                'label' => PaymentMethod::BanglaQr->label(),
+                'image' => $qr === null ? route('pay.media', 'qr') : null,
+                'dynamic' => $qr !== null,
+                'merchant' => self::text('pay_qr_merchant') ?: ($qr?->merchant() ?? ''),
+            ];
         }
 
         if (self::on('pay_bank_on') && self::text('pay_bank_account_number') !== '') {
@@ -92,6 +100,18 @@ class PaySettings
     public static function autoVerify(): bool
     {
         return filled(Setting::get('sms_device_token'));
+    }
+
+    /** The agency's Bangla QR from its text in Settings, or null when there is none (or it is broken). */
+    public static function banglaQr(): ?BanglaQr
+    {
+        $payload = self::text('pay_qr_payload');
+
+        try {
+            return $payload !== '' ? new BanglaQr($payload) : null;
+        } catch (\InvalidArgumentException) {
+            return null;
+        }
     }
 
     /** @return list<string> */

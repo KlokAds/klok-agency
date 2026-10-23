@@ -12,6 +12,7 @@ import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KMoney from '@/components/k/KMoney.vue';
 import KSelect from '@/components/k/KSelect.vue';
+import KSwitch from '@/components/k/KSwitch.vue';
 import KTag from '@/components/k/KTag.vue';
 import { confirmAction, toast } from '@/lib/feedback';
 import { ago, money, niceDate, toInput, today } from '@/lib/format';
@@ -48,6 +49,7 @@ const props = defineProps<{
         url: string;
         editable: boolean;
         payable: boolean;
+        allow_partial: boolean;
         created_at: string | null;
         sent_at: string | null;
         voided_at: string | null;
@@ -392,6 +394,33 @@ const PAY_STATUS: Record<
                         </p>
                     </li>
                 </ul>
+            </section>
+
+            <section
+                v-if="invoice.payable && can['clients.edit']"
+                class="panel p-5 text-[13px]"
+            >
+                <KSwitch
+                    :model-value="invoice.allow_partial"
+                    :label="t('Client অল্প অল্প করে দিতে পারবেন')"
+                    :hint="
+                        invoice.allow_partial
+                            ? t(
+                                  'খোলা: client নিজে ঠিক করবেন এখন কত দেবেন (কমপক্ষে ৳10)। QR-এ সেই অঙ্কই বসবে।',
+                              )
+                            : t(
+                                  'লক: পুরো বাকি একবারে দিতে হবে। QR-এ পুরো অঙ্ক বসানো, বদলানো যায় না।',
+                              )
+                    "
+                    @update:model-value="
+                        (on: boolean) =>
+                            router.post(
+                                `/invoices/${invoice.id}/partial`,
+                                { allow_partial: on },
+                                { preserveScroll: true },
+                            )
+                    "
+                />
             </section>
 
             <section class="panel p-5 text-[13px]">

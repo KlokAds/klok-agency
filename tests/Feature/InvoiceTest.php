@@ -10,8 +10,10 @@ use App\Models\PaymentSms;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\User;
+use App\Payments\BanglaQr;
 use App\Payments\PaymentMatcher;
 use App\Payments\PaymentMethod;
+use App\Payments\PaySettings;
 use App\Payments\SmsParser;
 use App\Services\Invoices;
 use App\Services\Postings;
@@ -343,4 +345,72 @@ it('locks an invoice once it has been sent to the client', function () {
 
     expect($invoice->fresh()->isEditable())->toBeFalse();
     $this->actingAs($this->owner)->get("/invoices/{$invoice->id}/edit")->assertRedirect();
+});
+
+/** A static Bangla QR as a bank hands it out (fields made up, check code real). */
+function staticBanglaQr(): string
+{
+    $tlv = fn (string $tag, string $value) => $tag.str_pad((string) strlen($value), 2, '0', STR_PAD_LEFT).$value;
+    $body = $tlv('00', '01').$tlv('01', '11').$tlv('26', $tlv('00', 'bd.com.islamibank').$tlv('01', '1234567890123'))
+        .$tlv('52', '5999').$tlv('53', '050').$tlv('58', 'BD').$tlv('59', 'KLOK ADS').$tlv('60', 'RAJSHAHI').'6304';
+
+    return $body.BanglaQr::crc($body);
+}
+
+it('computes the EMV check code the way banks do', function () {
+    expect(BanglaQr::crc('123456789'))->toBe('29B1');
+});
+
+it('puts the amount into the agency QR and keeps everything else', function () {
+    $qr = new BanglaQr(staticBanglaQr());
+    $text = $qr->forAmount(1490050);
+
+    $fields = BanglaQr::parse($text);
+    expect($fields['01'])->toBe('12')
+        ->and($fields['54'])->toBe('14900.50')
+        ->and($fields['59'])->toBe('KLOK ADS')
+        ->and($fields['26'])->toBe(BanglaQr::parse(staticBanglaQr())['26'])
+        ->and($qr->merchant())->toBe('KLOK ADS');
+
+    // A changed or cut text is refused.
+    expect(fn () => BanglaQr::parse(substr(staticBanglaQr(), 0, -1).'0'))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => BanglaQr::parse('hello'))->toThrow(InvalidArgumentException::class)
+        ->and(BanglaQr::svg($text))->toStartWith('<svg');
+});
+
+it('takes the QR text in Settings only when it is a real Bangla QR', function () {
+    $base = ['pay_business_name' => 'Klok Ads', 'qr_fee_percent' => '1', 'commission_percent' => '20'];
+
+    $this->actingAs($this->owner)->post('/admin/payment', $base + ['pay_qr_payload' => '000201broken'])->assertSessionHasErrors('pay_qr_payload');
+    $this->actingAs($this->owner)->post('/admin/payment', $base + ['pay_qr_payload' => staticBanglaQr()])->assertSessionHasNoErrors();
+
+    expect(Setting::get('pay_qr_on'))->toBe('1')
+        ->and(PaySettings::methods()['qr'])->toMatchArray(['dynamic' => true, 'merchant' => 'KLOK ADS', 'image' => null]);
+});
+
+it('shows a QR with the whole due locked in, or the part the client chose when allowed', function () {
+    Setting::put('pay_qr_on', '1');
+    Setting::put('pay_qr_payload', staticBanglaQr());
+    $invoice = sentInvoice($this->client);
+
+    // Locked: an amount from the client is ignored, the QR carries everything due.
+    $state = $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'qr', 'amount' => '500'])->assertOk()->json();
+    expect($state['session']['amount'])->toBe(1490000)
+        ->and($state['allow_partial'])->toBeFalse();
+    $svg = $this->get($state['session']['qr'])->assertOk()->assertHeader('Content-Type', 'image/svg+xml')->getContent();
+    expect($svg)->toContain('<svg');
+
+    // Open: the client pays ৳5,000 now; the QR is made for that.
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/partial", ['allow_partial' => true])->assertRedirect();
+    $state = $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'qr', 'amount' => '5000'])->assertOk()->json();
+    expect($state['session']['amount'])->toBe(500000)->and($state['allow_partial'])->toBeTrue();
+
+    // Not more than is due, not under ৳10.
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'qr', 'amount' => '20000'])->assertUnprocessable()->assertJsonValidationErrors('amount');
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'qr', 'amount' => '5'])->assertUnprocessable();
+
+    // The bank SMS for exactly that pays that part; the rest stays due.
+    Setting::put('pay_bank_sms_senders', 'IslamiBank');
+    smsHook('IslamiBank', 'Islami Bank CellFin BDT 5,000.00 Received from 01711111111')->assertJson(['status' => 'matched']);
+    expect($invoice->fresh()->paid)->toBe(500000)->and($invoice->fresh()->due())->toBe(990000);
 });

@@ -317,6 +317,23 @@ const wallets = [
                 <p v-if="err('qr')" class="-mt-3 text-[12px] text-out">
                     {{ err('qr') }}
                 </p>
+                <KField
+                    :label="t('QR-এর ভেতরের লেখা')"
+                    optional
+                    :error="err('pay_qr_payload')"
+                    :hint="
+                        t(
+                            'Phone-এর camera বা Google Lens দিয়ে QR scan করলে একটা লম্বা লেখা আসে (000201… দিয়ে শুরু) — সেটা copy করে এখানে দিন। দিলে প্রতি invoice-এ আলাদা QR তৈরি হবে, টাকার অঙ্ক বসানো ও লক করা, Klok-এর রঙে।',
+                        )
+                    "
+                >
+                    <KTextarea
+                        v-model="values['pay_qr_payload']"
+                        :rows="3"
+                        spellcheck="false"
+                        placeholder="000201010211…"
+                    />
+                </KField>
                 <KField :label="t('Merchant-এর নাম')" optional>
                     <KInput v-model="values['pay_qr_merchant']" />
                 </KField>

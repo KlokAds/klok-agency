@@ -79,3 +79,11 @@ it('reads the UCB alerts exactly as they come on the Owner phone', function () {
         expect($parser->parse('UCB', $text))->toBeNull();
     }
 });
+
+it('reads the CellFin alert a Bangla QR payment brings, with its own TrxId', function () {
+    Setting::put('pay_bank_sms_senders', 'IBBL');
+
+    $qr = app(SmsParser::class)->parse('IBBL', "CellFin\nBDT 1,500.00 Received\nFrom: bKash\nTrxId: 3226101500016142\n@15/10/2026 04:10 PM");
+
+    expect($qr)->toMatchArray(['provider' => 'bank', 'amount' => 150000, 'trx_id' => '3226101500016142']);
+});

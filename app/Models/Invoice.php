@@ -50,7 +50,7 @@ class Invoice extends Model
 
     protected $fillable = [
         'seq', 'number', 'client_id', 'issue_date', 'due_date', 'status', 'notes', 'public_token', 'total', 'usd', 'paid',
-        'sent_at', 'paid_at', 'voided_at', 'overdue_notified_at', 'created_by',
+        'allow_partial', 'sent_at', 'paid_at', 'voided_at', 'overdue_notified_at', 'created_by',
     ];
 
     protected function casts(): array
@@ -58,7 +58,7 @@ class Invoice extends Model
         return [
             'issue_date' => 'date', 'due_date' => 'date', 'sent_at' => 'datetime', 'paid_at' => 'datetime',
             'voided_at' => 'datetime', 'overdue_notified_at' => 'datetime',
-            'total' => 'integer', 'usd' => 'integer', 'paid' => 'integer', 'seq' => 'integer',
+            'total' => 'integer', 'usd' => 'integer', 'paid' => 'integer', 'seq' => 'integer', 'allow_partial' => 'boolean',
         ];
     }
 
