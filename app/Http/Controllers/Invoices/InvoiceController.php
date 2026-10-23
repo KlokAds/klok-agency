@@ -320,6 +320,7 @@ class InvoiceController extends Controller
                     ->map(fn (Campaign $c) => [
                         'value' => $c->id, 'label' => $c->name, 'client_id' => $c->client_id,
                         'budget' => $c->dailyBudget(), 'end' => $c->lastDay()?->toDateString(), 'live' => $c->isLive(),
+                        'status' => $c->hasEnded() ? 'ended' : ($c->isLive() ? 'active' : 'paused'),
                     ])->values()->all(),
             ],
         ]);

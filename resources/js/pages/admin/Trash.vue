@@ -53,7 +53,6 @@ function restore(type: string, id: number): void {
             v-model="filters.type"
             :options="types"
             :placeholder="t('সব ধরন')"
-            :searchable="false"
             clearable
             size="sm"
             class="w-48"

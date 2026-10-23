@@ -593,15 +593,10 @@ async function removeMove(move: Move): Promise<void> {
                 <KSelect
                     v-model="form.from_wallet"
                     :options="options.wallets"
-                    :searchable="false"
                 />
             </KField>
             <KField :label="t('কোথায়')" :error="form.errors.to_wallet">
-                <KSelect
-                    v-model="form.to_wallet"
-                    :options="options.wallets"
-                    :searchable="false"
-                />
+                <KSelect v-model="form.to_wallet" :options="options.wallets" />
             </KField>
             <KField label="Note" optional class="sm:col-span-2">
                 <KInput
@@ -733,11 +728,7 @@ async function removeMove(move: Move): Promise<void> {
                 />
             </KField>
             <KField :label="t('ধরন')" :error="placeForm.errors.type">
-                <KSelect
-                    v-model="placeForm.type"
-                    :options="options.types"
-                    :searchable="false"
-                />
+                <KSelect v-model="placeForm.type" :options="options.types" />
             </KField>
             <KField
                 :label="t('Account / নম্বর')"

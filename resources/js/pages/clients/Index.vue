@@ -131,7 +131,6 @@ const showOptions = computed<Option[]>(() => [
             v-model="filters.type"
             :options="options.types"
             :placeholder="t('সব ধরন')"
-            :searchable="false"
             clearable
             size="sm"
             class="w-40"

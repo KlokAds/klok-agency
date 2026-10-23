@@ -123,7 +123,6 @@ function copy(text: string): void {
                     <KSelect
                         v-model="form.summary_time"
                         :options="times"
-                        :searchable="false"
                         class="max-w-[160px]"
                     />
                 </KField>

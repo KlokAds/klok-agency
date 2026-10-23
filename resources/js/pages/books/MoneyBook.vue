@@ -269,7 +269,6 @@ function saveRename(): void {
                 :options="options.pay_via ?? []"
                 :placeholder="t('সব পদ্ধতি')"
                 clearable
-                :searchable="false"
                 size="sm"
             />
         </template>
@@ -286,7 +285,6 @@ function saveRename(): void {
                 :options="options.kinds ?? []"
                 :placeholder="t('খরচ ও বেতন')"
                 clearable
-                :searchable="false"
                 size="sm"
             />
         </template>
@@ -295,7 +293,6 @@ function saveRename(): void {
             :options="options.wallets"
             :placeholder="t('সব জায়গা')"
             clearable
-            :searchable="false"
             size="sm"
         />
         <div class="flex items-center gap-2 sm:col-span-2">
@@ -561,7 +558,6 @@ function saveRename(): void {
                     <KSelect
                         v-model="form.pay_via"
                         :options="options.pay_via ?? []"
-                        :searchable="false"
                     />
                 </KField>
             </template>

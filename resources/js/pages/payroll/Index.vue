@@ -399,7 +399,6 @@ const shortMonth = (ym: string) =>
                     v-model="filters.month"
                     :options="monthOptions"
                     :placeholder="t('সব মাস')"
-                    :searchable="false"
                     clearable
                     size="sm"
                     class="w-40"

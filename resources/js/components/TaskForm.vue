@@ -211,11 +211,7 @@ function save(): void {
                 />
             </KField>
             <KField :label="t('সময়')">
-                <KSelect
-                    v-model="form.due_time"
-                    :options="times"
-                    :searchable="false"
-                />
+                <KSelect v-model="form.due_time" :options="times" />
             </KField>
             <KField label="Reminder" class="sm:col-span-2">
                 <KSegment

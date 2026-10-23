@@ -10,7 +10,6 @@ const props = withDefaults(
         options: Option[];
         placeholder?: string;
         clearable?: boolean;
-        searchable?: boolean | 'auto';
         invalid?: boolean;
         disabled?: boolean;
         id?: string;
@@ -19,7 +18,6 @@ const props = withDefaults(
     {
         placeholder: 'বেছে নিন',
         clearable: false,
-        searchable: 'auto',
         size: 'md',
     }, // i18n
 );
@@ -41,9 +39,18 @@ const { open, style, toggle, close, show } = usePopover(anchor, panel, {
 const selected = computed(() =>
     props.options.find((o) => String(o.value) === String(model.value ?? '')),
 );
-const withSearch = computed(() =>
-    props.searchable === 'auto' ? props.options.length > 7 : props.searchable,
-);
+// Every list can be searched, however short: long ones grow.
+const withSearch = computed(() => true);
+
+// An option may carry a status ("active", "paused", "ended"): a coloured
+// dot and a word beside its name, e.g. for campaigns.
+const STATUS: Record<string, { dot: string; label: string }> = {
+    active: { dot: 'bg-in', label: 'Active' },
+    paused: { dot: 'bg-wait', label: 'Paused' },
+    ended: { dot: 'bg-line-2', label: 'Completed' },
+};
+const statusOf = (option: Option | undefined) =>
+    option?.status ? STATUS[String(option.status)] : undefined;
 
 const filtered = computed(() => {
     const q = query.value.trim().toLowerCase();
@@ -53,7 +60,9 @@ const filtered = computed(() => {
     }
 
     return props.options.filter((o) =>
-        `${o.label} ${o.hint ?? ''}`.toLowerCase().includes(q),
+        `${o.label} ${o.hint ?? ''} ${o.note ?? ''} ${statusOf(o)?.label ?? ''}`
+            .toLowerCase()
+            .includes(q),
     );
 });
 
@@ -142,6 +151,12 @@ function onKey(event: KeyboardEvent): void {
                 :name="String(selected.icon)"
                 :size="18"
                 class="text-brand-ink"
+            />
+            <span
+                v-if="statusOf(selected)"
+                class="size-2 shrink-0 rounded-full"
+                :class="statusOf(selected)?.dot"
+                :title="statusOf(selected)?.label"
             />
             <span
                 class="min-w-0 flex-1 truncate"
@@ -255,10 +270,16 @@ function onKey(event: KeyboardEvent): void {
                                     : 'text-ink-3'
                             "
                         />
+                        <span
+                            v-if="statusOf(option)"
+                            class="size-2 shrink-0 rounded-full"
+                            :class="statusOf(option)?.dot"
+                        />
                         <span class="min-w-0 flex-1">
                             <span
                                 class="block truncate"
                                 :class="option.note && 'font-semibold'"
+                                :title="option.label"
                                 >{{ option.label }}</span
                             >
                             <span
@@ -267,6 +288,11 @@ function onKey(event: KeyboardEvent): void {
                                 >{{ option.note }}</span
                             >
                         </span>
+                        <span
+                            v-if="statusOf(option)"
+                            class="shrink-0 rounded-full border border-line px-2 py-px text-[11px] font-medium text-ink-3"
+                            >{{ statusOf(option)?.label }}</span
+                        >
                         <span
                             v-if="option.hint"
                             class="shrink-0 text-[11.5px] text-ink-3"

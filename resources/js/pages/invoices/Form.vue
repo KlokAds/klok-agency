@@ -688,7 +688,7 @@ const errorAt = (index: number, field: string) =>
                 <p class="mt-2 text-[11.5px] text-ink-3">
                     {{
                         t(
-                            'তৈরি হলে Draft থাকবে; পাঠালে client-এর link চালু হবে।',
+                            'Client-কে পাঠানোর আগ পর্যন্ত বদলানো যায়; পাঠানোর পর আর বদলাবে না।',
                         )
                     }}
                 </p>

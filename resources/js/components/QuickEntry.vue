@@ -327,7 +327,6 @@ const directions = computed<Option[]>(() => [
                 :model-value="job"
                 :options="jobOptions"
                 @update:model-value="(v) => (job = v as JobKey)"
-                :searchable="false"
                 class="md:hidden"
             />
             <div class="hidden flex-col gap-1.5 md:flex">

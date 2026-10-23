@@ -469,18 +469,10 @@ const PAY_STATUS: Record<
     >
         <div class="grid gap-4 sm:grid-cols-2">
             <KField :label="t('কীভাবে')" :error="pay.errors.method">
-                <KSelect
-                    v-model="pay.method"
-                    :options="options.methods"
-                    :searchable="false"
-                />
+                <KSelect v-model="pay.method" :options="options.methods" />
             </KField>
             <KField :label="t('কোথায় এলো')" :error="pay.errors.wallet">
-                <KSelect
-                    v-model="pay.wallet"
-                    :options="options.wallets"
-                    :searchable="false"
-                />
+                <KSelect v-model="pay.wallet" :options="options.wallets" />
             </KField>
             <KField :label="t('তারিখ')" :error="pay.errors.paid_on">
                 <KDate v-model="pay.paid_on" :max="today()" />
