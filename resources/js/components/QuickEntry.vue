@@ -96,10 +96,9 @@ const JOBS = [
     {
         key: 'ad-spend',
         label: 'Pilot-এর বাইরের ad খরচ',
-        note: 'Pilot-এর campaign-এর খরচ নিজে আসে — শুধু বাকিগুলো',
+        note: 'Google বা অন্য — Meta-র খরচ নিজে আসে',
         icon: 'signal',
         perm: 'usd.create',
-        auto: true,
     }, // i18n
 ] as const;
 
@@ -600,6 +599,7 @@ const directions = computed<Option[]>(() => [
                             v-model="form.allocations"
                             :account-id="form.account_id"
                             :amount="form.amount"
+                            class="sm:col-span-2"
                         />
                         <p
                             v-if="form.errors.allocations"

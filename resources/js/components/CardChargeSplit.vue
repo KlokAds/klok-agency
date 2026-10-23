@@ -125,7 +125,10 @@ const rest = computed(() => cents(props.amount) - given.value);
 </script>
 
 <template>
-    <div v-if="rows.length" class="rounded-xl border border-line">
+    <div
+        v-if="rows.length && cents(amount) > 0"
+        class="rounded-xl border border-line"
+    >
         <div
             class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2.5"
         >
@@ -168,7 +171,7 @@ const rest = computed(() => cents(props.amount) - given.value);
                     }}</span
                 >
                 <span class="min-w-0 flex-1">
-                    <span class="block truncate font-medium" :title="r.label">{{
+                    <span class="block font-medium break-words">{{
                         r.label
                     }}</span>
                     <span class="text-ink-3"
