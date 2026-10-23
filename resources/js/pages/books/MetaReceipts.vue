@@ -51,10 +51,11 @@ function check(): void {
     );
 }
 
-const TONE: Record<string, 'in' | 'neutral' | 'out'> = {
+const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
     booked: 'in',
     duplicate: 'neutral',
     unread: 'out',
+    other_account: 'wait',
 };
 </script>
 

@@ -4,6 +4,7 @@ use App\Models\Account;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
+use App\Models\MetaReceipt;
 use App\Models\PilotAccount;
 use App\Models\UsdEntry;
 use App\Models\User;
@@ -28,7 +29,7 @@ beforeEach(function () {
 });
 
 /** A receipt in the shape Meta sends (text of the HTML mail). */
-function receiptText(string $amount = '20.00', string $currency = 'USD', string $tx = '7654321098765432-1234567'): string
+function receiptText(string $amount = '14.00', string $currency = 'USD', string $tx = '7654321098765432-1234567', string $extra = ''): string
 {
     return <<<TXT
     Receipt for Your Payment
@@ -48,15 +49,14 @@ function receiptText(string $amount = '20.00', string $currency = 'USD', string 
     GFFS 07/23/26 - Sales Campaign
     Oct 10, 2026 - Oct 15, 2026
     \$8.00
-    Old page likes
-    \$6.00
+    {$extra}
     TXT;
 }
 
 it('reads a Meta receipt whatever its layout: amount, day, card, transaction and each campaign', function () {
     $parsed = MetaReceipts::parse("Your Meta ads receipt (Account ID: 1234567890)\n".receiptText(), CarbonImmutable::parse('2026-10-16'), fn () => Campaign::all()->all());
 
-    expect($parsed['amount'])->toBe(2000)
+    expect($parsed['amount'])->toBe(1400)
         ->and($parsed['currency'])->toBe('USD')
         ->and($parsed['account_ref'])->toBe('1234567890')
         ->and($parsed['transaction_id'])->toBe('7654321098765432-1234567')
@@ -76,12 +76,11 @@ it('books a receipt once as a card charge with its campaign split, and keeps the
     expect($receipt->status)->toBe('booked');
     $entry = UsdEntry::findOrFail($receipt->usd_entry_id);
     expect($entry->category)->toBe('card_charge')
-        ->and($entry->amount)->toBe(-2000)
+        ->and($entry->amount)->toBe(-1400)
         ->and($entry->entry_date->toDateString())->toBe('2026-10-15')
         ->and($entry->account_id)->toBe(Account::where('code', 'meta')->value('id'))
-        // "Old page likes" is not in the books: its $6 pays the oldest spend.
         ->and($entry->allocations)->toBe(["c:{$this->leads->id}" => 600, "c:{$this->sales->id}" => 800])
-        ->and((string) $receipt->problem)->toMatch('/\$6\.00/');
+        ->and($receipt->problem)->toBeNull();
 
     // The same transaction forwarded again, or the same mail read again: nothing new.
     expect($receipts->take('<m2@meta>', 'Fwd: Your Meta ads receipt', receiptText(), CarbonImmutable::parse('2026-10-16'))->status)->toBe('duplicate')
@@ -103,6 +102,24 @@ it('books a receipt once as a card charge with its campaign split, and keeps the
         ->assertInertia(fn ($page) => $page->component('books/MetaReceipts')->where('receipts.total', 2));
 });
 
+it('books nothing while a campaign on the receipt is not ours, and books it once the name matches', function () {
+    $receipts = app(MetaReceipts::class);
+    $text = receiptText('20.00', 'USD', '5555555555-1', "Old page likes\n    \$6.00");
+    $receipt = $receipts->take('<m9@meta>', 'Your Meta ads receipt', $text, CarbonImmutable::parse('2026-10-16'));
+
+    expect($receipt->status)->toBe('unread')
+        ->and((string) $receipt->problem)->toMatch('/\$6\.00/')
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(0);
+
+    // The campaign is in the account after all (Pilot brought it in): read again, booked.
+    Campaign::create(['pilot_campaign_id' => 3, 'pilot_account_id' => $this->account->id, 'name' => 'Old page likes', 'status' => 'PAUSED']);
+    $this->actingAs($this->owner)->post("/dollars/receipts/{$receipt->id}/retry")->assertRedirect();
+
+    $again = MetaReceipt::where('message_id', '<m9@meta>')->sole();
+    expect($again->status)->toBe('booked')
+        ->and(UsdEntry::findOrFail($again->usd_entry_id)->amount)->toBe(-2000);
+});
+
 it('keeps the split honest: what a receipt pays a campaign comes off that campaign', function () {
     CampaignDay::create(['campaign_id' => $this->sales->id, 'day' => '2026-10-19', 'spend' => 800, 'results' => 1, 'clicks' => 1]);
     CampaignDay::create(['campaign_id' => $this->leads->id, 'day' => '2026-10-19', 'spend' => 600, 'results' => 1, 'clicks' => 1]);
@@ -115,9 +132,18 @@ it('keeps the split honest: what a receipt pays a campaign comes off that campai
         ->and($pending["c:{$this->leads->id}"] ?? 0)->toBe(0);
 });
 
+it('never books a receipt from an ad account that is not ours', function () {
+    $receipt = app(MetaReceipts::class)->take('<x1@meta>', 'Your Meta ads receipt (Account ID: 999999999999)', str_replace('(1234567890)', '(999999999999)', receiptText()), CarbonImmutable::now());
+
+    expect($receipt->status)->toBe('other_account')
+        ->and($receipt->usd_entry_id)->toBeNull()
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(0)
+        ->and($this->owner->notifications()->where('data->kind', 'meta_receipt')->count())->toBe(1);
+});
+
 it('joins a card charge already written by hand instead of booking it twice', function () {
     $meta = Account::where('code', 'meta')->first();
-    $byHand = UsdEntry::create(['entry_date' => '2026-10-15', 'description' => 'FACEBK* S5LHCASSD4 (manual pay)', 'category' => 'card_charge', 'account_id' => $meta->id, 'amount' => -2000, 'status' => 'na']);
+    $byHand = UsdEntry::create(['entry_date' => '2026-10-15', 'description' => 'FACEBK* S5LHCASSD4 (manual pay)', 'category' => 'card_charge', 'account_id' => $meta->id, 'amount' => -1400, 'status' => 'na']);
 
     $receipt = app(MetaReceipts::class)->take('<m1@meta>', 'Your Meta ads receipt', receiptText(), CarbonImmutable::parse('2026-10-16'));
 

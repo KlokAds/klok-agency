@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $subject
  * @property string|null $body
  * @property int|null $usd_entry_id
- * @property string $status booked|duplicate|unread|ignored
+ * @property string $status booked|duplicate|unread|ignored|other_account
  * @property string|null $problem
  */
 class MetaReceipt extends Model
@@ -32,6 +32,7 @@ class MetaReceipt extends Model
         'duplicate' => 'আগেই উঠেছিল', // i18n
         'unread' => 'পড়া যায়নি', // i18n
         'ignored' => 'Receipt নয়', // i18n
+        'other_account' => 'অচেনা ad account', // i18n
     ];
 
     protected $fillable = [

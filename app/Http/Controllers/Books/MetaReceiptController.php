@@ -66,6 +66,15 @@ class MetaReceiptController extends Controller
         return back();
     }
 
+    /** Reads a kept receipt again, once its names or account were matched. */
+    public function retry(MetaReceipt $receipt, MetaReceipts $receipts): RedirectResponse
+    {
+        $again = $receipts->retry($receipt);
+        $this->toast($again->status === 'booked' ? __('এবার মিলেছে — খাতায় উঠেছে।') : __('এখনো মেলেনি: :problem', ['problem' => (string) $again->problem]));
+
+        return redirect()->route('dollars.receipts.show', $again);
+    }
+
     /** The receipt as it came, to read it yourself. */
     public function show(MetaReceipt $receipt): Response
     {

@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dollars', [DollarController::class, 'index'])->middleware('can:usd.view')->name('dollars.index');
     Route::get('dollars/receipts', [MetaReceiptController::class, 'index'])->middleware('can:usd.view')->name('dollars.receipts');
     Route::get('dollars/receipts/{receipt}', [MetaReceiptController::class, 'show'])->middleware('can:usd.view')->name('dollars.receipts.show');
+    Route::post('dollars/receipts/{receipt}/retry', [MetaReceiptController::class, 'retry'])->middleware(['can:usd.create', 'throttle:20,1'])->name('dollars.receipts.retry');
     Route::post('dollars/receipts/check', [MetaReceiptController::class, 'check'])->middleware(['can:usd.create', 'throttle:6,1'])->name('dollars.receipts.check');
     Route::get('dollars/pending/{account}', [DollarController::class, 'pending'])->middleware(['can:usd.create', 'throttle:60,1'])->name('dollars.pending');
     Route::post('dollars/accounts', [DollarController::class, 'storeAccount'])->middleware('can:usd.edit')->name('dollars.accounts.store');

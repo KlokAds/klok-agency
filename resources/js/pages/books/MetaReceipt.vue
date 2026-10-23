@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
 import PageHeader from '@/components/PageHeader.vue';
 import SectionTabs from '@/components/SectionTabs.vue';
 import KButton from '@/components/k/KButton.vue';
@@ -25,6 +26,13 @@ defineProps<{
         <KButton href="/dollars/receipts" variant="quiet" icon="back">{{
             t('ফিরে যান')
         }}</KButton>
+        <KButton
+            v-if="['unread', 'other_account'].includes(receipt.status)"
+            variant="primary"
+            icon="undo"
+            @click="router.post(`/dollars/receipts/${receipt.id}/retry`)"
+            >{{ t('আবার পড়ুন') }}</KButton
+        >
     </PageHeader>
     <section class="panel max-w-3xl p-5 sm:p-6">
         <div class="flex flex-wrap items-center gap-2">

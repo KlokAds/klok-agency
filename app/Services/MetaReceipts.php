@@ -40,6 +40,8 @@ class MetaReceipts
 
     public const UNREAD_TITLE = 'Meta receipt পড়া যায়নি — দেখে নিন'; // i18n
 
+    public const OTHER_TITLE = 'অচেনা ad account-এর Meta receipt — খাতায় তোলা হয়নি'; // i18n
+
     public function __construct(private Postings $postings, private Notifier $notifier) {}
 
     public static function configured(): bool
@@ -148,7 +150,8 @@ class MetaReceipts
         $parsed = self::parse($subject."\n".$body, $sentAt, function (?string $ref) use (&$account) {
             $account = $ref ? PilotAccount::where('external_id', 'act_'.$ref)->orWhere('external_id', $ref)->first() : null;
 
-            return array_values(Campaign::query()->when($account, fn ($q) => $q->where('pilot_account_id', $account->id))->get(['id', 'name', 'client_id'])->all());
+            // Campaigns are looked for in the receipt's own ad account only.
+            return $account === null ? [] : array_values(Campaign::where('pilot_account_id', $account->id)->get(['id', 'name', 'client_id'])->all());
         });
 
         $receipt->fill([
@@ -162,8 +165,17 @@ class MetaReceipts
             'campaigns' => $parsed['campaigns'],
         ]);
 
+        // Only our own ad accounts' receipts are ours: one from an account Pilot does
+        // not know (someone else's, forwarded by the same filter) is kept, never booked.
+        if ($account === null) {
+            $receipt->fill(['status' => 'other_account', 'problem' => __('Ad account :ref আমাদের Pilot-এ নেই — খাতায় তোলা হয়নি।', ['ref' => $parsed['account_ref'] ?? '—'])])->save();
+            $this->tell($receipt, self::OTHER_TITLE);
+
+            return $receipt;
+        }
+
         // A BDT ad account's receipts are not the card's dollars: kept, quietly.
-        $currency = strtoupper((string) ($account->currency ?? $parsed['currency'] ?? ''));
+        $currency = strtoupper((string) ($account->currency ?: ($parsed['currency'] ?? '')));
         if ($currency !== '' && $currency !== 'USD') {
             $receipt->fill(['status' => 'ignored', 'problem' => __(':currency account-এর receipt — card-এর USD খাতায় নেওয়া হয় না।', ['currency' => $currency])])->save();
 
@@ -172,6 +184,16 @@ class MetaReceipts
 
         if ($parsed['amount'] === null || $parsed['amount'] <= 0) {
             $receipt->fill(['status' => 'unread', 'problem' => __('টাকার অঙ্ক পাওয়া যায়নি।')])->save();
+            $this->tell($receipt, self::UNREAD_TITLE);
+
+            return $receipt;
+        }
+
+        // Every dollar must belong to a campaign of that account we know (a cent of rounding
+        // aside); otherwise a person matches the names first and the mail stays.
+        $unmatched = $parsed['amount'] - (int) array_sum(array_column($parsed['campaigns'], 'cents'));
+        if ($parsed['campaigns'] === [] || abs($unmatched) > 1) {
+            $receipt->fill(['status' => 'unread', 'problem' => __('Receipt-এর :amount কোনো campaign-এর নামের সাথে মেলেনি — Campaign পাতায় নাম/account মিলিয়ে "আবার পড়ুন" চাপুন।', ['amount' => '$'.number_format(abs($unmatched) / 100, 2)])])->save();
             $this->tell($receipt, self::UNREAD_TITLE);
 
             return $receipt;
@@ -212,24 +234,36 @@ class MetaReceipts
                     'description' => 'Meta receipt'.($parsed['card_last4'] ? ' · card '.$parsed['card_last4'] : ''),
                     'account_id' => $meta->id,
                     'amount' => $parsed['amount'],
-                    'notes' => trim(($account ? $account->name.' · ' : '').'Transaction '.($parsed['transaction_id'] ?? '—')),
+                    'notes' => $account->name.' · Transaction '.($parsed['transaction_id'] ?? '—'),
                     'allocations' => $allocations,
                 ]);
                 $entry->forceFill(['source' => 'meta_receipt', 'source_key' => $sourceKey])->save();
             }
 
-            // Whatever the receipt paid that no campaign we know explains goes to the oldest spend.
-            $unmatched = $parsed['amount'] - (int) array_sum(array_column($parsed['campaigns'], 'cents'));
-            $receipt->fill([
-                'usd_entry_id' => $entry->id,
-                'status' => 'booked',
-                'problem' => $unmatched > 0 ? __('Receipt-এর :amount কোনো জানা campaign-এ মেলেনি — পুরনো খরচে গেছে।', ['amount' => '$'.number_format($unmatched / 100, 2)]) : null,
-            ])->save();
+            $receipt->fill(['usd_entry_id' => $entry->id, 'status' => 'booked', 'problem' => null])->save();
         });
 
         $this->tell($receipt, self::BOOKED_TITLE);
 
         return $receipt;
+    }
+
+    /**
+     * Reads a receipt that could not be booked again from its stored text
+     * (after a campaign or account was linked); its mail goes with the next
+     * look at the mailbox once it is in the books.
+     */
+    public function retry(MetaReceipt $receipt): MetaReceipt
+    {
+        if (in_array($receipt->status, self::DONE, true)) {
+            return $receipt;
+        }
+
+        $sentAt = CarbonImmutable::parse($receipt->created_at ?? now());
+        [$messageId, $subject, $body] = [$receipt->message_id, (string) $receipt->subject, (string) $receipt->body];
+        $receipt->delete();
+
+        return $this->take($messageId, $subject, $body, $sentAt);
     }
 
     /** A Meta receipt, not some other mail that reached the mailbox. */
@@ -262,7 +296,8 @@ class MetaReceipts
             ?? $find('/'.$money.'/');
         $currency = $find('/\$\s?[0-9][0-9,]*\.[0-9]{2}\s*([A-Z]{3})\b/') ?? (str_contains($text, '$') ? 'USD' : null);
         $ref = $find('/(?:ad\s+)?account\s+id\s*[:.]?\s*([0-9]{6,})/i')
-            ?? $find('/transaction\s+for\.?\s*[^()\n]{1,80}\(([0-9]{6,})\)/i');
+            // "Transaction for. Anowar Hossain (KA) (837…)": the last bracket holds the id.
+            ?? $find('/transaction\s+for\.?\s*[^\n]{0,100}?\(([0-9]{6,})\)/i');
         // The charge is made when the billed period ends: "Date range Oct 10, 2026, 12:00 AM - Oct 15, 2026, 11:47 PM".
         $day = '([A-Za-z]{3,9}\.?\s+[0-9]{1,2},?\s+[0-9]{4}(?:,?\s+(?:at\s+)?[0-9]{1,2}:[0-9]{2}\s*[AP]M)?)';
         $date = $find('/date\s+range\s*:?\s*[^
