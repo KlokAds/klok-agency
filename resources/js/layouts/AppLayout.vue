@@ -431,7 +431,7 @@ function appSettings(): void {
                                     name="shield"
                                     :size="16"
                                     class="text-ink-3"
-                                />{{ t('App lock ও SMS') }}
+                                />{{ t('App-এর setting') }}
                             </button>
                             <div class="my-1 h-px bg-line" />
                             <button

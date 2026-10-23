@@ -27,7 +27,12 @@ type Device = {
 const props = defineProps<{
     firebase: { project: string; email: string } | null;
     cardLow: string;
-    release: { version: string | null; at: string | null; url: string | null };
+    releases: {
+        flavor: 'plain' | 'sms';
+        version: string | null;
+        at: string | null;
+        url: string | null;
+    }[];
     devices: Device[];
     smsLastSeen: string | null;
 }>();
@@ -249,26 +254,44 @@ function phone(agent: string | null): string {
             "
             icon="signal"
         >
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <span class="text-[13.5px] font-medium">{{
-                    t('সর্বশেষ version')
-                }}</span>
-                <span class="num text-[13.5px]">
-                    <template v-if="release.version">
-                        v{{ release.version }}
-                        <span v-if="release.at" class="text-ink-3">
-                            · {{ ago(release.at) }}</span
-                        >
-                    </template>
-                    <template v-else>—</template>
-                </span>
-            </div>
-            <a
-                v-if="release.url"
-                :href="release.url"
-                class="text-[13.5px] font-medium text-brand underline underline-offset-2"
-                >{{ t('APK নামান') }}</a
+            <div
+                v-for="r in releases"
+                :key="r.flavor"
+                class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
             >
+                <div class="min-w-0">
+                    <p class="text-[13.5px] font-medium">
+                        {{
+                            r.flavor === 'sms'
+                                ? t('SMS-সহ app (শুধু Owner-এর phone)')
+                                : t('সাধারণ app (সবার জন্য)')
+                        }}
+                    </p>
+                    <p class="num text-[12.5px] text-ink-3">
+                        <template v-if="r.version">
+                            v{{ r.version }}
+                            <template v-if="r.at"> · {{ ago(r.at) }}</template>
+                        </template>
+                        <template v-else>—</template>
+                    </p>
+                </div>
+                <a
+                    v-if="r.url"
+                    :href="r.url"
+                    class="text-[13.5px] font-medium text-brand underline underline-offset-2"
+                    >{{ t('APK নামান') }}</a
+                >
+            </div>
+            <p
+                v-if="releases.some((r) => r.flavor === 'sms')"
+                class="text-[12.5px] leading-relaxed text-ink-3"
+            >
+                {{
+                    t(
+                        'SMS-সহ app-কে Google Play Protect আটকায় (SMS পড়ে বলে) — শুধু wallet SIM-এর phone-এ লাগে। Login page শুধু সাধারণ app দেয়।',
+                    )
+                }}
+            </p>
         </SettingsSection>
     </div>
 </template>

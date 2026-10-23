@@ -67,8 +67,10 @@ jobs:
         with:
           tag_name: finance-app-v${{ steps.version.outputs.number }}
           name: Klok Finance app ${{ steps.version.outputs.name }}
-          body: Klok Finance's Android app. Install over the earlier one; sign-in and settings stay.
-          files: mobile/klok-finance.apk
+          body: "Klok Finance's Android app. klok-finance.apk is for everyone; klok-finance-sms.apk (forwards payment SMS) only for the Owner's phone. Install over the earlier one; sign-in and settings stay."
+          files: |
+            mobile/klok-finance.apk
+            mobile/klok-finance-sms.apk
           make_latest: true
 
       # The APK is already in the release; a slow handoff only warns (it can be copied by hand).
@@ -82,8 +84,14 @@ jobs:
             echo "::warning::APP_RELEASE_URL is not set; the APK is only in the release."
             exit 0
           fi
-          curl --fail-with-body -sS --retry 3 --retry-all-errors --connect-timeout 30 --max-time 900 -X POST "$APP_RELEASE_URL" \
-            -H 'Accept: application/json' \
-            -F "version=${{ steps.version.outputs.number }}" \
-            -F "name=${{ steps.version.outputs.name }}" \
-            -F "apk=@mobile/klok-finance.apk"
+          for flavor in plain sms; do
+            file=mobile/klok-finance.apk
+            if [ "$flavor" = sms ]; then file=mobile/klok-finance-sms.apk; fi
+            curl --fail-with-body -sS --retry 3 --retry-all-errors --connect-timeout 30 --max-time 900 -X POST "$APP_RELEASE_URL" \
+              -H 'Accept: application/json' \
+              -F "flavor=$flavor" \
+              -F "version=${{ steps.version.outputs.number }}" \
+              -F "name=${{ steps.version.outputs.name }}" \
+              -F "apk=@$file"
+            echo
+          done

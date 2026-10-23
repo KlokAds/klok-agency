@@ -8,6 +8,7 @@ use App\Models\AppDevice;
 use App\Models\Setting;
 use App\Services\AppPush;
 use App\Services\Ticker;
+use App\Support\Access;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -21,18 +22,23 @@ use Inertia\Response;
  */
 class AppSettingsController extends Controller
 {
-    public function index(AppPush $push): Response
+    public function index(Request $request, AppPush $push): Response
     {
         $account = $push->account();
+        $owner = $request->user()->hasRole(Access::OWNER);
 
         return Inertia::render('admin/App', [
             'firebase' => $account ? ['project' => $account['project_id'], 'email' => $account['client_email']] : null,
             'cardLow' => (string) (Setting::get('card_low_usd') ?: Ticker::CARD_LOW_DEFAULT),
-            'release' => [
-                'version' => Setting::get('app_version'),
-                'at' => Setting::get('app_released_at'),
-                'url' => AppReleaseController::downloadUrl(),
-            ],
+            // The plain app for everyone; the one that forwards payment SMS only for the Owner.
+            'releases' => collect(AppReleaseController::FLAVORS)
+                ->reject(fn (string $flavor) => $flavor === 'sms' && ! $owner)
+                ->map(fn (string $flavor) => [
+                    'flavor' => $flavor,
+                    'version' => AppReleaseController::versionName($flavor),
+                    'at' => Setting::get($flavor === 'sms' ? 'app_sms_released_at' : 'app_released_at'),
+                    'url' => AppReleaseController::downloadUrl($flavor),
+                ])->values(),
             'devices' => AppDevice::with('user:id,name')->latest('last_seen_at')->get()
                 ->map(fn (AppDevice $d) => [
                     'id' => $d->id,

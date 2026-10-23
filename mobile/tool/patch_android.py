@@ -1,9 +1,14 @@
 """Turns the android/ folder that `flutter create` makes into Klok Finance's app: the package
 name, Firebase, signing (the same key every time, so a new APK installs over the old one),
-permissions, the native SMS forwarder and the notification icon. Run from mobile/."""
+permissions, our Kotlin and the notification icon. Run from mobile/.
+
+`python3 tool/patch_android.py` makes the plain app (no SMS permission: Play Protect lets it
+install). Run again with `sms` afterwards and the same folder becomes the SMS app for the
+Owner's phone: the SMS permissions and the receiver are added, nothing else changes."""
 
 import re
 import shutil
+import sys
 from pathlib import Path
 
 
@@ -13,6 +18,23 @@ def patch(path, old, new, count=1):
         raise SystemExit(f'{path}: pattern not found: {old}')
     Path(path).write_text(re.sub(old, new, text, count=count), encoding='utf8')
 
+
+manifest = 'android/app/src/main/AndroidManifest.xml'
+
+if sys.argv[1:] == ['sms']:
+    patch(manifest, r'(<uses-permission android:name="android.permission.INTERNET" />)', r'''\1
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />''')
+    # The SMS receiver works with the app closed.
+    patch(manifest, r'(\n(\s*)<activity)', r'''
+        <receiver android:name=".SmsReceiver" android:exported="true" android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="999">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>\1''')
+    print('android patched: sms')
+    sys.exit(0)
 
 settings = 'android/settings.gradle.kts'
 patch(settings, r'(\n(\s*)id\("com\.android\.application"\)[^\n]*)',
@@ -45,7 +67,6 @@ dependencies {
 }
 ''', encoding='utf8')
 
-manifest = 'android/app/src/main/AndroidManifest.xml'
 patch(manifest, r'(<manifest[^>]*>)', r'''\1
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -53,17 +74,9 @@ patch(manifest, r'(<manifest[^>]*>)', r'''\1
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />''')
-# The SMS receiver works with the app closed; the notification plugin's receiver handles taps.
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />''')
+# The notification plugin's receiver handles taps.
 patch(manifest, r'(\n(\s*)<activity)', r'''
-        <receiver android:name=".SmsReceiver" android:exported="true" android:permission="android.permission.BROADCAST_SMS">
-            <intent-filter android:priority="999">
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="finance_normal" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />

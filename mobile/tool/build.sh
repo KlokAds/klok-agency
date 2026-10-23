@@ -40,5 +40,9 @@ run "icons" dart run flutter_launcher_icons
 # The version is the one in pubspec.yaml: raised by hand when the phone side has changed enough.
 # Only for 64-bit ARM phones (every Android phone of recent years): half the size, so it reaches
 # the server quickly.
-run "build apk" flutter build apk --release --target-platform android-arm64
+run "build apk (plain)" flutter build apk --release --target-platform android-arm64
 cp build/app/outputs/flutter-apk/app-release.apk klok-finance.apk
+# The same app with payment SMS forwarding, for the Owner's phone only.
+run "patch android (sms)" python3 tool/patch_android.py sms
+run "build apk (sms)" flutter build apk --release --target-platform android-arm64 --dart-define=SMS=true
+cp build/app/outputs/flutter-apk/app-release.apk klok-finance-sms.apk

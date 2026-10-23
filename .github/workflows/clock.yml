@@ -1,0 +1,27 @@
+name: Keep the reminders on time
+
+# The live server has no cron: reminders, renewals, the credit guard and the daily summary run
+# whenever the site is visited (at most every five minutes). This visits the sign-in page every
+# five minutes, so they go out on time even when nobody has the site or the app open. No
+# secrets: the page is public and the visit does nothing else.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  knock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # Only a knock: a missed one is done by the next, five minutes later, so it never fails
+      # and never sends an email.
+      - name: Visit the site
+        run: |
+          code=$(curl -sS --max-time 25 --retry 2 --retry-delay 5 -o /dev/null -w '%{http_code}' https://billing.klokads.com/login || true)
+          echo "billing.klokads.com answered: ${code:-no answer}"
+          if [ "$code" != "200" ]; then
+            echo "::notice::The site did not answer this time; the next knock will try again."
+          fi

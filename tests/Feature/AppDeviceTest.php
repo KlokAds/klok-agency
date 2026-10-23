@@ -123,13 +123,23 @@ test('GitHub hands over a new APK and the app finds it', function () {
     Setting::put('app_release_token', Hash::make('release-secret-0123456789'));
 
     $this->post(route('hooks.app-release', 'wrong'), [])->assertNotFound();
-    $this->post(route('hooks.app-release', 'release-secret-0123456789'), [
-        'version' => 2, 'name' => '1.0.2', 'apk' => UploadedFile::fake()->create('app.apk', 100),
-    ])->assertOk();
+    foreach (['plain' => 'plain apk', 'sms' => 'sms apk'] as $flavor => $content) {
+        $this->post(route('hooks.app-release', 'release-secret-0123456789'), [
+            'flavor' => $flavor, 'version' => 2, 'name' => '1.0.2', 'apk' => UploadedFile::fake()->createWithContent('app.apk', $content),
+        ])->assertOk();
+    }
 
-    $this->actingAs($this->accountant)->getJson(route('app.latest'))->assertJson(['version' => 2, 'name' => '1.0.2']);
-    $url = $this->actingAs($this->accountant)->getJson(route('app.latest'))->json('url');
-    $this->get($url)->assertOk();
+    // Each kind of app is offered its own kind; the first app (no kind given) was the SMS one.
+    $this->actingAs($this->accountant)->getJson(route('app.latest', ['flavor' => 'plain']))->assertJson(['version' => 2, 'name' => '1.0.2']);
+    $plain = $this->actingAs($this->accountant)->getJson(route('app.latest', ['flavor' => 'plain']))->json('url');
+    $sms = $this->actingAs($this->owner)->getJson(route('app.latest'))->json('url');
+    expect($this->get($plain)->streamedContent())->toBe('plain apk')
+        ->and($this->get($sms)->streamedContent())->toBe('sms apk');
+
+    // Only the Owner sees the SMS app in Settings.
+    $this->actingAs($this->owner)->get('/admin/app')->assertInertia(fn ($page) => $page->has('releases', 2));
+    $this->accountant->givePermissionTo('settings.view');
+    $this->actingAs($this->accountant)->get('/admin/app')->assertInertia(fn ($page) => $page->has('releases', 1)->where('releases.0.flavor', 'plain'));
     $this->get(route('app.download'))->assertForbidden();
 
     // The login page offers it to anyone.

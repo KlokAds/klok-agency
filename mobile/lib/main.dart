@@ -26,6 +26,12 @@ const paper = Color(0xFFF6F7F6);
 final notifications = FlutterLocalNotificationsPlugin();
 const smsChannel = MethodChannel('klok/sms');
 
+/// Two builds of one app: the plain one for everyone, and (built with --dart-define=SMS=true)
+/// the one that also forwards payment SMS, for the Owner's phone only. Play Protect blocks any
+/// downloaded app that reads SMS, so only the phone that needs it carries it.
+const smsBuild = bool.fromEnvironment('SMS');
+const flavor = smsBuild ? 'sms' : 'plain';
+
 /// Money that needs you now (a payment, credit run out, card low): pops up over everything, loud.
 const urgent = AndroidNotificationChannel(
   'finance_urgent',
@@ -186,7 +192,7 @@ class Lock {
 
   static Future<SharedPreferences> get _p => SharedPreferences.getInstance();
 
-  static Future<String> mode() async => (await _p).getString('lock.mode') ?? 'bio';
+  static Future<String> mode() async => (await _p).getString('lock.mode') ?? 'off';
   static Future<int> after() async => (await _p).getInt('lock.after') ?? 1;
   static Future<bool> pinWithFinger() async => (await _p).getBool('lock.pin_finger') ?? true;
 
@@ -672,6 +678,60 @@ class _SitePageState extends State<SitePage> {
     }
   }
 
+  /// Makes this phone the payment SMS forwarder. Returns why not, or null when it is on.
+  Future<String?> enableSms() async {
+    final prefs = await SharedPreferences.getInstance();
+    final status = await Permission.sms.request();
+    if (!status.isGranted) {
+      return 'SMS পড়ার অনুমতি দেওয়া হয়নি। Phone-এর Settings › Apps › Klok Finance › Permissions থেকে দিন।';
+    }
+    final current = token ?? await FirebaseMessaging.instance.getToken();
+    handedOver = null;
+    await handOver();
+    final result = await request('POST', '/app/sms-forwarder', {'token': current});
+    final body = result?.body;
+    if (result?.status == 403) {
+      return 'শুধু Owner নিজের phone-এ এটা চালু করতে পারেন।';
+    }
+    if (result?.status != 200 || body is! Map || body['url'] is! String) {
+      return 'চালু হলো না — নেট আছে আর login করা আছে কিনা দেখুন।';
+    }
+    await prefs.setString('sms.url', body['url'] as String);
+    await prefs.setString('sms.senders', ((body['senders'] as List?) ?? []).join(','));
+    await prefs.remove('sms.error');
+    await prefs.remove('sms.off');
+    // Kept awake by Android for SMS even when the battery saver would stop it.
+    await Permission.ignoreBatteryOptimizations.request();
+    return null;
+  }
+
+  /// The SMS app on the Owner's phone: forwarding turns itself on at sign-in, once (unless it
+  /// was turned off by hand). Anyone else signing in on it is left alone.
+  Future<void> autoSms() async {
+    if (!smsBuild || !await signedIn()) {
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getString('sms.url') != null && prefs.getString('sms.error') == null) {
+      return;
+    }
+    if (prefs.getBool('sms.off') == true) {
+      return;
+    }
+    final latest = await request('GET', '/app/latest?flavor=$flavor');
+    final body = latest?.body;
+    if (body is Map && body['owner'] == true) {
+      await step('sms', () async {
+        final why = await enableSms();
+        if (why == null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment SMS forward চালু হয়েছে — এই phone-এর bKash/Nagad/Rocket/bank SMS নিজে থেকে যাবে।')),
+          );
+        }
+      });
+    }
+  }
+
   /// Once a day: is there a newer APK? Offered, never forced.
   Future<void> checkUpdate() async {
     if (checkedUpdate != null && DateTime.now().difference(checkedUpdate!) < const Duration(hours: 20)) {
@@ -680,7 +740,7 @@ class _SitePageState extends State<SitePage> {
     if (!await signedIn()) {
       return;
     }
-    final result = await request('GET', '/app/latest');
+    final result = await request('GET', '/app/latest?flavor=$flavor');
     final body = result?.body;
     if (body is! Map) {
       return;
@@ -800,6 +860,7 @@ class _SitePageState extends State<SitePage> {
                     setState(() => failed = false);
                   }
                   await handOver();
+                  await autoSms();
                   await checkUpdate();
                 },
                 onReceivedError: (controller, request, error) {
@@ -939,6 +1000,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!on) {
       await prefs.remove('sms.url');
       await prefs.remove('sms.senders');
+      // Turned off by hand: it does not turn itself back on at the next sign-in.
+      await prefs.setBool('sms.off', true);
       setState(() => smsOn = false);
       return;
     }
@@ -947,28 +1010,8 @@ class _SettingsPageState extends State<SettingsPage> {
       smsError = null;
     });
     try {
-      final status = await Permission.sms.request();
-      if (!status.isGranted) {
-        smsError = 'SMS পড়ার অনুমতি দেওয়া হয়নি। Phone-এর Settings › Apps › Klok Finance › Permissions থেকে দিন।';
-        return;
-      }
-      final token = widget.site.token ?? await FirebaseMessaging.instance.getToken();
-      widget.site.handedOver = null;
-      await widget.site.handOver();
-      final result = await widget.site.request('POST', '/app/sms-forwarder', {'token': token});
-      final body = result?.body;
-      if (result?.status == 403) {
-        smsError = 'শুধু Owner নিজের phone-এ এটা চালু করতে পারেন।';
-      } else if (result?.status != 200 || body is! Map || body['url'] is! String) {
-        smsError = 'চালু হলো না — নেট আছে আর login করা আছে কিনা দেখুন।';
-      } else {
-        await prefs.setString('sms.url', body['url'] as String);
-        await prefs.setString('sms.senders', ((body['senders'] as List?) ?? []).join(','));
-        await prefs.remove('sms.error');
-        smsOn = true;
-        // Kept awake by Android for SMS even when the battery saver would stop it.
-        await Permission.ignoreBatteryOptimizations.request();
-      }
+      smsError = await widget.site.enableSms();
+      smsOn = smsError == null;
     } finally {
       if (mounted) {
         setState(() => smsBusy = false);
@@ -988,7 +1031,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     const head = TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: teal, letterSpacing: .3);
     return Scaffold(
-      appBar: AppBar(title: const Text('App lock ও SMS'), backgroundColor: rail, foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(smsBuild ? 'App lock ও SMS' : 'App lock'), backgroundColor: rail, foregroundColor: Colors.white),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
@@ -1032,6 +1075,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
             ),
+          if (smsBuild) ...[
           const Divider(height: 32),
           const Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 4), child: Text('PAYMENT SMS', style: head)),
           SwitchListTile(
@@ -1064,11 +1108,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     )
                   : null,
             ),
+          ],
           const Divider(height: 32),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Version'),
-            subtitle: Text(version),
+            subtitle: Text(smsBuild ? '$version · SMS' : version),
             onTap: () {
               widget.site.checkedUpdate = null;
               widget.site.checkUpdate();
