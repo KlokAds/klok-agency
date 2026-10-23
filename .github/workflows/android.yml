@@ -71,8 +71,10 @@ jobs:
           files: mobile/klok-finance.apk
           make_latest: true
 
+      # The APK is already in the release; a slow handoff only warns (it can be copied by hand).
       - name: Hand it to the server (the app offers it from there)
         if: steps.version.outputs.build == 'yes'
+        continue-on-error: true
         env:
           APP_RELEASE_URL: ${{ secrets.APP_RELEASE_URL }}
         run: |
@@ -80,7 +82,7 @@ jobs:
             echo "::warning::APP_RELEASE_URL is not set; the APK is only in the release."
             exit 0
           fi
-          curl --fail-with-body -sS -X POST "$APP_RELEASE_URL" \
+          curl --fail-with-body -sS --retry 3 --retry-all-errors --connect-timeout 30 --max-time 900 -X POST "$APP_RELEASE_URL" \
             -H 'Accept: application/json' \
             -F "version=${{ steps.version.outputs.number }}" \
             -F "name=${{ steps.version.outputs.name }}" \

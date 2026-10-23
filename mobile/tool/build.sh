@@ -38,5 +38,7 @@ grep -rl "proguard-android.txt" "$HOME/.pub-cache/hosted" --include=build.gradle
     | xargs -r sed -i "s/proguard-android.txt/proguard-android-optimize.txt/g"
 run "icons" dart run flutter_launcher_icons
 # The version is the one in pubspec.yaml: raised by hand when the phone side has changed enough.
-run "build apk" flutter build apk --release
+# Only for 64-bit ARM phones (every Android phone of recent years): half the size, so it reaches
+# the server quickly.
+run "build apk" flutter build apk --release --target-platform android-arm64
 cp build/app/outputs/flutter-apk/app-release.apk klok-finance.apk
