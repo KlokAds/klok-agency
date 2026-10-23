@@ -223,7 +223,7 @@ void props;
 
         <!-- 2FA -->
         <section class="panel flex flex-col gap-5 p-6">
-            <div class="flex items-start justify-between gap-3">
+            <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 class="text-[17px] font-bold">
                         {{ t('দুই ধাপের যাচাই (2FA)') }}

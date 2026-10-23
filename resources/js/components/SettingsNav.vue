@@ -15,7 +15,7 @@ const tabs = computed(() =>
 
 <template>
     <nav
-        class="no-print -mx-4 mb-6 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+        class="no-print -mx-4 mb-6 [scrollbar-width:none] overflow-x-auto px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
         :aria-label="t('Settings-এর ভাগ')"
     >
         <div

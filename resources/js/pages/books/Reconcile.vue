@@ -162,42 +162,49 @@ const diff = computed(() =>
                     )
                 "
             />
-            <table v-else class="ledger mt-3">
-                <thead>
-                    <tr>
-                        <th>{{ t('তারিখ') }}</th>
-                        <th class="r">App</th>
-                        <th class="r">{{ t('খাতা') }}</th>
-                        <th class="r">{{ t('পার্থক্য') }}</th>
-                        <th>{{ t('কে') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="h in history.data" :key="h.id">
-                        <td class="num text-[12.5px]">
-                            {{ niceDate(h.date)
-                            }}<span
-                                v-if="h.note"
-                                class="block font-sans text-[12px] text-ink-3"
-                                >{{ h.note }}</span
+            <!-- A phone scrolls the table sideways instead of squeezing it. -->
+            <div v-else class="mt-3 overflow-x-auto">
+                <table class="ledger min-w-[560px]">
+                    <thead>
+                        <tr>
+                            <th>{{ t('তারিখ') }}</th>
+                            <th class="r">App</th>
+                            <th class="r">{{ t('খাতা') }}</th>
+                            <th class="r">{{ t('পার্থক্য') }}</th>
+                            <th>{{ t('কে') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="h in history.data" :key="h.id">
+                            <td class="num text-[12.5px]">
+                                {{ niceDate(h.date)
+                                }}<span
+                                    v-if="h.note"
+                                    class="block font-sans text-[12px] text-ink-3"
+                                    >{{ h.note }}</span
+                                >
+                            </td>
+                            <td class="r num">{{ money(h.app, 'usd') }}</td>
+                            <td class="r num">{{ money(h.system, 'usd') }}</td>
+                            <td
+                                class="r num font-semibold"
+                                :class="
+                                    h.difference === 0 ? 'text-in' : 'text-out'
+                                "
                             >
-                        </td>
-                        <td class="r num">{{ money(h.app, 'usd') }}</td>
-                        <td class="r num">{{ money(h.system, 'usd') }}</td>
-                        <td
-                            class="r num font-semibold"
-                            :class="h.difference === 0 ? 'text-in' : 'text-out'"
-                        >
-                            {{
-                                h.difference === 0
-                                    ? '✓'
-                                    : money(h.difference, 'usd', { sign: true })
-                            }}
-                        </td>
-                        <td class="text-[13px] text-ink-2">{{ h.by }}</td>
-                    </tr>
-                </tbody>
-            </table>
+                                {{
+                                    h.difference === 0
+                                        ? '✓'
+                                        : money(h.difference, 'usd', {
+                                              sign: true,
+                                          })
+                                }}
+                            </td>
+                            <td class="text-[13px] text-ink-2">{{ h.by }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <KPager :page="history" :sizes="[10, 25, 50, 100]" />
         </section>
     </div>

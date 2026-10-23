@@ -7,8 +7,11 @@ defineProps<{ title: string; eyebrow?: string; lead?: string }>();
 
 <template>
     <Head :title="t(title)" />
-    <div class="mb-6 flex flex-wrap items-end gap-x-6 gap-y-4">
-        <div class="min-w-0 flex-1">
+    <!-- Phone: the words take the whole width and the buttons go under them. -->
+    <div
+        class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-6"
+    >
+        <div class="min-w-0 sm:flex-1">
             <p v-if="eyebrow" class="eyebrow mb-1.5">{{ t(eyebrow) }}</p>
             <h1
                 class="text-[26px] leading-tight font-semibold tracking-[-0.02em] sm:text-[30px]"
