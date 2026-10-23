@@ -97,7 +97,7 @@ const showOptions = computed<Option[]>(() => [
     </PageHeader>
 
     <div
-        class="mb-6 grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-3"
+        class="mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('মোট margin') }}</p>
@@ -171,7 +171,7 @@ const showOptions = computed<Option[]>(() => [
                 </div>
             </div>
             <dl
-                class="mt-5 grid grid-cols-3 gap-2 border-t border-dashed border-line pt-4 text-[12px]"
+                class="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-[12px]"
             >
                 <div>
                     <dt class="text-ink-3">{{ t('ad খরচ') }}</dt>

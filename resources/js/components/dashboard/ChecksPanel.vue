@@ -52,7 +52,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                         </dd>
                     </div>
                     <div
-                        class="flex justify-between gap-3 border-t border-dashed border-line pt-1 font-semibold"
+                        class="flex justify-between gap-3 border-t border-line pt-1 font-semibold"
                     >
                         <dt>{{ t('বাকি থাকার কথা') }}</dt>
                         <dd class="num">
@@ -76,7 +76,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                         <dd class="num">{{ money(-s.platform_due, 'usd') }}</dd>
                     </div>
                     <div
-                        class="flex justify-between gap-3 border-t border-dashed border-line pt-1 font-semibold"
+                        class="flex justify-between gap-3 border-t border-line pt-1 font-semibold"
                     >
                         <dt>{{ t('আসলে আছে') }}</dt>
                         <dd class="num">{{ money(s.business_usd, 'usd') }}</dd>
@@ -150,7 +150,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                         <dd class="num">{{ money(s.owner_due, 'bdt') }}</dd>
                     </div>
                     <div
-                        class="flex justify-between gap-3 border-t border-dashed border-line pt-1 font-semibold"
+                        class="flex justify-between gap-3 border-t border-line pt-1 font-semibold"
                     >
                         <dt>{{ t('মোট সম্পদ') }}</dt>
                         <dd class="num">{{ money(s.assets, 'bdt') }}</dd>
@@ -178,7 +178,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                         <dd class="num">{{ money(s.unearned, 'bdt') }}</dd>
                     </div>
                     <div
-                        class="flex justify-between gap-3 border-t border-dashed border-line pt-1 font-semibold"
+                        class="flex justify-between gap-3 border-t border-line pt-1 font-semibold"
                     >
                         <dt>{{ t('মোট') }}</dt>
                         <dd class="num">{{ money(s.equity, 'bdt') }}</dd>

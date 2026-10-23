@@ -243,7 +243,7 @@ function sync(): void {
                 <table class="w-full min-w-[760px] text-[13px]">
                     <thead>
                         <tr
-                            class="border-b border-line text-left text-[11.5px] font-semibold tracking-wide text-ink-3 uppercase"
+                            class="border-b border-line text-left text-[12.5px] font-semibold text-ink-3"
                         >
                             <th class="px-5 py-3">Campaign</th>
                             <th class="px-3 py-3 text-right">
@@ -260,7 +260,7 @@ function sync(): void {
                         <tr
                             v-for="c in campaigns.data"
                             :key="c.id"
-                            class="border-b border-dashed border-line last:border-0"
+                            class="border-b border-line last:border-0"
                         >
                             <td class="max-w-[340px] px-5 py-3">
                                 <p class="flex items-center gap-2">

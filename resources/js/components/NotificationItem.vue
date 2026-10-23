@@ -136,7 +136,7 @@ const tone = computed(() =>
                         <tr
                             v-for="a in item.summary.ads"
                             :key="a.client"
-                            class="border-t border-dashed border-line"
+                            class="border-t border-line"
                         >
                             <td class="py-1.5 font-medium">{{ a.client }}</td>
                             <td class="num py-1.5 text-right">

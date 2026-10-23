@@ -15,9 +15,7 @@ defineProps<{ title?: string; description?: string }>();
             <BrandMark light />
 
             <div class="relative mt-auto max-w-md">
-                <p
-                    class="text-[11px] font-bold tracking-[0.2em] text-rail-dim uppercase"
-                >
+                <p class="text-[12.5px] font-medium text-rail-dim">
                     Klok Ads · Agency Books
                 </p>
                 <p

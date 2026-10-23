@@ -192,19 +192,19 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                     <thead class="bg-surface-2">
                         <tr>
                             <th
-                                class="px-4 py-3 text-left text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase"
+                                class="px-4 py-3 text-left text-[12.5px] font-medium text-ink-3"
                             >
                                 {{ t('পাতা') }}
                             </th>
                             <th
                                 v-for="a in allActions"
                                 :key="a"
-                                class="px-3 py-3 text-center text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase"
+                                class="px-3 py-3 text-center text-[12.5px] font-medium text-ink-3"
                             >
                                 {{ actions[a] }}
                             </th>
                             <th
-                                class="px-3 py-3 text-center text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase"
+                                class="px-3 py-3 text-center text-[12.5px] font-medium text-ink-3"
                             >
                                 {{ t('সব') }}
                             </th>
@@ -214,7 +214,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                         <tr
                             v-for="m in modules"
                             :key="m.key"
-                            class="border-t border-dashed border-line"
+                            class="border-t border-line"
                         >
                             <td class="px-4 py-2.5 font-medium">
                                 {{ m.label }}

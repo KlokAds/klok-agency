@@ -212,7 +212,7 @@ function saveRename(): void {
 
     <!-- Totals -->
     <section
-        class="mb-4 grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-3"
+        class="mb-4 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">
@@ -339,7 +339,7 @@ function saveRename(): void {
                 <li
                     v-for="r in rows.data"
                     :key="r.id"
-                    class="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-dashed border-line px-4 py-3 text-[13.5px] last:border-0 sm:flex-nowrap sm:px-5"
+                    class="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line px-4 py-3 text-[13.5px] last:border-0 sm:flex-nowrap sm:px-5"
                 >
                     <span
                         class="num w-full shrink-0 text-[12px] text-ink-3 sm:w-20"
@@ -454,7 +454,7 @@ function saveRename(): void {
                     <li
                         v-for="h in heads"
                         :key="h.id"
-                        class="flex items-center gap-2 border-b border-dashed border-line py-2 text-[13px] last:border-0"
+                        class="flex items-center gap-2 border-b border-line py-2 text-[13px] last:border-0"
                     >
                         <template v-if="renaming?.id === h.id">
                             <KInput

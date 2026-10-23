@@ -252,7 +252,7 @@ const shortMonth = (ym: string) =>
     </PageHeader>
 
     <div
-        class="mb-6 grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-3"
+        class="mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('মাসিক বেতন (active)') }}</p>
@@ -422,7 +422,7 @@ const shortMonth = (ym: string) =>
             <li
                 v-for="p in payments.data"
                 :key="p.id"
-                class="group flex flex-wrap items-center gap-3 border-b border-dashed border-line py-3 text-[13.5px] last:border-0"
+                class="group flex flex-wrap items-center gap-3 border-b border-line py-3 text-[13.5px] last:border-0"
             >
                 <span class="num w-24 shrink-0 text-[12.5px] text-ink-3">{{
                     niceDate(p.date)

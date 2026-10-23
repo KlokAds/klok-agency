@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SectionTabs from '@/components/SectionTabs.vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -191,29 +192,16 @@ const needsClient = computed(() =>
 </script>
 
 <template>
+    <SectionTabs section="ledgers" />
     <PageHeader
         :eyebrow="t('খাতা')"
         :title="t('BDT খাতা')"
         :lead="
             t(
-                'Capital, USD কেনা, client-এর টাকা, খরচ আর বেতন — হাতে আর bank-এ কত টাকা।',
+                'সব BDT লেনদেন এক জায়গায় — মিলিয়ে দেখা আর ভুল ঠিক করার জন্য। নতুন টাকা Payment, খরচ বা “নতুন entry” থেকে লিখুন।',
             )
         "
     >
-        <KButton
-            v-if="can['reports.export']"
-            href="/reports/export/bdt"
-            external
-            icon="down"
-            >CSV</KButton
-        >
-        <KButton
-            v-if="can['bdt.create']"
-            variant="ink"
-            icon="plus"
-            @click="startNew"
-            >{{ t('নতুন row') }}</KButton
-        >
     </PageHeader>
 
     <section

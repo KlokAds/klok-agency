@@ -47,7 +47,7 @@ withDefaults(
                 >Klok Finance</span
             >
             <span
-                class="mt-1 font-semibold uppercase"
+                class="mt-1 font-semibold"
                 :class="[
                     compact
                         ? 'text-[9.5px] tracking-[0.1em]'

@@ -290,7 +290,7 @@ function onGridKey(event: KeyboardEvent): void {
                 </div>
 
                 <div
-                    class="mt-2 flex items-center gap-1.5 border-t border-dashed border-line pt-2.5"
+                    class="mt-2 flex items-center gap-1.5 border-t border-line pt-2.5"
                 >
                     <button
                         type="button"

@@ -1,12 +1,7 @@
 @import 'tailwindcss';
 
-@import '@fontsource-variable/manrope';
-@import '@fontsource/hind-siliguri/400.css';
-@import '@fontsource/hind-siliguri/500.css';
-@import '@fontsource/hind-siliguri/600.css';
-@import '@fontsource/hind-siliguri/700.css';
-@import '@fontsource/ibm-plex-mono/400.css';
-@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/noto-sans-bengali';
 
 @source '../../storage/framework/views/*.php';
 
@@ -74,9 +69,11 @@
 }
 
 @theme inline {
-    --font-sans: 'Manrope Variable', 'Hind Siliguri', ui-sans-serif, sans-serif;
-    --font-bn: 'Hind Siliguri', 'Manrope Variable', sans-serif;
-    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --font-sans:
+        'Inter Variable', 'Noto Sans Bengali Variable', ui-sans-serif,
+        system-ui, sans-serif;
+    --font-bn: 'Noto Sans Bengali Variable', 'Inter Variable', sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
     --color-paper: var(--paper);
     --color-surface: var(--surface);
@@ -122,8 +119,10 @@
 
     body {
         font-family: var(--font-sans);
-        font-feature-settings: 'ss01', 'cv11';
+        font-feature-settings: 'cv11';
         line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
     }
 
     ::selection {
@@ -213,20 +212,20 @@
     .panel {
         background: var(--surface);
         border: 1px solid var(--line);
-        border-radius: 14px;
+        border-radius: 12px;
     }
 
+    /* Figures line up in columns without a typewriter look. */
     .num {
-        font-family: var(--font-mono);
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.01em;
+        font-family: var(--font-sans);
+        font-variant-numeric: tabular-nums lining-nums;
+        font-feature-settings: 'tnum', 'cv11';
+        letter-spacing: -0.005em;
     }
 
     .eyebrow {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+        font-size: 12.5px;
+        font-weight: 500;
         color: var(--ink-3);
     }
 
@@ -286,10 +285,8 @@
         border-bottom: 1px solid var(--line-2);
         padding: 10px 12px;
         text-align: left;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 600;
         color: var(--ink-3);
         white-space: nowrap;
     }

@@ -92,7 +92,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                 <li
                     v-for="c in rows"
                     :key="c.id"
-                    class="border-b border-dashed border-line py-3 last:border-0"
+                    class="border-b border-line py-3 last:border-0"
                 >
                     <div class="flex items-center justify-between gap-3">
                         <Link
@@ -305,15 +305,13 @@ const own = computed(() => props.platformDue - total.value.unbilled);
             <dl
                 class="mx-4 mb-4 rounded-xl bg-surface-2 px-4 py-2 text-[13px] md:hidden"
             >
-                <div
-                    class="flex justify-between border-b border-dashed border-line py-1.5"
-                >
+                <div class="flex justify-between border-b border-line py-1.5">
                     <dt class="text-ink-2">{{ t('মোট বাকি credit') }}</dt>
                     <dd class="num font-semibold">{{ usd(total.held) }}</dd>
                 </div>
                 <div
                     v-if="total.owed"
-                    class="flex justify-between border-b border-dashed border-line py-1.5"
+                    class="flex justify-between border-b border-line py-1.5"
                 >
                     <dt class="text-ink-2">{{ t('মোট পাওনা') }}</dt>
                     <dd class="num font-semibold text-out">

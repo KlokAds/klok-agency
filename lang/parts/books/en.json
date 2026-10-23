@@ -300,5 +300,11 @@
     "খরচ সবসময় পুরনো batch থেকে কাটে (FIFO) — সেই batch-এর দামে হিসাব হয়।": "Spend always comes out of the oldest batch first (FIFO), at that batch's rate.",
     "খরচ হয়েছে, card থেকে এখনো কাটেনি": "Spent, not charged to the card yet",
     "মিলেছে — কেনা dollar − খরচ = হাতে থাকা dollar": "Matches — dollars bought − spent = dollars on hand",
-    "মেলেনি — কোনো USD entry বাদ পড়েছে বা ভুল": "Does not match — a USD entry is missing or wrong"
+    "মেলেনি — কোনো USD entry বাদ পড়েছে বা ভুল": "Does not match — a USD entry is missing or wrong",
+    "সব BDT লেনদেন এক জায়গায় — মিলিয়ে দেখা আর ভুল ঠিক করার জন্য। নতুন টাকা Payment, খরচ বা “নতুন entry” থেকে লিখুন।": "Every BDT transaction in one place — for checking and correcting. Enter new money from Payments, Expenses or “New entry”.",
+    "প্রতিটা ডলারের লেনদেন — মিলিয়ে দেখা আর ভুল ঠিক করার জন্য। Campaign-এর খরচ Pilot থেকে নিজে আসে; USD কেনা আর card-এর কাটা Dollar ও Card পাতা থেকে।": "Every dollar transaction — for checking and correcting. Campaign spend comes from Pilot by itself; buying USD and card charges are entered from Dollars & card.",
+    "Dollar ও Card": "Dollars & card",
+    "খাতা (সব লেনদেন)": "Ledgers (all transactions)",
+    "এই অংশের পাতা": "Pages in this section",
+    "Overview": "Overview"
 }

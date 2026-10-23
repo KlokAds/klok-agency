@@ -56,9 +56,6 @@ function pretty(raw: string | null | undefined): string {
             class="num h-full min-w-0 flex-1 py-2 text-[15px]"
             @input="onInput"
         />
-        <span
-            class="text-[10.5px] font-bold tracking-wider text-ink-3 uppercase"
-            >{{ currency }}</span
-        >
+        <span class="text-[12.5px] font-medium text-ink-3">{{ currency }}</span>
     </div>
 </template>

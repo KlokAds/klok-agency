@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SectionTabs from '@/components/SectionTabs.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -104,6 +105,7 @@ function saveAccount(): void {
 </script>
 
 <template>
+    <SectionTabs section="dollars" />
     <PageHeader
         :eyebrow="t('টাকা')"
         :title="t('Dollar কোথায়')"
@@ -132,12 +134,10 @@ function saveAccount(): void {
 
     <!-- The card -->
     <section
-        class="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
+        class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p
-                class="text-[11px] font-bold tracking-[0.14em] text-rail-dim uppercase"
-            >
+            <p class="text-[12.5px] font-medium text-rail-dim">
                 {{ t('Card-এ এখন') }}
             </p>
             <p class="num mt-3 text-[30px] leading-none font-medium text-white">
@@ -306,7 +306,7 @@ function saveAccount(): void {
                 <table class="w-full min-w-[440px] text-[13px]">
                     <thead>
                         <tr
-                            class="border-b border-line text-left text-[11.5px] font-semibold tracking-wide text-ink-3 uppercase"
+                            class="border-b border-line text-left text-[12.5px] font-semibold text-ink-3"
                         >
                             <th class="px-5 py-2.5 sm:px-6">Platform</th>
                             <th class="px-3 py-2.5 text-right">
@@ -324,7 +324,7 @@ function saveAccount(): void {
                         <tr
                             v-for="p in platforms"
                             :key="p.id"
-                            class="border-b border-dashed border-line last:border-0"
+                            class="border-b border-line last:border-0"
                         >
                             <td class="px-5 py-2.5 font-medium sm:px-6">
                                 {{ p.name }}
@@ -374,7 +374,7 @@ function saveAccount(): void {
                 <li
                     v-for="a in accounts"
                     :key="a.id"
-                    class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[14px]"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[14px]"
                 >
                     <span
                         class="min-w-0 flex-1 truncate font-medium"

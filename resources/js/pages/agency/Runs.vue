@@ -413,7 +413,7 @@ onMounted(() => {
             </p>
 
             <div
-                class="mt-auto flex flex-wrap items-center gap-2 border-t border-dashed border-line pt-3"
+                class="mt-auto flex flex-wrap items-center gap-2 border-t border-line pt-3"
                 :class="run.result_note ? 'mt-3' : 'mt-4'"
             >
                 <a

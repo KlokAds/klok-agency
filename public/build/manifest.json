@@ -1,308 +1,157 @@
 {
-  "_InvoiceDoc-CyK0hhmw.js": {
-    "file": "assets/InvoiceDoc-CyK0hhmw.js",
+  "_InvoiceDoc-CK1_UgpA.js": {
+    "file": "assets/InvoiceDoc-CK1_UgpA.js",
     "name": "InvoiceDoc",
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
-      "_KTag-BfW3ffN8.js"
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
+      "_KTag-CvUjg7mb.js"
     ]
   },
-  "_KAmount-CY2HIsex.js": {
-    "file": "assets/KAmount-CY2HIsex.js",
+  "_KAmount-BO35c3kk.js": {
+    "file": "assets/KAmount-BO35c3kk.js",
     "name": "KAmount",
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js"
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js"
     ]
   },
-  "_KCode-9k2QiSvk.js": {
-    "file": "assets/KCode-9k2QiSvk.js",
+  "_KCode-RWLbzawD.js": {
+    "file": "assets/KCode-RWLbzawD.js",
     "name": "KCode",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_KEmpty-Cnr_j8ok.js": {
-    "file": "assets/KEmpty-Cnr_j8ok.js",
+  "_KEmpty-Dx-7OdA_.js": {
+    "file": "assets/KEmpty-Dx-7OdA_.js",
     "name": "KEmpty",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_KIcon-ykCjBi4j.js": {
-    "file": "assets/KIcon-ykCjBi4j.js",
+  "_KIcon-BzBkyGSd.js": {
+    "file": "assets/KIcon-BzBkyGSd.js",
     "name": "KIcon",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_KPager-LmDCmp7r.js": {
-    "file": "assets/KPager-LmDCmp7r.js",
+  "_KPager-DKcDlxzG.js": {
+    "file": "assets/KPager-DKcDlxzG.js",
     "name": "KPager",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_KTag-BfW3ffN8.js": {
-    "file": "assets/KTag-BfW3ffN8.js",
+  "_KTag-CvUjg7mb.js": {
+    "file": "assets/KTag-CvUjg7mb.js",
     "name": "KTag",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_PageHeader-CAU57bl8.js": {
-    "file": "assets/PageHeader-CAU57bl8.js",
+  "_PageHeader-D1OjOrOp.js": {
+    "file": "assets/PageHeader-D1OjOrOp.js",
     "name": "PageHeader",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_SettingsNav-xKIRyX04.js": {
-    "file": "assets/SettingsNav-xKIRyX04.js",
+  "_SectionTabs-D2Oyi5YJ.js": {
+    "file": "assets/SectionTabs-D2Oyi5YJ.js",
+    "name": "SectionTabs",
+    "imports": [
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "resources/js/app.ts"
+    ]
+  },
+  "_SettingsNav-2F39RBE2.js": {
+    "file": "assets/SettingsNav-2F39RBE2.js",
     "name": "SettingsNav",
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
       "resources/js/app.ts"
     ]
   },
-  "_TaskForm-DoAUGKlo.js": {
-    "file": "assets/TaskForm-DoAUGKlo.js",
+  "_TaskForm-B7WF-opj.js": {
+    "file": "assets/TaskForm-B7WF-opj.js",
     "name": "TaskForm",
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts"
     ]
   },
-  "_format-CdwtLQxl.js": {
-    "file": "assets/format-CdwtLQxl.js",
+  "_format-BxVgTmUy.js": {
+    "file": "assets/format-BxVgTmUy.js",
     "name": "format",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_i18n-D9Rta_cp.js": {
-    "file": "assets/i18n-D9Rta_cp.js",
+  "_i18n-CNpKzh_Z.js": {
+    "file": "assets/i18n-CNpKzh_Z.js",
     "name": "i18n"
   },
-  "_useFilters-B_0vJYuk.js": {
-    "file": "assets/useFilters-B_0vJYuk.js",
+  "_useFilters-4ZVNIJV9.js": {
+    "file": "assets/useFilters-4ZVNIJV9.js",
     "name": "useFilters",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "_usePopover-B5E6ANPw.js": {
-    "file": "assets/usePopover-B5E6ANPw.js",
+  "_usePopover-DIRvt-7D.js": {
+    "file": "assets/usePopover-DIRvt-7D.js",
     "name": "usePopover",
     "imports": [
-      "_i18n-D9Rta_cp.js"
+      "_i18n-CNpKzh_Z.js"
     ]
   },
-  "node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-ext-wght-normal.woff2": {
-    "file": "assets/manrope-cyrillic-ext-wght-normal-C8S-KRRz.woff2",
-    "src": "node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-ext-wght-normal.woff2"
+  "node_modules/@fontsource-variable/inter/files/inter-cyrillic-ext-wght-normal.woff2": {
+    "file": "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-cyrillic-ext-wght-normal.woff2"
   },
-  "node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-wght-normal.woff2": {
-    "file": "assets/manrope-cyrillic-wght-normal-Dvxsihut.woff2",
-    "src": "node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-wght-normal.woff2"
+  "node_modules/@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2": {
+    "file": "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2"
   },
-  "node_modules/@fontsource-variable/manrope/files/manrope-greek-wght-normal.woff2": {
-    "file": "assets/manrope-greek-wght-normal-DL7QRZyv.woff2",
-    "src": "node_modules/@fontsource-variable/manrope/files/manrope-greek-wght-normal.woff2"
+  "node_modules/@fontsource-variable/inter/files/inter-greek-ext-wght-normal.woff2": {
+    "file": "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-greek-ext-wght-normal.woff2"
   },
-  "node_modules/@fontsource-variable/manrope/files/manrope-latin-ext-wght-normal.woff2": {
-    "file": "assets/manrope-latin-ext-wght-normal-Ch3YOpNY.woff2",
-    "src": "node_modules/@fontsource-variable/manrope/files/manrope-latin-ext-wght-normal.woff2"
+  "node_modules/@fontsource-variable/inter/files/inter-greek-wght-normal.woff2": {
+    "file": "assets/inter-greek-wght-normal-CkhJZR-_.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-greek-wght-normal.woff2"
   },
-  "node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2": {
-    "file": "assets/manrope-latin-wght-normal-DHIcAJRg.woff2",
-    "src": "node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2"
+  "node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2": {
+    "file": "assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2"
   },
-  "node_modules/@fontsource-variable/manrope/files/manrope-vietnamese-wght-normal.woff2": {
-    "file": "assets/manrope-vietnamese-wght-normal-usUDDRr7.woff2",
-    "src": "node_modules/@fontsource-variable/manrope/files/manrope-vietnamese-wght-normal.woff2"
+  "node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2": {
+    "file": "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2"
   },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-400-normal.woff": {
-    "file": "assets/hind-siliguri-bengali-400-normal-qtENw2Fc.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-400-normal.woff"
+  "node_modules/@fontsource-variable/inter/files/inter-vietnamese-wght-normal.woff2": {
+    "file": "assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-vietnamese-wght-normal.woff2"
   },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-400-normal.woff2": {
-    "file": "assets/hind-siliguri-bengali-400-normal-rHQ7AW0H.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-400-normal.woff2"
+  "node_modules/@fontsource-variable/noto-sans-bengali/files/noto-sans-bengali-bengali-wght-normal.woff2": {
+    "file": "assets/noto-sans-bengali-bengali-wght-normal-DeF8kf4m.woff2",
+    "src": "node_modules/@fontsource-variable/noto-sans-bengali/files/noto-sans-bengali-bengali-wght-normal.woff2"
   },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-500-normal.woff": {
-    "file": "assets/hind-siliguri-bengali-500-normal-CDy0O77J.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-500-normal.woff"
+  "node_modules/@fontsource-variable/noto-sans-bengali/files/noto-sans-bengali-latin-ext-wght-normal.woff2": {
+    "file": "assets/noto-sans-bengali-latin-ext-wght-normal-B4w0d5pX.woff2",
+    "src": "node_modules/@fontsource-variable/noto-sans-bengali/files/noto-sans-bengali-latin-ext-wght-normal.woff2"
   },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-500-normal.woff2": {
-    "file": "assets/hind-siliguri-bengali-500-normal-UuhTmLlo.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-500-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-600-normal.woff": {
-    "file": "assets/hind-siliguri-bengali-600-normal-D_VSXRuy.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-600-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-600-normal.woff2": {
-    "file": "assets/hind-siliguri-bengali-600-normal-DLZF4s8q.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-600-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-700-normal.woff": {
-    "file": "assets/hind-siliguri-bengali-700-normal-CeVCCB8W.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-700-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-700-normal.woff2": {
-    "file": "assets/hind-siliguri-bengali-700-normal-FVd7rFqZ.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-bengali-700-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-400-normal.woff": {
-    "file": "assets/hind-siliguri-latin-400-normal-B2m00w2e.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-400-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-400-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-400-normal-esES0U7a.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-400-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-500-normal.woff": {
-    "file": "assets/hind-siliguri-latin-500-normal-6-4w_u8d.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-500-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-500-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-500-normal-S8HLIV69.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-500-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-600-normal.woff": {
-    "file": "assets/hind-siliguri-latin-600-normal-Cgt-s7Wl.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-600-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-600-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-600-normal-DHrLfb92.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-600-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-700-normal.woff": {
-    "file": "assets/hind-siliguri-latin-700-normal-z30-k5TQ.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-700-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-700-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-700-normal-DO_14aHP.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-700-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-400-normal.woff": {
-    "file": "assets/hind-siliguri-latin-ext-400-normal-BPdlAeTO.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-400-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-400-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-ext-400-normal-EIcpWxdl.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-400-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-500-normal.woff": {
-    "file": "assets/hind-siliguri-latin-ext-500-normal-BnuUACUj.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-500-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-500-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-ext-500-normal-BzNTYs89.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-500-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-600-normal.woff": {
-    "file": "assets/hind-siliguri-latin-ext-600-normal-Cohm2Dtr.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-600-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-600-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-ext-600-normal-BE5fbvrE.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-600-normal.woff2"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-700-normal.woff": {
-    "file": "assets/hind-siliguri-latin-ext-700-normal-AcGW2CvL.woff",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-700-normal.woff"
-  },
-  "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-700-normal.woff2": {
-    "file": "assets/hind-siliguri-latin-ext-700-normal-DrXhL2wd.woff2",
-    "src": "node_modules/@fontsource/hind-siliguri/files/hind-siliguri-latin-ext-700-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-400-normal.woff": {
-    "file": "assets/ibm-plex-mono-cyrillic-400-normal-CEL4l2ZJ.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-400-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-400-normal.woff2": {
-    "file": "assets/ibm-plex-mono-cyrillic-400-normal-BSMlKf0J.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-400-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-500-normal.woff": {
-    "file": "assets/ibm-plex-mono-cyrillic-500-normal-Ael50iVv.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-500-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-500-normal.woff2": {
-    "file": "assets/ibm-plex-mono-cyrillic-500-normal-Bq9vWWag.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-500-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-400-normal.woff": {
-    "file": "assets/ibm-plex-mono-cyrillic-ext-400-normal-DMdlQ8Kv.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-400-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-400-normal.woff2": {
-    "file": "assets/ibm-plex-mono-cyrillic-ext-400-normal-xuaO2J-f.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-400-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-500-normal.woff": {
-    "file": "assets/ibm-plex-mono-cyrillic-ext-500-normal-BIfNGwUT.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-500-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-500-normal.woff2": {
-    "file": "assets/ibm-plex-mono-cyrillic-ext-500-normal-BqneJy0T.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-cyrillic-ext-500-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff": {
-    "file": "assets/ibm-plex-mono-latin-400-normal-CvHOgSBP.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2": {
-    "file": "assets/ibm-plex-mono-latin-400-normal-DMJ8VG8y.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff": {
-    "file": "assets/ibm-plex-mono-latin-500-normal-CB9ihrfo.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2": {
-    "file": "assets/ibm-plex-mono-latin-500-normal-DSY6xOcd.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-400-normal.woff": {
-    "file": "assets/ibm-plex-mono-latin-ext-400-normal-D3D2R8hC.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-400-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-400-normal.woff2": {
-    "file": "assets/ibm-plex-mono-latin-ext-400-normal-BmRBH3aV.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-400-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-500-normal.woff": {
-    "file": "assets/ibm-plex-mono-latin-ext-500-normal-CZ70TYgx.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-500-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-500-normal.woff2": {
-    "file": "assets/ibm-plex-mono-latin-ext-500-normal-CAhNIIs5.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-ext-500-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-400-normal.woff": {
-    "file": "assets/ibm-plex-mono-vietnamese-400-normal-DDuiU_S-.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-400-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-400-normal.woff2": {
-    "file": "assets/ibm-plex-mono-vietnamese-400-normal-BulugwFq.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-400-normal.woff2"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-500-normal.woff": {
-    "file": "assets/ibm-plex-mono-vietnamese-500-normal-C8zxqsMH.woff",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-500-normal.woff"
-  },
-  "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-500-normal.woff2": {
-    "file": "assets/ibm-plex-mono-vietnamese-500-normal-DZ4AoWbu.woff2",
-    "src": "node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-vietnamese-500-normal.woff2"
+  "node_modules/@fontsource-variable/noto-sans-bengali/files/noto-sans-bengali-latin-wght-normal.woff2": {
+    "file": "assets/noto-sans-bengali-latin-wght-normal-BEfni1Yl.woff2",
+    "src": "node_modules/@fontsource-variable/noto-sans-bengali/files/noto-sans-bengali-latin-wght-normal.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-MMT9w2a-.css",
+    "file": "assets/app-DsqBNxhb.css",
     "name": "app",
     "names": [
       "app.css"
@@ -310,68 +159,28 @@
     "src": "resources/css/app.css",
     "isEntry": true,
     "assets": [
-      "assets/manrope-cyrillic-ext-wght-normal-C8S-KRRz.woff2",
-      "assets/manrope-cyrillic-wght-normal-Dvxsihut.woff2",
-      "assets/manrope-greek-wght-normal-DL7QRZyv.woff2",
-      "assets/manrope-vietnamese-wght-normal-usUDDRr7.woff2",
-      "assets/manrope-latin-ext-wght-normal-Ch3YOpNY.woff2",
-      "assets/manrope-latin-wght-normal-DHIcAJRg.woff2",
-      "assets/hind-siliguri-bengali-400-normal-rHQ7AW0H.woff2",
-      "assets/hind-siliguri-bengali-400-normal-qtENw2Fc.woff",
-      "assets/hind-siliguri-latin-ext-400-normal-EIcpWxdl.woff2",
-      "assets/hind-siliguri-latin-ext-400-normal-BPdlAeTO.woff",
-      "assets/hind-siliguri-latin-400-normal-esES0U7a.woff2",
-      "assets/hind-siliguri-latin-400-normal-B2m00w2e.woff",
-      "assets/hind-siliguri-bengali-500-normal-UuhTmLlo.woff2",
-      "assets/hind-siliguri-bengali-500-normal-CDy0O77J.woff",
-      "assets/hind-siliguri-latin-ext-500-normal-BzNTYs89.woff2",
-      "assets/hind-siliguri-latin-ext-500-normal-BnuUACUj.woff",
-      "assets/hind-siliguri-latin-500-normal-S8HLIV69.woff2",
-      "assets/hind-siliguri-latin-500-normal-6-4w_u8d.woff",
-      "assets/hind-siliguri-bengali-600-normal-DLZF4s8q.woff2",
-      "assets/hind-siliguri-bengali-600-normal-D_VSXRuy.woff",
-      "assets/hind-siliguri-latin-ext-600-normal-BE5fbvrE.woff2",
-      "assets/hind-siliguri-latin-ext-600-normal-Cohm2Dtr.woff",
-      "assets/hind-siliguri-latin-600-normal-DHrLfb92.woff2",
-      "assets/hind-siliguri-latin-600-normal-Cgt-s7Wl.woff",
-      "assets/hind-siliguri-bengali-700-normal-FVd7rFqZ.woff2",
-      "assets/hind-siliguri-bengali-700-normal-CeVCCB8W.woff",
-      "assets/hind-siliguri-latin-ext-700-normal-DrXhL2wd.woff2",
-      "assets/hind-siliguri-latin-ext-700-normal-AcGW2CvL.woff",
-      "assets/hind-siliguri-latin-700-normal-DO_14aHP.woff2",
-      "assets/hind-siliguri-latin-700-normal-z30-k5TQ.woff",
-      "assets/ibm-plex-mono-cyrillic-ext-400-normal-xuaO2J-f.woff2",
-      "assets/ibm-plex-mono-cyrillic-ext-400-normal-DMdlQ8Kv.woff",
-      "assets/ibm-plex-mono-cyrillic-400-normal-BSMlKf0J.woff2",
-      "assets/ibm-plex-mono-cyrillic-400-normal-CEL4l2ZJ.woff",
-      "assets/ibm-plex-mono-vietnamese-400-normal-BulugwFq.woff2",
-      "assets/ibm-plex-mono-vietnamese-400-normal-DDuiU_S-.woff",
-      "assets/ibm-plex-mono-latin-ext-400-normal-BmRBH3aV.woff2",
-      "assets/ibm-plex-mono-latin-ext-400-normal-D3D2R8hC.woff",
-      "assets/ibm-plex-mono-latin-400-normal-DMJ8VG8y.woff2",
-      "assets/ibm-plex-mono-latin-400-normal-CvHOgSBP.woff",
-      "assets/ibm-plex-mono-cyrillic-ext-500-normal-BqneJy0T.woff2",
-      "assets/ibm-plex-mono-cyrillic-ext-500-normal-BIfNGwUT.woff",
-      "assets/ibm-plex-mono-cyrillic-500-normal-Bq9vWWag.woff2",
-      "assets/ibm-plex-mono-cyrillic-500-normal-Ael50iVv.woff",
-      "assets/ibm-plex-mono-vietnamese-500-normal-DZ4AoWbu.woff2",
-      "assets/ibm-plex-mono-vietnamese-500-normal-C8zxqsMH.woff",
-      "assets/ibm-plex-mono-latin-ext-500-normal-CAhNIIs5.woff2",
-      "assets/ibm-plex-mono-latin-ext-500-normal-CZ70TYgx.woff",
-      "assets/ibm-plex-mono-latin-500-normal-DSY6xOcd.woff2",
-      "assets/ibm-plex-mono-latin-500-normal-CB9ihrfo.woff"
+      "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2",
+      "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2",
+      "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2",
+      "assets/inter-greek-wght-normal-CkhJZR-_.woff2",
+      "assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2",
+      "assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2",
+      "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+      "assets/noto-sans-bengali-bengali-wght-normal-DeF8kf4m.woff2",
+      "assets/noto-sans-bengali-latin-ext-wght-normal-B4w0d5pX.woff2",
+      "assets/noto-sans-bengali-latin-wght-normal-BEfni1Yl.woff2"
     ]
   },
   "resources/js/app.ts": {
-    "file": "assets/app-7ZQxf9uz.js",
+    "file": "assets/app-Du8PnfZ2.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
-      "_usePopover-B5E6ANPw.js"
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
+      "_usePopover-DIRvt-7D.js"
     ],
     "dynamicImports": [
       "resources/js/pages/Dashboard.vue",
@@ -413,525 +222,530 @@
     ]
   },
   "resources/js/pages/Dashboard.vue": {
-    "file": "assets/Dashboard-1mSbJFvy.js",
+    "file": "assets/Dashboard-CgFS1I-i.js",
     "name": "Dashboard",
     "src": "resources/js/pages/Dashboard.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KAmount-CY2HIsex.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KAmount-BO35c3kk.js"
     ]
   },
   "resources/js/pages/admin/Activity.vue": {
-    "file": "assets/Activity-BFWHQT70.js",
+    "file": "assets/Activity-DzNAA5xK.js",
     "name": "Activity",
     "src": "resources/js/pages/admin/Activity.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_SettingsNav-xKIRyX04.js",
-      "_KPager-LmDCmp7r.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_SettingsNav-2F39RBE2.js",
+      "_KPager-DKcDlxzG.js"
     ]
   },
   "resources/js/pages/admin/Agency.vue": {
-    "file": "assets/Agency-CZKlKYaq.js",
+    "file": "assets/Agency-DNoqodWh.js",
     "name": "Agency",
     "src": "resources/js/pages/admin/Agency.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_SettingsNav-xKIRyX04.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_SettingsNav-2F39RBE2.js"
     ]
   },
   "resources/js/pages/admin/Payment.vue": {
-    "file": "assets/Payment-J_rEAlhU.js",
+    "file": "assets/Payment-Ca2kWdxn.js",
     "name": "Payment",
     "src": "resources/js/pages/admin/Payment.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_SettingsNav-xKIRyX04.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_SettingsNav-2F39RBE2.js"
     ]
   },
   "resources/js/pages/admin/Roles.vue": {
-    "file": "assets/Roles-CMEts63V.js",
+    "file": "assets/Roles-CwQ3ou8J.js",
     "name": "Roles",
     "src": "resources/js/pages/admin/Roles.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_SettingsNav-xKIRyX04.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_SettingsNav-2F39RBE2.js"
     ]
   },
   "resources/js/pages/admin/Settings.vue": {
-    "file": "assets/Settings-CDWBPXNE.js",
+    "file": "assets/Settings-C54XhtEk.js",
     "name": "Settings",
     "src": "resources/js/pages/admin/Settings.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_SettingsNav-xKIRyX04.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_SettingsNav-2F39RBE2.js"
     ]
   },
   "resources/js/pages/admin/Trash.vue": {
-    "file": "assets/Trash-CHsu6-g1.js",
+    "file": "assets/Trash-BwvQcUjC.js",
     "name": "Trash",
     "src": "resources/js/pages/admin/Trash.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_SettingsNav-xKIRyX04.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_SettingsNav-2F39RBE2.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js"
     ]
   },
   "resources/js/pages/admin/Users.vue": {
-    "file": "assets/Users-CPxNmnyB.js",
+    "file": "assets/Users-g2SbQoVu.js",
     "name": "Users",
     "src": "resources/js/pages/admin/Users.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_SettingsNav-xKIRyX04.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_SettingsNav-2F39RBE2.js"
     ]
   },
   "resources/js/pages/agency/AdAccounts.vue": {
-    "file": "assets/AdAccounts-B88CBms_.js",
+    "file": "assets/AdAccounts-CZRmz89J.js",
     "name": "AdAccounts",
     "src": "resources/js/pages/agency/AdAccounts.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js"
     ]
   },
   "resources/js/pages/agency/Campaigns.vue": {
-    "file": "assets/Campaigns-TdCdEIAp.js",
+    "file": "assets/Campaigns-Be6UhgFw.js",
     "name": "Campaigns",
     "src": "resources/js/pages/agency/Campaigns.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js"
     ]
   },
   "resources/js/pages/agency/Notifications.vue": {
-    "file": "assets/Notifications-6nD4uXTk.js",
+    "file": "assets/Notifications-ssZPrb50.js",
     "name": "Notifications",
     "src": "resources/js/pages/agency/Notifications.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
+      "_i18n-CNpKzh_Z.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KPager-LmDCmp7r.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KPager-DKcDlxzG.js"
     ]
   },
   "resources/js/pages/agency/Runs.vue": {
-    "file": "assets/Runs-BN7ZvmP6.js",
+    "file": "assets/Runs-kQIStn-x.js",
     "name": "Runs",
     "src": "resources/js/pages/agency/Runs.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KPager-LmDCmp7r.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KPager-DKcDlxzG.js"
     ]
   },
   "resources/js/pages/agency/Tasks.vue": {
-    "file": "assets/Tasks-B612Ht8P.js",
+    "file": "assets/Tasks-Dwdpy3zZ.js",
     "name": "Tasks",
     "src": "resources/js/pages/agency/Tasks.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KPager-LmDCmp7r.js",
-      "_TaskForm-DoAUGKlo.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KPager-DKcDlxzG.js",
+      "_TaskForm-B7WF-opj.js"
     ]
   },
   "resources/js/pages/auth/ConfirmPassword.vue": {
-    "file": "assets/ConfirmPassword-CdnPdi_J.js",
+    "file": "assets/ConfirmPassword-BuS6-94B.js",
     "name": "ConfirmPassword",
     "src": "resources/js/pages/auth/ConfirmPassword.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
+      "_i18n-CNpKzh_Z.js",
       "resources/js/app.ts"
     ]
   },
   "resources/js/pages/auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-CyMEeVrN.js",
+    "file": "assets/ForgotPassword-CpV_1urw.js",
     "name": "ForgotPassword",
     "src": "resources/js/pages/auth/ForgotPassword.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
+      "_i18n-CNpKzh_Z.js",
       "resources/js/app.ts"
     ]
   },
   "resources/js/pages/auth/Login.vue": {
-    "file": "assets/Login-BD2zB4AW.js",
+    "file": "assets/Login-lQOYYoJi.js",
     "name": "Login",
     "src": "resources/js/pages/auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
+      "_i18n-CNpKzh_Z.js",
       "resources/js/app.ts"
     ]
   },
   "resources/js/pages/auth/ResetPassword.vue": {
-    "file": "assets/ResetPassword-fxzU5Dd_.js",
+    "file": "assets/ResetPassword-BXD2SWWq.js",
     "name": "ResetPassword",
     "src": "resources/js/pages/auth/ResetPassword.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
+      "_i18n-CNpKzh_Z.js",
       "resources/js/app.ts"
     ]
   },
   "resources/js/pages/auth/TwoFactorChallenge.vue": {
-    "file": "assets/TwoFactorChallenge-CDLxVUzF.js",
+    "file": "assets/TwoFactorChallenge-C7lroveQ.js",
     "name": "TwoFactorChallenge",
     "src": "resources/js/pages/auth/TwoFactorChallenge.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
+      "_i18n-CNpKzh_Z.js",
       "resources/js/app.ts",
-      "_KCode-9k2QiSvk.js"
+      "_KCode-RWLbzawD.js"
     ]
   },
   "resources/js/pages/books/BdtLedger.vue": {
-    "file": "assets/BdtLedger-C7cT-mji.js",
+    "file": "assets/BdtLedger-CRX6jpMS.js",
     "name": "BdtLedger",
     "src": "resources/js/pages/books/BdtLedger.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KAmount-CY2HIsex.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KAmount-BO35c3kk.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js",
+      "_SectionTabs-D2Oyi5YJ.js"
     ]
   },
   "resources/js/pages/books/Dollars.vue": {
-    "file": "assets/Dollars-BRXmUOaW.js",
+    "file": "assets/Dollars-B72mg8So.js",
     "name": "Dollars",
     "src": "resources/js/pages/books/Dollars.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_SectionTabs-D2Oyi5YJ.js"
     ]
   },
   "resources/js/pages/books/FxBatches.vue": {
-    "file": "assets/FxBatches-Bz46amcJ.js",
+    "file": "assets/FxBatches-Dt_Vcusf.js",
     "name": "FxBatches",
     "src": "resources/js/pages/books/FxBatches.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KPager-LmDCmp7r.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KPager-DKcDlxzG.js",
+      "_SectionTabs-D2Oyi5YJ.js"
     ]
   },
   "resources/js/pages/books/MoneyBook.vue": {
-    "file": "assets/MoneyBook-CqjZ199W.js",
+    "file": "assets/MoneyBook-k3yyCp-B.js",
     "name": "MoneyBook",
     "src": "resources/js/pages/books/MoneyBook.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js"
     ]
   },
   "resources/js/pages/books/Platforms.vue": {
-    "file": "assets/Platforms-mmAZtuPg.js",
+    "file": "assets/Platforms-DM2X4Aas.js",
     "name": "Platforms",
     "src": "resources/js/pages/books/Platforms.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js"
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js"
     ]
   },
   "resources/js/pages/books/Reconcile.vue": {
-    "file": "assets/Reconcile-B6mC-dz1.js",
+    "file": "assets/Reconcile-1wMzkKWY.js",
     "name": "Reconcile",
     "src": "resources/js/pages/books/Reconcile.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KPager-LmDCmp7r.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KPager-DKcDlxzG.js",
+      "_SectionTabs-D2Oyi5YJ.js"
     ]
   },
   "resources/js/pages/books/UsdLedger.vue": {
-    "file": "assets/UsdLedger-CKB8AEiv.js",
+    "file": "assets/UsdLedger-NijNe8nh.js",
     "name": "UsdLedger",
     "src": "resources/js/pages/books/UsdLedger.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KAmount-CY2HIsex.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KAmount-BO35c3kk.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js",
+      "_SectionTabs-D2Oyi5YJ.js"
     ]
   },
   "resources/js/pages/books/Wallets.vue": {
-    "file": "assets/Wallets-Xh63Zzq9.js",
+    "file": "assets/Wallets-BM7B6Ikk.js",
     "name": "Wallets",
     "src": "resources/js/pages/books/Wallets.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KPager-LmDCmp7r.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KPager-DKcDlxzG.js"
     ]
   },
   "resources/js/pages/clients/Index.vue": {
-    "file": "assets/Index-DlrZwb3B.js",
+    "file": "assets/Index-vY6-hPA4.js",
     "name": "Index",
     "src": "resources/js/pages/clients/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_KAmount-CY2HIsex.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_KAmount-BO35c3kk.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js"
     ]
   },
   "resources/js/pages/clients/Show.vue": {
-    "file": "assets/Show-JrDrYaNl.js",
+    "file": "assets/Show-CMG9c761.js",
     "name": "Show",
     "src": "resources/js/pages/clients/Show.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KAmount-CY2HIsex.js",
-      "_TaskForm-DoAUGKlo.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KAmount-BO35c3kk.js",
+      "_TaskForm-B7WF-opj.js"
     ]
   },
   "resources/js/pages/invoices/Form.vue": {
-    "file": "assets/Form-CRb6w0Wo.js",
+    "file": "assets/Form-Bq1vW9af.js",
     "name": "Form",
     "src": "resources/js/pages/invoices/Form.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js"
+      "_PageHeader-D1OjOrOp.js"
     ]
   },
   "resources/js/pages/invoices/Index.vue": {
-    "file": "assets/Index-DHpz-aZX.js",
+    "file": "assets/Index-BkLkoI4x.js",
     "name": "Index",
     "src": "resources/js/pages/invoices/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js"
     ]
   },
   "resources/js/pages/invoices/Show.vue": {
-    "file": "assets/Show-CKfs9fFh.js",
+    "file": "assets/Show-BeDZ32sL.js",
     "name": "Show",
     "src": "resources/js/pages/invoices/Show.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_InvoiceDoc-CyK0hhmw.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_InvoiceDoc-CK1_UgpA.js"
     ]
   },
   "resources/js/pages/payroll/Index.vue": {
-    "file": "assets/Index-CfHa1qIl.js",
+    "file": "assets/Index-Byv3C0mP.js",
     "name": "Index",
     "src": "resources/js/pages/payroll/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
-      "_usePopover-B5E6ANPw.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
+      "_usePopover-DIRvt-7D.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KTag-BfW3ffN8.js",
-      "_KPager-LmDCmp7r.js",
-      "_useFilters-B_0vJYuk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KTag-CvUjg7mb.js",
+      "_KPager-DKcDlxzG.js",
+      "_useFilters-4ZVNIJV9.js"
     ]
   },
   "resources/js/pages/public/Invoice.vue": {
-    "file": "assets/Invoice-C25ZMo9i.js",
+    "file": "assets/Invoice-9vGFg51l.js",
     "name": "Invoice",
     "src": "resources/js/pages/public/Invoice.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_InvoiceDoc-CyK0hhmw.js"
+      "_InvoiceDoc-CK1_UgpA.js"
     ]
   },
   "resources/js/pages/reports/Index.vue": {
-    "file": "assets/Index-zGxZ0RLV.js",
+    "file": "assets/Index-C2nXyEHl.js",
     "name": "Index",
     "src": "resources/js/pages/reports/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_format-CdwtLQxl.js",
+      "_i18n-CNpKzh_Z.js",
+      "_format-BxVgTmUy.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KEmpty-Cnr_j8ok.js",
-      "_KAmount-CY2HIsex.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KEmpty-Dx-7OdA_.js",
+      "_KAmount-BO35c3kk.js"
     ],
     "css": [
-      "assets/Index-BYXbl2ui.css"
+      "assets/Index-D4tfw-kJ.css"
     ]
   },
   "resources/js/pages/settings/Profile.vue": {
-    "file": "assets/Profile-C1PlBvg4.js",
+    "file": "assets/Profile-DZth_JDn.js",
     "name": "Profile",
     "src": "resources/js/pages/settings/Profile.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
+      "_i18n-CNpKzh_Z.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js"
+      "_PageHeader-D1OjOrOp.js"
     ]
   },
   "resources/js/pages/settings/Security.vue": {
-    "file": "assets/Security-CHezFI52.js",
+    "file": "assets/Security-Bj-0JN-f.js",
     "name": "Security",
     "src": "resources/js/pages/settings/Security.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_i18n-D9Rta_cp.js",
-      "_KIcon-ykCjBi4j.js",
+      "_i18n-CNpKzh_Z.js",
+      "_KIcon-BzBkyGSd.js",
       "resources/js/app.ts",
-      "_PageHeader-CAU57bl8.js",
-      "_KTag-BfW3ffN8.js",
-      "_KCode-9k2QiSvk.js"
+      "_PageHeader-D1OjOrOp.js",
+      "_KTag-CvUjg7mb.js",
+      "_KCode-RWLbzawD.js"
     ]
   }
 }

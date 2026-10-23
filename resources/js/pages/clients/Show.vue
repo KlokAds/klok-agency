@@ -228,7 +228,7 @@ function print(): void {
     </PageHeader>
 
     <div
-        class="mb-6 grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
+        class="mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('Ad খরচ (settled)') }}</p>
@@ -350,7 +350,7 @@ function print(): void {
                         <li
                             v-for="c in a.campaigns.slice(0, 8)"
                             :key="c.name"
-                            class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                            class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
                         >
                             <span class="min-w-0 flex-1 truncate font-medium">{{
                                 c.name
@@ -402,7 +402,7 @@ function print(): void {
             <li
                 v-for="i in invoices"
                 :key="i.id"
-                class="border-b border-dashed border-line last:border-0"
+                class="border-b border-line last:border-0"
             >
                 <Link
                     :href="`/invoices/${i.id}`"
@@ -485,7 +485,7 @@ function print(): void {
                 <li
                     v-for="c in campaigns"
                     :key="c.id"
-                    class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
                 >
                     <span
                         class="size-2 shrink-0 rounded-full"
@@ -536,7 +536,7 @@ function print(): void {
                 <li
                     v-for="task in tasks"
                     :key="task.id"
-                    class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
                 >
                     <span class="min-w-0 flex-1 truncate font-medium">{{
                         t(task.title)

@@ -331,7 +331,7 @@ async function removeMove(move: Move): Promise<void> {
     </PageHeader>
 
     <section
-        class="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
+        class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
         <div
             v-for="p in wallets.places"
@@ -352,9 +352,7 @@ async function removeMove(move: Move): Promise<void> {
             </p>
         </div>
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p
-                class="text-[11px] font-bold tracking-[0.14em] text-rail-dim uppercase"
-            >
+            <p class="text-[12.5px] font-medium text-rail-dim">
                 {{ t('Card-এ USD') }}
             </p>
             <p class="num mt-3 text-[30px] leading-none font-medium text-white">
@@ -473,7 +471,7 @@ async function removeMove(move: Move): Promise<void> {
                 <li
                     v-for="e in untagged.data"
                     :key="e.id"
-                    class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-dashed border-line px-5 py-2.5 text-[13px] sm:flex-nowrap sm:px-6"
+                    class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line px-5 py-2.5 text-[13px] sm:flex-nowrap sm:px-6"
                 >
                     <span class="num w-20 shrink-0 text-[12px] text-ink-3">{{
                         e.date ? niceDate(e.date, false) : t('তারিখ নেই')
@@ -540,7 +538,7 @@ async function removeMove(move: Move): Promise<void> {
                 <li
                     v-for="m in moves.data"
                     :key="m.id"
-                    class="flex items-center gap-3 border-t border-dashed border-line px-5 py-2.5 text-[13px] sm:px-6"
+                    class="flex items-center gap-3 border-t border-line px-5 py-2.5 text-[13px] sm:px-6"
                 >
                     <span class="num w-20 shrink-0 text-[12px] text-ink-3">{{
                         niceDate(m.date, false)
@@ -688,7 +686,7 @@ async function removeMove(move: Move): Promise<void> {
             <li
                 v-for="w in list"
                 :key="w.id"
-                class="flex items-center gap-3 border-b border-dashed border-line px-3 py-2.5 text-[13.5px] last:border-0"
+                class="flex items-center gap-3 border-b border-line px-3 py-2.5 text-[13.5px] last:border-0"
             >
                 <span class="min-w-0 flex-1">
                     <span

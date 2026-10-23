@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SectionTabs from '@/components/SectionTabs.vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -185,29 +186,16 @@ const needsDirection = computed(() =>
 </script>
 
 <template>
+    <SectionTabs section="ledgers" />
     <PageHeader
         :eyebrow="t('খাতা')"
         :title="t('USD খাতা')"
         :lead="
             t(
-                'Card, অন্য account আর ad platform-এর প্রতিটা ডলারের হিসাব। খরচের row-এ FIFO cost নিজে বসে।',
+                'প্রতিটা ডলারের লেনদেন — মিলিয়ে দেখা আর ভুল ঠিক করার জন্য। Campaign-এর খরচ Pilot থেকে নিজে আসে; USD কেনা আর card-এর কাটা Dollar ও Card পাতা থেকে।',
             )
         "
     >
-        <KButton
-            v-if="can['reports.export']"
-            href="/reports/export/usd"
-            external
-            icon="down"
-            >CSV</KButton
-        >
-        <KButton
-            v-if="can['usd.create']"
-            variant="ink"
-            icon="plus"
-            @click="startNew"
-            >{{ t('নতুন row') }}</KButton
-        >
     </PageHeader>
 
     <!-- Filters -->

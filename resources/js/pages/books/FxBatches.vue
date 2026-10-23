@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SectionTabs from '@/components/SectionTabs.vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -98,6 +99,7 @@ async function remove(batch: Batch): Promise<void> {
 </script>
 
 <template>
+    <SectionTabs section="dollars" />
     <PageHeader
         :eyebrow="t('খাতা')"
         title="FX Batch"
@@ -109,7 +111,7 @@ async function remove(batch: Batch): Promise<void> {
     />
 
     <div
-        class="mb-6 grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-4"
+        class="mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('মোট কেনা') }}</p>

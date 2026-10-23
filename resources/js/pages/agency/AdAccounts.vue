@@ -244,7 +244,7 @@ function live(status: string | null): boolean {
                     <li
                         v-for="c in a.campaigns"
                         :key="c.name"
-                        class="flex items-center gap-3 border-b border-dashed border-line py-2.5 text-[13px] last:border-0"
+                        class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
                     >
                         <span
                             class="size-2 shrink-0 rounded-full"

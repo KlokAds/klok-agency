@@ -24,12 +24,12 @@ const afterTone = computed(() =>
 
 <template>
     <section
-        class="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
+        class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
         <!-- Card now -->
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
             <p
-                class="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.14em] text-rail-dim uppercase"
+                class="flex items-center gap-1.5 text-[12.5px] font-medium text-rail-dim"
             >
                 <KIcon name="wallet" :size="14" />
                 {{ t('Card-এ এখন') }}

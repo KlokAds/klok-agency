@@ -14,6 +14,7 @@ import { useIdleLogout } from '@/composables/useIdleLogout';
 import { usePopover } from '@/composables/usePopover';
 import { locale, switchLocale, t } from '@/lib/i18n';
 import { quickOpen } from '@/lib/quick-entry';
+import { sectionOf } from '@/lib/sections';
 import { SETTINGS_TABS, isSettingsPath } from '@/lib/settings-tabs';
 
 const page = usePage();
@@ -49,25 +50,17 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 perm: 'bdt.view',
             }, // i18n
             { label: 'খরচ', href: '/expenses', icon: 'bin', perm: 'bdt.view' }, // i18n
-            { label: 'BDT খাতা', href: '/bdt', icon: 'taka', perm: 'bdt.view' }, // i18n
             {
-                label: 'Dollar কোথায়',
+                label: 'Dollar ও Card',
                 href: '/dollars',
                 icon: 'dollar',
                 perm: 'usd.view',
             }, // i18n
             {
-                label: 'USD খাতা',
-                href: '/usd',
-                icon: 'dollar',
-                perm: 'usd.view',
-            }, // i18n
-            { label: 'FX Batch', href: '/fx', icon: 'swap', perm: 'fx.view' },
-            {
-                label: 'Card মেলানো',
-                href: '/reconcile',
-                icon: 'scale',
-                perm: 'reconcile.view',
+                label: 'খাতা (সব লেনদেন)',
+                href: '/bdt',
+                icon: 'list',
+                perm: 'bdt.view',
             }, // i18n
         ],
     },
@@ -91,18 +84,6 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 href: '/campaigns',
                 icon: 'pulse',
                 perm: 'runs.view',
-            },
-            {
-                label: 'Ad account',
-                href: '/ad-accounts',
-                icon: 'signal',
-                perm: 'runs.view',
-            },
-            {
-                label: 'Ad Platform',
-                href: '/platforms',
-                icon: 'chart',
-                perm: 'platforms.view',
             },
         ],
     },
@@ -156,6 +137,7 @@ const path = computed(() => page.url.split('?')[0]);
 const isActive = (href: string) =>
     path.value === href ||
     path.value.startsWith(href + '/') ||
+    (sectionOf(href) !== null && sectionOf(href) === sectionOf(path.value)) ||
     (href === settingsHref.value && isSettingsPath(path.value));
 
 // The switch always names the other language, written in that language.
@@ -190,27 +172,25 @@ function logout(): void {
             </div>
 
             <nav
-                class="flex-1 overflow-y-auto px-3 pb-6"
+                class="flex-1 [scrollbar-width:none] overflow-y-auto px-3 pb-6 hover:[scrollbar-width:thin]"
                 :aria-label="t('মূল মেনু')"
             >
                 <div
                     v-for="(group, gi) in visible"
                     :key="gi"
-                    class="mt-5 first:mt-2"
+                    class="mt-4 first:mt-2"
                 >
                     <p
                         v-if="group.title"
-                        class="mb-1.5 flex items-center gap-2 px-3 text-[10.5px] font-bold tracking-[0.18em] text-rail-dim uppercase"
+                        class="mb-1 px-3 text-[12px] font-medium text-rail-dim"
                     >
-                        <span class="num">0{{ gi }}</span>
-                        <span class="h-px flex-1 bg-rail-2" />
                         {{ t(group.title) }}
                     </p>
                     <Link
                         v-for="item in group.items"
                         :key="item.href"
                         :href="item.href"
-                        class="group relative flex items-center gap-3 rounded-[10px] px-3 py-2 text-[14px] font-medium transition-colors"
+                        class="group relative flex items-center gap-3 rounded-lg px-3 py-[7px] text-[14px] font-medium transition-colors"
                         :class="
                             isActive(item.href)
                                 ? 'bg-rail-2 text-white'
@@ -238,7 +218,7 @@ function logout(): void {
             <div v-if="settingsHref" class="px-3 pb-3">
                 <Link
                     :href="settingsHref"
-                    class="group relative flex items-center gap-3 rounded-[10px] px-3 py-2 text-[14px] font-medium transition-colors"
+                    class="group relative flex items-center gap-3 rounded-lg px-3 py-[7px] text-[14px] font-medium transition-colors"
                     :class="
                         isActive(settingsHref)
                             ? 'bg-rail-2 text-white'

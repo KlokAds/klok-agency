@@ -131,7 +131,7 @@ function ignore(sms: Sms): void {
     </PageHeader>
 
     <section
-        class="mb-6 grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-3"
+        class="mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('পাওনা') }}</p>

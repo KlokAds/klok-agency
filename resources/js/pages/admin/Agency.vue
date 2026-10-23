@@ -209,7 +209,7 @@ function copy(text: string): void {
                 <li
                     v-for="a in accounts"
                     :key="a.id"
-                    class="flex justify-between gap-3 border-b border-dashed border-line px-3 py-2 last:border-0"
+                    class="flex justify-between gap-3 border-b border-line px-3 py-2 last:border-0"
                 >
                     <span
                         >{{ a.name

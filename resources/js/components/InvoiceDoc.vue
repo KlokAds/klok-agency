@@ -210,7 +210,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
             <table class="hidden w-full text-[13.5px] md:table">
                 <thead>
                     <tr
-                        class="border-b border-line text-left text-[11px] font-bold tracking-[0.08em] text-ink-3 uppercase"
+                        class="border-b border-line text-left text-[12.5px] font-medium text-ink-3"
                     >
                         <th class="py-3 pr-4">{{ t('বিবরণ') }}</th>
                         <th v-if="hasUsd" class="py-3 pr-4 text-right">USD</th>
@@ -222,7 +222,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                     <tr
                         v-for="line in invoice.items"
                         :key="line.id"
-                        class="border-b border-dashed border-line align-top last:border-0"
+                        class="border-b border-line align-top last:border-0"
                     >
                         <td class="py-3.5 pr-4">
                             <p class="font-semibold">{{ line.description }}</p>

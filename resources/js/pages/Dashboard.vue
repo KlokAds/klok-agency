@@ -125,7 +125,7 @@ const greeting =
         {{ t('টাকা — কোথায় কত আছে') }}
     </h2>
     <section
-        class="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
+        class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
         <div class="bg-surface p-5 sm:p-6">
             <p class="eyebrow">{{ t('BDT কোথায়') }}</p>
@@ -270,7 +270,7 @@ const greeting =
             <li
                 v-for="r in recent"
                 :key="r.book + r.id"
-                class="flex items-center gap-3 border-b border-dashed border-line py-3 text-[13.5px]"
+                class="flex items-center gap-3 border-b border-line py-3 text-[13.5px]"
             >
                 <span
                     class="grid size-8 shrink-0 place-items-center rounded-lg bg-sunken text-[12px] font-bold text-ink-2"

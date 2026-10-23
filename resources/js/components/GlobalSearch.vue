@@ -208,7 +208,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     </p>
                     <div v-for="g in all" :key="g.key" class="mb-2 last:mb-0">
                         <p
-                            class="px-3 pt-2 pb-1 text-[11px] font-bold tracking-[0.12em] text-ink-3 uppercase"
+                            class="px-3 pt-2 pb-1 text-[12.5px] font-medium text-ink-3"
                         >
                             {{ g.label }}
                         </p>

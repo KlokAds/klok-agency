@@ -314,7 +314,7 @@ const clients = computed(() => {
 
         <!-- KPIs -->
         <section
-            class="grid grid-cols-2 gap-px overflow-hidden rounded-[16px] border border-line bg-line lg:grid-cols-5"
+            class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-5"
         >
             <div
                 v-for="c in tiles"
@@ -329,7 +329,7 @@ const clients = computed(() => {
                 <p
                     :class="
                         c.key === 'net'
-                            ? 'text-[11px] font-bold tracking-[0.14em] text-rail-dim uppercase'
+                            ? 'text-[11px] font-bold text-rail-dim uppercase'
                             : 'eyebrow'
                     "
                 >
@@ -534,7 +534,7 @@ const clients = computed(() => {
                 </ul>
                 <p
                     v-if="pl.unlinked_income"
-                    class="mt-4 border-t border-dashed border-line pt-3 text-[12.5px] text-ink-3"
+                    class="mt-4 border-t border-line pt-3 text-[12.5px] text-ink-3"
                 >
                     {{ t('Client ছাড়া service / অন্যান্য আয়') }}
                     <b class="num font-semibold text-ink-2">{{
@@ -547,7 +547,7 @@ const clients = computed(() => {
         <!-- Not profit -->
         <h2 class="eyebrow mt-8 mb-2.5">{{ t('লাভ নয় — মনে রাখুন') }}</h2>
         <section
-            class="grid gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-3"
+            class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
         >
             <div class="bg-surface p-5">
                 <p class="eyebrow">{{ t('Client-দের আগাম টাকা') }}</p>
