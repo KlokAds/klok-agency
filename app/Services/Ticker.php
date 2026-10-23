@@ -31,6 +31,7 @@ class Ticker
             $summary = $this->dailySummary();
             $this->syncCampaignSpend();
             $this->renewals();
+            $this->metaReceipts();
             $this->overdueInvoices();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
@@ -48,6 +49,16 @@ class Ticker
                 // The money left changed: caps and pauses follow it.
                 app(CampaignLimits::class)->guard();
             }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /** Meta's receipts from the receipts mailbox become card charges. */
+    private function metaReceipts(): void
+    {
+        try {
+            app(MetaReceipts::class)->checkIfDue();
         } catch (\Throwable $e) {
             report($e);
         }

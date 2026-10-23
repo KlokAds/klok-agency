@@ -33,6 +33,9 @@ const props = defineProps<{
         from_name: string;
         has_password: boolean;
         notify_email: string;
+        receipts_host: string;
+        receipts_username: string;
+        receipts_has_password: boolean;
     };
 }>();
 
@@ -52,11 +55,14 @@ const mailForm = useForm({
     password: '',
     from_name: props.mail.from_name,
     notify_email: props.mail.notify_email,
+    receipts_host: props.mail.receipts_host,
+    receipts_username: props.mail.receipts_username,
+    receipts_password: '',
 });
 function saveMail(): void {
     mailForm.put('/admin/settings/mail', {
         preserveScroll: true,
-        onSuccess: () => mailForm.reset('password'),
+        onSuccess: () => mailForm.reset('password', 'receipts_password'),
     });
 }
 const testing = ref(false);
@@ -328,6 +334,60 @@ onMounted(() => {
                         :disabled="!editable"
                     />
                 </KField>
+            </div>
+            <div class="border-t border-line pt-5">
+                <p class="text-[13.5px] font-semibold">
+                    {{ t('Meta receipt-এর mailbox') }}
+                </p>
+                <p class="mt-1 text-[12.5px] text-ink-3">
+                    {{
+                        t(
+                            'Gmail-এ filter দিয়ে Meta-র receipt এই mailbox-এ forward করুন — প্রতি কয়েক মিনিটে পড়ে card charge নিজে খাতায় উঠবে, campaign-এর ভাগসহ।',
+                        )
+                    }}
+                </p>
+                <div class="mt-4 grid gap-5 sm:grid-cols-2">
+                    <KField
+                        :label="t('Mailbox (email)')"
+                        optional
+                        :error="mailForm.errors.receipts_username"
+                    >
+                        <KInput
+                            v-model="mailForm.receipts_username"
+                            type="email"
+                            placeholder="receipts@klokads.com"
+                            :disabled="!editable"
+                        />
+                    </KField>
+                    <KField
+                        :label="t('Mailbox-এর password')"
+                        optional
+                        :error="mailForm.errors.receipts_password"
+                        :hint="
+                            mail.receipts_has_password
+                                ? t(
+                                      'রাখা আছে (encrypted)। খালি রাখলে আগেরটাই থাকবে।',
+                                  )
+                                : undefined
+                        "
+                    >
+                        <KInput
+                            v-model="mailForm.receipts_password"
+                            type="password"
+                            autocomplete="new-password"
+                            :disabled="!editable"
+                        />
+                    </KField>
+                    <KField
+                        label="IMAP host"
+                        :error="mailForm.errors.receipts_host"
+                    >
+                        <KInput
+                            v-model="mailForm.receipts_host"
+                            :disabled="!editable"
+                        />
+                    </KField>
+                </div>
             </div>
             <template v-if="editable" #footer>
                 <KButton

@@ -14,7 +14,7 @@ class MailSettings
 {
     public const DEFAULTS = ['host' => 'smtp.hostinger.com', 'port' => 465];
 
-    /** @return array{host: string, port: int, username: string, from_name: string, has_password: bool, notify_email: string} */
+    /** @return array{host: string, port: int, username: string, from_name: string, has_password: bool, notify_email: string, receipts_host: string, receipts_username: string, receipts_has_password: bool} */
     public static function form(): array
     {
         return [
@@ -24,6 +24,37 @@ class MailSettings
             'from_name' => (string) (Setting::get('smtp_from_name') ?: 'Klok Ads'),
             'has_password' => filled(Setting::get('smtp_password')),
             'notify_email' => (string) (Setting::get('notify_email') ?: 'adsklok@gmail.com'),
+            'receipts_host' => (string) (Setting::get('receipts_host') ?: 'imap.hostinger.com'),
+            'receipts_username' => (string) Setting::get('receipts_username', ''),
+            'receipts_has_password' => filled(Setting::get('receipts_password')),
+        ];
+    }
+
+    /**
+     * The mailbox Meta's receipts are forwarded to (read over IMAP), when set.
+     *
+     * @return array{host: string, port: int, username: string, password: string}|null
+     */
+    public static function receipts(): ?array
+    {
+        $username = (string) Setting::get('receipts_username', '');
+        $stored = Setting::get('receipts_password');
+
+        if ($username === '' || blank($stored)) {
+            return null;
+        }
+
+        try {
+            $password = Crypt::decryptString($stored);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return [
+            'host' => (string) (Setting::get('receipts_host') ?: 'imap.hostinger.com'),
+            'port' => (int) (Setting::get('receipts_port') ?: 993),
+            'username' => $username,
+            'password' => $password,
         ];
     }
 

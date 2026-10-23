@@ -15,6 +15,12 @@ export const SECTIONS = {
             icon: 'scale',
             perm: 'reconcile.view',
         }, // i18n
+        {
+            label: 'Meta receipt',
+            href: '/dollars/receipts',
+            icon: 'mail',
+            perm: 'usd.view',
+        },
     ],
     campaigns: [
         {

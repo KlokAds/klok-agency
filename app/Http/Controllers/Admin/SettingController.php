@@ -65,6 +65,9 @@ class SettingController extends Controller
             'password' => ['nullable', 'string', 'max:190'],
             'from_name' => ['required', 'string', 'max:80'],
             'notify_email' => ['required', 'email', 'max:190'],
+            'receipts_host' => ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9.-]+$/i'],
+            'receipts_username' => ['nullable', 'email', 'max:190'],
+            'receipts_password' => ['nullable', 'string', 'max:190'],
         ]);
 
         Setting::put('smtp_host', $data['host']);
@@ -72,6 +75,12 @@ class SettingController extends Controller
         Setting::put('smtp_username', $data['username']);
         Setting::put('smtp_from_name', $data['from_name']);
         Setting::put('notify_email', $data['notify_email']);
+        // Where Meta's receipts are forwarded: read every few minutes.
+        Setting::put('receipts_host', ($data['receipts_host'] ?? null) ?: 'imap.hostinger.com');
+        Setting::put('receipts_username', $data['receipts_username'] ?? '');
+        if (filled($data['receipts_password'] ?? null)) {
+            Setting::put('receipts_password', Crypt::encryptString($data['receipts_password']));
+        }
 
         // A blank password keeps the saved one.
         if (filled($data['password'] ?? null)) {
