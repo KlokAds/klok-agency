@@ -199,6 +199,7 @@
     "টাকা শেষ — বন্ধ": "Money ran out — paused",
     "টাকায় চলবে": "Money lasts until",
     "টাকার অঙ্ক পাওয়া যায়নি।": "No amount found.",
+    "ঠিক এই পরিমাণ": "Exactly this amount",
     "দিতে হবে": "Amount due",
     "দিনের budget": "Daily budget",
     "দিলে এটা client-এর আগাম টাকা: campaign যত খরচ করবে তত কাটা যাবে, বাকিটা credit থাকবে। খালি রাখলে টাকা পাওয়ার দিনেই আয়।": "If given, this is the client's advance: campaign spend comes off it and the rest stays as credit. Left blank, it is income on the day it came.",

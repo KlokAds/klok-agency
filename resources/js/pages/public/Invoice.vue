@@ -271,7 +271,7 @@ const STATUS_WORD: Record<string, string> = {
         </div>
 
         <main
-            class="mx-auto grid max-w-[1080px] grid-cols-1 gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start"
+            class="mx-auto grid max-w-[1080px] grid-cols-1 gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch"
         >
             <InvoiceDoc :invoice="doc" :business="business" />
 
@@ -324,6 +324,7 @@ const STATUS_WORD: Record<string, string> = {
                     </div>
 
                     <div
+                        v-if="!state.session.qr"
                         class="mt-4 rounded-xl border border-brand/30 bg-brand-soft p-4 text-center"
                     >
                         <p class="text-[12px] text-ink-2">
@@ -387,13 +388,45 @@ const STATUS_WORD: Record<string, string> = {
                     </div>
                     <div
                         v-else-if="state.session.qr || sessionMethod.image"
-                        class="mt-3 rounded-xl border border-line p-4 text-center"
+                        class="mt-4 rounded-xl border border-line p-4 text-center"
+                        :class="
+                            state.session.qr && 'border-brand/30 bg-brand-soft'
+                        "
                     >
+                        <div
+                            v-if="state.session.qr"
+                            class="mb-3 flex items-center justify-between gap-3 text-left"
+                        >
+                            <div>
+                                <p class="text-[12px] text-ink-2">
+                                    {{ t('ঠিক এই পরিমাণ') }}
+                                </p>
+                                <p
+                                    class="num text-[24px] leading-tight font-semibold"
+                                >
+                                    {{ bdt(state.session.amount) }}
+                                </p>
+                            </div>
+                            <KButton
+                                size="sm"
+                                @click="
+                                    copy(
+                                        'amount',
+                                        String(state.session.amount / 100),
+                                    )
+                                "
+                                >{{
+                                    copied === 'amount'
+                                        ? t('Copy হয়েছে')
+                                        : 'Copy'
+                                }}</KButton
+                            >
+                        </div>
                         <!-- Made for this payment: the amount is in the QR and the payer's app locks it. -->
                         <img
                             :src="state.session.qr ?? sessionMethod.image ?? ''"
                             alt="Bangla QR"
-                            class="mx-auto w-full max-w-[260px] rounded-xl bg-white"
+                            class="mx-auto w-full max-w-[220px] rounded-xl bg-white"
                             :class="state.session.qr ? '' : 'p-2'"
                         />
                         <p
@@ -406,6 +439,17 @@ const STATUS_WORD: Record<string, string> = {
                                     {
                                         amount: bdt(state.session.amount),
                                     },
+                                )
+                            }}
+                        </p>
+                        <p
+                            v-if="state.session.qr && state.session.extra > 0"
+                            class="mt-1 text-[12px] text-wait"
+                        >
+                            {{
+                                t(
+                                    '{extra} বেশি — যাতে আপনার পেমেন্ট সঙ্গে সঙ্গে চেনা যায়।',
+                                    { extra: bdt(state.session.extra) },
                                 )
                             }}
                         </p>

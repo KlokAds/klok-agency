@@ -368,6 +368,9 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
     --band: #f6f8f7;
     --brand: #0f766e;
 
+    /* A column, so beside a taller pay panel the footer sits at the bottom. */
+    display: flex;
+    flex-direction: column;
     background: var(--paper);
     color: var(--ink);
     border: 1px solid var(--line);
@@ -430,6 +433,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
 }
 
 .inv-foot {
+    margin-top: auto;
     color: var(--muted);
     border-top: 1px solid var(--line);
     background: var(--band);
