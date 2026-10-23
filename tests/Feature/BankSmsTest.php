@@ -62,3 +62,20 @@ it('shows in Settings what one pasted SMS reads as', function () {
     $this->actingAs($owner)->postJson('/admin/payment/sms-test', ['from' => '01999999999', 'text' => 'You have received Tk 500.00'])
         ->assertJson(['trusted' => false, 'incoming' => false]);
 });
+
+it('reads the UCB alerts exactly as they come on the Owner phone', function () {
+    Setting::put('pay_bank_sms_senders', 'UCB');
+    $parser = app(SmsParser::class);
+
+    $credit = $parser->parse('UCB', 'Your A/C (***1603) has been credited BDT 80.00 for I BANKING FUND TRANSFER - CREDIT. Avl Bal: BDT 19,632.00 @ 12:41 AM. For query: 16419');
+    expect($credit['amount'])->toBe(8000)->and($credit['provider'])->toBe('bank');
+
+    foreach ([
+        'Your A/C (***6318) has been debited BDT 80.00 for Ibanking Fund Transfer - Debit. Avl Bal: BDT 2,500.00 @ 12:41 AM. For query: 16419',
+        "2237 is your OTP\nFor UCB One NPSB, Amount BDT 8,500.00.\nValidity is 2.0 minutes.\nNever share your OTP/PIN/Password RLnTZL1W6wd",
+        'Your A/C (***1603) has been debited BDT 8.70 for NPSB CHARGE. Avl Bal: BDT 11,122.00 @ 09:38 AM. For query: 16419',
+        'Your A/C (***1603) has been debited BDT 8,500.00 for I Banking NPSB Transfer Debit. Avl Bal: BDT 11,122.00 @ 09:38 AM. For query: 16419',
+    ] as $text) {
+        expect($parser->parse('UCB', $text))->toBeNull();
+    }
+});
