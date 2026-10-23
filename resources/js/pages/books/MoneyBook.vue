@@ -13,6 +13,7 @@ import KMoney from '@/components/k/KMoney.vue';
 import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
+import KSwitch from '@/components/k/KSwitch.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { useFilters } from '@/composables/useFilters';
@@ -166,11 +167,28 @@ function addHead(): void {
     });
 }
 
-function toggleHead(h: Head): void {
+// A head being saved: its switch waits, so a second tap cannot undo the first.
+const savingHead = ref<number | null>(null);
+
+/** The switch moves at once; only the heads come back from the server, no page reload. */
+function toggleHead(h: Head, on: boolean): void {
+    if (savingHead.value !== null) {
+        return;
+    }
+
+    savingHead.value = h.id;
+    h.is_active = on;
     router.put(
         `/expenses/heads/${h.id}`,
-        { name: h.name, is_active: !h.is_active },
-        { preserveScroll: true },
+        { name: h.name, is_active: on },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['heads', 'options'],
+            showProgress: false,
+            onError: () => (h.is_active = !on),
+            onFinish: () => (savingHead.value = null),
+        },
     );
 }
 
@@ -443,7 +461,7 @@ function saveRename(): void {
                 <p class="mt-1 text-[12.5px] text-ink-3">
                     {{
                         t(
-                            'খরচ লেখার সময় এগুলো থেকে বাছা যায়। বন্ধ করলে নতুন entry-তে দেখাবে না।',
+                            'খরচ লেখার সময় এগুলো থেকে বাছা যায়। Switch বন্ধ করলে নতুন entry-তে দেখাবে না, পুরনো খরচ যেমন আছে থাকবে। ✎ দিয়ে নাম বদলান।',
                         )
                     }}
                 </p>
@@ -451,7 +469,7 @@ function saveRename(): void {
                     <li
                         v-for="h in heads"
                         :key="h.id"
-                        class="flex items-center gap-2 border-b border-line py-2 text-[13px] last:border-0"
+                        class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
                     >
                         <template v-if="renaming?.id === h.id">
                             <KInput
@@ -464,36 +482,52 @@ function saveRename(): void {
                             }}</KButton>
                         </template>
                         <template v-else>
-                            <span
-                                class="min-w-0 flex-1 truncate"
-                                :class="
-                                    h.is_active ? '' : 'text-ink-3 line-through'
-                                "
-                                >{{ h.name }}</span
-                            >
+                            <span class="min-w-0 flex-1">
+                                <span
+                                    class="block truncate text-[13.5px] font-medium"
+                                    :class="h.is_active ? '' : 'text-ink-3'"
+                                    >{{ h.name }}</span
+                                >
+                                <span
+                                    class="block text-[12px]"
+                                    :class="
+                                        h.is_active ? 'text-ink-3' : 'text-wait'
+                                    "
+                                    >{{
+                                        h.is_active
+                                            ? t('নতুন খরচে বাছা যায়')
+                                            : t('বন্ধ — নতুন খরচে দেখাবে না')
+                                    }}</span
+                                >
+                            </span>
                             <template v-if="can['bdt.edit']">
                                 <button
                                     type="button"
-                                    class="text-[12px] font-semibold text-ink-3 hover:text-ink"
+                                    class="grid size-9 shrink-0 place-items-center rounded-lg border border-line text-ink-2 hover:border-ink-3 hover:text-ink"
+                                    :aria-label="t('নাম বদলান')"
+                                    :title="t('নাম বদলান')"
                                     @click="
                                         renaming = h;
                                         renameTo = h.name;
                                     "
                                 >
-                                    {{ t('নাম বদলান') }}
+                                    <KIcon name="pen" :size="15" />
                                 </button>
-                                <button
-                                    type="button"
-                                    class="text-[12px] font-semibold"
-                                    :class="
+                                <KSwitch
+                                    :model-value="h.is_active"
+                                    :aria-label="
                                         h.is_active
-                                            ? 'text-ink-3 hover:text-out'
-                                            : 'text-brand-ink'
+                                            ? t('খাত বন্ধ করুন')
+                                            : t('খাত চালু করুন')
                                     "
-                                    @click="toggleHead(h)"
-                                >
-                                    {{ h.is_active ? t('বন্ধ') : t('চালু') }}
-                                </button>
+                                    :class="
+                                        savingHead === h.id &&
+                                        'pointer-events-none opacity-60'
+                                    "
+                                    @update:model-value="
+                                        (on: boolean) => toggleHead(h, on)
+                                    "
+                                />
                             </template>
                         </template>
                     </li>

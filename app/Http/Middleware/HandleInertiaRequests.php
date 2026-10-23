@@ -69,8 +69,10 @@ class HandleInertiaRequests extends Middleware
     /** @return array<string, bool> */
     private function permissions(User $user): array
     {
-        $names = $user->hasRole(Access::OWNER) ? Access::all() : $user->getAllPermissions()->pluck('name')->all();
+        $owner = $user->hasRole(Access::OWNER);
+        $names = $owner ? Access::all() : $user->getAllPermissions()->pluck('name')->all();
 
-        return array_fill_keys($names, true);
+        // "owner": pages only the Owner sees (the error log), not a permission one can be given.
+        return array_fill_keys($names, true) + ($owner ? ['owner' => true] : []);
     }
 }
