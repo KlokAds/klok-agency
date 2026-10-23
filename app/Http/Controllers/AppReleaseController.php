@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -59,6 +60,15 @@ class AppReleaseController extends Controller
         return (int) Setting::get('app_version', 0) > 0 && Storage::disk('local')->exists(self::FILE)
             ? URL::temporarySignedRoute('app.download', now()->addMinutes(30))
             : null;
+    }
+
+    /** The login page's button: anyone may have the app; it is useless without signing in. */
+    public function get(): RedirectResponse
+    {
+        $url = self::downloadUrl();
+        abort_if($url === null, 404);
+
+        return redirect()->away($url);
     }
 
     public function download(): StreamedResponse

@@ -131,4 +131,9 @@ test('GitHub hands over a new APK and the app finds it', function () {
     $url = $this->actingAs($this->accountant)->getJson(route('app.latest'))->json('url');
     $this->get($url)->assertOk();
     $this->get(route('app.download'))->assertForbidden();
+
+    // The login page offers it to anyone.
+    auth()->logout();
+    $this->get('/login')->assertInertia(fn ($page) => $page->where('app', '1.0.2'));
+    $this->get(route('app.get'))->assertRedirect();
 });

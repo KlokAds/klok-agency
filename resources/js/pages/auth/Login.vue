@@ -13,7 +13,14 @@ defineOptions({
     }, // i18n
 });
 
-defineProps<{ status?: string; canResetPassword: boolean }>();
+defineProps<{
+    status?: string;
+    canResetPassword: boolean;
+    app?: string | null;
+}>();
+
+// Inside the app itself there is nothing to download.
+const inApp = /KlokFinanceApp/.test(navigator.userAgent);
 
 // The Android app stays signed in (it locks itself with a fingerprint or PIN).
 const form = useForm({
@@ -83,4 +90,31 @@ function submit(): void {
             >Sign in</KButton
         >
     </form>
+
+    <a
+        v-if="app && !inApp"
+        href="/app/get"
+        class="mt-6 flex items-center gap-3 rounded-xl border border-line px-4 py-3 transition-colors hover:border-brand hover:bg-sunken"
+    >
+        <svg
+            viewBox="0 0 24 24"
+            class="size-6 shrink-0 text-brand"
+            fill="currentColor"
+            aria-hidden="true"
+        >
+            <path
+                d="M17.6 9.48l1.84-3.18a.38.38 0 0 0-.66-.38l-1.86 3.22a11.4 11.4 0 0 0-9.84 0L5.22 5.92a.38.38 0 0 0-.66.38L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"
+            />
+        </svg>
+        <span class="min-w-0 flex-1">
+            <span class="block text-[14px] font-semibold">{{
+                t('Android app নামান')
+            }}</span>
+            <span class="block text-[12.5px] text-ink-3"
+                >{{ t('শব্দসহ notification, আঙুলের ছাপে খোলা') }} · v{{
+                    app
+                }}</span
+            >
+        </span>
+    </a>
 </template>
