@@ -12,6 +12,7 @@ use App\Models\Setting;
 use App\Models\UsdEntry;
 use App\Models\Wallet;
 use App\Models\WalletMove;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -556,10 +557,17 @@ class Books
     {
         $opening = Setting::get('wallet_opening_on');
         $opening = is_string($opening) && $opening !== '' ? $opening : null;
-        $after = fn ($date) => $opening === null || ($date !== null && $date->toDateString() > $opening);
+        // Counted "now" (the balances typed in on the day itself): rows of that same day written
+        // after that moment still count, earlier ones are already in the counted balance.
+        $at = Setting::get('wallet_opening_at');
+        $at = is_string($at) && $at !== '' && $opening !== null && str_starts_with($at, $opening) ? CarbonImmutable::parse($at) : null;
+        $after = fn ($date, $created) => $opening === null || ($date !== null && (
+            $date->toDateString() > $opening
+            || ($at !== null && $date->toDateString() === $opening && $created !== null && $created->gt($at))
+        ));
 
-        $entries = $this->bdtEntries()->filter(fn (BdtEntry $e) => $after($e->entry_date));
-        $moves = WalletMove::all()->filter(fn (WalletMove $m) => $after($m->moved_on));
+        $entries = $this->bdtEntries()->filter(fn (BdtEntry $e) => $after($e->entry_date, $e->created_at));
+        $moves = WalletMove::all()->filter(fn (WalletMove $m) => $after($m->moved_on, $m->created_at));
         $places = [];
 
         foreach (Wallet::places() as $wallet) {

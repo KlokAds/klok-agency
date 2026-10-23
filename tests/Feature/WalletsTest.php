@@ -181,3 +181,18 @@ it('adds, renames and removes places; a place with history is only switched off'
     $this->actingAs($this->owner)->delete("/wallets/places/{$bank->id}")->assertRedirect();
     expect($bank->fresh()->is_active)->toBeFalse();
 });
+
+it('counts the real balance typed in today as of that moment, so later rows of today still count', function () {
+    $this->travelTo(now()->setTime(10, 0));
+    $this->actingAs($this->owner)->put('/wallets/opening', [
+        'opening_on' => now()->toDateString(),
+        'balances' => ['bank' => '1000', 'bkash' => '0', 'cash' => '0'],
+    ])->assertRedirect();
+
+    // An hour later the same day, money comes in: it is on top of the counted 1,000.
+    $this->travelTo(now()->addHour());
+    BdtEntry::create(['entry_date' => now()->toDateString(), 'description' => 'Later today', 'category' => 'other_income', 'wallet' => 'bank', 'amount' => 25000]);
+
+    $bank = collect(app(Books::class)->wallets()['places'])->firstWhere('key', 'bank');
+    expect($bank['balance'])->toBe(125000);
+});

@@ -216,6 +216,8 @@ class WalletController extends Controller
             }
 
             Setting::put('wallet_opening_on', $data['opening_on']);
+            // Counted today: at this moment (later rows of today still count). Another day: its end.
+            Setting::put('wallet_opening_at', $data['opening_on'] === now()->toDateString() ? now()->toIso8601String() : null);
         });
 
         $this->toast(__('আসল balance বসানো হয়েছে — :date থেকে হিসাব চলবে।', ['date' => $data['opening_on']]));

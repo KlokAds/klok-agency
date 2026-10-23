@@ -136,18 +136,18 @@ const openingForm = useForm({
     balances: {} as Record<string, string | null>,
 });
 
+// Opens with today and what each place has now, as this page counts it: only the places
+// that do not match the real money need changing.
 function startOpening(): void {
     openingForm.clearErrors();
-    openingForm.opening_on = props.wallets.opening_on ?? today();
+    openingForm.opening_on = today();
+    const now = Object.fromEntries(
+        props.wallets.places.map((p) => [p.key, p.balance]),
+    );
     openingForm.balances = Object.fromEntries(
         props.list
             .filter((w) => w.is_active)
-            .map((w) => [
-                w.key,
-                props.wallets.opening_on
-                    ? (w.opening_balance / 100).toFixed(2)
-                    : '',
-            ]),
+            .map((w) => [w.key, ((now[w.key] ?? 0) / 100).toFixed(2)]),
     );
     openingOpen.value = true;
 }
