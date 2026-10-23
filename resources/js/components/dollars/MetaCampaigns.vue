@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import KButton from '@/components/k/KButton.vue';
+import KField from '@/components/k/KField.vue';
+import KInput from '@/components/k/KInput.vue';
+import KModal from '@/components/k/KModal.vue';
 import KTag from '@/components/k/KTag.vue';
 import { money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -15,6 +20,8 @@ export type ForecastCampaign = {
     budget: number | null;
     to_spend: number | null;
     renewal: { id: number; status: string } | null;
+    spent: number;
+    extendable: boolean;
 };
 
 export type ForecastClient = {
@@ -40,14 +47,20 @@ export type ForecastClient = {
     lasts_until: string | null;
     ends_on: string | null;
     needed: number;
+    collected: number;
+    collected_usd: number;
     campaigns: ForecastCampaign[];
 };
 
-// Client by client: where they stand now (due or money left), when they
-// last paid, their campaigns with end dates, what Meta still takes off the
-// card, and what the next payment has to be — the old due first, then the
-// days to come.
-defineProps<{
+type Row =
+    | { kind: 'campaign'; campaign: ForecastCampaign }
+    | { kind: 'loose'; amount: number };
+
+// One row per campaign, a client's campaigns one under another: the
+// client's money (last payment, due now, next payment, collected) once
+// for them all, and each campaign's end, what Meta still takes off the
+// card for it, its spend, and Extend.
+const props = defineProps<{
     forecast: {
         clients: ForecastClient[];
         pending: number;
@@ -56,17 +69,76 @@ defineProps<{
     };
 }>();
 
+const can = computed(() => usePage().props.auth.can);
+
+function rows(c: ForecastClient): Row[] {
+    const list: Row[] = c.campaigns.map((campaign) => ({
+        kind: 'campaign',
+        campaign,
+    }));
+
+    if (c.loose) {
+        list.push({ kind: 'loose', amount: c.loose });
+    }
+
+    return list.length ? list : [{ kind: 'loose', amount: 0 }];
+}
+
+const toBdt = (cents: number) =>
+    props.forecast.rate ? Math.round(cents * props.forecast.rate) : null;
+
 const RENEWAL: Record<string, string> = {
     open: 'Renewal link পাঠানো', // i18n
     invoiced: 'Invoice — টাকার অপেক্ষা', // i18n
     paid: 'টাকা এসেছে — approve করুন', // i18n
     declined: 'Contract শেষ', // i18n
 };
+
+// Extend: more days on Meta, from this row.
+const extending = ref<ForecastCampaign | null>(null);
+const extendOpen = ref(false);
+const extendDays = ref('7');
+const extendError = ref<string | null>(null);
+const saving = ref(false);
+
+function startExtend(k: ForecastCampaign): void {
+    extending.value = k;
+    extendDays.value = '7';
+    extendError.value = null;
+    extendOpen.value = true;
+}
+
+function extend(): void {
+    if (!extending.value) {
+        return;
+    }
+
+    router.post(
+        `/campaigns/${extending.value.id}/extend`,
+        { days: Number.parseInt(extendDays.value, 10) || 0 },
+        {
+            preserveScroll: true,
+            onStart: () => (saving.value = true),
+            onFinish: () => (saving.value = false),
+            onSuccess: () => (extendOpen.value = false),
+            onError: (e) => (extendError.value = e.days ?? null),
+        },
+    );
+}
+
+const extendCost = computed(() => {
+    const days = Number.parseInt(extendDays.value, 10) || 0;
+    const usd = (extending.value?.budget ?? 0) * days;
+
+    return { usd, bdt: toBdt(usd) };
+});
 </script>
 
 <template>
-    <section class="min-w-0 xl:col-span-2">
-        <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+    <section class="panel min-w-0 overflow-hidden xl:col-span-2">
+        <div
+            class="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 sm:px-6 sm:pt-6"
+        >
             <div>
                 <h2 class="text-[16px] font-bold">
                     {{ t('Client অনুযায়ী — Meta') }}
@@ -89,7 +161,7 @@ const RENEWAL: Record<string, string> = {
 
         <p
             v-if="!forecast.clients.length"
-            class="panel px-5 py-6 text-[13px] text-ink-3 sm:px-6"
+            class="px-5 py-6 text-[13px] text-ink-3 sm:px-6"
         >
             {{
                 t(
@@ -98,254 +170,358 @@ const RENEWAL: Record<string, string> = {
             }}
         </p>
 
-        <div class="grid gap-4 lg:grid-cols-2">
-            <article
-                v-for="c in forecast.clients"
-                :key="c.id"
-                class="panel min-w-0 overflow-hidden"
-            >
-                <!-- Who, last payment, where they stand -->
-                <header
-                    class="flex flex-wrap items-start justify-between gap-3 px-5 pt-4"
-                >
-                    <div class="min-w-0">
-                        <Link
-                            :href="`/clients/${c.id}`"
-                            class="text-[15px] font-semibold hover:text-brand"
-                            >{{ c.name }}</Link
-                        >
-                        <p class="mt-0.5 text-[12px] text-ink-3">
-                            <template v-if="c.last_paid">
-                                {{ t('শেষ payment') }}
-                                <template v-if="c.last_paid.date"
-                                    >{{ niceDate(c.last_paid.date, false) }} ·
-                                </template>
-                                <span class="num">{{
-                                    money(c.last_paid.amount, 'bdt')
-                                }}</span>
-                                <template v-if="c.last_paid.usd">
-                                    ({{
-                                        money(c.last_paid.usd, 'usd')
-                                    }})</template
-                                >
-                            </template>
-                            <template v-else>{{
-                                t('এখনো কোনো payment নেই')
-                            }}</template>
-                            ·
-                            {{
-                                c.prepaid
-                                    ? t('আগে টাকা দেয়')
-                                    : t('খরচের পরে বিল')
-                            }}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <template v-if="c.due_now > 0">
-                            <p class="text-[11.5px] text-out">
-                                {{ t('এখন due') }}
-                            </p>
-                            <p class="num text-[18px] font-semibold text-out">
-                                {{ money(c.due_now, 'usd') }}
-                            </p>
-                            <p
-                                v-if="c.due_now_bdt"
-                                class="num text-[11.5px] text-ink-3"
-                            >
-                                ≈ {{ money(c.due_now_bdt, 'bdt') }}
-                            </p>
-                        </template>
-                        <template v-else-if="c.credit_now > 0">
-                            <p class="text-[11.5px] text-in">
-                                {{ t('টাকা বাকি') }}
-                            </p>
-                            <p class="num text-[18px] font-semibold text-in">
-                                {{ money(c.credit_now, 'usd') }}
-                            </p>
-                        </template>
-                        <KTag v-else tone="neutral">{{ t('মিলে আছে') }}</KTag>
-                    </div>
-                </header>
-
-                <!-- The four numbers -->
-                <dl
-                    class="mx-5 mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line text-[12px] sm:grid-cols-4"
-                >
-                    <div class="bg-surface px-3 py-2">
-                        <dt class="text-ink-3">{{ t('Meta কাটবে') }}</dt>
-                        <dd class="num mt-0.5 font-semibold text-wait">
-                            {{ money(c.pending, 'usd') }}
-                        </dd>
-                    </div>
-                    <div class="bg-surface px-3 py-2">
-                        <dt class="text-ink-3">{{ t('শেষ পর্যন্ত খরচ') }}</dt>
-                        <dd class="num mt-0.5 font-semibold">
-                            {{ money(c.to_spend, 'usd') }}
-                        </dd>
-                    </div>
-                    <div class="bg-surface px-3 py-2">
-                        <dt class="text-ink-3">{{ t('টাকায় চলবে') }}</dt>
-                        <dd class="mt-0.5 font-semibold">
-                            <template v-if="!c.prepaid">—</template>
-                            <template v-else-if="c.lasts_until">{{
-                                niceDate(c.lasts_until, false)
-                            }}</template>
-                            <span v-else class="text-out">{{
-                                t('টাকা শেষ')
-                            }}</span>
-                        </dd>
-                    </div>
-                    <div class="bg-surface px-3 py-2">
-                        <dt class="text-ink-3">{{ t('পরের payment') }}</dt>
-                        <dd
-                            class="num mt-0.5 font-semibold"
-                            :class="c.needed > 0 ? 'text-out' : 'text-in'"
-                        >
-                            <template v-if="c.needed > 0"
-                                >{{ money(c.needed, 'usd') }}
-                                <span
-                                    v-if="c.due_bdt"
-                                    class="block text-[11px] font-medium text-ink-3"
-                                    >≈ {{ money(c.due_bdt, 'bdt') }}</span
-                                ></template
-                            >
-                            <template v-else>{{ t('লাগবে না') }}</template>
-                        </dd>
-                    </div>
-                </dl>
-                <p
-                    v-if="c.needed > 0"
-                    class="mx-5 mt-2 text-[11.5px] text-ink-3"
-                >
-                    {{
-                        c.due_now > 0 && !c.to_spend
-                            ? t('আগের due {due} শোধ করতে হবে।', {
-                                  due: money(c.due_now, 'usd'),
-                              })
-                            : c.due_now > 0
-                              ? t(
-                                    'আগের due {due} শোধ, তারপর শেষ ({end}) পর্যন্ত {rest}।',
-                                    {
-                                        due: money(c.due_now, 'usd'),
-                                        end: c.ends_on
-                                            ? niceDate(c.ends_on, false)
-                                            : '—',
-                                        rest: money(c.to_spend, 'usd'),
-                                    },
-                                )
-                              : t(
-                                    'বাকি টাকা বাদে শেষ ({end}) পর্যন্ত চালাতে লাগবে।',
-                                    {
-                                        end: c.ends_on
-                                            ? niceDate(c.ends_on, false)
-                                            : '—',
-                                    },
-                                )
-                    }}
-                </p>
-
-                <!-- Campaigns -->
-                <ul class="mt-3 border-t border-line">
-                    <li
-                        v-for="k in c.campaigns"
-                        :key="k.id"
-                        class="flex items-start gap-3 border-b border-line px-5 py-2.5 text-[12.5px] last:border-0"
+        <div v-else class="mt-4 overflow-x-auto">
+            <table class="ledger w-full min-w-[1120px] text-[13px]">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-2.5 text-left sm:px-6">Client</th>
+                        <th class="px-3 py-2.5 text-left">Campaign</th>
+                        <th class="px-3 py-2.5 text-left">{{ t('শেষ') }}</th>
+                        <th class="px-3 py-2.5 text-right">
+                            {{ t('Meta বাকি') }}
+                        </th>
+                        <th class="px-3 py-2.5 text-right">
+                            {{ t('এখন due') }}
+                        </th>
+                        <th class="px-3 py-2.5 text-right">
+                            {{ t('পরের payment') }}
+                        </th>
+                        <th class="px-3 py-2.5 text-center">Extend</th>
+                        <th class="px-3 py-2.5 text-right">
+                            {{ t('মোট খরচ') }}
+                        </th>
+                        <th class="px-5 py-2.5 text-right sm:px-6">
+                            {{ t('মোট পাওয়া') }}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody v-for="c in forecast.clients" :key="c.id">
+                    <tr
+                        v-for="(row, i) in rows(c)"
+                        :key="
+                            row.kind === 'campaign' ? row.campaign.id : 'loose'
+                        "
+                        class="align-top"
                     >
-                        <span
-                            class="mt-1.5 size-1.5 shrink-0 rounded-full"
-                            :class="k.live ? 'bg-in' : 'bg-line-2'"
-                        />
-                        <span class="min-w-0 flex-1">
-                            <span class="block truncate font-medium">{{
-                                k.name
-                            }}</span>
-                            <span class="text-ink-3">
-                                <template v-if="k.budget"
-                                    >{{ money(k.budget, 'usd') }}/{{ t('দিন') }}
-                                    ·
+                        <!-- Client: once for all their campaigns -->
+                        <td
+                            v-if="i === 0"
+                            :rowspan="rows(c).length"
+                            class="w-[190px] border-r border-line px-5 py-3 sm:px-6"
+                        >
+                            <Link
+                                :href="`/clients/${c.id}`"
+                                class="font-semibold hover:text-brand"
+                                >{{ c.name }}</Link
+                            >
+                            <p class="mt-0.5 text-[11.5px] text-ink-3">
+                                <template v-if="c.last_paid">
+                                    {{ t('শেষ payment') }}
+                                    <template v-if="c.last_paid.date"
+                                        ><br />{{
+                                            niceDate(c.last_paid.date, false)
+                                        }}
+                                        ·
+                                    </template>
+                                    <span class="num">{{
+                                        money(c.last_paid.amount, 'bdt')
+                                    }}</span>
                                 </template>
-                                <template v-if="!k.live">{{
+                                <template v-else>{{
+                                    t('এখনো কোনো payment নেই')
+                                }}</template>
+                            </p>
+                            <p class="mt-1 text-[11px] text-ink-3">
+                                {{
+                                    c.prepaid
+                                        ? t('আগে টাকা দেয়')
+                                        : t('খরচের পরে বিল')
+                                }}
+                            </p>
+                        </td>
+
+                        <!-- Campaign -->
+                        <template v-if="row.kind === 'campaign'">
+                            <td class="max-w-[260px] px-3 py-3">
+                                <span class="flex items-center gap-2">
+                                    <span
+                                        class="size-1.5 shrink-0 rounded-full"
+                                        :class="
+                                            row.campaign.live
+                                                ? 'bg-in'
+                                                : 'bg-line-2'
+                                        "
+                                    />
+                                    <span
+                                        class="truncate font-medium"
+                                        :title="row.campaign.name"
+                                        >{{ row.campaign.name }}</span
+                                    >
+                                </span>
+                                <span
+                                    v-if="row.campaign.budget"
+                                    class="num pl-3.5 text-[11.5px] text-ink-3"
+                                    >{{ money(row.campaign.budget, 'usd') }}/{{
+                                        t('দিন')
+                                    }}</span
+                                >
+                                <span
+                                    v-if="
+                                        row.campaign.paused_for_credit ||
+                                        row.campaign.renewal
+                                    "
+                                    class="mt-1 flex flex-wrap gap-1.5 pl-3.5"
+                                >
+                                    <KTag
+                                        v-if="row.campaign.paused_for_credit"
+                                        tone="out"
+                                        >{{ t('টাকা শেষ — বন্ধ') }}</KTag
+                                    >
+                                    <Link
+                                        v-if="row.campaign.renewal"
+                                        :href="`/renewals/${row.campaign.renewal.id}`"
+                                        ><KTag
+                                            :tone="
+                                                row.campaign.renewal.status ===
+                                                'paid'
+                                                    ? 'wait'
+                                                    : 'neutral'
+                                            "
+                                            >{{
+                                                t(
+                                                    RENEWAL[
+                                                        row.campaign.renewal
+                                                            .status
+                                                    ] ??
+                                                        row.campaign.renewal
+                                                            .status,
+                                                )
+                                            }}</KTag
+                                        ></Link
+                                    >
+                                </span>
+                            </td>
+                            <td class="px-3 py-3 whitespace-nowrap">
+                                <template v-if="!row.campaign.live">{{
                                     t('বন্ধ')
                                 }}</template>
-                                <template v-else-if="k.end"
-                                    >{{ t('শেষ') }}
-                                    {{ niceDate(k.end, false) }} ({{
-                                        t('{n} দিন', { n: k.days_left ?? 0 })
-                                    }})</template
-                                >
-                                <template v-else>{{
-                                    t('শেষের দিন নেই')
-                                }}</template>
-                            </span>
-                            <span
-                                v-if="k.paused_for_credit || k.renewal"
-                                class="mt-1 flex flex-wrap gap-1.5"
-                            >
-                                <KTag v-if="k.paused_for_credit" tone="out">{{
-                                    t('টাকা শেষ — বন্ধ')
-                                }}</KTag>
-                                <Link
-                                    v-if="k.renewal"
-                                    :href="`/renewals/${k.renewal.id}`"
-                                    ><KTag
-                                        :tone="
-                                            k.renewal.status === 'paid'
-                                                ? 'wait'
-                                                : k.renewal.status ===
-                                                    'declined'
-                                                  ? 'out'
-                                                  : 'neutral'
-                                        "
+                                <template v-else-if="row.campaign.end">
+                                    {{ niceDate(row.campaign.end, false) }}
+                                    <span
+                                        class="block text-[11.5px] text-ink-3"
                                         >{{
-                                            t(
-                                                RENEWAL[k.renewal.status] ??
-                                                    k.renewal.status,
-                                            )
-                                        }}</KTag
-                                    ></Link
-                                >
-                            </span>
-                        </span>
-                        <span class="shrink-0 text-right">
-                            <span class="num block">{{
-                                k.to_spend === null
-                                    ? '—'
-                                    : money(k.to_spend, 'usd')
+                                            t('{n} দিন বাকি', {
+                                                n: row.campaign.days_left ?? 0,
+                                            })
+                                        }}</span
+                                    >
+                                </template>
+                                <span v-else class="text-ink-3">{{
+                                    t('শেষের দিন নেই')
+                                }}</span>
+                            </td>
+                            <td
+                                class="num px-3 py-3 text-right"
+                                :class="
+                                    row.campaign.pending
+                                        ? 'text-wait'
+                                        : 'text-ink-3'
+                                "
+                            >
+                                {{ money(row.campaign.pending, 'usd') }}
+                            </td>
+                        </template>
+                        <template v-else>
+                            <td class="px-3 py-3 text-[12.5px] text-ink-3">
+                                {{
+                                    row.amount
+                                        ? t('হাতে লেখা খরচ (campaign ছাড়া)')
+                                        : t('কোনো চালু campaign নেই।')
+                                }}
+                            </td>
+                            <td class="px-3 py-3" />
+                            <td
+                                class="num px-3 py-3 text-right"
+                                :class="row.amount ? 'text-wait' : 'text-ink-3'"
+                            >
+                                {{ row.amount ? money(row.amount, 'usd') : '' }}
+                            </td>
+                        </template>
+
+                        <!-- Client money: once -->
+                        <template v-if="i === 0">
+                            <td
+                                :rowspan="rows(c).length"
+                                class="border-l border-line px-3 py-3 text-right"
+                            >
+                                <template v-if="c.due_now > 0">
+                                    <span
+                                        class="num block font-semibold text-out"
+                                        >{{ money(c.due_now, 'usd') }}</span
+                                    >
+                                    <span
+                                        v-if="c.due_now_bdt"
+                                        class="num block text-[11.5px] text-ink-3"
+                                        >≈
+                                        {{ money(c.due_now_bdt, 'bdt') }}</span
+                                    >
+                                </template>
+                                <template v-else-if="c.credit_now > 0">
+                                    <span
+                                        class="num block font-semibold text-in"
+                                        >+{{ money(c.credit_now, 'usd') }}</span
+                                    >
+                                    <span class="block text-[11.5px] text-ink-3"
+                                        >{{ t('টাকা বাকি') }}
+                                        <template v-if="c.lasts_until">
+                                            ·
+                                            {{
+                                                niceDate(c.lasts_until, false)
+                                            }}</template
+                                        ></span
+                                    >
+                                </template>
+                                <span v-else class="text-ink-3">{{
+                                    t('মিলে আছে')
+                                }}</span>
+                            </td>
+                            <td
+                                :rowspan="rows(c).length"
+                                class="px-3 py-3 text-right"
+                            >
+                                <template v-if="c.needed > 0">
+                                    <span class="num block font-semibold">{{
+                                        money(c.needed, 'usd')
+                                    }}</span>
+                                    <span
+                                        v-if="c.due_bdt"
+                                        class="num block text-[11.5px] text-ink-3"
+                                        >≈ {{ money(c.due_bdt, 'bdt') }}</span
+                                    >
+                                    <span
+                                        v-if="c.ends_on"
+                                        class="block text-[11px] text-ink-3"
+                                        >{{
+                                            t('{date} পর্যন্ত', {
+                                                date: niceDate(
+                                                    c.ends_on,
+                                                    false,
+                                                ),
+                                            })
+                                        }}</span
+                                    >
+                                </template>
+                                <span v-else class="text-in">{{
+                                    t('লাগবে না')
+                                }}</span>
+                            </td>
+                        </template>
+
+                        <!-- Extend and spend: per campaign -->
+                        <td class="px-3 py-3 text-center">
+                            <KButton
+                                v-if="
+                                    row.kind === 'campaign' &&
+                                    row.campaign.extendable &&
+                                    can['clients.edit']
+                                "
+                                size="sm"
+                                icon="renew"
+                                @click="startExtend(row.campaign)"
+                                >Extend</KButton
+                            >
+                        </td>
+                        <td class="num px-3 py-3 text-right">
+                            <template v-if="row.kind === 'campaign'">{{
+                                money(row.campaign.spent, 'usd')
+                            }}</template>
+                        </td>
+
+                        <td
+                            v-if="i === 0"
+                            :rowspan="rows(c).length"
+                            class="border-l border-line px-5 py-3 text-right sm:px-6"
+                        >
+                            <span class="num block font-semibold">{{
+                                money(c.collected, 'bdt')
                             }}</span>
                             <span
-                                v-if="k.pending"
-                                class="num block text-[11px] text-wait"
-                                >{{ t('Meta কাটবে') }}
-                                {{ money(k.pending, 'usd') }}</span
+                                v-if="c.collected_usd"
+                                class="num block text-[11.5px] text-ink-3"
+                                >{{ money(c.collected_usd, 'usd') }}
+                                {{ t('ad-এর জন্য') }}</span
                             >
-                        </span>
-                    </li>
-                    <li
-                        v-if="c.loose"
-                        class="flex justify-between gap-3 px-5 py-2.5 text-[12.5px] text-ink-3"
-                    >
-                        <span>{{ t('হাতে লেখা খরচ (campaign ছাড়া)') }}</span>
-                        <span class="num text-wait"
-                            >{{ t('Meta কাটবে') }}
-                            {{ money(c.loose, 'usd') }}</span
-                        >
-                    </li>
-                    <li
-                        v-if="!c.campaigns.length && !c.loose"
-                        class="px-5 py-2.5 text-[12.5px] text-ink-3"
-                    >
-                        {{ t('কোনো চালু campaign নেই।') }}
-                    </li>
-                </ul>
-            </article>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-
-        <p v-if="forecast.other" class="mt-3 text-[12px] text-ink-3">
+        <p
+            v-if="forecast.other"
+            class="px-5 py-3 text-[12px] text-ink-3 sm:px-6"
+        >
             {{
                 t('Client ছাড়া Meta খরচ (নিজের ad, adjustment): {amount}', {
                     amount: money(forecast.other, 'usd'),
                 })
             }}
         </p>
+
+        <KModal v-model="extendOpen" :title="extending?.name ?? 'Campaign'">
+            <p class="text-[13.5px] text-ink-2">
+                {{
+                    t(
+                        'Campaign আরও কত দিন চলবে? শেষের তারিখ Meta-তে বাড়বে; টাকা শেষ হয়ে বন্ধ থাকলে আবার চালু হবে। Client-এর টাকা খাতায় না থাকলে spend cap আবার থামিয়ে দেবে।',
+                    )
+                }}
+            </p>
+            <KField
+                :label="t('কত দিন')"
+                :error="extendError ?? undefined"
+                class="mt-4"
+                :hint="
+                    extending?.end
+                        ? t('এখন শেষ {date}', {
+                              date: niceDate(extending.end, false),
+                          })
+                        : undefined
+                "
+            >
+                <KInput
+                    v-model="extendDays"
+                    inputmode="numeric"
+                    class="max-w-[140px]"
+                >
+                    <template #trail
+                        ><span class="text-[12.5px] text-ink-3">{{
+                            t('দিন')
+                        }}</span></template
+                    >
+                </KInput>
+            </KField>
+            <p
+                v-if="extending?.budget"
+                class="num mt-3 rounded-lg bg-sunken px-3 py-2 text-[12.5px]"
+            >
+                {{ money(extending.budget, 'usd') }} ×
+                {{ Number.parseInt(extendDays, 10) || 0 }} =
+                <b>{{ money(extendCost.usd, 'usd') }}</b>
+                <template v-if="extendCost.bdt">
+                    ≈ {{ money(extendCost.bdt, 'bdt') }}</template
+                >
+            </p>
+            <template #footer>
+                <KButton variant="quiet" @click="extendOpen = false">{{
+                    t('বাতিল')
+                }}</KButton>
+                <KButton
+                    variant="primary"
+                    icon="renew"
+                    :loading="saving"
+                    @click="extend"
+                    >Extend</KButton
+                >
+            </template>
+        </KModal>
     </section>
 </template>

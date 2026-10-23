@@ -100,6 +100,9 @@ class CampaignForecast
                     'budget' => $budget,
                     'to_spend' => $budget !== null && $daysLeft !== null ? $budget * $daysLeft : null,
                     'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
+                    'spent' => (int) CampaignDay::where('campaign_id', $c->id)
+                        ->when($c->bill_from, fn ($q) => $q->where('day', '>=', $c->bill_from->toDateString()))->sum('spend'),
+                    'extendable' => CampaignLimits::guarded($c) && $c->bill_from !== null,
                 ];
             })->sortByDesc('pending')->values();
 
@@ -138,6 +141,8 @@ class CampaignForecast
                 'lasts_until' => $lastsUntil && $lastsUntil->gte($today->subDay()) ? $lastsUntil->toDateString() : null,
                 'ends_on' => $endsOn,
                 'needed' => max(0, -$balance),
+                'collected' => (int) BdtEntry::where('client_id', $client->id)->whereIn('category', BdtEntry::REVENUE)->sum('amount'),
+                'collected_usd' => (int) ($figure['credit_usd'] ?? 0),
                 'campaigns' => $lines->all(),
             ];
         }
