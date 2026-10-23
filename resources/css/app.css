@@ -1,7 +1,11 @@
 @import 'tailwindcss';
 
-@import '@fontsource-variable/inter';
-@import '@fontsource-variable/noto-sans-bengali';
+/*
+ * Onest for Latin and figures (calm grotesk, true tabular digits),
+ * Anek Bangla for Bangla (modern, open counters, sits well beside Onest).
+ */
+@import '@fontsource-variable/onest';
+@import '@fontsource-variable/anek-bangla';
 
 @source '../../storage/framework/views/*.php';
 
@@ -9,8 +13,8 @@
 
 /*
  * Klok Finance — "ledger desk".
- * Warm paper, deep ink, Klok teal as the one accent. Money in a mono face
- * so columns line up like a ruled book.
+ * Warm paper, deep ink, Klok teal as the one accent. Money in tabular
+ * figures so columns line up like a ruled book.
  */
 :root {
     --paper: #f3f1ea;
@@ -40,6 +44,7 @@
     --neg: #b4441b;
     --shadow-pop:
         0 1px 2px rgb(21 33 31 / 0.06), 0 12px 32px -8px rgb(21 33 31 / 0.22);
+    --shadow-card: 0 1px 2px rgb(21 33 31 / 0.05);
 }
 
 .dark {
@@ -66,13 +71,14 @@
     --pos: #2a9f8f;
     --neg: #e0704a;
     --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -8px rgb(0 0 0 / 0.6);
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.025);
 }
 
 @theme inline {
     --font-sans:
-        'Inter Variable', 'Noto Sans Bengali Variable', ui-sans-serif,
-        system-ui, sans-serif;
-    --font-bn: 'Noto Sans Bengali Variable', 'Inter Variable', sans-serif;
+        'Onest Variable', 'Anek Bangla Variable', ui-sans-serif, system-ui,
+        sans-serif;
+    --font-bn: 'Anek Bangla Variable', 'Onest Variable', sans-serif;
     --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
     --color-paper: var(--paper);
@@ -119,7 +125,6 @@
 
     body {
         font-family: var(--font-sans);
-        font-feature-settings: 'cv11';
         line-height: 1.5;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
@@ -212,15 +217,16 @@
     .panel {
         background: var(--surface);
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
     }
 
     /* Figures line up in columns without a typewriter look. */
     .num {
         font-family: var(--font-sans);
         font-variant-numeric: tabular-nums lining-nums;
-        font-feature-settings: 'tnum', 'cv11';
-        letter-spacing: -0.005em;
+        font-feature-settings: 'tnum', 'lnum';
+        letter-spacing: -0.01em;
     }
 
     .eyebrow {
@@ -282,19 +288,23 @@
         top: 0;
         z-index: 1;
         background: var(--surface-2);
-        border-bottom: 1px solid var(--line-2);
-        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        padding: 9px 14px;
         text-align: left;
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 12.5px;
+        font-weight: 500;
         color: var(--ink-3);
         white-space: nowrap;
     }
 
     .ledger td {
-        padding: 11px 12px;
-        border-bottom: 1px dashed var(--line);
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
         vertical-align: top;
+    }
+
+    .ledger tbody tr {
+        transition: background-color 0.12s;
     }
 
     .ledger tbody tr:hover td {
@@ -307,6 +317,97 @@
 
     .ledger .r {
         text-align: right;
+    }
+
+    /* Dashboard: section heading with a hairline that runs to the edge. */
+    .dash-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 14.5px;
+        font-weight: 600;
+        color: var(--ink-2);
+    }
+
+    .dash-head::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--line);
+    }
+
+    .dash-title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    .dash-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-2);
+    }
+
+    .dash-fig {
+        margin-top: 10px;
+        font-size: 26px;
+        line-height: 1;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums lining-nums;
+    }
+
+    /* Four tiles in one panel, split by hairlines at every width. */
+    .dash-tiles {
+        display: grid;
+        overflow: hidden;
+    }
+
+    .dash-tiles > * + * {
+        border-top: 1px solid var(--line);
+    }
+
+    @media (width >= 40rem) {
+        .dash-tiles {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .dash-tiles > * + * {
+            border-top: 0;
+        }
+
+        .dash-tiles > :nth-child(2n) {
+            border-left: 1px solid var(--line);
+        }
+
+        .dash-tiles > :nth-child(n + 3) {
+            border-top: 1px solid var(--line);
+        }
+    }
+
+    @media (width >= 80rem) {
+        .dash-tiles {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .dash-tiles > :nth-child(n) {
+            border-top: 0;
+        }
+
+        .dash-tiles > * + * {
+            border-left: 1px solid var(--line);
+        }
+    }
+
+    .dash-entry:last-child {
+        border-bottom: 0;
+    }
+
+    @media (width >= 64rem) {
+        .dash-entry:nth-last-child(2):nth-child(odd) {
+            border-bottom: 0;
+        }
     }
 
     /* Amounts never break between the sign and the number. */

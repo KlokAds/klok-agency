@@ -306,5 +306,9 @@
     "Dollar ও Card": "Dollars & card",
     "খাতা (সব লেনদেন)": "Ledgers (all transactions)",
     "এই অংশের পাতা": "Pages in this section",
-    "Overview": "Overview"
+    "Overview": "Overview",
+    "Batch {n} চলছে": "Batch {n} in use",
+    "পরে আরো {n}টা batch": "{n} more batches queued",
+    "রোজ গড়ে {amount} খরচ": "Spending {amount} a day",
+    "প্রায় {n} দিন": "About {n} days"
 }

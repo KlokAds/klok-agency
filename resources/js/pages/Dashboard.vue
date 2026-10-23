@@ -84,7 +84,7 @@ const greeting =
     <!-- Data that still needs a human look -->
     <div
         v-if="s.review_count || s.undated_count"
-        class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-dashed border-wait/50 bg-wait-soft px-4 py-3 text-[13px] text-wait"
+        class="mb-7 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-wait/25 bg-wait-soft px-4 py-3 text-[13px] text-wait"
     >
         <KIcon name="warn" :size="16" />
         <span v-if="s.review_count">{{
@@ -97,49 +97,39 @@ const greeting =
         }}</span>
         <Link
             href="/bdt"
-            class="ml-auto font-semibold underline-offset-2 hover:underline"
+            class="ml-auto font-medium underline-offset-2 hover:underline"
             >{{ t('খাতায় দেখুন →') }}</Link
         >
     </div>
 
     <!-- USD: the card and the bought dollars -->
-    <h2 class="eyebrow mb-2.5 flex items-center gap-1.5">
-        <span
-            class="grid size-5 place-items-center rounded bg-sunken text-[11px] text-ink-2"
-            >$</span
-        >
-        {{ t('Dollar — card আর কেনা dollar') }}
+    <h2 class="dash-head">
+        <span>{{ t('Dollar — card আর কেনা dollar') }}</span>
     </h2>
     <CardStrip :summary="summary" :fx="fx" />
 
-    <div class="mt-6">
+    <div class="mt-5">
         <ClientTable :clients="clients" :platform-due="s.platform_due" />
     </div>
 
     <!-- BDT -->
-    <h2 class="eyebrow mt-8 mb-2.5 flex items-center gap-1.5">
-        <span
-            class="grid size-5 place-items-center rounded bg-sunken text-[11px] text-ink-2"
-            >{{ '\u09F3' }}</span
-        >
-        {{ t('টাকা — কোথায় কত আছে') }}
+    <h2 class="dash-head mt-9">
+        <span>{{ t('টাকা — কোথায় কত আছে') }}</span>
     </h2>
-    <section
-        class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
-    >
-        <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('BDT কোথায়') }}</p>
-            <p class="num mt-3 text-[30px] leading-none font-medium">
+    <section class="panel dash-tiles">
+        <div class="p-5 sm:p-6">
+            <p class="dash-label">{{ t('BDT কোথায়') }}</p>
+            <p class="dash-fig">
                 {{ money(wallets.total, 'bdt') }}
             </p>
-            <ul class="mt-3 space-y-1 text-[12.5px]">
+            <ul class="mt-4 space-y-1.5 text-[12.5px]">
                 <li
                     v-for="p in wallets.places"
                     :key="p.key"
                     class="flex justify-between gap-3 text-ink-3"
                 >
                     <span>{{ p.label }}</span>
-                    <span class="num font-semibold text-ink-2">{{
+                    <span class="num font-medium text-ink-2">{{
                         money(p.balance, 'bdt')
                     }}</span>
                 </li>
@@ -152,23 +142,23 @@ const greeting =
                             n: wallets.untagged_count,
                         })
                     }}</span>
-                    <span class="num font-semibold text-ink-2">{{
+                    <span class="num font-medium text-ink-2">{{
                         money(wallets.untagged, 'bdt')
                     }}</span>
                 </li>
             </ul>
             <Link
                 href="/wallets"
-                class="no-print mt-2 inline-block text-[12.5px] font-semibold text-brand-ink hover:underline"
+                class="no-print mt-3 inline-block text-[13px] font-medium text-brand-ink hover:underline"
                 >{{ t('বিস্তারিত') }} →</Link
             >
         </div>
-        <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('Client-দের আগাম টাকা') }}</p>
-            <p class="num mt-3 text-[30px] leading-none font-medium">
+        <div class="p-5 sm:p-6">
+            <p class="dash-label">{{ t('Client-দের আগাম টাকা') }}</p>
+            <p class="dash-fig">
                 {{ money(s.unearned, 'bdt') }}
             </p>
-            <p class="mt-3 text-[12.5px] text-ink-3">
+            <p class="mt-4 text-[12.5px] text-ink-3">
                 {{
                     t(
                         'Client আগাম দিয়েছে কিন্তু campaign-এ এখনো খরচ হয়নি। এটা client-দের টাকা — লাভ নয়।',
@@ -176,13 +166,13 @@ const greeting =
                 }}
             </p>
         </div>
-        <div class="bg-surface p-5 sm:p-6">
+        <div class="p-5 sm:p-6">
             <template v-if="s.owner_due > 0">
-                <p class="eyebrow">{{ t('Owner-এর কাছে পাওনা') }}</p>
-                <p class="num mt-3 text-[30px] leading-none font-medium">
+                <p class="dash-label">{{ t('Owner-এর কাছে পাওনা') }}</p>
+                <p class="dash-fig">
                     {{ money(s.owner_due, 'bdt') }}
                 </p>
-                <p class="mt-3 text-[12.5px] text-ink-3">
+                <p class="mt-4 text-[12.5px] text-ink-3">
                     {{
                         t(
                             'Owner কিছুদিনের জন্য নিয়েছেন, ফেরত দেবেন — এটা ব্যবসার টাকা।',
@@ -191,14 +181,14 @@ const greeting =
                 </p>
             </template>
             <template v-else>
-                <p class="eyebrow">{{ t('Client দেবে') }}</p>
+                <p class="dash-label">{{ t('Client দেবে') }}</p>
                 <p
-                    class="num mt-3 text-[30px] leading-none font-medium"
+                    class="dash-fig"
                     :class="s.receivable_cost > 0 && 'text-wait'"
                 >
                     {{ money(s.receivable_cost, 'bdt') }}
                 </p>
-                <p class="mt-3 text-[12.5px] text-ink-3">
+                <p class="mt-4 text-[12.5px] text-ink-3">
                     {{
                         t(
                             '{amount} খরচ হয়েছে, client এখনো টাকা দেয়নি (কেনা দামে)।',
@@ -210,37 +200,37 @@ const greeting =
                 </p>
             </template>
         </div>
-        <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('এই মাসের লাভ') }}</p>
-            <p class="mt-3 text-[30px] leading-none font-medium">
+        <div class="p-5 sm:p-6">
+            <p class="dash-label">{{ t('এই মাসের লাভ') }}</p>
+            <p class="dash-fig">
                 <KAmount :value="month_net" currency="bdt" sign />
             </p>
-            <p class="mt-3 text-[12.5px] text-ink-3">
+            <p class="mt-4 text-[12.5px] text-ink-3">
                 {{ t('শুরু থেকে') }}
                 <KAmount
                     :value="s.net"
                     currency="bdt"
                     sign
-                    class="font-semibold"
+                    class="font-medium"
                 />
                 ·
                 <Link
                     href="/reports?preset=this_month"
-                    class="no-print font-semibold text-brand-ink hover:underline"
+                    class="no-print font-medium text-brand-ink hover:underline"
                     >P&amp;L →</Link
                 >
             </p>
         </div>
     </section>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
+    <div class="mt-5 grid gap-5 xl:grid-cols-[1fr_1fr]">
         <ChecksPanel :summary="summary" />
 
         <!-- Month by month -->
         <section class="panel p-5 sm:p-6">
             <div class="mb-4 flex items-baseline justify-between gap-4">
                 <div>
-                    <h2 class="text-[16px] font-bold">
+                    <h2 class="dash-title">
                         {{ t('মাসে মাসে ফলাফল') }}
                     </h2>
                     <p class="text-[12.5px] text-ink-3">
@@ -253,7 +243,7 @@ const greeting =
                 </div>
                 <Link
                     href="/reports"
-                    class="shrink-0 text-[13px] font-semibold whitespace-nowrap text-brand-ink hover:underline"
+                    class="shrink-0 text-[13px] font-medium whitespace-nowrap text-brand-ink hover:underline"
                     >P&L →</Link
                 >
             </div>
@@ -262,18 +252,18 @@ const greeting =
     </div>
 
     <!-- Latest entries -->
-    <section v-if="recent.length" class="panel mt-6">
-        <h2 class="px-5 pt-5 text-[16px] font-bold sm:px-6">
+    <section v-if="recent.length" class="panel mt-5">
+        <h2 class="dash-title px-5 pt-5 sm:px-6">
             {{ t('সর্বশেষ entry') }}
         </h2>
-        <ul class="mt-2 grid px-5 pb-3 sm:px-6 lg:grid-cols-2 lg:gap-x-8">
+        <ul class="mt-2 grid px-5 pb-2 sm:px-6 lg:grid-cols-2 lg:gap-x-10">
             <li
                 v-for="r in recent"
                 :key="r.book + r.id"
-                class="flex items-center gap-3 border-b border-line py-3 text-[13.5px]"
+                class="dash-entry flex items-center gap-3 border-b border-line py-3 text-[13.5px]"
             >
                 <span
-                    class="grid size-8 shrink-0 place-items-center rounded-lg bg-sunken text-[12px] font-bold text-ink-2"
+                    class="grid size-8 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-[12px] font-semibold text-ink-2"
                     >{{ r.book === 'usd' ? '$' : '\u09F3' }}</span
                 >
                 <span class="min-w-0 flex-1">

@@ -19,7 +19,7 @@ defineProps<{ title?: string; description?: string }>();
                     Klok Ads · Agency Books
                 </p>
                 <p
-                    class="mt-4 text-[34px] leading-[1.15] font-extrabold tracking-tight text-white"
+                    class="mt-4 text-[34px] leading-[1.15] font-bold tracking-[-0.02em] text-white"
                 >
                     {{
                         t(
@@ -64,7 +64,7 @@ defineProps<{ title?: string; description?: string }>();
                 <div class="mb-10 lg:hidden"><BrandMark /></div>
                 <h1
                     v-if="title"
-                    class="text-[26px] font-extrabold tracking-tight"
+                    class="text-[26px] font-bold tracking-[-0.02em]"
                 >
                     {{ t(title) }}
                 </h1>

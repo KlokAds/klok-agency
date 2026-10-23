@@ -39,7 +39,7 @@ withDefaults(
         <!-- compact: the phone top bar — same two lines, tighter, never wrapping -->
         <span class="flex flex-col leading-none whitespace-nowrap">
             <span
-                class="font-extrabold tracking-tight"
+                class="font-bold tracking-[-0.02em]"
                 :class="[
                     compact ? 'text-[14.5px]' : 'text-[15px]',
                     light ? 'text-white' : 'text-ink',

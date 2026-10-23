@@ -57,15 +57,15 @@ const own = computed(() => props.platformDue - total.value.unbilled);
 </script>
 
 <template>
-    <section class="panel">
+    <section class="panel overflow-hidden">
         <div
             class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 pt-5 sm:px-6"
         >
             <div>
-                <h2 class="text-[16px] font-bold">
+                <h2 class="dash-title">
                     {{ t('Client-দের হিসাব') }}
                 </h2>
-                <p class="text-[12.5px] text-ink-3">
+                <p class="mt-0.5 text-[12.5px] text-ink-3">
                     {{
                         t(
                             'আগাম যা দিয়েছে, campaign-এ যা খরচ হয়েছে, কত বাকি — আর Meta এখনো card থেকে কত কাটবে।',
@@ -75,7 +75,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
             </div>
             <Link
                 href="/clients"
-                class="no-print shrink-0 text-[13px] font-semibold text-brand-ink hover:underline"
+                class="no-print shrink-0 text-[13px] font-medium text-brand-ink hover:underline"
                 >{{ t('সব client →') }}</Link
             >
         </div>
@@ -97,7 +97,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                     <div class="flex items-center justify-between gap-3">
                         <Link
                             :href="`/clients/${c.id}`"
-                            class="truncate font-semibold hover:text-brand-ink"
+                            class="truncate font-medium hover:text-brand-ink"
                             >{{ c.name }}</Link
                         >
                         <KTag :tone="c.tag.tone">{{ c.tag.label }}</KTag>
@@ -171,7 +171,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
             </ul>
 
             <!-- Tablet and up: a ruled table -->
-            <div class="mt-3 hidden overflow-x-auto md:block">
+            <div class="mt-4 hidden overflow-x-auto md:block">
                 <table class="ledger [&_tfoot_td]:border-b-0">
                     <thead>
                         <tr>
@@ -189,9 +189,17 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                             <td>
                                 <Link
                                     :href="`/clients/${c.id}`"
-                                    class="font-semibold hover:text-brand-ink hover:underline"
-                                    >{{ c.name }}</Link
+                                    class="group flex items-center gap-2.5 font-medium"
                                 >
+                                    <span
+                                        class="grid size-7 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-[12px] font-semibold text-ink-2"
+                                        >{{ c.name.charAt(0) }}</span
+                                    >
+                                    <span
+                                        class="group-hover:text-brand-ink group-hover:underline"
+                                        >{{ c.name }}</span
+                                    >
+                                </Link>
                             </td>
                             <td class="r num">{{ usd(c.credit_usd) }}</td>
                             <td class="r num">{{ usd(c.spent_usd) }}</td>
@@ -258,7 +266,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                             </td>
                         </tr>
                         <tr v-if="own !== 0">
-                            <td class="text-ink-2">
+                            <td class="pl-[52px] text-ink-3">
                                 {{ t('Klok Ads নিজের / অন্যান্য') }}
                             </td>
                             <td />
@@ -270,17 +278,25 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                         </tr>
                     </tbody>
                     <tfoot>
-                        <tr class="font-semibold">
-                            <td class="border-t-2 border-ink px-3 py-3">
+                        <tr class="font-semibold [&_td:first-child]:pl-[52px]">
+                            <td
+                                class="border-t border-line-2 bg-surface-2 px-3.5 py-3"
+                            >
                                 {{ t('মোট') }}
                             </td>
-                            <td class="r num border-t-2 border-ink px-3 py-3">
+                            <td
+                                class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3"
+                            >
                                 {{ usd(total.credit) }}
                             </td>
-                            <td class="r num border-t-2 border-ink px-3 py-3">
+                            <td
+                                class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3"
+                            >
                                 {{ usd(total.spent) }}
                             </td>
-                            <td class="r num border-t-2 border-ink px-3 py-3">
+                            <td
+                                class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3"
+                            >
                                 {{ usd(total.held) }}
                                 <span
                                     v-if="total.owed"
@@ -290,12 +306,12 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 >
                             </td>
                             <td
-                                class="r num border-t-2 border-ink px-3 py-3 text-wait"
+                                class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3 text-wait"
                             >
                                 {{ usd(platformDue) }}
                             </td>
-                            <td class="border-t-2 border-ink" />
-                            <td class="border-t-2 border-ink" />
+                            <td class="border-t border-line-2 bg-surface-2" />
+                            <td class="border-t border-line-2 bg-surface-2" />
                         </tr>
                     </tfoot>
                 </table>

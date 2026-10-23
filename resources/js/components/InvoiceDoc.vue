@@ -136,7 +136,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                             stroke-linejoin="round"
                         />
                     </svg>
-                    <span class="text-[19px] font-extrabold tracking-tight">{{
+                    <span class="text-[19px] font-bold tracking-[-0.02em]">{{
                         business.name
                     }}</span>
                 </div>
