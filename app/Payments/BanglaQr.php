@@ -16,8 +16,9 @@ use InvalidArgumentException;
  * tag 54, so the payer's bKash / Nagad / bank app fills the amount in and
  * locks it. The money still goes to the same merchant account.
  *
- * It is then drawn in the brand's colours with the mark in the middle; the
- * highest error correction (H, ~30%) keeps it readable with the mark there.
+ * It is then drawn in the brand's colours with the mark in the middle: rounded
+ * squares in deep teal (dark enough for any camera) and error correction Q
+ * (~25%), which leaves the code less dense, so phones read it quickly.
  */
 class BanglaQr
 {
@@ -111,9 +112,9 @@ class BanglaQr
     public static function png(string $text, int $size = 600): string
     {
         $size = max(64, $size);
-        $matrix = Encoder::encode($text, ErrorCorrectionLevel::H(), 'UTF-8')->getMatrix();
+        $matrix = Encoder::encode($text, ErrorCorrectionLevel::Q(), 'UTF-8')->getMatrix();
         $count = $matrix->getWidth();
-        $quiet = 3;
+        $quiet = 4;
         $big = $size * 4;
         $cell = $big / ($count + 2 * $quiet);
 
@@ -121,7 +122,7 @@ class BanglaQr
         $channel = fn (string $hex, int $at): int => max(0, min(255, (int) hexdec(substr($hex, $at, 2))));
         $rgb = fn (string $hex) => (int) imagecolorallocate($img, $channel($hex, 1), $channel($hex, 3), $channel($hex, 5));
         $white = $rgb('#FFFFFF');
-        $ink = $rgb('#0F1F1C');
+        $ink = $rgb('#0F766E');
         $brand = $rgb('#0D9488');
         $markBg = $rgb('#11211E');
         $markTeal = $rgb('#2DD4BF');
@@ -137,7 +138,7 @@ class BanglaQr
             }
         };
 
-        $hole = (int) floor($count * 0.2);
+        $hole = (int) floor($count * 0.18);
         $hole += ($count - $hole) % 2;
         $from = intdiv($count - $hole, 2);
         $to = $from + $hole;
@@ -148,8 +149,7 @@ class BanglaQr
                 if ($matrix->get($x, $y) !== 1 || $isEye($x, $y) || ($x >= $from && $x < $to && $y >= $from && $y < $to)) {
                     continue;
                 }
-                $d = (int) round($cell * 0.92);
-                imagefilledellipse($img, (int) round(($x + $quiet + 0.5) * $cell), (int) round(($y + $quiet + 0.5) * $cell), $d, $d, $ink);
+                $rounded(($x + $quiet) * $cell + $cell * 0.04, ($y + $quiet) * $cell + $cell * 0.04, $cell * 0.92, $cell * 0.92, $cell * 0.28, $ink);
             }
         }
 
@@ -200,15 +200,15 @@ class BanglaQr
      */
     public static function svg(string $text, int $size = 300): string
     {
-        $matrix = Encoder::encode($text, ErrorCorrectionLevel::H(), 'UTF-8')->getMatrix();
+        $matrix = Encoder::encode($text, ErrorCorrectionLevel::Q(), 'UTF-8')->getMatrix();
         $count = $matrix->getWidth();
-        $quiet = 3;
+        $quiet = 4;
         $cell = $size / ($count + 2 * $quiet);
-        $ink = '#0F1F1C';
+        $ink = '#0F766E';
         $brand = '#0D9488';
 
         // The middle square kept clear for the mark: under a fifth of the code, well within H.
-        $hole = (int) floor($count * 0.2);
+        $hole = (int) floor($count * 0.18);
         $hole += ($count - $hole) % 2;
         $from = intdiv($count - $hole, 2);
         $to = $from + $hole;
@@ -220,9 +220,8 @@ class BanglaQr
                 if ($matrix->get($x, $y) !== 1 || $isEye($x, $y) || ($x >= $from && $x < $to && $y >= $from && $y < $to)) {
                     continue;
                 }
-                $cx = round(($x + $quiet + 0.5) * $cell, 2);
-                $cy = round(($y + $quiet + 0.5) * $cell, 2);
-                $dots .= '<circle cx="'.$cx.'" cy="'.$cy.'" r="'.round($cell * 0.46, 2).'"/>';
+                $dots .= '<rect x="'.round(($x + $quiet) * $cell + $cell * 0.04, 2).'" y="'.round(($y + $quiet) * $cell + $cell * 0.04, 2)
+                    .'" width="'.round($cell * 0.92, 2).'" height="'.round($cell * 0.92, 2).'" rx="'.round($cell * 0.28, 2).'"/>';
             }
         }
 

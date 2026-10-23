@@ -163,7 +163,9 @@ it('checks the forwarder token, stores each SMS once, and settles the open sessi
 
     $invoice = sentInvoice($this->client);
 
-    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'bkash'])->assertOk()
+    // bKash needs the number the money comes from.
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'bkash'])->assertUnprocessable()->assertJsonValidationErrors('payer');
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'bkash', 'payer' => '01798765432'])->assertOk()
         ->assertJsonPath('session.amount', 1490000)->assertJsonPath('session.method', 'bkash');
 
     $payload = ['sender' => 'bKash', 'message' => 'You have received Tk 14,900.00 from 01798765432. Fee Tk 0.00. Balance Tk 60,000.00. TrxID AUTO123456 at 20/10/2026 14:25'];
@@ -452,4 +454,19 @@ it('books each way of paying into the account the money really reaches', functio
     expect($payment->wallet)->toBe('ibbl')
         ->and(BdtEntry::find($payment->bdt_entry_id)->wallet)->toBe('ibbl')
         ->and(BdtEntry::find($payment->fee_entry_id)->wallet)->toBe('ibbl');
+});
+
+it('matches a bKash payment only from the number the client gave', function () {
+    $invoice = sentInvoice($this->client);
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'bkash', 'payer' => '01798765432'])->assertOk();
+
+    // Same amount, another number: not this invoice.
+    smsHook('bKash', 'You have received Tk 14,900.00 from 01811111111. TrxID OTHER11111 at 20/10/2026 14:25')->assertJson(['status' => 'stored']);
+    // No number in the SMS at all: not taken on trust either.
+    smsHook('bKash', 'You have received Tk 14,900.00. TrxID NONUM22222 at 20/10/2026 14:26')->assertJson(['status' => 'stored']);
+    expect($invoice->fresh()->paid)->toBe(0);
+
+    // A masked number matches by the digits it shows.
+    smsHook('bKash', 'You have received Tk 14,900.00 from 01798***432. TrxID MASKED3333 at 20/10/2026 14:27')->assertJson(['status' => 'matched']);
+    expect($invoice->fresh()->status)->toBe('paid');
 });

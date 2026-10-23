@@ -56,7 +56,7 @@ class PaymentMatcher
             ->first();
 
         // The same payment again (a reload) keeps its amount; a new amount is a new payment.
-        if ($existing !== null && $existing->amount >= $base && $existing->amount < $base + 100 * 50) {
+        if ($existing !== null && $existing->amount >= $base && $existing->amount < $base + 100 * 50 && $existing->sender === $payerNumber) {
             return $existing;
         }
 
@@ -186,17 +186,31 @@ class PaymentMatcher
             ->where('expires_at', '>', now());
     }
 
-    /** When both sides know the sending number, they must agree (last 10 digits; masked digits ignored). */
+    /**
+     * The number the client said they pay from, against the one in the wallet's SMS. No number
+     * given (Bangla QR, bank): nothing to compare. Given: the SMS must show it — a masked one
+     * (017****45) by the digits it shows; an SMS without any number is not taken on trust.
+     */
     protected function samePayer(?string $expected, ?string $actual): bool
     {
         $expected = substr(preg_replace('/\D+/', '', (string) $expected) ?? '', -10);
-        $actual = (string) $actual;
 
-        if (strlen($expected) < 10 || $actual === '' || str_contains($actual, '*')) {
+        if (strlen($expected) < 10) {
             return true;
         }
 
-        return substr(preg_replace('/\D+/', '', $actual) ?? '', -10) === $expected;
+        $shown = substr(preg_replace('/[^\d*]+/', '', (string) $actual) ?? '', -10);
+        if (strlen($shown) < 10 || ! preg_match('/\d/', $shown)) {
+            return false;
+        }
+
+        foreach (str_split($shown) as $i => $digit) {
+            if ($digit !== '*' && $digit !== $expected[$i]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     protected function settle(InvoicePayment $payment, PaymentSms $sms, ?User $by = null): bool

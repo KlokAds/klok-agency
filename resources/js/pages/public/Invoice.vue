@@ -44,6 +44,7 @@ type State = {
         method: string;
         amount: number;
         qr: string | null;
+        sender: string | null;
         extra: number;
         seconds_left: number;
     } | null;
@@ -147,6 +148,7 @@ onBeforeUnmount(() => {
 });
 
 const payer = ref('');
+const payerError = ref<string | null>(null);
 // An invoice that allows part payments: how much to pay now (taka; empty = all that is due).
 const payNow = ref('');
 // The taka sign, from its code (the file keeps Bangla text only inside t()).
@@ -165,6 +167,7 @@ async function start(key: string): Promise<void> {
     busy.value = true;
     try {
         payNowError.value = null;
+        payerError.value = null;
         state.value = await postJson<State>(`${base}/pay`, {
             method: key,
             payer: payer.value || null,
@@ -178,12 +181,14 @@ async function start(key: string): Promise<void> {
             payNowError.value = e.errors.amount[0];
             chosen.value = null;
         }
+        if (e instanceof HttpError && e.errors.payer) {
+            payerError.value = e.errors.payer[0];
+            chosen.value = null;
+        }
         error.value =
-            e instanceof HttpError && e.errors.payer
-                ? e.errors.payer[0]
-                : e instanceof HttpError && e.errors.amount
-                  ? null
-                  : t('এখন শুরু করা গেল না — একটু পরে আবার চেষ্টা করুন।');
+            e instanceof HttpError && (e.errors.payer || e.errors.amount)
+                ? null
+                : t('এখন শুরু করা গেল না — একটু পরে আবার চেষ্টা করুন।');
     } finally {
         busy.value = false;
     }
@@ -397,6 +402,17 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
                     </div>
 
+                    <p
+                        v-if="sessionMethod.number && state.session.sender"
+                        class="mt-3 flex items-center gap-2 rounded-xl bg-wait-soft px-4 py-3 text-[13px] text-wait"
+                    >
+                        <KIcon name="warn" :size="15" class="shrink-0" />{{
+                            t(
+                                'ঠিক {number} থেকেই পাঠান — অন্য নম্বর থেকে পাঠালে নিজে থেকে মিলবে না।',
+                                { number: state.session.sender },
+                            )
+                        }}
+                    </p>
                     <div
                         v-if="sessionMethod.number"
                         class="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line p-4"
@@ -700,6 +716,26 @@ const STATUS_WORD: Record<string, string> = {
                         </KField>
                     </div>
 
+                    <!-- bKash, Nagad, Rocket: the number the money comes from (only that SMS can match). -->
+                    <div v-if="wallets.some((k) => k !== 'qr')" class="mt-4">
+                        <KField
+                            :label="t('কোন নম্বর থেকে পাঠাবেন?')"
+                            :hint="
+                                t(
+                                    'যে নম্বর থেকে টাকা পাঠাবেন, ঠিক সেটাই দিন — অন্য নম্বর থেকে পাঠালে নিজে থেকে মিলবে না। শুধু bKash, Nagad, Rocket-এ লাগে।',
+                                )
+                            "
+                            :error="payerError ?? undefined"
+                        >
+                            <KInput
+                                v-model="payer"
+                                type="tel"
+                                inputmode="tel"
+                                placeholder="01XXXXXXXXX"
+                            />
+                        </KField>
+                    </div>
+
                     <div v-if="keys.length" class="mt-4 grid grid-cols-2 gap-2">
                         <button
                             v-for="key in [
@@ -730,28 +766,6 @@ const STATUS_WORD: Record<string, string> = {
                             />{{ methods[key].label }}
                         </button>
                     </div>
-
-                    <details
-                        v-if="wallets.some((k) => k !== 'qr')"
-                        class="mt-3 text-[12.5px]"
-                    >
-                        <summary
-                            class="cursor-pointer text-ink-3 hover:text-ink"
-                        >
-                            {{
-                                t(
-                                    'কোন নম্বর থেকে পাঠাবেন? (ঐচ্ছিক — মেলানো নিশ্চিত হয়)',
-                                )
-                            }}
-                        </summary>
-                        <KInput
-                            v-model="payer"
-                            type="tel"
-                            inputmode="tel"
-                            class="mt-2"
-                            placeholder="01XXXXXXXXX"
-                        />
-                    </details>
 
                     <p v-if="error" class="mt-3 text-[12.5px] text-out">
                         {{ error }}

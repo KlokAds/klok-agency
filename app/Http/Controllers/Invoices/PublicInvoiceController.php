@@ -48,11 +48,13 @@ class PublicInvoiceController extends Controller
         $invoice = $this->find($token);
         $data = $request->validate([
             'method' => ['required', Rule::in(array_keys(PaySettings::methods()))],
-            'payer' => ['nullable', 'regex:/^(\+?88)?01[3-9]\d{8}$/'],
+            // bKash, Nagad, Rocket: the number the money comes from, so only that SMS can match.
+            'payer' => ['nullable', 'required_if:method,bkash,nagad,rocket', 'regex:/^(\+?88)?01[3-9]\d{8}$/'],
             // Part of it now, when the invoice allows it: from ৳10 up to what is due.
             'amount' => ['nullable', 'numeric', 'min:10', 'max:'.max(10, $invoice->due() / 100)],
         ], [
             'payer.regex' => __('১১ সংখ্যার নম্বর দিন, যেমন 01712345678।'),
+            'payer.required_if' => __('কোন নম্বর থেকে পাঠাবেন, সেটা দিন — শুধু সেই নম্বরের টাকাই নিজে থেকে মিলবে।'),
             'amount.min' => __('কমপক্ষে ৳10 দিন।'),
             'amount.max' => __('বাকির চেয়ে বেশি দেওয়া যায় না।'),
         ]);
@@ -167,6 +169,8 @@ class PublicInvoiceController extends Controller
             'session' => $session ? [
                 'method' => $session->method->value,
                 'amount' => $session->amount,
+                // The number the client said they pay from, to remind them on the pay screen.
+                'sender' => $session->sender,
                 // The amount in the URL makes a new picture whenever the amount changes.
                 'qr' => $session->method === PaymentMethod::BanglaQr && PaySettings::banglaQr() !== null
                     ? route('invoice.public.qr', [$invoice->public_token, 'a' => $session->amount]) : null,
