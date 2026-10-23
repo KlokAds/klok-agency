@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KCheck from '@/components/k/KCheck.vue';
@@ -167,7 +167,21 @@ const taka = (value: number | null) =>
 // Campaign spend for a period
 const first = new Date();
 first.setDate(1);
-const period = ref({ from: isoDate(first), to: today() });
+// Editing: the period the invoice's campaign lines already cover.
+const billedLines = (props.invoice?.items ?? []).filter(
+    (l) => l.kind === 'ad_spend' && l.campaign_id && l.period_from,
+);
+const period = ref({
+    from: billedLines.length
+        ? billedLines.map((l) => l.period_from as string).sort()[0]
+        : isoDate(first),
+    to: billedLines.length
+        ? billedLines
+              .map((l) => (l.period_to ?? l.period_from) as string)
+              .sort()
+              .reverse()[0]
+        : today(),
+});
 const spend = ref<CampaignSpend[] | null>(null);
 const picked = ref<Record<number, boolean>>({});
 const loading = ref(false);
@@ -190,8 +204,17 @@ async function loadCampaigns(): Promise<void> {
             `/invoices/campaigns?${query}`,
         );
         spend.value = result.campaigns;
+        // On an invoice being edited, the campaigns already on it stay ticked.
+        const onInvoice = new Set(
+            form.items
+                .filter((l) => l.kind === 'ad_spend' && l.campaign_id)
+                .map((l) => l.campaign_id),
+        );
         picked.value = Object.fromEntries(
-            result.campaigns.map((c) => [c.id, c.usd > 0]),
+            result.campaigns.map((c) => [
+                c.id,
+                onInvoice.size ? onInvoice.has(c.id) : c.usd > 0,
+            ]),
         );
     } catch {
         loadError.value = t('Campaign আনা গেল না।');
@@ -206,6 +229,23 @@ watch(
         spend.value = null;
     },
 );
+
+// Editing an invoice with campaign lines: show that period's campaigns,
+// and give any line whose name was lost its campaign's name back.
+onMounted(() => {
+    for (const line of form.items) {
+        if (line.kind === 'ad_spend' && line.campaign_id && !line.description) {
+            line.description =
+                (props.options.campaigns.find(
+                    (c) => c.value === line.campaign_id,
+                )?.label as string) ?? '';
+        }
+    }
+
+    if (billedLines.length) {
+        void loadCampaigns();
+    }
+});
 
 const pickedCount = computed(
     () => spend.value?.filter((c) => picked.value[c.id]).length ?? 0,

@@ -358,7 +358,8 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
 </template>
 
 <style scoped>
-/* A document: paper-white with its own ink, in either app theme and on paper. */
+/* A document with its own ink: white in the light theme and on paper,
+   the app's dark surfaces in the dark theme. */
 .inv {
     --paper: #ffffff;
     --ink: #111816;
@@ -477,7 +478,56 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
     background: rgb(180 35 24 / 6%);
 }
 
+.dark .inv {
+    --paper: #121b19;
+    --ink: #e7eeeb;
+    --muted: #8d9a96;
+    --line: #26332f;
+    --band: #16211f;
+    --brand: #2dd4bf;
+
+    box-shadow: none;
+}
+
+.dark .inv-due {
+    background: #e7eeeb;
+    color: #0c1311;
+}
+
+.dark .inv-out {
+    color: #f97066;
+}
+
+.dark .inv-in,
+.dark .inv-pill-in {
+    color: #47cd89;
+}
+
+.dark .inv-pill-wait {
+    color: #fdb022;
+}
+
+.dark .inv-pill-out {
+    color: #f97066;
+}
+
 @media print {
+    /* Paper is always white, whatever the screen theme. */
+    .dark .inv,
+    .inv {
+        --paper: #ffffff;
+        --ink: #111816;
+        --muted: #66706d;
+        --line: #e6e9e8;
+        --band: #f6f8f7;
+        --brand: #0f766e;
+    }
+
+    .dark .inv-due {
+        background: #111816;
+        color: #ffffff;
+    }
+
     .inv {
         margin: 14mm;
         border: 0;
