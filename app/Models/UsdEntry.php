@@ -41,12 +41,12 @@ class UsdEntry extends Model
 
     protected $fillable = [
         'entry_date', 'sequence', 'description', 'category', 'account_id', 'client_id', 'amount',
-        'status', 'fx_batch_id', 'settled_by_id', 'pair_key', 'notes', 'review_note', 'created_by', 'updated_by',
+        'status', 'fx_batch_id', 'settled_by_id', 'pair_key', 'notes', 'review_note', 'created_by', 'updated_by', 'allocations',
     ];
 
     protected function casts(): array
     {
-        return ['entry_date' => 'date', 'amount' => 'integer', 'sequence' => 'integer'];
+        return ['entry_date' => 'date', 'amount' => 'integer', 'sequence' => 'integer', 'allocations' => 'array'];
     }
 
     /** @return BelongsTo<Account, $this> */

@@ -7,6 +7,9 @@ use App\Models\Account;
 use App\Models\FxBatch;
 use App\Services\Books;
 use App\Services\CampaignForecast;
+use App\Services\PlatformDue;
+use App\Support\Money;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -65,6 +68,15 @@ class DollarController extends Controller
             'batches' => $batches,
             'kinds' => collect(Account::KINDS)->map(fn ($l, $v) => ['value' => $v, 'label' => $l])->values(),
         ]);
+    }
+
+    /** What a new card charge on this platform would most likely pay for. */
+    public function pending(Request $request, Account $account, PlatformDue $due): JsonResponse
+    {
+        abort_unless($account->kind === 'platform', 404);
+        $cents = Money::toMinor((string) $request->query('amount', '0'));
+
+        return response()->json(['rows' => $due->suggest($account, max(0, $cents))]);
     }
 
     public function storeAccount(Request $request): RedirectResponse

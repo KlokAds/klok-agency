@@ -350,28 +350,12 @@ class Books
     public function unbilledByClient(): array
     {
         $out = [];
+        $due = new PlatformDue($this);
 
+        // Charges pay what they say they paid for, the rest the oldest spend.
         foreach (Account::where('kind', 'platform')->get() as $account) {
-            $entries = $this->usdEntries()->where('account_id', $account->id);
-            $charged = -(int) $entries->where('category', 'card_charge')->sum('amount');
-            $due = -(int) $entries->where('category', '!=', 'card_charge')->sum('amount') - $charged;
-            $split = 0;
-
-            foreach ($entries->whereIn('category', UsdEntry::CONSUMING) as $row) {
-                $amount = -$row->amount;
-                $paid = max(0, min($charged, $amount));
-                $charged -= $paid;
-
-                if ($amount - $paid > 0) {
-                    $key = (int) ($row->client_id ?? 0);
-                    $out[$key] = ($out[$key] ?? 0) + $amount - $paid;
-                    $split += $amount - $paid;
-                }
-            }
-
-            // Adjustments and refunds on the platform belong to no client.
-            if ($due !== $split) {
-                $out[0] = ($out[0] ?? 0) + $due - $split;
+            foreach ($due->byClient($account) as $client => $cents) {
+                $out[$client] = ($out[$client] ?? 0) + $cents;
             }
         }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import CardChargeSplit from '@/components/CardChargeSplit.vue';
 import KButton from '@/components/k/KButton.vue';
 import KCheck from '@/components/k/KCheck.vue';
 import KDate from '@/components/k/KDate.vue';
@@ -136,6 +137,7 @@ const blank = () => ({
     notes: '' as string | null,
     settle_ids: [] as number[],
     run_days: '' as string | null,
+    allocations: {} as Record<string, string>,
 });
 
 const form = useForm(blank());
@@ -595,6 +597,17 @@ const directions = computed<Option[]>(() => [
                                 :invalid="!!form.errors.amount"
                             />
                         </KField>
+                        <CardChargeSplit
+                            v-model="form.allocations"
+                            :account-id="form.account_id"
+                            :amount="form.amount"
+                        />
+                        <p
+                            v-if="form.errors.allocations"
+                            class="-mt-2 text-[12.5px] text-out"
+                        >
+                            {{ form.errors.allocations }}
+                        </p>
                         <KField
                             :label="t('Card statement-এর লেখা')"
                             optional

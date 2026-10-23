@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\RenewalMail;
+use App\Models\Account;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Services\Books;
 use App\Services\CampaignBilling;
 use App\Services\CampaignLimits;
+use App\Services\PlatformDue;
 use App\Services\Renewals;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
@@ -246,4 +248,31 @@ it('puts spend not paid for yet on the renewal invoice first, so the new money c
     $client = collect(app(Books::class)->clients())->firstWhere('id', $this->gffs->id);
     expect($client['credit_left'])->toBe(1400)
         ->and(UsdEntry::where('source', 'pilot')->pluck('status')->unique()->all())->toBe(['settled']);
+});
+
+it('lets a card charge say which campaign it paid for, and pays the rest oldest first', function () {
+    $other = Campaign::create(['pilot_campaign_id' => 202, 'pilot_account_id' => $this->account->id, 'name' => 'GFFS - Leads', 'status' => 'ACTIVE', 'client_id' => $this->gffs->id, 'bill_from' => $this->day1]);
+    CampaignDay::create(['campaign_id' => $other->id, 'day' => $this->day2, 'spend' => 300, 'results' => 1, 'clicks' => 2]);
+    app(CampaignBilling::class)->rebuild([$this->gffs->id]);
+    $meta = Account::where('code', 'meta')->first();
+
+    // Before: the suggestion for a $3 charge pays the oldest spend.
+    $rows = $this->actingAs($this->owner)->getJson("/dollars/pending/{$meta->id}?amount=3")->assertOk()->json('rows');
+    $keys = collect($rows)->keyBy('key');
+    expect($keys["c:{$other->id}"]['pending'])->toBe(300)
+        ->and($keys["c:{$this->campaign->id}"]['pending'])->toBe(404);
+
+    // Meta's invoice says the $3 was for GFFS - Leads.
+    $this->actingAs($this->owner)->post('/quick/card-charge', [
+        'entry_date' => now()->toDateString(), 'account_id' => $meta->id, 'amount' => '3', 'allocations' => ["c:{$other->id}" => '3'],
+    ])->assertRedirect();
+
+    $pending = (new PlatformDue(new Books))->pending($meta);
+    expect($pending["c:{$other->id}"] ?? 0)->toBe(0)
+        ->and($pending["c:{$this->campaign->id}"])->toBe(404);
+
+    // More than the charge is refused.
+    $this->actingAs($this->owner)->post('/quick/card-charge', [
+        'entry_date' => now()->toDateString(), 'account_id' => $meta->id, 'amount' => '1', 'allocations' => ["c:{$other->id}" => '5'],
+    ])->assertSessionHasErrors('allocations');
 });

@@ -68,6 +68,8 @@ class Postings
             'amount' => -$data['amount'],
             'status' => 'na',
             'notes' => $data['notes'] ?? null,
+            // What it paid for, as the platform's invoice says (the rest pays the oldest spend).
+            'allocations' => $data['allocations'] ?? null,
         ]);
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BdtEntry;
 use App\Models\Wallet;
 use App\Services\Books;
+use App\Services\CampaignBilling;
 use App\Support\Lookups;
 use App\Support\Money;
 use App\Support\Paging;
@@ -35,6 +36,7 @@ class BdtEntryController extends Controller
                 'client' => $e->client?->name,
                 'client_id' => $e->client_id,
                 'pay_via' => $e->pay_via,
+                'usd_credit' => $e->usd_credit,
                 'wallet' => $e->wallet,
                 'head' => $e->head?->name,
                 'expense_head_id' => $e->expense_head_id,
@@ -118,7 +120,13 @@ class BdtEntryController extends Controller
             $data['review_note'] = null;
         }
 
+        $before = $bdt->client_id;
         $bdt->update($data);
+
+        // A payment's ad credit changed: its client's campaign spend is funded again.
+        foreach (array_unique(array_filter([(int) $before, (int) $bdt->client_id])) as $clientId) {
+            app(CampaignBilling::class)->fund($clientId);
+        }
         $this->toast(__('BDT entry আপডেট হয়েছে।'));
 
         return back();
@@ -166,7 +174,9 @@ class BdtEntryController extends Controller
             'wallet' => ['nullable', Rule::in(Wallet::keys())],
             'amount' => ['required', Money::RULE],
             'notes' => ['nullable', 'string', 'max:2000'],
-        ], [], ['amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'client_id' => 'client']);
+            // An advance: the USD of ads this payment buys, spent by the client's campaigns.
+            'usd_credit' => ['nullable', Money::RULE],
+        ], [], ['amount' => __('পরিমাণ'), 'entry_date' => __('তারিখ'), 'client_id' => 'client', 'usd_credit' => 'USD credit']);
 
         $amount = Money::toMinor($data['amount']);
 
@@ -183,6 +193,10 @@ class BdtEntryController extends Controller
         if (! in_array($data['category'], ['client_payment', 'service_income'], true)) {
             $data['pay_via'] = null;
         }
+
+        $data['usd_credit'] = $data['category'] === 'client_payment' && filled($data['usd_credit'] ?? null)
+            ? (Money::toMinor($data['usd_credit']) ?: null)
+            : null;
 
         return $data;
     }

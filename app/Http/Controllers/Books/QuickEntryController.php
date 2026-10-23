@@ -64,7 +64,9 @@ class QuickEntryController extends Controller
             'card-charge' => $this->run($request, $base + [
                 'account_id' => ['required', 'exists:accounts,id'],
                 'amount' => ['required', Money::RULE],
-            ], fn ($d) => $postings->cardCharge($d), __('Card charge লেখা হয়েছে।')),
+                'allocations' => ['nullable', 'array', 'max:100'],
+                'allocations.*' => ['nullable', Money::RULE],
+            ], fn ($d) => $postings->cardCharge([...$d, 'allocations' => $this->allocations($d)]), __('Card charge লেখা হয়েছে।')),
 
             'transfer' => $this->run($request, $base + [
                 'from_id' => ['required', 'exists:accounts,id'],
@@ -144,6 +146,34 @@ class QuickEntryController extends Controller
 
             $agency->plan($run);
         });
+    }
+
+    /**
+     * What a card charge says it paid for: key => cents, never more than the charge.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, int>|null
+     */
+    private function allocations(array $data): ?array
+    {
+        $out = [];
+
+        foreach ((array) ($data['allocations'] ?? []) as $key => $amount) {
+            if (! preg_match('/^(c:\d+|l:\d+|o)$/', (string) $key)) {
+                throw ValidationException::withMessages(['allocations' => __('ভাগ বোঝা গেল না — আবার চেষ্টা করুন।')]);
+            }
+
+            $cents = blank($amount) ? 0 : Money::toMinor((string) $amount);
+            if ($cents > 0) {
+                $out[(string) $key] = $cents;
+            }
+        }
+
+        if (array_sum($out) > (int) $data['amount']) {
+            throw ValidationException::withMessages(['allocations' => __('ভাগগুলোর যোগফল charge-এর চেয়ে বেশি।')]);
+        }
+
+        return $out ?: null;
     }
 
     /** @param  array<string, mixed>  $rules */

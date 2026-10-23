@@ -33,6 +33,7 @@ type Row = {
     client: string | null;
     client_id: number | null;
     pay_via: string | null;
+    usd_credit: number | null;
     wallet: string | null;
     head: string | null;
     expense_head_id: number | null;
@@ -107,6 +108,7 @@ const form = useForm({
     wallet: null as string | null,
     expense_head_id: null as number | null,
     amount: '' as string | null,
+    usd_credit: '' as string | null,
     notes: '' as string | null,
     clear_review: false,
 });
@@ -122,6 +124,7 @@ function startNew(): void {
         wallet: null,
         expense_head_id: null,
         amount: '',
+        usd_credit: '',
         notes: '',
         clear_review: false,
     });
@@ -142,6 +145,7 @@ function startEdit(row: Row): void {
         wallet: row.wallet,
         expense_head_id: row.expense_head_id,
         amount: toInput(row.amount),
+        usd_credit: toInput(row.usd_credit),
         notes: row.notes ?? '',
         clear_review: false,
     });
@@ -514,6 +518,19 @@ const needsClient = computed(() =>
                 :error="form.errors.pay_via"
             >
                 <KSegment v-model="form.pay_via" :options="payVia" />
+            </KField>
+            <KField
+                v-if="form.category === 'client_payment'"
+                :label="t('এই টাকায় কত dollar-এর ad (আগাম)')"
+                optional
+                :error="form.errors.usd_credit"
+                :hint="
+                    t(
+                        'দিলে এটা client-এর আগাম টাকা: campaign যত খরচ করবে তত কাটা যাবে, বাকিটা credit থাকবে। খালি রাখলে টাকা পাওয়ার দিনেই আয়।',
+                    )
+                "
+            >
+                <KMoney v-model="form.usd_credit" currency="usd" />
             </KField>
             <KField
                 :label="t('কোন জায়গায়')"

@@ -93,6 +93,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('search', SearchController::class)->middleware('throttle:60,1')->name('search');
     Route::get('dollars', [DollarController::class, 'index'])->middleware('can:usd.view')->name('dollars.index');
+    Route::get('dollars/pending/{account}', [DollarController::class, 'pending'])->middleware(['can:usd.create', 'throttle:60,1'])->name('dollars.pending');
     Route::post('dollars/accounts', [DollarController::class, 'storeAccount'])->middleware('can:usd.edit')->name('dollars.accounts.store');
     Route::put('dollars/accounts/{account}', [DollarController::class, 'updateAccount'])->middleware('can:usd.edit')->name('dollars.accounts.update');
     Route::get('payments', [MoneyInOutController::class, 'payments'])->middleware('can:bdt.view')->name('payments.index');

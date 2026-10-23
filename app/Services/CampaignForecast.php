@@ -7,7 +7,6 @@ use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
-use App\Models\UsdEntry;
 use Carbon\CarbonImmutable;
 
 /**
@@ -16,9 +15,8 @@ use Carbon\CarbonImmutable;
  * spend to its end date at its daily budget, and — per client — whether
  * the money they paid covers that or how much is still due.
  *
- * Card charges are not per campaign, so they pay the oldest spend first
- * (as on the platform table); a day's unpaid spend of a client is shared
- * between their campaigns by what each spent that day.
+ * What each campaign still owes the platform comes from PlatformDue: a
+ * card charge pays what it says it paid for, the rest the oldest spend.
  */
 class CampaignForecast
 {
@@ -35,40 +33,17 @@ class CampaignForecast
             return ['clients' => [], 'pending' => 0, 'other' => 0, 'rate' => null];
         }
 
-        $unpaid = $this->unpaidRows($account);
+        // Card charges pay what they say they paid for, the rest the oldest spend.
         $byCampaign = [];
         $byClientLoose = [];
         $other = 0;
-        $rows = UsdEntry::whereIn('id', array_keys($unpaid))->get(['id', 'client_id', 'source', 'entry_date']);
 
-        foreach ($rows as $row) {
-            $left = $unpaid[$row->id];
-
-            if ($row->client_id === null) {
-                $other += $left;
-
-                continue;
-            }
-
-            $days = $row->source === 'pilot'
-                ? CampaignDay::whereDate('day', $row->entry_date->toDateString())
-                    ->whereIn('campaign_id', Campaign::where('client_id', $row->client_id)->pluck('id'))
-                    ->where('spend', '>', 0)->get(['campaign_id', 'spend'])
-                : collect();
-            $total = (int) $days->sum('spend');
-
-            if ($total <= 0) {
-                $byClientLoose[$row->client_id] = ($byClientLoose[$row->client_id] ?? 0) + $left;
-
-                continue;
-            }
-
-            $given = 0;
-            foreach ($days->values() as $i => $day) {
-                $share = $i === $days->count() - 1 ? $left - $given : (int) round($left * $day->spend / $total);
-                $given += $share;
-                $byCampaign[$day->campaign_id] = ($byCampaign[$day->campaign_id] ?? 0) + $share;
-            }
+        foreach ((new PlatformDue($this->books))->pending($account) as $key => $cents) {
+            match (true) {
+                str_starts_with($key, 'c:') => $byCampaign[(int) substr($key, 2)] = $cents,
+                str_starts_with($key, 'l:') => $byClientLoose[(int) substr($key, 2)] = $cents,
+                default => $other += $cents,
+            };
         }
 
         $figures = collect($this->books->clients())->keyBy('id');
@@ -151,41 +126,9 @@ class CampaignForecast
 
         usort($out, fn ($a, $b) => $a['balance'] <=> $b['balance'] ?: $b['pending'] <=> $a['pending']);
 
-        // The total is the platform's own due (as on the platform table);
-        // whatever no client's campaign explains is shown as the rest.
-        $due = (int) array_sum($unpaid);
-        foreach ($this->books->summary()['platforms'] as $platform) {
-            if ($platform['id'] === $account->id) {
-                $due = (int) $platform['due'];
-            }
-        }
         $explained = (int) array_sum(array_column($out, 'pending'));
+        $due = $explained + $other;
 
-        return ['clients' => $out, 'pending' => $due, 'other' => $due - $explained, 'rate' => $rate];
-    }
-
-    /**
-     * Rows of the platform's spend the card has not paid yet, oldest paid
-     * first (like Books::unbilledByClient).
-     *
-     * @return array<int, int> usd entry id => cents unpaid
-     */
-    private function unpaidRows(Account $account): array
-    {
-        $entries = $this->books->usdEntries()->where('account_id', $account->id);
-        $charged = -(int) $entries->where('category', 'card_charge')->sum('amount');
-        $out = [];
-
-        foreach ($entries->whereIn('category', UsdEntry::CONSUMING) as $row) {
-            $amount = -$row->amount;
-            $paid = max(0, min($charged, $amount));
-            $charged -= $paid;
-
-            if ($amount - $paid > 0) {
-                $out[$row->id] = $amount - $paid;
-            }
-        }
-
-        return $out;
+        return ['clients' => $out, 'pending' => $due, 'other' => $other, 'rate' => $rate];
     }
 }
