@@ -226,7 +226,10 @@ const wallets = [
                 class="border-t border-line pt-5 first:border-0 first:pt-0"
             >
                 <KSwitch v-model="flags[`pay_${w.key}_on`]" :label="w.label" />
-                <div v-if="flags[`pay_${w.key}_on`]" class="mt-4 grid gap-3">
+                <div
+                    v-if="flags[`pay_${w.key}_on`]"
+                    class="mt-4 grid grid-cols-1 gap-3"
+                >
                     <KField
                         :label="t('নম্বর')"
                         :error="err(`pay_${w.key}_number`)"

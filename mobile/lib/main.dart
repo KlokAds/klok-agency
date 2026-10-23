@@ -581,6 +581,27 @@ class _SitePageState extends State<SitePage> {
   String? handedOver;
   double progress = 0;
   bool failed = false;
+  // The page's own background: the phone's bars above and below take it (dark page, dark bars).
+  Color pageColor = paper;
+
+  void setBars(List<dynamic> args) {
+    final dark = args.isNotEmpty && args[0] == 'dark';
+    var color = dark ? rail : paper;
+    final match = RegExp(r'rgba?\((\d+),\s*(\d+),\s*(\d+)').firstMatch(args.length > 1 ? '${args[1]}' : '');
+    if (match != null) {
+      color = Color.fromARGB(255, int.parse(match[1]!), int.parse(match[2]!), int.parse(match[3]!));
+    }
+    final icons = dark ? Brightness.light : Brightness.dark;
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: color,
+      statusBarIconBrightness: icons,
+      systemNavigationBarColor: color,
+      systemNavigationBarIconBrightness: icons,
+    ));
+    if (mounted && color != pageColor) {
+      setState(() => pageColor = color);
+    }
+  }
   DateTime? checkedUpdate;
 
   @override
@@ -805,7 +826,7 @@ class _SitePageState extends State<SitePage> {
         }
       },
       child: Scaffold(
-        backgroundColor: paper,
+        backgroundColor: pageColor,
         body: SafeArea(
           child: Stack(
             children: [
@@ -827,6 +848,7 @@ class _SitePageState extends State<SitePage> {
                 onWebViewCreated: (controller) {
                   web = controller;
                   controller.addJavaScriptHandler(handlerName: 'appSettings', callback: (_) => openSettings());
+                  controller.addJavaScriptHandler(handlerName: 'theme', callback: setBars);
                   controller.addJavaScriptHandler(handlerName: 'signingOut', callback: (_) async {
                     await signingOut();
                     return true;

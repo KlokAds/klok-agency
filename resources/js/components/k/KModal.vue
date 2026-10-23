@@ -112,7 +112,7 @@ void props;
         <div
             v-if="open"
             :style="{ zIndex: layer }"
-            class="fixed inset-0 flex items-end justify-center sm:items-start sm:p-6 sm:pt-[8vh]"
+            class="fixed inset-0 flex items-center justify-center p-3 sm:items-start sm:p-6 sm:pt-[8vh]"
         >
             <div
                 class="k-fade absolute inset-0 bg-[rgb(10_20_18/0.45)] backdrop-blur-[2px]"
@@ -123,7 +123,7 @@ void props;
                 role="dialog"
                 aria-modal="true"
                 :aria-label="title"
-                class="k-rise relative flex max-h-[92vh] w-full min-w-0 flex-col rounded-t-[18px] border border-line bg-surface shadow-pop sm:rounded-[16px]"
+                class="k-rise relative flex max-h-[calc(100dvh-24px)] w-full min-w-0 flex-col rounded-[16px] border border-line bg-surface shadow-pop sm:max-h-[88vh]"
                 :class="widths[width]"
             >
                 <header

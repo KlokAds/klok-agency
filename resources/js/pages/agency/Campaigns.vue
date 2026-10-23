@@ -438,7 +438,7 @@ function sync(): void {
     </template>
 
     <KModal v-model="linkOpen" :title="editing?.name ?? 'Campaign'">
-        <div class="grid gap-4">
+        <div class="grid grid-cols-1 gap-4">
             <KField label="Client">
                 <KSelect
                     v-model="linkClient"

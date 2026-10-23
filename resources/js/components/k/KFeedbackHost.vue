@@ -30,14 +30,15 @@ function answer(ok: boolean): void {
 
 <template>
     <Teleport to="body">
+        <!-- Just under the top bar, on the right on a computer and across on a phone. -->
         <div
-            class="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6"
+            class="pointer-events-none fixed inset-x-0 top-[68px] z-[90] flex flex-col items-center gap-2 px-3 pt-1 sm:items-end sm:px-6 lg:top-[80px] lg:px-8"
             aria-live="polite"
         >
             <div
                 v-for="item in feedback.toasts"
                 :key="item.id"
-                class="k-rise pointer-events-auto flex w-full max-w-[380px] items-stretch overflow-hidden rounded-xl border border-line bg-surface shadow-pop"
+                class="k-drop pointer-events-auto flex w-full max-w-[380px] items-stretch overflow-hidden rounded-xl border border-line bg-surface shadow-pop"
             >
                 <span class="w-1 shrink-0" :class="tone[item.type]" />
                 <p

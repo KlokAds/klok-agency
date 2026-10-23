@@ -536,7 +536,7 @@ const errorAt = (index: number, field: string) =>
                     <li
                         v-for="(line, index) in form.items"
                         :key="index"
-                        class="grid gap-3 p-4 sm:p-5"
+                        class="grid grid-cols-1 gap-3 p-4 sm:p-5"
                     >
                         <div class="flex items-center justify-between gap-2">
                             <span class="eyebrow">{{
@@ -585,7 +585,7 @@ const errorAt = (index: number, field: string) =>
                         </p>
                         <div
                             v-if="line.kind === 'ad_budget'"
-                            class="grid gap-1.5"
+                            class="grid grid-cols-1 gap-1.5"
                         >
                             <KField
                                 :label="t('কোন campaign-এর দিন বাড়বে')"

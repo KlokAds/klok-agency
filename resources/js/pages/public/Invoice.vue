@@ -487,7 +487,7 @@ const STATUS_WORD: Record<string, string> = {
                             }}
                         </summary>
                         <form
-                            class="mt-3 grid gap-3"
+                            class="mt-3 grid grid-cols-1 gap-3"
                             @submit.prevent="sendClaim"
                         >
                             <KField
@@ -624,7 +624,7 @@ const STATUS_WORD: Record<string, string> = {
                             }}
                         </p>
                         <dl
-                            class="mt-3 grid gap-2 rounded-xl border border-line p-4 text-[13px]"
+                            class="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-line p-4 text-[13px]"
                         >
                             <div
                                 v-for="[label, value] in [
@@ -654,7 +654,7 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
 
                         <form
-                            class="mt-4 grid gap-3"
+                            class="mt-4 grid grid-cols-1 gap-3"
                             @submit.prevent="sendClaim"
                         >
                             <p class="text-[13px] font-semibold">

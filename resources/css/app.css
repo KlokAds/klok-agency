@@ -445,6 +445,22 @@
     animation: k-fade 0.14s ease-out;
 }
 
+/* Toasts slide down from under the top bar. */
+@keyframes k-drop {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.k-drop {
+    animation: k-drop 0.2s ease-out;
+}
+
 /* No browser date / URL lines on a printed page: the document brings its own margin. */
 @page {
     size: A4;

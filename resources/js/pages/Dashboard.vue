@@ -256,7 +256,9 @@ const greeting =
         <h2 class="dash-title px-5 pt-5 sm:px-6">
             {{ t('সর্বশেষ entry') }}
         </h2>
-        <ul class="mt-2 grid px-5 pb-2 sm:px-6 lg:grid-cols-2 lg:gap-x-10">
+        <ul
+            class="mt-2 grid grid-cols-1 px-5 pb-2 sm:px-6 lg:grid-cols-2 lg:gap-x-10"
+        >
             <li
                 v-for="r in recent"
                 :key="r.book + r.id"

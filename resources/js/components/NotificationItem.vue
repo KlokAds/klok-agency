@@ -96,7 +96,7 @@ const tone = computed(() =>
             <!-- The end-of-day note, in full on the notifications page -->
             <div
                 v-if="full && item.summary"
-                class="mt-3 grid gap-3 rounded-xl border border-line p-3 text-[12.5px]"
+                class="mt-3 grid grid-cols-1 gap-3 rounded-xl border border-line p-3 text-[12.5px]"
             >
                 <p class="flex flex-wrap gap-x-4 gap-y-1 text-ink-2">
                     <span

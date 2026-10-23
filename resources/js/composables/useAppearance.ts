@@ -28,6 +28,40 @@ export function updateTheme(value: Appearance): void {
     } else {
         document.documentElement.classList.toggle('dark', value === 'dark');
     }
+
+    tellApp();
+}
+
+/**
+ * Inside the Android app: the phone's status and navigation bars take the
+ * page's own background, so a dark page has dark bars. The bridge may come
+ * a moment after the page, so it is told again once it is ready.
+ */
+function tellApp(): void {
+    const send = () => {
+        const bridge = (
+            window as unknown as {
+                flutter_inappwebview?: {
+                    callHandler: (name: string, ...args: unknown[]) => unknown;
+                };
+            }
+        ).flutter_inappwebview;
+        const dark = document.documentElement.classList.contains('dark');
+
+        void bridge?.callHandler(
+            'theme',
+            dark ? 'dark' : 'light',
+            getComputedStyle(document.body ?? document.documentElement)
+                .backgroundColor,
+        );
+    };
+
+    if (/KlokFinanceApp/.test(navigator.userAgent)) {
+        send();
+        window.addEventListener('flutterInAppWebViewPlatformReady', send, {
+            once: true,
+        });
+    }
 }
 
 const setCookie = (name: string, value: string, days = 365) => {

@@ -208,7 +208,7 @@ const willEnd = computed(() => {
         </div>
 
         <aside class="panel h-fit p-5 text-[13px]">
-            <dl class="grid gap-3">
+            <dl class="grid grid-cols-1 gap-3">
                 <div class="flex justify-between gap-3">
                     <dt class="text-ink-3">{{ t('এখন শেষ') }}</dt>
                     <dd class="num">

@@ -278,7 +278,7 @@ const PAY_STATUS: Record<
                 >
                     <KIcon name="warn" :size="17" />{{ t('যাচাই করুন') }}
                 </h2>
-                <ul class="mt-3 grid gap-3">
+                <ul class="mt-3 grid grid-cols-1 gap-3">
                     <li
                         v-for="c in claims"
                         :key="c.id"
