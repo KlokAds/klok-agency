@@ -406,7 +406,11 @@ const directions = computed<Option[]>(() => [
             </div>
 
             <!-- The form for it -->
-            <form class="flex min-w-0 flex-col gap-4" @submit.prevent="submit">
+            <form
+                id="quick-entry-form"
+                class="flex min-w-0 flex-col gap-4"
+                @submit.prevent="submit"
+            >
                 <div
                     class="hidden rounded-xl border border-dashed border-line-2 bg-surface-2 px-4 py-3 text-[13px] text-ink-2 md:block"
                 >
@@ -878,22 +882,22 @@ const directions = computed<Option[]>(() => [
                         :placeholder="t('দরকারি কিছু থাকলে লিখুন')"
                     />
                 </KField>
-
-                <div
-                    class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4"
-                >
-                    <KButton variant="quiet" @click="open = false">{{
-                        t('বাতিল')
-                    }}</KButton>
-                    <KButton
-                        type="submit"
-                        variant="primary"
-                        icon="check"
-                        :loading="form.processing"
-                        >{{ t('খাতায় তুলুন') }}</KButton
-                    >
-                </div>
             </form>
         </div>
+
+        <!-- In the modal's own footer: stays in place while the form scrolls. -->
+        <template #footer>
+            <KButton variant="quiet" @click="open = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                type="submit"
+                form="quick-entry-form"
+                variant="primary"
+                icon="check"
+                :loading="form.processing"
+                >{{ t('খাতায় তুলুন') }}</KButton
+            >
+        </template>
     </KModal>
 </template>

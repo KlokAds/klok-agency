@@ -259,12 +259,9 @@ const clients = computed(() => {
             )
         "
     >
-        <KButton icon="print" class="max-sm:hidden" @click="printPage"
-            >Print / PDF</KButton
-        >
+        <KButton icon="print" @click="printPage">Print / PDF</KButton>
         <KButton
             v-if="can['reports.export']"
-            class="max-sm:hidden"
             :href="exportUrl"
             external
             icon="down"
@@ -274,19 +271,7 @@ const clients = computed(() => {
 
     <section class="no-print mb-6 flex flex-wrap items-center gap-3">
         <KSegment v-model="preset" :options="presets" size="sm" />
-        <div class="flex w-full gap-2 sm:hidden">
-            <KButton size="sm" icon="print" @click="printPage"
-                >Print / PDF</KButton
-            >
-            <KButton
-                size="sm"
-                v-if="can['reports.export']"
-                :href="exportUrl"
-                external
-                icon="down"
-                >CSV / Excel</KButton
-            >
-        </div>
+        <!-- The dates sit right under "নিজে বাছুন" (on a phone the row breaks after it). -->
         <div v-if="preset === 'custom'" class="flex items-center gap-2">
             <KDate
                 v-model="from"
