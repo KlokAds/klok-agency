@@ -15,6 +15,7 @@ use App\Http\Controllers\Agency\PilotAccountController;
 use App\Http\Controllers\Agency\RenewalController;
 use App\Http\Controllers\Agency\TaskController;
 use App\Http\Controllers\Agency\TickController;
+use App\Http\Controllers\AppCrashController;
 use App\Http\Controllers\AppDeviceController;
 use App\Http\Controllers\AppReleaseController;
 use App\Http\Controllers\Books\BdtEntryController;
@@ -51,6 +52,7 @@ Route::get('agency/tick/{token}', TickController::class)->middleware('throttle:3
 Route::post('hooks/sms/{token}', SmsHookController::class)->middleware('throttle:120,1')->name('hooks.sms');
 Route::get('app/get', [AppReleaseController::class, 'get'])->middleware('throttle:10,1')->name('app.get');
 Route::get('app/download', [AppReleaseController::class, 'download'])->middleware(['signed', 'throttle:10,1'])->name('app.download');
+Route::post('hooks/app-crash', AppCrashController::class)->middleware('throttle:20,1')->name('hooks.app-crash');
 Route::post('hooks/app-forget', [AppDeviceController::class, 'forget'])->middleware('throttle:10,1')->name('app.device.forget');
 Route::post('hooks/app-release/{token}', [AppReleaseController::class, 'upload'])->middleware('throttle:10,1')->name('hooks.app-release');
 

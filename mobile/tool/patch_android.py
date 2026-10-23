@@ -33,6 +33,11 @@ patch(app, r'(\n(\s*)buildTypes \{)', r'''
     }
 \1''')
 patch(app, r'signingConfig = signingConfigs\.getByName\("debug"\)', 'signingConfig = signingConfigs.getByName("release")')
+# No code shrinking: R8 strips classes some plugins find by reflection (the notification
+# plugin among them), and the app then closes as it opens. A few MB more is worth it.
+patch(app, r'(signingConfig = signingConfigs\.getByName\("release"\))', r'''\1
+            isMinifyEnabled = false
+            isShrinkResources = false''')
 Path(app).write_text(Path(app).read_text(encoding='utf8') + '''
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
@@ -64,6 +69,8 @@ patch(manifest, r'(\n(\s*)<activity)', r'''
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/finance_teal" />\1''')
 patch(manifest, r'android:label="[^"]*"', 'android:label="Klok Finance"')
+# Our Application: reports a crash to the server (see android-src/CrashReporter.kt).
+patch(manifest, r'android:name="\$\{applicationName\}"', 'android:name=".FinanceApplication"')
 # Other apps (browser, phone, WhatsApp) for outside links.
 patch(manifest, r'(<queries>)', r'''\1
         <intent>

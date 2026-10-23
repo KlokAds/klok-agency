@@ -137,3 +137,9 @@ test('GitHub hands over a new APK and the app finds it', function () {
     $this->get('/login')->assertInertia(fn ($page) => $page->where('app', '1.0.2'));
     $this->get(route('app.get'))->assertRedirect();
 });
+
+test('the app reports its own crash without being signed in', function () {
+    $this->postJson(route('hooks.app-crash'), ['where' => 'native', 'error' => 'java.lang.RuntimeException: boom', 'version' => '1.0.1', 'device' => 'Xiaomi · Android 15'])
+        ->assertOk();
+    $this->postJson(route('hooks.app-crash'), [])->assertUnprocessable();
+});

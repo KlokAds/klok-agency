@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -89,23 +90,62 @@ Future<void> showAlert(RemoteMessage message) async {
   );
 }
 
+String appVersion = '?';
+
+/// Sends an error to the server's crash log (the app cannot be signed in when it fails).
+Future<void> report(String where, Object error, StackTrace? stack) async {
+  try {
+    await http
+        .post(
+          Uri.parse('$site/hooks/app-crash'),
+          headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+          body: jsonEncode({'where': where, 'error': '$error\n$stack'.substring(0, min(18000, '$error\n$stack'.length)), 'version': appVersion}),
+        )
+        .timeout(const Duration(seconds: 8));
+  } catch (_) {}
+}
+
+/// One start-up step; when it fails the app still opens (the site works without it).
+Future<void> step(String name, Future<void> Function() run) async {
+  try {
+    await run();
+  } catch (error, stack) {
+    unawaited(report('start:$name', error, stack));
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    report('flutter', details.exception, details.stack);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    report('dart', error, stack);
+    return true;
+  };
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(statusBarColor: rail, statusBarIconBrightness: Brightness.light));
-  await Firebase.initializeApp();
-  await setUpNotifications();
-  appBuild = int.tryParse((await PackageInfo.fromPlatform()).buildNumber) ?? 0;
 
-  // Tapped while the app was closed: open that page once it starts.
-  final first = await FirebaseMessaging.instance.getInitialMessage();
-  openFirst = first?.data['url'];
-  final launch = await notifications.getNotificationAppLaunchDetails();
-  if (launch?.didNotificationLaunchApp == true) {
-    openFirst ??= launch!.notificationResponse?.payload;
-  }
-
-  FirebaseMessaging.onMessageOpenedApp.listen((message) => go(message.data['url']));
-  FirebaseMessaging.onMessage.listen(showAlert);
+  await step('version', () async {
+    final info = await PackageInfo.fromPlatform();
+    appBuild = int.tryParse(info.buildNumber) ?? 0;
+    appVersion = '${info.version}+${info.buildNumber}';
+  });
+  await step('firebase', () async {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onMessageOpenedApp.listen((message) => go(message.data['url']));
+    FirebaseMessaging.onMessage.listen(showAlert);
+    // Tapped while the app was closed: open that page once it starts.
+    final first = await FirebaseMessaging.instance.getInitialMessage();
+    openFirst = first?.data['url'];
+  });
+  await step('notifications', () async {
+    await setUpNotifications();
+    final launch = await notifications.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp == true) {
+      openFirst ??= launch!.notificationResponse?.payload;
+    }
+  });
 
   // Payment SMS that waited for internet go now.
   unawaited(smsChannel.invokeMethod('flush').catchError((_) => null));
@@ -256,6 +296,8 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
       if (mode == 'bio' || (mode == 'pin' && await Lock.pinWithFinger())) {
         ok = await Lock.finger('Klok Finance খুলতে আঙুলের ছাপ দিন');
       }
+    } catch (error, stack) {
+      unawaited(report('lock', error, stack));
     } finally {
       asking = false;
     }
@@ -553,15 +595,17 @@ class _SitePageState extends State<SitePage> {
   }
 
   Future<void> askPermissions() async {
-    await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
-    await Permission.notification.request();
-    token = await FirebaseMessaging.instance.getToken();
-    FirebaseMessaging.instance.onTokenRefresh.listen((fresh) {
-      token = fresh;
-      handedOver = null;
-      handOver();
+    await step('permission', () async {
+      await Permission.notification.request();
+      await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
+      token = await FirebaseMessaging.instance.getToken();
+      FirebaseMessaging.instance.onTokenRefresh.listen((fresh) {
+        token = fresh;
+        handedOver = null;
+        handOver();
+      });
     });
-    handOver();
+    await handOver();
   }
 
   void open(String url) {
