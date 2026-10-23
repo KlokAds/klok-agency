@@ -27,7 +27,7 @@ class SmsParser
 
     public function providerFor(string $sender): ?string
     {
-        $normalised = strtolower(preg_replace('/\s+/', '', $sender) ?? '');
+        $normalised = PaySettings::sender($sender);
 
         if ($normalised === '') {
             return null;
@@ -91,8 +91,9 @@ class SmsParser
         $number = '([\d,]+(?:\.\d{1,2})?)';
         $patterns = [
             "/Amount:\\s*(?:Tk|BDT)\\.?\\s*{$number}/i",
-            "/received(?:\\s+payment)?\\s+Tk\\.?\\s*{$number}/i",
-            "/Tk\\.?\\s*{$number}\\s+received/i",
+            "/received(?:\\s+payment)?\\s+(?:Tk|BDT)\\.?\\s*{$number}/i",
+            // "BDT 1,015.00 Received" (Islami Bank CellFin), "Tk 500 received".
+            "/(?:Tk|BDT)\\.?\\s*{$number}\\s+received/i",
             "/Cash In\\s+Tk\\.?\\s*{$number}/i",
             "/credited\\s+(?:with|by|for)\\s+(?:Tk|BDT)\\.?\\s*{$number}/i",
             "/(?:Tk|BDT)\\.?\\s*{$number}\\s+(?:has been\\s+|is\\s+)?(?:credited|deposited)/i",

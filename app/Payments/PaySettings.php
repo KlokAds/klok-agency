@@ -99,6 +99,44 @@ class PaySettings
     {
         $list = preg_split('/[,\n]+/', strtolower(self::text('pay_bank_sms_senders'))) ?: [];
 
-        return array_values(array_filter(array_map(fn (string $s) => preg_replace('/\s+/', '', $s) ?? '', $list)));
+        return array_values(array_unique(array_filter(array_map(fn (string $s) => self::sender($s), $list))));
+    }
+
+    /**
+     * One way of writing a sender: no spaces, lower case, and a phone number
+     * as 01XXXXXXXXX whether it came as +8801…, 8801… or 01844-242613 (some
+     * banks, Islami Bank among them, send their alerts from an ordinary number).
+     */
+    public static function sender(string $sender): string
+    {
+        $plain = strtolower(preg_replace('/\s+/', '', $sender) ?? '');
+
+        if (preg_match('/^\+?[\d-]{5,}$/', $plain)) {
+            $digits = preg_replace('/\D/', '', $plain) ?? '';
+
+            return str_starts_with($digits, '880') ? substr($digits, 2) : $digits;
+        }
+
+        return $plain;
+    }
+
+    /**
+     * The same senders in every form a phone may show them, for the phone
+     * app's own filter (it compares them as they come: +8801…, 01…).
+     *
+     * @return list<string>
+     */
+    public static function senderForms(): array
+    {
+        $forms = [];
+        foreach ([...array_merge(...array_values(SmsParser::SENDERS)), ...self::bankSenders()] as $sender) {
+            $forms[] = $sender;
+            if (preg_match('/^0\d{10}$/', $sender)) {
+                $forms[] = '+88'.$sender;
+                $forms[] = '88'.$sender;
+            }
+        }
+
+        return array_values(array_unique($forms));
     }
 }

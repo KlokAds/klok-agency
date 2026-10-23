@@ -221,6 +221,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('payment', [PaymentSettingsController::class, 'index'])->middleware('can:settings.view')->name('payment.index');
         Route::post('payment', [PaymentSettingsController::class, 'update'])->middleware('can:settings.edit')->name('payment.update');
         Route::delete('payment/image/{kind}', [PaymentSettingsController::class, 'removeImage'])->middleware('can:settings.edit')->name('payment.image.destroy');
+        Route::post('payment/sms-test', [PaymentSettingsController::class, 'smsTest'])->middleware(['can:settings.view', 'throttle:30,1'])->name('payment.sms-test');
         Route::post('payment/token', [PaymentSettingsController::class, 'token'])->middleware('can:settings.edit')->name('payment.token');
         Route::post('payment/disconnect', [PaymentSettingsController::class, 'disconnect'])->middleware('can:settings.edit')->name('payment.disconnect');
         Route::get('agency', [AgencySettingsController::class, 'index'])->middleware('can:settings.view')->name('agency.index');

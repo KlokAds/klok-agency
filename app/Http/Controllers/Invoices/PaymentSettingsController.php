@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\PaymentSms;
 use App\Models\Setting;
 use App\Payments\PaySettings;
+use App\Payments\SmsParser;
+use App\Support\Money;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -132,6 +135,31 @@ class PaymentSettingsController extends Controller
         $this->toast(__('ছবি সরানো হয়েছে।'));
 
         return back();
+    }
+
+    /**
+     * What the system would read from one SMS, without keeping it: is the
+     * sender trusted, is it money coming in, how much, which reference.
+     */
+    public function smsTest(Request $request, SmsParser $parser): JsonResponse
+    {
+        $data = $request->validate([
+            'from' => ['required', 'string', 'max:60'],
+            'text' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $provider = $parser->providerFor($data['from']);
+        $parsed = $parser->parse($data['from'], $data['text']);
+
+        return response()->json([
+            'trusted' => $provider !== null,
+            'provider' => $provider,
+            'incoming' => $parsed !== null,
+            'amount' => $parsed ? Money::bdt($parsed['amount']) : null,
+            'trx_id' => $parsed['trx_id'] ?? null,
+            'made_up_id' => $parsed !== null && str_starts_with($parsed['trx_id'], 'SMS'),
+            'payer' => $parsed['payer_number'] ?? null,
+        ]);
     }
 
     /** A fresh forwarder URL; the old one stops working at once. */

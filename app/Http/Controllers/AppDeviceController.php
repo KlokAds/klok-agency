@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\AppDevice;
 use App\Models\Setting;
 use App\Payments\PaySettings;
-use App\Payments\SmsParser;
 use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,7 +74,7 @@ class AppDeviceController extends Controller
         // The phone forwards only these senders; everyone else's SMS never leave it.
         return response()->json([
             'url' => route('hooks.sms', $secret),
-            'senders' => array_values(array_unique([...array_merge(...array_values(SmsParser::SENDERS)), ...PaySettings::bankSenders()])),
+            'senders' => PaySettings::senderForms(),
         ]);
     }
 }

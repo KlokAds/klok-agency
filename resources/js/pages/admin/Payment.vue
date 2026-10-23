@@ -12,6 +12,7 @@ import KSwitch from '@/components/k/KSwitch.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { confirmAction, toast } from '@/lib/feedback';
+import { postJson } from '@/lib/http';
 import { ago } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Option } from '@/types';
@@ -112,6 +113,33 @@ async function disconnect(): Promise<void> {
         })
     ) {
         router.post('/admin/payment/disconnect', {}, { preserveScroll: true });
+    }
+}
+
+// Try one SMS: what the system would read from it (nothing is kept).
+const smsTest = reactive({ from: '', text: '' });
+type SmsResult = {
+    trusted: boolean;
+    provider: string | null;
+    incoming: boolean;
+    amount: string | null;
+    trx_id: string | null;
+    made_up_id: boolean;
+    payer: string | null;
+};
+const smsResult = ref<SmsResult | null>(null);
+const smsTesting = ref(false);
+
+async function testSms(): Promise<void> {
+    smsTesting.value = true;
+    try {
+        smsResult.value = await postJson<SmsResult>('/admin/payment/sms-test', {
+            ...smsTest,
+        });
+    } catch {
+        toast(t('পরীক্ষা হলো না — sender আর SMS দুটোই দিন।'), 'error');
+    } finally {
+        smsTesting.value = false;
     }
 }
 
@@ -335,12 +363,95 @@ const wallets = [
                     optional
                     :hint="
                         t(
-                            'যেমন DBBL, BRAC BANK — কমা দিয়ে। শুধু এই নাম থেকে আসা credit SMS বিশ্বাস করা হবে।',
+                            'Phone-এ bank-এর SMS যে নামে বা নম্বরে আসে, ঠিক সেটা — কমা দিয়ে। যেমন IslamiBank, IBBL, 01844-242613। শুধু এগুলো থেকে আসা credit SMS বিশ্বাস করা হবে। বদলালে phone app-এ SMS forward একবার বন্ধ করে আবার চালু করুন।',
                         )
                     "
                 >
                     <KInput v-model="values['pay_bank_sms_senders']" />
                 </KField>
+            </div>
+
+            <!-- Try a real SMS before trusting a bank. -->
+            <div class="rounded-xl border border-line p-4">
+                <p class="text-[13.5px] font-semibold">
+                    {{ t('একটা SMS দিয়ে পরীক্ষা করুন') }}
+                </p>
+                <p class="mt-0.5 text-[12.5px] text-ink-3">
+                    {{
+                        t(
+                            'Phone থেকে টাকা আসার একটা SMS copy করে দিন — system কী বুঝল দেখাবে। কিছু জমা হয় না। আগে উপরের sender list সংরক্ষণ করুন।',
+                        )
+                    }}
+                </p>
+                <div class="mt-3 grid grid-cols-1 gap-3">
+                    <KField :label="t('কে পাঠিয়েছে (sender)')">
+                        <KInput
+                            v-model="smsTest.from"
+                            :placeholder="t('যেমন IslamiBank বা 01844-242613')"
+                        />
+                    </KField>
+                    <KField label="SMS">
+                        <KTextarea
+                            v-model="smsTest.text"
+                            :rows="3"
+                            :placeholder="t('পুরো SMS-টা এখানে paste করুন')"
+                        />
+                    </KField>
+                    <div>
+                        <KButton
+                            :loading="smsTesting"
+                            :disabled="
+                                !smsTest.from.trim() || !smsTest.text.trim()
+                            "
+                            @click="testSms"
+                            >{{ t('পরীক্ষা করুন') }}</KButton
+                        >
+                    </div>
+                </div>
+                <ul
+                    v-if="smsResult"
+                    class="mt-3 flex flex-col gap-1.5 rounded-lg bg-sunken p-3 text-[13px]"
+                >
+                    <li :class="smsResult.trusted ? 'text-in' : 'text-out'">
+                        {{
+                            smsResult.trusted
+                                ? t('✓ Sender বিশ্বাসযোগ্য ({provider})', {
+                                      provider: smsResult.provider,
+                                  })
+                                : t(
+                                      '✗ এই sender list-এ নেই — এর SMS বিশ্বাস করা হবে না',
+                                  )
+                        }}
+                    </li>
+                    <li
+                        v-if="smsResult.trusted"
+                        :class="smsResult.incoming ? 'text-in' : 'text-out'"
+                    >
+                        {{
+                            smsResult.incoming
+                                ? t('✓ টাকা আসার SMS: {amount}', {
+                                      amount: smsResult.amount,
+                                  })
+                                : t(
+                                      '✗ টাকা আসার SMS হিসেবে বোঝা যায়নি (খরচ, OTP, বা অন্য রকম লেখা)',
+                                  )
+                        }}
+                    </li>
+                    <li v-if="smsResult.incoming" class="text-ink-2">
+                        {{
+                            smsResult.made_up_id
+                                ? t(
+                                      'SMS-এ TrxID নেই — তাই SMS-এর লেখা থেকে একটা নিজস্ব নম্বর বানানো হবে, একই SMS দুবার গোনা হবে না',
+                                  )
+                                : t('TrxID: {id}', { id: smsResult.trx_id })
+                        }}
+                    </li>
+                    <li v-if="smsResult.payer" class="text-ink-2">
+                        {{
+                            t('পাঠিয়েছেন: {payer}', { payer: smsResult.payer })
+                        }}
+                    </li>
+                </ul>
             </div>
             <template v-if="editable" #footer>
                 <KButton variant="primary" :loading="saving" @click="save">{{
