@@ -7,7 +7,6 @@ use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
-use App\Models\Invoice;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\UsdEntry;
@@ -204,29 +203,6 @@ class CampaignBilling
         }
 
         return $days;
-    }
-
-    /**
-     * Campaigns an invoice bills that belong to no client yet now belong to
-     * the invoice's client, billed from the line's first day.
-     */
-    public function linkFromInvoice(Invoice $invoice): void
-    {
-        $lines = $invoice->items()->where('kind', 'ad_spend')->whereNotNull('campaign_id')->get();
-        $linked = false;
-
-        foreach ($lines as $line) {
-            $campaign = Campaign::find($line->campaign_id);
-
-            if ($campaign !== null && $campaign->client_id === null) {
-                $campaign->update(['client_id' => $invoice->client_id, 'bill_from' => ($line->period_from ?? $this->defaultBillFrom($campaign, $invoice->client_id))->toDateString()]);
-                $linked = true;
-            }
-        }
-
-        if ($linked) {
-            $this->rebuild([$invoice->client_id]);
-        }
     }
 
     /**

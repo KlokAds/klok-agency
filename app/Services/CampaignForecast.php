@@ -61,7 +61,7 @@ class CampaignForecast
             $mine = $campaigns->where('client_id', $client->id)->values();
             $lines = $mine->map(function (Campaign $c) use ($byCampaign, $today) {
                 $end = $c->lastDay();
-                $daysLeft = $c->isLive() && $end !== null ? max(0, (int) $today->diffInDays($end, false) + 1) : ($c->isLive() ? null : 0);
+                $daysLeft = $c->daysLeft();
                 $budget = $c->dailyBudget() ?? ($c->spend_7d > 0 ? (int) round($c->spend_7d / 7) : null);
 
                 return [
@@ -75,7 +75,10 @@ class CampaignForecast
                     'ended' => $c->hasEnded(),
                     'days_left' => $daysLeft,
                     'budget' => $budget,
-                    'to_spend' => $budget !== null && $daysLeft !== null ? $budget * $daysLeft : null,
+                    // The full days to come, plus what is left of today's budget.
+                    'to_spend' => $budget !== null && $daysLeft !== null
+                        ? $budget * $daysLeft + ($c->isLive() ? max(0, $budget - (int) $c->days()->whereDate('day', $today->toDateString())->sum('spend')) : 0)
+                        : null,
                     'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
                     'spent' => (int) CampaignDay::where('campaign_id', $c->id)
                         ->when($c->bill_from, fn ($q) => $q->where('day', '>=', $c->bill_from->toDateString()))->sum('spend'),
@@ -94,6 +97,7 @@ class CampaignForecast
             // Right now: what they owe for spend already run, or what is left of their money.
             $dueNow = $prepaid ? max(0, -$credit) : $owed;
             $creditNow = $prepaid ? max(0, $credit) : 0;
+            $dueBdt = $dueNow > 0 ? (int) ($figure['pending_bdt'] ?? 0) : 0;
             $daily = (int) $lines->where('live', true)->sum('budget');
             $lastsUntil = $creditNow > 0 && $daily > 0 ? $today->addDays(intdiv($creditNow, $daily) - 1) : null;
             $endsOn = $lines->where('live', true)->pluck('end')->filter()->max();
@@ -110,9 +114,10 @@ class CampaignForecast
                 'owed' => $prepaid ? null : $owed,
                 'to_spend' => $toSpend,
                 'balance' => $balance,
-                'due_bdt' => $balance < 0 && $rate ? (int) round(-$balance * $rate) : null,
+                // Spend already run is owed at the batches that paid for it; days to come at today's rate.
+                'due_bdt' => $balance < 0 ? $dueBdt + (int) round(max(0, -$balance - $dueNow) * ($rate ?? 0)) : null,
                 'due_now' => $dueNow,
-                'due_now_bdt' => $dueNow > 0 && $rate ? (int) round($dueNow * $rate) : null,
+                'due_now_bdt' => $dueNow > 0 ? $dueBdt : null,
                 'credit_now' => $creditNow,
                 'daily' => $daily,
                 'lasts_until' => $lastsUntil && $lastsUntil->gte($today->subDay()) ? $lastsUntil->toDateString() : null,

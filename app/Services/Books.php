@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\BdtEntry;
+use App\Models\Campaign;
 use App\Models\Client;
 use App\Models\FxBatch;
 use App\Models\Setting;
@@ -261,13 +262,18 @@ class Books
                 'margin' => (int) $received - $settledCost,
                 'usd_pending' => -$pending->sum('amount'),
                 'cost_pending' => $pendingCost,
+                // Unpaid spend as the client owes it: its batches' rate plus commission.
+                'pending_bdt' => (int) round($pendingCost * (1 + Invoices::commissionPercent() / 100)),
                 'pending_count' => $pending->count(),
                 'credit_usd' => $prepaid['credit_usd'],
                 'campaign_usd' => $prepaid['spent_usd'],
                 'credit_left' => $prepaid['credit_usd'] - $prepaid['spent_usd'],
                 'unearned' => $prepaid['unearned'],
+                // The same in taka, at the rate the client paid: what they gave for ads, and what of it is spent.
+                'credit_bdt' => $prepaid['paid_bdt'],
+                'spent_bdt' => $prepaid['paid_bdt'] - $prepaid['unearned'],
                 'daily_usd' => $prepaid['daily_usd'],
-                'days_left' => $prepaid['daily_usd'] > 0 ? (int) floor(max(0, $prepaid['credit_usd'] - $prepaid['spent_usd']) / $prepaid['daily_usd']) : null,
+                'days_left' => $this->daysLeft($client->id, $prepaid),
                 'unbilled_usd' => $unbilled[$client->id] ?? 0,
             ];
         }
@@ -275,7 +281,26 @@ class Books
         return $rows;
     }
 
-    /** @var array<int, array{credit_usd: int, spent_usd: int, unearned: int, daily_usd: int, earned: array<int, int>}> */
+    /**
+     * Full days the client's ads still run after today: as far as the money
+     * reaches, but never past the end of their running campaigns.
+     *
+     * @param  array{credit_usd: int, spent_usd: int, daily_usd: int}  $prepaid
+     */
+    private function daysLeft(int $clientId, array $prepaid): ?int
+    {
+        $money = $prepaid['daily_usd'] > 0
+            ? (int) floor(max(0, $prepaid['credit_usd'] - $prepaid['spent_usd']) / $prepaid['daily_usd'])
+            : null;
+        $running = Campaign::where('client_id', $clientId)->whereNotNull('bill_from')->running()->get();
+        $ends = $running->isNotEmpty() && $running->every(fn (Campaign $c) => $c->stop_at !== null)
+            ? (int) $running->map(fn (Campaign $c) => $c->daysLeft())->max()
+            : null;
+
+        return $money === null ? $ends : ($ends === null ? $money : min($money, $ends));
+    }
+
+    /** @var array<int, array{credit_usd: int, spent_usd: int, paid_bdt: int, unearned: int, daily_usd: int, earned: array<int, int>}> */
     private array $prepaid = [];
 
     /**
@@ -284,7 +309,7 @@ class Books
      * earns the BDT its share of the tranche cost; what is not spent yet is
      * the client's money held in advance (unearned).
      *
-     * @return array{credit_usd: int, spent_usd: int, unearned: int, daily_usd: int, earned: array<int, int>}
+     * @return array{credit_usd: int, spent_usd: int, paid_bdt: int, unearned: int, daily_usd: int, earned: array<int, int>}
      */
     public function prepaid(int $clientId): array
     {
@@ -339,6 +364,7 @@ class Books
         return $this->prepaid[$clientId] = [
             'credit_usd' => $credit,
             'spent_usd' => -(int) $rows->sum('amount'),
+            'paid_bdt' => $paid,
             'unearned' => $paid - array_sum($earned),
             'daily_usd' => (int) round(-$full->sum('amount') / $days),
             'earned' => $earned,

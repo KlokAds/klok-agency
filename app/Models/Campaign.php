@@ -119,6 +119,21 @@ class Campaign extends Model
             && ($this->stop_at === null || CarbonImmutable::parse($this->stop_at)->isFuture());
     }
 
+    /**
+     * Full days it still runs after today: ending 26 Oct 12:00 AM, on 23 Oct
+     * that is 2 (the 24th and the 25th). Null when it has no end.
+     */
+    public function daysLeft(): ?int
+    {
+        $last = $this->lastDay();
+
+        if (! $this->isLive() || $last === null) {
+            return $this->isLive() ? null : 0;
+        }
+
+        return max(0, (int) CarbonImmutable::now()->startOfDay()->diffInDays($last, false));
+    }
+
     /** Ended on Meta's clock, whatever its status says. */
     public function hasEnded(): bool
     {

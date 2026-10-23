@@ -33,13 +33,13 @@ type Line = {
 type CampaignSpend = {
     id: number;
     name: string;
+    rate: number | null;
     usd: number;
     results: number;
     clicks: number;
     days: number;
     from: string;
     to: string;
-    linked: boolean;
     live: boolean;
     ended: boolean;
     account: string | null;
@@ -152,7 +152,7 @@ async function loadCampaigns(): Promise<void> {
         );
         spend.value = result.campaigns;
         picked.value = Object.fromEntries(
-            result.campaigns.map((c) => [c.id, c.linked && c.usd > 0]),
+            result.campaigns.map((c) => [c.id, c.usd > 0]),
         );
     } catch {
         loadError.value = t('Campaign আনা গেল না।');
@@ -189,6 +189,8 @@ function generate(): void {
             results: c.results,
             clicks: c.clicks,
             usd: (c.usd / 100).toFixed(2),
+            // The batches that paid for this spend, plus commission.
+            rate: c.rate ? String(c.rate) : defaultRate,
         }));
 
     form.items = [
@@ -319,7 +321,7 @@ const errorAt = (index: number, field: string) =>
                     >
                         {{
                             t(
-                                'এই client-এর কোনো campaign নেই, আর এখন চালু কোনো campaign কোনো client ছাড়াও নেই।',
+                                'এই client-এর সাথে কোনো campaign যুক্ত নেই। Campaign পাতা থেকে যুক্ত করুন।',
                             )
                         }}
                     </p>
@@ -348,11 +350,6 @@ const errorAt = (index: number, field: string) =>
                                     {{ c.name }}
                                     <KTag v-if="c.ended" tone="neutral">{{
                                         t('শেষ হয়েছে')
-                                    }}</KTag>
-                                    <KTag v-if="!c.linked" tone="wait">{{
-                                        t(
-                                            'কোনো client-এর নয় — বাছলে এই client-এর হবে',
-                                        )
                                     }}</KTag>
                                 </p>
                                 <p class="mt-0.5 text-[12px] text-ink-3">

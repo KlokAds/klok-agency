@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import KTag from '@/components/k/KTag.vue';
 import { money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
@@ -106,22 +105,23 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
 </script>
 
 <template>
-    <article class="invoice-doc panel overflow-hidden">
-        <!-- Header -->
+    <article class="inv @container">
+        <!-- A thin brand rule, then who sends it and what it is -->
+        <div class="inv-rule" />
         <header
-            class="flex flex-col gap-6 border-b border-line p-5 sm:flex-row sm:items-start sm:justify-between sm:p-8"
+            class="flex flex-col gap-6 px-6 pt-7 pb-6 @xl:flex-row @xl:items-start @xl:justify-between @xl:px-10 @xl:pt-9"
         >
             <div class="min-w-0">
                 <img
                     v-if="business.logo"
                     :src="business.logo"
                     :alt="business.name"
-                    class="mb-3 h-12 w-auto max-w-[200px] object-contain"
+                    class="mb-3 h-11 w-auto max-w-[190px] object-contain"
                 />
                 <div v-else class="mb-3 flex items-center gap-2.5">
                     <svg
-                        width="40"
-                        height="40"
+                        width="36"
+                        height="36"
                         viewBox="0 0 64 64"
                         aria-hidden="true"
                     >
@@ -135,23 +135,21 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                             stroke-linejoin="round"
                         />
                     </svg>
-                    <span class="text-[19px] font-bold tracking-[-0.02em]">{{
-                        business.name
-                    }}</span>
+                    <span
+                        class="text-[18px] font-semibold tracking-[-0.02em]"
+                        >{{ business.name }}</span
+                    >
                 </div>
-                <p
-                    v-if="business.logo"
-                    class="text-[15px] font-bold tracking-tight"
-                >
+                <p v-if="business.logo" class="text-[15px] font-semibold">
                     {{ business.name }}
                 </p>
                 <p
                     v-if="business.address"
-                    class="mt-1 max-w-xs text-[12.5px] whitespace-pre-line text-ink-3"
+                    class="inv-muted mt-1 max-w-xs text-[12.5px] leading-relaxed whitespace-pre-line"
                 >
                     {{ business.address }}
                 </p>
-                <p class="mt-1 text-[12.5px] text-ink-3">
+                <p class="inv-muted mt-0.5 text-[12.5px]">
                     <span v-if="business.phone">{{ business.phone }}</span>
                     <span v-if="business.phone && business.email"> · </span>
                     <span v-if="business.email" class="break-all">{{
@@ -159,44 +157,48 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                     }}</span>
                 </p>
             </div>
-            <div class="sm:text-right">
-                <p class="eyebrow">Invoice</p>
-                <p class="num mt-1 text-[26px] leading-none font-semibold">
+            <div class="@xl:text-right">
+                <p class="inv-title">Invoice</p>
+                <p class="num inv-muted mt-1 text-[14px] font-medium">
                     {{ invoice.number }}
                 </p>
-                <div class="mt-3">
-                    <KTag :tone="status.tone">{{ t(status.label) }}</KTag>
-                    <KTag v-if="invoice.overdue" tone="out" class="ml-1.5">{{
-                        t('মেয়াদ পার')
-                    }}</KTag>
-                </div>
+                <p class="mt-3 flex flex-wrap gap-1.5 @xl:justify-end">
+                    <span class="inv-pill" :class="`inv-pill-${status.tone}`">{{
+                        t(status.label)
+                    }}</span>
+                    <span
+                        v-if="invoice.overdue"
+                        class="inv-pill inv-pill-out"
+                        >{{ t('মেয়াদ পার') }}</span
+                    >
+                </p>
             </div>
         </header>
 
-        <!-- Who and when -->
+        <!-- Bill to, dates, and the one number that matters -->
         <section
-            class="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-line bg-surface-2 px-5 py-5 text-[13px] sm:grid-cols-3 sm:px-8"
+            class="inv-band grid grid-cols-2 gap-x-6 gap-y-5 px-6 py-5 @xl:grid-cols-[1.4fr_1fr_1fr_1.2fr] @xl:px-10"
         >
-            <div class="col-span-2 sm:col-span-1">
-                <p class="eyebrow">{{ t('যার জন্য') }}</p>
+            <div class="col-span-2 @xl:col-span-1">
+                <p class="inv-label">{{ t('যার জন্য') }}</p>
                 <p class="mt-1 text-[15px] font-semibold">
                     {{ invoice.client }}
                 </p>
-                <p v-if="invoice.company" class="text-ink-3">
+                <p v-if="invoice.company" class="inv-muted text-[12.5px]">
                     {{ invoice.company }}
                 </p>
             </div>
             <div>
-                <p class="eyebrow">{{ t('তারিখ') }}</p>
-                <p class="num mt-1 font-medium">
+                <p class="inv-label">{{ t('তারিখ') }}</p>
+                <p class="num mt-1 text-[13.5px] font-medium">
                     {{ niceDate(invoice.issue_date) }}
                 </p>
             </div>
             <div>
-                <p class="eyebrow">{{ t('শেষ তারিখ') }}</p>
+                <p class="inv-label">{{ t('শেষ তারিখ') }}</p>
                 <p
-                    class="num mt-1 font-medium"
-                    :class="invoice.overdue ? 'text-out' : ''"
+                    class="num mt-1 text-[13.5px] font-medium"
+                    :class="invoice.overdue ? 'inv-out' : ''"
                 >
                     {{
                         invoice.due_date
@@ -205,56 +207,64 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                     }}
                 </p>
             </div>
+            <div class="col-span-2 @xl:col-span-1 @xl:text-right">
+                <p class="inv-label">
+                    {{ invoice.due ? t('দিতে হবে') : t('পরিশোধিত') }}
+                </p>
+                <p
+                    class="num mt-0.5 text-[24px] leading-tight font-semibold tracking-[-0.01em]"
+                >
+                    {{ bdt(invoice.due ? invoice.due : invoice.total) }}
+                </p>
+            </div>
         </section>
 
-        <!-- Lines: a table on wide screens, stacked rows on a phone -->
-        <section class="px-5 sm:px-8">
-            <table class="hidden w-full text-[13.5px] md:table">
+        <!-- Lines: a table when there is room (and on paper), stacked on a phone -->
+        <section class="px-6 pt-2 @xl:px-10">
+            <table class="inv-table hidden w-full text-[13px] @xl:table">
                 <thead>
-                    <tr
-                        class="border-b border-line text-left text-[12.5px] font-medium text-ink-3"
-                    >
-                        <th class="py-3 pr-4">{{ t('বিবরণ') }}</th>
+                    <tr>
+                        <th class="w-8 py-3 pr-2 text-left">#</th>
+                        <th class="py-3 pr-4 text-left">{{ t('বিবরণ') }}</th>
                         <th v-if="hasUsd" class="py-3 pr-4 text-right">USD</th>
                         <th v-if="hasUsd" class="py-3 pr-4 text-right">Rate</th>
-                        <th class="py-3 text-right">BDT</th>
+                        <th class="py-3 text-right">{{ t('পরিমাণ') }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr
-                        v-for="line in invoice.items"
-                        :key="line.id"
-                        class="border-b border-line align-top last:border-0"
-                    >
-                        <td class="py-3.5 pr-4">
+                    <tr v-for="(line, i) in invoice.items" :key="line.id">
+                        <td class="num inv-muted py-4 pr-2 align-top">
+                            {{ String(i + 1).padStart(2, '0') }}
+                        </td>
+                        <td class="py-4 pr-4 align-top">
                             <p class="font-semibold">{{ line.description }}</p>
                             <p
                                 v-if="period(line)"
-                                class="num mt-0.5 text-[12px] text-ink-3"
+                                class="num inv-muted mt-0.5 text-[12px]"
                             >
                                 {{ period(line) }}
                             </p>
                             <p
                                 v-if="outcome(line)"
-                                class="mt-0.5 text-[12px] text-ink-3"
+                                class="inv-muted mt-0.5 text-[12px]"
                             >
                                 {{ outcome(line) }}
                             </p>
                         </td>
                         <td
                             v-if="hasUsd"
-                            class="num py-3.5 pr-4 text-right whitespace-nowrap"
+                            class="num py-4 pr-4 text-right align-top whitespace-nowrap"
                         >
                             {{ usd(line.usd) }}
                         </td>
                         <td
                             v-if="hasUsd"
-                            class="num py-3.5 pr-4 text-right whitespace-nowrap text-ink-2"
+                            class="num inv-muted py-4 pr-4 text-right align-top whitespace-nowrap"
                         >
                             {{ line.usd !== null ? rate(line.rate) : '—' }}
                         </td>
                         <td
-                            class="num py-3.5 text-right font-medium whitespace-nowrap"
+                            class="num py-4 text-right align-top font-semibold whitespace-nowrap"
                         >
                             {{ bdt(line.amount) }}
                         </td>
@@ -262,31 +272,31 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                 </tbody>
             </table>
 
-            <ul class="divide-y divide-dashed divide-line md:hidden">
-                <li v-for="line in invoice.items" :key="line.id" class="py-3.5">
+            <ul class="inv-stack @xl:hidden">
+                <li v-for="line in invoice.items" :key="line.id" class="py-4">
                     <div class="flex items-start justify-between gap-3">
                         <p class="min-w-0 font-semibold break-words">
                             {{ line.description }}
                         </p>
-                        <p class="num shrink-0 font-medium">
+                        <p class="num shrink-0 font-semibold">
                             {{ bdt(line.amount) }}
                         </p>
                     </div>
                     <p
                         v-if="period(line)"
-                        class="num mt-0.5 text-[12px] text-ink-3"
+                        class="num inv-muted mt-0.5 text-[12px]"
                     >
                         {{ period(line) }}
                     </p>
                     <p
                         v-if="outcome(line)"
-                        class="mt-0.5 text-[12px] text-ink-3"
+                        class="inv-muted mt-0.5 text-[12px]"
                     >
                         {{ outcome(line) }}
                     </p>
                     <p
                         v-if="line.usd !== null"
-                        class="num mt-1 text-[12px] text-ink-2"
+                        class="num inv-muted mt-1 text-[12px]"
                     >
                         {{ usd(line.usd) }} × {{ rate(line.rate) }}
                     </p>
@@ -294,37 +304,194 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
             </ul>
         </section>
 
-        <!-- Totals -->
+        <!-- Notes and totals -->
         <section
-            class="flex flex-col gap-6 border-t border-line px-5 py-5 sm:flex-row sm:justify-between sm:px-8"
+            class="flex flex-col gap-6 px-6 pt-2 pb-7 @xl:flex-row @xl:items-start @xl:justify-between @xl:px-10"
         >
-            <p
-                v-if="invoice.notes"
-                class="max-w-sm text-[12.5px] whitespace-pre-line text-ink-2"
+            <div class="max-w-sm text-[12.5px]">
+                <template v-if="invoice.notes">
+                    <p class="inv-label">{{ t('Note') }}</p>
+                    <p class="inv-muted mt-1 whitespace-pre-line">
+                        {{ invoice.notes }}
+                    </p>
+                </template>
+            </div>
+            <dl
+                class="inv-totals w-full text-[13px] @xl:ml-auto @xl:max-w-[300px]"
             >
-                {{ invoice.notes }}
-            </p>
-            <span v-else />
-            <dl class="w-full max-w-xs space-y-1.5 text-[13.5px] sm:ml-auto">
-                <div v-if="invoice.usd" class="flex justify-between text-ink-3">
-                    <dt>{{ t('Ad খরচ (USD)') }}</dt>
+                <div v-if="invoice.usd" class="flex justify-between py-1.5">
+                    <dt class="inv-muted">{{ t('Ad খরচ (USD)') }}</dt>
                     <dd class="num">{{ usd(invoice.usd) }}</dd>
                 </div>
-                <div class="flex justify-between text-ink-2">
-                    <dt>{{ t('মোট') }}</dt>
+                <div class="flex justify-between py-1.5">
+                    <dt class="inv-muted">{{ t('মোট') }}</dt>
                     <dd class="num">{{ bdt(invoice.total) }}</dd>
                 </div>
-                <div v-if="invoice.paid" class="flex justify-between text-in">
-                    <dt>{{ t('পরিশোধ হয়েছে') }}</dt>
-                    <dd class="num">−{{ bdt(invoice.paid) }}</dd>
+                <div v-if="invoice.paid" class="flex justify-between py-1.5">
+                    <dt class="inv-muted">{{ t('পরিশোধ হয়েছে') }}</dt>
+                    <dd class="num inv-in">−{{ bdt(invoice.paid) }}</dd>
                 </div>
                 <div
-                    class="flex justify-between border-t border-line pt-2 text-[17px] font-bold"
+                    class="inv-due mt-2 flex items-baseline justify-between px-4 py-3"
                 >
-                    <dt>{{ t('বাকি') }}</dt>
-                    <dd class="num">{{ bdt(invoice.due) }}</dd>
+                    <dt class="font-semibold">{{ t('বাকি') }}</dt>
+                    <dd class="num text-[18px] font-semibold">
+                        {{ bdt(invoice.due) }}
+                    </dd>
                 </div>
             </dl>
         </section>
+
+        <footer
+            class="inv-foot flex flex-col gap-1 px-6 py-4 text-[11.5px] @xl:flex-row @xl:justify-between @xl:px-10"
+        >
+            <span>{{
+                t('ধন্যবাদ — {name}-এর সাথে কাজ করার জন্য।', {
+                    name: business.name,
+                })
+            }}</span>
+            <span class="num"
+                >{{ invoice.number }} · {{ niceDate(invoice.issue_date) }}</span
+            >
+        </footer>
     </article>
 </template>
+
+<style scoped>
+/* A document: paper-white with its own ink, in either app theme and on paper. */
+.inv {
+    --paper: #ffffff;
+    --ink: #111816;
+    --muted: #66706d;
+    --line: #e6e9e8;
+    --band: #f6f8f7;
+    --brand: #0f766e;
+
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgb(0 0 0 / 4%),
+        0 8px 24px -12px rgb(0 0 0 / 18%);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}
+
+.inv-rule {
+    height: 4px;
+    background: linear-gradient(90deg, var(--brand), #2dd4bf);
+}
+
+.inv-title {
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.inv-muted {
+    color: var(--muted);
+}
+
+.inv-label {
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 500;
+}
+
+.inv-band {
+    background: var(--band);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+
+.inv-table thead th {
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink);
+}
+
+.inv-table tbody td {
+    border-bottom: 1px solid var(--line);
+}
+
+.inv-stack > li + li {
+    border-top: 1px solid var(--line);
+}
+
+.inv-due {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 10px;
+}
+
+.inv-foot {
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    background: var(--band);
+}
+
+.inv-out {
+    color: #b42318;
+}
+
+.inv-in {
+    color: #067647;
+}
+
+.inv-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    color: var(--muted);
+}
+
+.inv-pill-brand {
+    color: var(--brand);
+    border-color: rgb(15 118 110 / 30%);
+    background: rgb(15 118 110 / 6%);
+}
+
+.inv-pill-in {
+    color: #067647;
+    border-color: rgb(6 118 71 / 30%);
+    background: rgb(6 118 71 / 6%);
+}
+
+.inv-pill-wait {
+    color: #b54708;
+    border-color: rgb(181 71 8 / 30%);
+    background: rgb(181 71 8 / 6%);
+}
+
+.inv-pill-out {
+    color: #b42318;
+    border-color: rgb(180 35 24 / 30%);
+    background: rgb(180 35 24 / 6%);
+}
+
+@media print {
+    .inv {
+        margin: 14mm;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    /* Paper is wide: always the table. */
+    .inv-table {
+        display: table !important;
+    }
+
+    .inv-stack {
+        display: none !important;
+    }
+}
+</style>

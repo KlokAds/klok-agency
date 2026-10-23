@@ -318,27 +318,29 @@ it('saves the payment settings and makes a forwarder URL shown once', function (
     $this->actingAs($this->owner)->get('/admin/payment')->assertOk()->assertInertia(fn ($page) => $page->component('admin/Payment'));
 });
 
-it('lists running campaigns with no client on the invoice, and links one to the client when billed', function () {
-    $this->seed(BooksSeeder::class);
+it('lists only the client\'s own campaigns on the invoice, ended ones marked', function () {
     $account = PilotAccount::create(['pilot_id' => 9, 'name' => 'Klok Ads Agency', 'platform' => 'meta', 'currency' => 'USD', 'seen_at' => now()]);
-    $mine = Campaign::create(['pilot_campaign_id' => 1, 'pilot_account_id' => $account->id, 'name' => 'GFFS - Sales', 'status' => 'ACTIVE', 'client_id' => $this->client->id, 'bill_from' => now()->subDays(5)->toDateString()]);
-    $free = Campaign::create(['pilot_campaign_id' => 2, 'pilot_account_id' => $account->id, 'name' => 'New page likes', 'status' => 'ACTIVE', 'stop_at' => now()->addDays(3)]);
-    Campaign::create(['pilot_campaign_id' => 3, 'pilot_account_id' => $account->id, 'name' => 'Ended long ago', 'status' => 'ACTIVE', 'stop_at' => now()->subMonth()]);
-    CampaignDay::create(['campaign_id' => $free->id, 'day' => now()->subDay()->toDateString(), 'spend' => 700, 'results' => 3, 'clicks' => 9]);
+    Campaign::create(['pilot_campaign_id' => 1, 'pilot_account_id' => $account->id, 'name' => 'GFFS - Sales', 'status' => 'ACTIVE', 'client_id' => $this->client->id, 'bill_from' => now()->subDays(5)->toDateString()]);
+    Campaign::create(['pilot_campaign_id' => 3, 'pilot_account_id' => $account->id, 'name' => 'GFFS - Old', 'status' => 'ACTIVE', 'client_id' => $this->client->id, 'bill_from' => now()->subDays(5)->toDateString(), 'stop_at' => now()->subMonth()]);
+    Campaign::create(['pilot_campaign_id' => 2, 'pilot_account_id' => $account->id, 'name' => 'Someone else', 'status' => 'ACTIVE', 'stop_at' => now()->addDays(3)]);
 
     $list = $this->actingAs($this->owner)->getJson('/invoices/campaigns?'.http_build_query(['client' => $this->client->id, 'from' => now()->subDays(10)->toDateString(), 'to' => now()->toDateString()]))
         ->assertOk()->json('campaigns');
 
-    expect(array_column($list, 'name'))->toBe(['GFFS - Sales', 'New page likes'])
-        ->and($list[1]['linked'])->toBeFalse()
-        ->and($list[1]['usd'])->toBe(700)
-        ->and($free->fresh()->isLive())->toBeTrue()
-        ->and(Campaign::where('pilot_campaign_id', 3)->first()->isLive())->toBeFalse();
+    expect(array_column($list, 'name'))->toBe(['GFFS - Old', 'GFFS - Sales'])
+        ->and($list[0]['ended'])->toBeTrue()
+        ->and($list[1]['live'])->toBeTrue();
+});
 
-    $this->actingAs($this->owner)->post('/invoices', [
+it('locks an invoice once it has been sent to the client', function () {
+    $invoice = app(Invoices::class)->save([
         'client_id' => $this->client->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null,
-        'items' => [['kind' => 'ad_spend', 'description' => 'New page likes', 'campaign_id' => $free->id, 'period_from' => $list[1]['from'], 'period_to' => $list[1]['to'], 'results' => 3, 'clicks' => 9, 'usd' => '7', 'rate' => '150', 'amount' => '']],
-    ])->assertRedirect();
+        'items' => [['kind' => 'service', 'description' => 'Page management', 'usd' => null, 'rate' => null, 'amount' => 120000, 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null]],
+    ]);
+    expect($invoice->isEditable())->toBeTrue();
 
-    expect($free->fresh()->client_id)->toBe($this->client->id);
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/send")->assertRedirect();
+
+    expect($invoice->fresh()->isEditable())->toBeFalse();
+    $this->actingAs($this->owner)->get("/invoices/{$invoice->id}/edit")->assertRedirect();
 });

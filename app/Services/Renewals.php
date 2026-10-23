@@ -8,6 +8,7 @@ use App\Models\Campaign;
 use App\Models\Invoice;
 use App\Models\Renewal;
 use App\Models\Setting;
+use App\Models\UsdEntry;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Support\Money;
@@ -119,11 +120,13 @@ class Renewals
 
             $usd = (int) $renewal->budget * $days;
             $from = CarbonImmutable::parse($renewal->ends_on)->max(CarbonImmutable::now()->startOfDay())->addDay();
-            $line = fn (string $description, int $cents) => [
-                'kind' => 'ad_budget', 'description' => $description, 'usd' => $cents, 'rate' => $rate, 'amount' => null,
+            $line = fn (string $description, int $cents, float $at) => [
+                'kind' => 'ad_budget', 'description' => $description, 'usd' => $cents, 'rate' => $at, 'amount' => null,
                 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null,
             ];
-            $items = $due > 0 ? [$line('Previous ad spend not yet paid', $due)] : [];
+            // Spend already run is owed at the batches that paid for it; the new days at today's rate.
+            $dueRate = Invoices::rateFor(UsdEntry::where('source', 'pilot')->where('client_id', $renewal->client_id)->where('status', 'pending')->get()) ?? $rate;
+            $items = $due > 0 ? [$line('Previous ad spend not yet paid', $due, $dueRate)] : [];
             $invoice = $this->invoices->save([
                 'client_id' => $renewal->client_id,
                 'issue_date' => now()->toDateString(),

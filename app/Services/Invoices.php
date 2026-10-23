@@ -8,13 +8,13 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
 use App\Models\Setting;
+use App\Models\UsdEntry;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -291,6 +291,29 @@ class Invoices
         return $last;
     }
 
+    /**
+     * What a client pays per USD of spend already run: the rate of the FX
+     * batch that paid for it (FIFO), plus the commission. Spend not costed
+     * yet (no batch) takes today's client rate.
+     *
+     * @param  iterable<UsdEntry>  $rows  spend rows (negative amounts)
+     */
+    public static function rateFor(iterable $rows): ?float
+    {
+        $fifo = app(Books::class)->fifo();
+        $usd = 0;
+        $cost = 0;
+
+        foreach ($rows as $row) {
+            if (isset($fifo['entries'][$row->id]['cost'])) {
+                $usd += -$row->amount;
+                $cost += (int) $fifo['entries'][$row->id]['cost'];
+            }
+        }
+
+        return $usd > 0 ? round($cost / $usd * (1 + self::commissionPercent() / 100), 2) : self::clientRate();
+    }
+
     /** What a client pays per USD: the FX rate plus the agency's commission. */
     public static function clientRate(): ?float
     {
@@ -300,19 +323,17 @@ class Invoices
     }
 
     /**
-     * The campaigns an invoice can bill, with their spend, results and
-     * clicks between two days: the client's own (only days billed to them,
-     * from bill_from on) and running ones no client has yet. Spend is read
-     * fresh from Pilot first, so a campaign linked a minute ago shows too.
+     * The client's campaigns (those linked to them on the Campaign page) with
+     * their spend, results and clicks between two days — only days billed to
+     * them, from bill_from on. Spend is read fresh from Pilot first, so a
+     * campaign linked a minute ago shows too.
      *
-     * @return list<array{id: int, name: string, usd: int, results: int, clicks: int, days: int, from: string, to: string, linked: bool, live: bool, ended: bool, account: ?string}>
+     * @return list<array{id: int, name: string, rate: ?float, usd: int, results: int, clicks: int, days: int, from: string, to: string, live: bool, ended: bool, account: ?string}>
      */
     public static function campaignSpend(int $clientId, string $from, string $to): array
     {
         $rows = [];
-        $campaigns = Campaign::with('account')
-            ->where(fn ($q) => $q->where('client_id', $clientId)->orWhere(fn (Builder $w) => $w->whereNull('client_id')->running()))
-            ->orderByRaw('case when client_id is null then 1 else 0 end')->orderBy('name')->get();
+        $campaigns = Campaign::with('account')->where('client_id', $clientId)->orderBy('name')->get();
 
         if (PilotClient::connected()) {
             $billing = app(CampaignBilling::class);
@@ -332,16 +353,20 @@ class Invoices
             $start = $campaign->bill_from !== null && $campaign->bill_from->toDateString() > $from ? $campaign->bill_from->toDateString() : $from;
             $days = CampaignDay::where('campaign_id', $campaign->id)->whereBetween('day', [$start, $to])->get();
 
+            // Priced at the batches that paid for these days' spend, as the books cost them.
+            $billed = UsdEntry::where('source', 'pilot')->where('client_id', $clientId)
+                ->whereBetween('entry_date', [$start, $to])->get();
+
             $rows[] = [
                 'id' => $campaign->id,
                 'name' => $campaign->name,
+                'rate' => self::rateFor($billed),
                 'usd' => (int) $days->sum('spend'),
                 'results' => (int) $days->sum('results'),
                 'clicks' => (int) $days->sum('clicks'),
                 'days' => $days->where('spend', '>', 0)->count(),
                 'from' => $start,
                 'to' => $to,
-                'linked' => $campaign->client_id !== null,
                 'live' => $campaign->isLive(),
                 'ended' => $campaign->hasEnded(),
                 'account' => $campaign->account?->name,

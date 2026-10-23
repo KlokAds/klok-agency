@@ -84,7 +84,10 @@ class DashboardController extends Controller
                 'name' => $c['name'],
                 'active' => $c['status'] === 'active',
                 'credit_usd' => $credit,
+                'credit_bdt' => (int) $c['credit_bdt'],
                 'spent_usd' => $campaign + $pending,
+                // Prepaid spend at the rate the client paid, plus unpaid spend at its cost.
+                'spent_bdt' => (int) $c['spent_bdt'] + (int) $c['cost_pending'],
                 'balance_usd' => $balance,
                 'pending_cost' => (int) $c['cost_pending'],
                 'unearned' => (int) $c['unearned'],

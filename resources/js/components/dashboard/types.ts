@@ -54,7 +54,9 @@ export type ClientRow = {
     name: string;
     active: boolean;
     credit_usd: number;
+    credit_bdt: number;
     spent_usd: number;
+    spent_bdt: number;
     balance_usd: number;
     pending_cost: number;
     unearned: number;

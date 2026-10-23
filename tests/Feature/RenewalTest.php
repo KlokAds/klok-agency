@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\Books;
 use App\Services\CampaignBilling;
 use App\Services\CampaignLimits;
+use App\Services\Invoices;
 use App\Services\PlatformDue;
 use App\Services\Renewals;
 use App\Support\Access;
@@ -196,7 +197,8 @@ it('shows each Meta campaign with what Meta still takes, what it will spend, and
             ->where('forecast.clients.0.name', 'GFFS')
             ->where('forecast.clients.0.campaigns.0.pending', 404)
             ->where('forecast.clients.0.campaigns.0.budget', 200)
-            ->where('forecast.clients.0.campaigns.0.days_left', 2)
+            // Ends tomorrow night: one full day after today, plus today's budget still to run.
+            ->where('forecast.clients.0.campaigns.0.days_left', 1)
             ->where('forecast.clients.0.to_spend', 400)
             // $4 paid, $4.04 spent: −$0.04 left, and $4 more to spend → $4.04 due.
             ->where('forecast.clients.0.balance', -404));
@@ -275,4 +277,16 @@ it('lets a card charge say which campaign it paid for, and pays the rest oldest 
     $this->actingAs($this->owner)->post('/quick/card-charge', [
         'entry_date' => now()->toDateString(), 'account_id' => $meta->id, 'amount' => '1', 'allocations' => ["c:{$other->id}" => '5'],
     ])->assertSessionHasErrors('allocations');
+});
+
+it('prices spend at the FX batch that paid for it plus commission, not today\'s rate', function () {
+    $rows = UsdEntry::where('source', 'pilot')->get();
+    $fifo = app(Books::class)->fifo();
+    $cost = $rows->sum(fn ($r) => $fifo['entries'][$r->id]['cost']);
+    $expected = round($cost / -$rows->sum('amount') * 1.2, 2);
+
+    expect(Invoices::rateFor($rows))->toBe($expected);
+
+    $list = $this->actingAs($this->owner)->getJson('/invoices/campaigns?'.http_build_query(['client' => $this->gffs->id, 'from' => $this->day1, 'to' => $this->day2]))->json('campaigns');
+    expect($list[0]['rate'])->toBe($expected);
 });

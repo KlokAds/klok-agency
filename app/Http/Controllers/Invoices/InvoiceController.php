@@ -12,7 +12,6 @@ use App\Models\Wallet;
 use App\Payments\PaymentMatcher;
 use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
-use App\Services\CampaignBilling;
 use App\Services\Invoices;
 use App\Support\Access;
 use App\Support\ClientMessage;
@@ -103,20 +102,19 @@ class InvoiceController extends Controller
         return $this->form($invoice->load('items'), $invoice->client_id);
     }
 
-    public function store(Request $request, Invoices $invoices, CampaignBilling $billing): RedirectResponse
+    public function store(Request $request, Invoices $invoices): RedirectResponse
     {
         $invoice = $invoices->save($this->validated($request));
-        $billing->linkFromInvoice($invoice);
         $this->toast(__('Invoice :number তৈরি হয়েছে।', ['number' => $invoice->number]));
 
         return redirect()->route('invoices.show', $invoice);
     }
 
-    public function update(Request $request, Invoice $invoice, Invoices $invoices, CampaignBilling $billing): RedirectResponse
+    public function update(Request $request, Invoice $invoice, Invoices $invoices): RedirectResponse
     {
         abort_unless($invoice->isEditable(), 422);
 
-        $billing->linkFromInvoice($invoices->save($this->validated($request), $invoice));
+        $invoices->save($this->validated($request), $invoice);
         $this->toast(__('Invoice আপডেট হয়েছে।'));
 
         return redirect()->route('invoices.show', $invoice);
@@ -336,8 +334,7 @@ class InvoiceController extends Controller
             'items.*.usd' => ['nullable', "required_if:items.*.kind,{$usdKinds}", Money::RULE],
             'items.*.rate' => ['nullable', "required_if:items.*.kind,{$usdKinds}", 'numeric', 'min:1', 'max:1000'],
             'items.*.amount' => ['nullable', "required_unless:items.*.kind,{$usdKinds}", Money::RULE],
-            // The client's own campaign, or one no client has yet (the invoice links it).
-            'items.*.campaign_id' => ['nullable', 'integer', Rule::exists('campaigns', 'id')->where(fn ($q) => $q->where('client_id', $request->integer('client_id'))->orWhereNull('client_id'))],
+            'items.*.campaign_id' => ['nullable', 'integer', Rule::exists('campaigns', 'id')->where('client_id', $request->integer('client_id'))],
             'items.*.period_from' => ['nullable', 'date'],
             'items.*.period_to' => ['nullable', 'date'],
             'items.*.results' => ['nullable', 'integer', 'min:0'],

@@ -45,7 +45,9 @@ const total = computed(() => {
 
     return {
         credit: sum('credit_usd'),
+        creditBdt: sum('credit_bdt'),
         spent: sum('spent_usd'),
+        spentBdt: sum('spent_bdt'),
         held: props.clients.reduce((n, c) => n + Math.max(0, c.balance_usd), 0),
         owed: props.clients.reduce((n, c) => n + Math.min(0, c.balance_usd), 0),
         unbilled: sum('unbilled_usd'),
@@ -107,11 +109,25 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                     >
                         <div class="flex justify-between gap-2">
                             <dt class="text-ink-3">{{ t('আগাম credit') }}</dt>
-                            <dd class="num">{{ usd(c.credit_usd) }}</dd>
+                            <dd class="num text-right">
+                                {{ usd(c.credit_usd)
+                                }}<span
+                                    v-if="c.credit_bdt"
+                                    class="block text-[11px] text-ink-3"
+                                    >{{ money(c.credit_bdt, 'bdt') }}</span
+                                >
+                            </dd>
                         </div>
                         <div class="flex justify-between gap-2">
                             <dt class="text-ink-3">{{ t('খরচ হয়েছে') }}</dt>
-                            <dd class="num">{{ usd(c.spent_usd) }}</dd>
+                            <dd class="num text-right">
+                                {{ usd(c.spent_usd)
+                                }}<span
+                                    v-if="c.spent_bdt"
+                                    class="block text-[11px] text-ink-3"
+                                    >{{ money(c.spent_bdt, 'bdt') }}</span
+                                >
+                            </dd>
                         </div>
                         <div class="flex justify-between gap-2">
                             <dt class="text-ink-3">
@@ -201,8 +217,22 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                     >
                                 </Link>
                             </td>
-                            <td class="r num">{{ usd(c.credit_usd) }}</td>
-                            <td class="r num">{{ usd(c.spent_usd) }}</td>
+                            <td class="r num">
+                                {{ usd(c.credit_usd) }}
+                                <span
+                                    v-if="c.credit_bdt"
+                                    class="block text-[11.5px] text-ink-3"
+                                    >{{ money(c.credit_bdt, 'bdt') }}</span
+                                >
+                            </td>
+                            <td class="r num">
+                                {{ usd(c.spent_usd) }}
+                                <span
+                                    v-if="c.spent_bdt"
+                                    class="block text-[11.5px] text-ink-3"
+                                    >{{ money(c.spent_bdt, 'bdt') }}</span
+                                >
+                            </td>
                             <td class="r">
                                 <span
                                     v-if="c.balance_usd < 0"
@@ -288,11 +318,21 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3"
                             >
                                 {{ usd(total.credit) }}
+                                <span
+                                    v-if="total.creditBdt"
+                                    class="block text-[11.5px] text-ink-3"
+                                    >{{ money(total.creditBdt, 'bdt') }}</span
+                                >
                             </td>
                             <td
                                 class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3"
                             >
                                 {{ usd(total.spent) }}
+                                <span
+                                    v-if="total.spentBdt"
+                                    class="block text-[11.5px] text-ink-3"
+                                    >{{ money(total.spentBdt, 'bdt') }}</span
+                                >
                             </td>
                             <td
                                 class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3"

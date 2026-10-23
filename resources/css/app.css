@@ -445,6 +445,12 @@
     animation: k-fade 0.14s ease-out;
 }
 
+/* No browser date / URL lines on a printed page: the document brings its own margin. */
+@page {
+    size: A4;
+    margin: 0;
+}
+
 @media print {
     html,
     body {
