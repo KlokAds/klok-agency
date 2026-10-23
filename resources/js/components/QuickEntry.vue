@@ -54,7 +54,7 @@ const JOBS = [
     {
         key: 'card-charge',
         label: 'Card থেকে কেটেছে',
-        note: 'Meta/Google card charge',
+        note: 'Google বা অন্য — Meta-র charge receipt থেকে নিজে আসে',
         icon: 'wallet',
         perm: 'usd.create',
     }, // i18n
@@ -177,6 +177,11 @@ const accounts = computed(() => lookups.value?.accounts ?? []);
 const platforms = computed(() =>
     accounts.value.filter((a) => a.kind === 'platform'),
 );
+const isMeta = computed(
+    () =>
+        platforms.value.find((a) => a.value === form.account_id)?.code ===
+        'meta',
+);
 const ownAccounts = computed(() =>
     accounts.value.filter((a) => a.kind !== 'platform'),
 );
@@ -186,9 +191,13 @@ const spendAccounts = computed(() =>
 
 function applyDefaults(): void {
     const meta = platforms.value.find((a) => a.code === 'meta');
+    // Meta's spend and charges come in by themselves; these two are for the rest.
+    const other =
+        platforms.value.find((a) => a.code === 'google') ??
+        platforms.value.find((a) => a.code !== 'meta');
 
     if (job.value === 'ad-spend' || job.value === 'card-charge') {
-        form.account_id = (meta?.value as number) ?? null;
+        form.account_id = ((other ?? meta)?.value as number) ?? null;
     }
 
     if (job.value === 'own-spend') {
@@ -585,6 +594,16 @@ const directions = computed<Option[]>(() => [
                                 :invalid="!!form.errors.account_id"
                             />
                         </KField>
+                        <p
+                            v-if="isMeta"
+                            class="rounded-lg bg-wait-soft px-3 py-2 text-[12.5px] text-wait sm:col-span-2"
+                        >
+                            {{
+                                t(
+                                    'Meta-র charge receipt থেকে নিজে আসে — শুধু কোনো receipt না এলে এখানে লিখুন, নাহলে দুবার হিসাব হবে।',
+                                )
+                            }}
+                        </p>
                         <KField
                             :label="t('কত কেটেছে (USD)')"
                             :error="form.errors.amount"

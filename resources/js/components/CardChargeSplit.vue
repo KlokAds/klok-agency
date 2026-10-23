@@ -137,7 +137,7 @@ const rest = computed(() => cents(props.amount) - given.value);
             </p>
             <KSwitch
                 v-model="byHand"
-                :label="t('Meta invoice দেখে নিজে ভাগ করুন')"
+                :label="t('Invoice দেখে নিজে ভাগ করুন')"
             />
         </div>
         <p
@@ -146,7 +146,7 @@ const rest = computed(() => cents(props.amount) - given.value);
         >
             {{
                 t(
-                    'Meta invoice-এর ক্রমে campaign-গুলোতে চাপুন — charge প্রথমটা থেকে শুরু করে যতটা বাকি ততটা ভরবে। নিজে অঙ্ক লিখলে সেটাই থাকবে।',
+                    'Invoice-এর ক্রমে campaign-গুলোতে চাপুন — charge প্রথমটা থেকে শুরু করে যতটা বাকি ততটা ভরবে। নিজে অঙ্ক লিখলে সেটাই থাকবে।',
                 )
             }}
         </p>
