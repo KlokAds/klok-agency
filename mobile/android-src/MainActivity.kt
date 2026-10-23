@@ -18,5 +18,23 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "klok/update").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "allowed" -> result.success(AppUpdater.allowed(this))
+                "askToAllow" -> {
+                    AppUpdater.askToAllow(this)
+                    result.success(null)
+                }
+                "install" -> {
+                    val url = call.argument<String>("url")
+                    if (url == null) {
+                        result.error("url", "no url", null)
+                    } else {
+                        AppUpdater.install(this, url) { status -> runOnUiThread { result.success(status) } }
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 }

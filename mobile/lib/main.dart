@@ -25,6 +25,7 @@ const paper = Color(0xFFF6F7F6);
 
 final notifications = FlutterLocalNotificationsPlugin();
 const smsChannel = MethodChannel('klok/sms');
+const updateChannel = MethodChannel('klok/update');
 
 /// Two builds of one app: the plain one for everyone, and (built with --dart-define=SMS=true)
 /// the one that also forwards payment SMS, for the Owner's phone only. Play Protect blocks any
@@ -603,6 +604,7 @@ class _SitePageState extends State<SitePage> {
     }
   }
   DateTime? checkedUpdate;
+  bool installing = false;
 
   @override
   void initState() {
@@ -613,6 +615,19 @@ class _SitePageState extends State<SitePage> {
     );
     openSub = opened.stream.listen(open);
     askPermissions();
+    // The server says a new version is out: look now, not on the next hourly check.
+    step('update-listen', () async {
+      FirebaseMessaging.onMessage.listen((m) {
+        if (m.data['kind'] == 'app_update') {
+          checkUpdate(now: true);
+        }
+      });
+      FirebaseMessaging.onMessageOpenedApp.listen((m) {
+        if (m.data['kind'] == 'app_update') {
+          checkUpdate(now: true);
+        }
+      });
+    });
   }
 
   @override
@@ -762,8 +777,10 @@ class _SitePageState extends State<SitePage> {
   }
 
   /// Once a day: is there a newer APK? Offered, never forced.
-  Future<void> checkUpdate() async {
-    if (checkedUpdate != null && DateTime.now().difference(checkedUpdate!) < const Duration(hours: 20)) {
+  /// Is there a newer APK? It is downloaded and installed here, by the app itself: the first time
+  /// Android asks once, after that (Android 12+) it goes in by itself. No browser, no new sign-in.
+  Future<void> checkUpdate({bool now = false}) async {
+    if (!now && checkedUpdate != null && DateTime.now().difference(checkedUpdate!) < const Duration(hours: 1)) {
       return;
     }
     if (!await signedIn()) {
@@ -777,26 +794,46 @@ class _SitePageState extends State<SitePage> {
     checkedUpdate = DateTime.now();
     final version = (body['version'] as num?)?.toInt() ?? 0;
     final url = body['url'] as String?;
-    final prefs = await SharedPreferences.getInstance();
-    if (version <= appBuild || url == null || prefs.getInt('update.skipped') == version || !mounted) {
+    if (version <= appBuild || url == null || !mounted || installing) {
       return;
     }
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('App-এর নতুন version'),
-        content: Text('Version ${body['name'] ?? version} এসেছে। নামিয়ে install করলে আগের login আর setting থেকে যাবে।'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('পরে')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('নামান')),
-        ],
-      ),
-    );
-    if (go == true) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      await prefs.setInt('update.skipped', version);
+
+    final allowed = await updateChannel.invokeMethod<bool>('allowed').catchError((_) => false) ?? false;
+    if (!allowed) {
+      // Android asks once whether this app may install its own updates.
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('App নিজে update হবে'),
+          content: Text(
+            'Version ${body['name'] ?? version} এসেছে। একবার অনুমতি দিন — এরপর নতুন version app নিজেই নামিয়ে বসাবে, login আর setting থেকে যাবে।',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('পরে')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('অনুমতি দিন')),
+          ],
+        ),
+      );
+      if (go == true) {
+        await updateChannel.invokeMethod('askToAllow');
+        checkedUpdate = null; // asked again when the person comes back from Settings
+      }
+      return;
     }
+
+    installing = true;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('নতুন version ${body['name'] ?? version} নামানো হচ্ছে — শেষে app একবার বন্ধ হয়ে নতুনটা বসবে।')),
+      );
+    }
+    await step('update', () async {
+      final status = await updateChannel.invokeMethod<String>('install', {'url': url});
+      if (status != 'started') {
+        throw Exception('update $status');
+      }
+    });
+    installing = false;
   }
 
   /// The site's "Sign out" in the app: this phone stops getting that person's notifications.

@@ -74,9 +74,12 @@ patch(manifest, r'(<manifest[^>]*>)', r'''\1
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />''')
-# The notification plugin's receiver handles taps.
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />''')
+# The notification plugin's receiver handles taps; ours hears how an update install went.
 patch(manifest, r'(\n(\s*)<activity)', r'''
+        <receiver android:exported="false" android:name=".UpdateReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="finance_normal" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />

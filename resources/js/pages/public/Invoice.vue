@@ -114,10 +114,17 @@ const clock = computed(
 
 let tick: number | undefined;
 let poll: number | undefined;
+// Every tap (pay, another way, claim) moves this on: a poll that left before it answers with
+// the old state, and is thrown away instead of bringing the old payment back.
+let acted = 0;
 
 async function refresh(): Promise<void> {
+    const at = acted;
     try {
-        state.value = await getJson<State>(`${base}/status`);
+        const fresh = await getJson<State>(`${base}/status`);
+        if (at === acted) {
+            state.value = fresh;
+        }
     } catch {
         // A missed poll is fine; the next one catches up.
     }
@@ -147,6 +154,7 @@ const takaSign = String.fromCharCode(0x09f3);
 const payNowError = ref<string | null>(null);
 
 async function start(key: string): Promise<void> {
+    acted++;
     chosen.value = key;
     error.value = null;
 
@@ -182,8 +190,10 @@ async function start(key: string): Promise<void> {
 }
 
 async function cancel(): Promise<void> {
-    state.value = await postJson<State>(`${base}/cancel`);
+    acted++;
     chosen.value = null;
+    state.value = { ...state.value, session: null };
+    state.value = await postJson<State>(`${base}/cancel`);
 }
 
 const claim = reactive({ reference: '', sender: '', amount: '' });
@@ -194,6 +204,7 @@ async function sendClaim(): Promise<void> {
     if (!chosen.value) {
         return;
     }
+    acted++;
 
     busy.value = true;
     claimErrors.value = {};
@@ -324,7 +335,7 @@ const STATUS_WORD: Record<string, string> = {
                 <!-- Open session -->
                 <section
                     v-else-if="state.session && sessionMethod"
-                    class="panel p-5"
+                    class="panel flex flex-col p-5 lg:flex-1"
                     role="region"
                     :aria-label="t('পেমেন্ট')"
                 >
@@ -409,9 +420,7 @@ const STATUS_WORD: Record<string, string> = {
                     <div
                         v-else-if="state.session.qr || sessionMethod.image"
                         class="mt-4 rounded-xl border border-line p-4 text-center"
-                        :class="
-                            state.session.qr && 'border-brand/30 bg-brand-soft'
-                        "
+                        :class="state.session.qr && 'bg-sunken'"
                     >
                         <div
                             v-if="state.session.qr"
@@ -619,10 +628,28 @@ const STATUS_WORD: Record<string, string> = {
                             >
                         </form>
                     </details>
+                    <!-- Bottom of the card, level with the invoice's own footer. -->
+                    <p
+                        class="mt-5 flex items-center gap-2 border-t border-line pt-4 text-[12px] text-ink-3 lg:mt-auto"
+                    >
+                        <KIcon
+                            name="lock"
+                            :size="14"
+                            class="shrink-0 text-brand"
+                        />{{
+                            t(
+                                'টাকা সরাসরি {name}-এর account-এ যায় · পেমেন্ট নিজে থেকে মিলে যায়, রসিদ এই পাতাতেই।',
+                                { name: business.name },
+                            )
+                        }}
+                    </p>
                 </section>
 
                 <!-- Choose a way to pay -->
-                <section v-else-if="state.payable" class="panel p-5">
+                <section
+                    v-else-if="state.payable"
+                    class="panel flex flex-col p-5 lg:flex-1"
+                >
                     <h2 class="text-[16px] font-bold">
                         {{
                             t('{amount} পরিশোধ করুন', {
@@ -818,6 +845,21 @@ const STATUS_WORD: Record<string, string> = {
                             >
                         </form>
                     </div>
+                    <!-- Bottom of the card, level with the invoice's own footer. -->
+                    <p
+                        class="mt-5 flex items-center gap-2 border-t border-line pt-4 text-[12px] text-ink-3 lg:mt-auto"
+                    >
+                        <KIcon
+                            name="lock"
+                            :size="14"
+                            class="shrink-0 text-brand"
+                        />{{
+                            t(
+                                'টাকা সরাসরি {name}-এর account-এ যায় · পেমেন্ট নিজে থেকে মিলে যায়, রসিদ এই পাতাতেই।',
+                                { name: business.name },
+                            )
+                        }}
+                    </p>
                 </section>
 
                 <!-- History -->

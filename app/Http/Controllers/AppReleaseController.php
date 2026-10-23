@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppDevice;
 use App\Models\Setting;
 use App\Payments\PaySettings;
+use App\Services\AppPush;
 use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -70,6 +72,17 @@ class AppReleaseController extends Controller
         Setting::put(self::key($flavor, 'version_name'), $data['name']);
         Setting::put(self::key($flavor, 'released_at'), now()->toIso8601String());
         activity('Setting')->log("app {$data['name']} ($flavor) uploaded");
+
+        // Every phone hears of it now; each app looks for its own kind and installs it itself.
+        // One tag, so the plain and the SMS upload make one notification, not two.
+        rescue(fn () => app(AppPush::class)->send(AppDevice::all(), [
+            'title' => __('Klok Finance-এর নতুন version :name', ['name' => $data['name']]),
+            'body' => __('App খুললে নিজে থেকে নতুনটা বসে যাবে — login আর setting থেকে যায়।'),
+            'level' => 'normal',
+            'kind' => 'app_update',
+            'tag' => 'app_update_'.$data['version'],
+            'url' => '/dashboard',
+        ]));
 
         return response()->json(['ok' => true]);
     }
