@@ -147,6 +147,8 @@ it('dates a charge at the end of the billed period, as on a real receipt', funct
     Total $10.00
     TXT;
 
+    // As Gmail writes it: a narrow no-break space before AM / PM.
+    $real = str_replace([' AM', ' PM'], ["\u{202F}AM", "\u{202F}PM"], $real);
     $parsed = MetaReceipts::parse("Your Meta ads receipt (Account ID: 1234567890)\n".$real, CarbonImmutable::parse('2026-10-16 09:00'), fn () => Campaign::all()->all());
 
     expect($parsed['charged_at']->format('Y-m-d H:i'))->toBe('2026-10-15 23:47')

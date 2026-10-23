@@ -223,7 +223,8 @@ class MetaReceipts
      */
     public static function parse(string $body, CarbonImmutable $sentAt, callable $campaignsFor): array
     {
-        $text = preg_replace('/[ \t\x{00A0}]+/u', ' ', str_replace("\r", '', $body)) ?? $body;
+        // Mail clients write odd spaces (Gmail: "11:47\u{202F}PM"): all become plain ones.
+        $text = preg_replace('/[ \t\x{00A0}\x{2000}-\x{200B}\x{202F}\x{205F}\x{3000}]+/u', ' ', str_replace("\r", '', $body)) ?? $body;
         $money = '(?:US)?\$\s?([0-9][0-9,]*\.[0-9]{2})';
 
         $find = fn (string $pattern) => preg_match($pattern, $text, $m) ? trim($m[1]) : null;
