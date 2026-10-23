@@ -78,7 +78,10 @@ watch(open, async (value) => {
     );
     active.value = Math.max(0, index);
     await nextTick();
-    (withSearch.value ? search.value : list.value)?.focus();
+    // Focus without moving the page.
+    (withSearch.value ? search.value : list.value)?.focus({
+        preventScroll: true,
+    });
     scrollActive();
 });
 
@@ -87,14 +90,30 @@ watch(query, () => (active.value = 0));
 function choose(option: Option): void {
     model.value = option.value;
     close();
-    anchor.value?.querySelector('button')?.focus();
+    anchor.value?.querySelector('button')?.focus({ preventScroll: true });
 }
 
+/** Keeps the active option in view by scrolling the list only, never the page. */
 function scrollActive(): void {
     nextTick(() => {
-        list.value
-            ?.querySelector(`[data-index="${active.value}"]`)
-            ?.scrollIntoView({ block: 'nearest' });
+        const box = list.value;
+        const item = box?.querySelector<HTMLElement>(
+            `[data-index="${active.value}"]`,
+        );
+
+        if (!box || !item) {
+            return;
+        }
+
+        if (item.offsetTop < box.scrollTop) {
+            box.scrollTop = item.offsetTop - 6;
+        } else if (
+            item.offsetTop + item.offsetHeight >
+            box.scrollTop + box.clientHeight
+        ) {
+            box.scrollTop =
+                item.offsetTop + item.offsetHeight - box.clientHeight + 6;
+        }
     });
 }
 

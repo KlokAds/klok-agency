@@ -79,6 +79,14 @@ export function usePopover(
         listen(value);
 
         if (value) {
+            // Out of the page flow and unseen until placed, so opening never shifts the page.
+            style.value = {
+                position: 'fixed',
+                top: '0px',
+                left: '0px',
+                visibility: 'hidden',
+                zIndex: '80',
+            };
             await nextTick();
             place();
         }

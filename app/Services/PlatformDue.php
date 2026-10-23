@@ -171,10 +171,12 @@ class PlatformDue
                 continue;
             }
 
-            $days = $row->source === 'pilot' && $row->entry_date
-                ? CampaignDay::whereDate('day', $row->entry_date->toDateString())
+            [$from, $to] = self::span($row);
+            $days = $from !== null
+                ? CampaignDay::whereDate('day', '>=', $from)->whereDate('day', '<=', $to)
                     ->whereIn('campaign_id', Campaign::where('client_id', $row->client_id)->pluck('id'))
-                    ->where('spend', '>', 0)->get(['campaign_id', 'spend'])->values()
+                    ->where('spend', '>', 0)
+                    ->selectRaw('campaign_id, sum(spend) as spend')->groupBy('campaign_id')->get()->values()
                 : collect();
             $total = (int) $days->sum('spend');
 
@@ -193,6 +195,23 @@ class PlatformDue
         }
 
         return $pieces;
+    }
+
+    /**
+     * The days a Pilot spend row covers: a week ("pilot:client:platform:from:to"),
+     * or the one day of an older row.
+     *
+     * @return array{0: ?string, 1: ?string}
+     */
+    public static function span(UsdEntry $row): array
+    {
+        if ($row->source !== 'pilot' || ! $row->entry_date) {
+            return [null, null];
+        }
+
+        $parts = explode(':', (string) $row->source_key);
+
+        return count($parts) === 5 ? [$parts[3], $parts[4]] : [$row->entry_date->toDateString(), $row->entry_date->toDateString()];
     }
 
     /**

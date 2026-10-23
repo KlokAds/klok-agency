@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\BdtEntry;
 use App\Models\Campaign;
+use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\FxBatch;
 use App\Models\Setting;
@@ -329,9 +330,10 @@ class Books
         $used = 0;
 
         foreach ($rows as $row) {
-            $need = -$row->amount;
+            // A week only partly covered earns the part the money reached.
+            $need = min(-$row->amount, $credit - $used);
 
-            if ($used + $need > $credit) {
+            if ($need <= 0) {
                 break;
             }
 
@@ -353,20 +355,22 @@ class Books
             $earned[$row->id] = (int) round($bdt);
         }
 
-        // A day's average over the last week's full days that spent: a campaign
-        // that started three days ago is not spread over seven, and today
-        // (still running) does not pull the average down.
-        $week = now()->subDays(7)->startOfDay();
-        $today = now()->startOfDay();
-        $full = $rows->filter(fn ($e) => $e->entry_date && $e->entry_date->gte($week) && $e->entry_date->lt($today));
-        $days = max(1, $full->map(fn ($e) => $e->entry_date->toDateString())->unique()->count());
+        // A day's average over the last week's full days that spent (the
+        // campaigns' own days, since the book rows are weekly): a campaign that
+        // started three days ago is not spread over seven, and today (still
+        // running) does not pull the average down.
+        $spent = CampaignDay::query()
+            ->whereIn('campaign_id', Campaign::where('client_id', $clientId)->whereNotNull('bill_from')->pluck('id'))
+            ->whereDate('day', '>=', now()->subDays(7)->toDateString())->whereDate('day', '<', now()->toDateString())
+            ->where('spend', '>', 0)
+            ->toBase()->selectRaw('day, sum(spend) as spend')->groupBy('day')->get();
 
         return $this->prepaid[$clientId] = [
             'credit_usd' => $credit,
             'spent_usd' => -(int) $rows->sum('amount'),
             'paid_bdt' => $paid,
             'unearned' => $paid - array_sum($earned),
-            'daily_usd' => (int) round(-$full->sum('amount') / $days),
+            'daily_usd' => $spent->isEmpty() ? 0 : (int) round($spent->sum('spend') / $spent->count()),
             'earned' => $earned,
         ];
     }

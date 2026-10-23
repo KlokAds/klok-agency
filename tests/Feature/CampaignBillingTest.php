@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Account;
+use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\Client;
 use App\Models\PilotAccount;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Services\Books;
 use App\Services\CampaignBilling;
 use App\Support\Access;
+use Carbon\CarbonImmutable;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
 use Illuminate\Support\Facades\Crypt;
@@ -57,25 +59,26 @@ it('lists an ad account\'s campaigns and suggests the client from the name', fun
             ->where('campaigns.data.1.suggested', null));
 });
 
-it('bills a linked campaign\'s daily spend to its client and funds it from the advance credit', function () {
+it('bills a linked campaign\'s spend to its client week by week and funds it from the advance credit', function () {
     app(CampaignBilling::class)->refreshCampaigns($this->account);
     $campaign = Campaign::where('pilot_campaign_id', 101)->sole();
 
     $this->actingAs($this->owner)->put("/campaigns/{$campaign->id}/client", ['client_id' => $this->gffs->id, 'bill_from' => $this->day1])->assertRedirect();
     app(CampaignBilling::class)->sync();
 
+    // Both days fall in one week: one row of $9.
     $rows = UsdEntry::where('source', 'pilot')->orderBy('entry_date')->get();
-    expect($rows->pluck('amount')->all())->toBe([-500, -400])
+    expect($rows->pluck('amount')->all())->toBe([-900])
         ->and($rows->pluck('status')->unique()->all())->toBe(['pending'])
         ->and($rows->first()->account_id)->toBe(Account::where('code', 'meta')->value('id'));
 
-    // ৳900 buys $6 of credit (rate 150): the first day ($5) is funded, the second is not yet.
+    // ৳900 buys $6 of credit (rate 150): the $9 week is only partly covered, so it stays pending.
     $this->actingAs($this->owner)->post('/quick/client-payment', [
         'entry_date' => now()->toDateString(), 'client_id' => $this->gffs->id, 'category' => 'client_payment',
         'pay_via' => 'bank', 'wallet' => 'bank', 'amount' => '900', 'usd_credit' => '6',
     ])->assertRedirect();
 
-    expect(UsdEntry::where('source', 'pilot')->orderBy('entry_date')->pluck('status')->all())->toBe(['settled', 'pending']);
+    expect(UsdEntry::where('source', 'pilot')->orderBy('entry_date')->pluck('status')->all())->toBe(['pending']);
 
     $books = new Books;
     $client = collect($books->clients())->firstWhere('id', $this->gffs->id);
@@ -83,7 +86,8 @@ it('bills a linked campaign\'s daily spend to its client and funds it from the a
     expect($client['credit_usd'])->toBe(600)
         ->and($client['campaign_usd'])->toBe(900)
         ->and($client['credit_left'])->toBe(-300)
-        ->and($client['unearned'])->toBe(90000 - 75000)
+        // The $6 the money reached is earned: nothing of the ৳900 is still held.
+        ->and($client['unearned'])->toBe(0)
         ->and($books->summary()['equity_ok'])->toBeTrue();
 
     // Pilot rows follow the campaign: they cannot be edited by hand.
@@ -150,4 +154,18 @@ it('bills from the campaign start when no day is given, or the day after spend a
 
     app(CampaignBilling::class)->sync();
     expect(UsdEntry::where('source', 'pilot')->pluck('amount')->all())->toBe([-400]);
+});
+
+it('starts a billing week on the day the client paid, and a new payment starts the next', function () {
+    $billing = app(CampaignBilling::class);
+    BdtEntry::create(['entry_date' => '2026-10-20', 'description' => 'GFFS', 'category' => 'client_payment', 'client_id' => $this->gffs->id, 'pay_via' => 'bank', 'amount' => 210000, 'usd_credit' => 1400]);
+    BdtEntry::create(['entry_date' => '2026-10-30', 'description' => 'GFFS', 'category' => 'client_payment', 'client_id' => $this->gffs->id, 'pay_via' => 'bank', 'amount' => 210000, 'usd_credit' => 1400]);
+    $week = $billing->weeks($this->gffs->id, '2026-10-20');
+    $span = fn (string $day) => array_map(fn ($d) => $d->toDateString(), $week(CarbonImmutable::parse($day)));
+
+    expect($span('2026-10-20'))->toBe(['2026-10-20', '2026-10-26'])
+        ->and($span('2026-10-26'))->toBe(['2026-10-20', '2026-10-26'])
+        // No payment on the 27th: the next seven days, cut short by the payment on the 30th.
+        ->and($span('2026-10-28'))->toBe(['2026-10-27', '2026-10-29'])
+        ->and($span('2026-10-30'))->toBe(['2026-10-30', '2026-11-05']);
 });
