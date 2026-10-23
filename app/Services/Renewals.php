@@ -171,17 +171,48 @@ class Renewals
         $this->tell($renewal, 'declined', self::DECLINED_TITLE);
     }
 
-    /** An invoice was paid in full: its renewal waits for the admin's OK. */
+    /**
+     * An invoice was paid in full: its renewal waits for the admin's OK. An
+     * ordinary invoice's advance lines for a campaign ("7 more days") wait
+     * the same way, each as a paid renewal.
+     */
     public function paid(Invoice $invoice): void
     {
         $renewal = Renewal::where('invoice_id', $invoice->id)->where('status', 'invoiced')->first();
 
-        if ($renewal === null) {
+        if ($renewal !== null) {
+            $renewal->forceFill(['status' => 'paid', 'paid_at' => now()])->save();
+            $this->tell($renewal, 'paid', self::PAID_TITLE);
+
             return;
         }
 
-        $renewal->forceFill(['status' => 'paid', 'paid_at' => now()])->save();
-        $this->tell($renewal, 'paid', self::PAID_TITLE);
+        $lines = $invoice->items()->where('kind', 'ad_budget')->whereNotNull('campaign_id')->whereNotNull('days')->get();
+
+        foreach ($lines as $line) {
+            $campaign = Campaign::find($line->campaign_id);
+
+            if ($campaign === null || Renewal::where('invoice_id', $invoice->id)->where('campaign_id', $campaign->id)->exists()) {
+                continue;
+            }
+
+            // The link made two days before the end, if any, becomes this one.
+            $endsOn = ($campaign->lastDay() ?? CarbonImmutable::now()->startOfDay())->toDateString();
+            $renewal = Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->whereIn('status', ['open', 'declined', 'expired'])->first()
+                ?? (Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->exists() ? null : new Renewal([
+                    'campaign_id' => $campaign->id, 'client_id' => $invoice->client_id, 'token' => Str::random(40), 'ends_on' => $endsOn,
+                ]));
+
+            if ($renewal === null) {
+                continue;
+            }
+
+            $renewal->forceFill([
+                'budget' => $campaign->dailyBudget(), 'days' => $line->days, 'usd' => $line->usd, 'invoice_id' => $invoice->id,
+                'status' => 'paid', 'decided_at' => $renewal->decided_at ?? now(), 'paid_at' => now(),
+            ])->save();
+            $this->tell($renewal, 'paid', self::PAID_TITLE);
+        }
     }
 
     /**

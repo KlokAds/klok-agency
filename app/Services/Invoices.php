@@ -66,7 +66,11 @@ class Invoices
 
             foreach ($data['items'] as $position => $line) {
                 $priced = in_array($line['kind'], InvoiceItem::USD_KINDS, true);
-                $campaign = $line['kind'] === 'ad_spend' ? $line['campaign_id'] : null;
+                // Spend lines bill a campaign. An advance line for a campaign buys
+                // as many more days as its USD covers at the daily budget.
+                $campaign = in_array($line['kind'], InvoiceItem::USD_KINDS, true) ? ($line['campaign_id'] ?? null) : null;
+                $budget = $line['kind'] === 'ad_budget' && $campaign ? Campaign::find($campaign)?->dailyBudget() : null;
+                $days = $budget ? intdiv((int) $line['usd'], $budget) ?: null : null;
 
                 if ($priced) {
                     $cents = (int) $line['usd'];
@@ -87,6 +91,7 @@ class Invoices
                     'campaign_id' => $campaign,
                     'period_from' => $line['kind'] === 'ad_spend' ? $line['period_from'] : null,
                     'period_to' => $line['kind'] === 'ad_spend' ? $line['period_to'] : null,
+                    'days' => $days,
                     'description' => $description,
                     'usd' => $cents,
                     'rate' => $rate,

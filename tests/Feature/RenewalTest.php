@@ -290,3 +290,29 @@ it('prices spend at the FX batch that paid for it plus commission, not today\'s 
     $list = $this->actingAs($this->owner)->getJson('/invoices/campaigns?'.http_build_query(['client' => $this->gffs->id, 'from' => $this->day1, 'to' => $this->day2]))->json('campaigns');
     expect($list[0]['rate'])->toBe($expected);
 });
+
+it('extends a campaign from an ordinary invoice\'s advance line: its USD buys the days, approved after payment', function () {
+    payGffs($this, '1500', '10');
+    app(CampaignLimits::class)->refresh($this->campaign, true);
+
+    // $14 for this campaign at $2 a day: 7 more days.
+    $this->actingAs($this->owner)->post('/invoices', [
+        'client_id' => $this->gffs->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null,
+        'items' => [['kind' => 'ad_budget', 'description' => 'Advance', 'campaign_id' => $this->campaign->id, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null, 'usd' => '14', 'rate' => '150', 'amount' => '']],
+    ])->assertRedirect();
+    $invoice = Invoice::with('items')->latest('id')->first();
+    expect($invoice->items->first()->days)->toBe(7)
+        ->and(Renewal::count())->toBe(0);
+
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/pay", [
+        'method' => 'bank', 'wallet' => 'bank', 'paid_on' => now()->toDateString(), 'amount' => (string) ($invoice->total / 100),
+    ])->assertRedirect();
+
+    $renewal = Renewal::sole();
+    expect($renewal->status)->toBe('paid')
+        ->and($renewal->days)->toBe(7)
+        ->and(collect($this->limits)->whereNotNull('new_end')->count())->toBe(0);
+
+    $this->actingAs($this->owner)->post("/renewals/{$renewal->id}/approve")->assertRedirect();
+    expect(collect($this->limits)->last()['new_end'])->toBe(now()->addDay()->addDays(7)->toDateString());
+});

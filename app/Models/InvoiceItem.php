@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $campaign_id
  * @property CarbonImmutable|null $period_from
  * @property CarbonImmutable|null $period_to
+ * @property int|null $days more days of the campaign an advance line pays for
  * @property string $description
  * @property int|null $usd
  * @property string|null $rate
@@ -39,13 +40,13 @@ class InvoiceItem extends Model
     public const USD_KINDS = ['ad_spend', 'ad_budget'];
 
     protected $fillable = [
-        'invoice_id', 'position', 'kind', 'campaign_id', 'period_from', 'period_to', 'description', 'usd', 'rate', 'results', 'clicks', 'amount',
+        'invoice_id', 'position', 'kind', 'campaign_id', 'period_from', 'period_to', 'days', 'description', 'usd', 'rate', 'results', 'clicks', 'amount',
     ];
 
     protected function casts(): array
     {
         return [
-            'usd' => 'integer', 'amount' => 'integer', 'position' => 'integer', 'results' => 'integer', 'clicks' => 'integer',
+            'usd' => 'integer', 'amount' => 'integer', 'position' => 'integer', 'results' => 'integer', 'clicks' => 'integer', 'days' => 'integer',
             'period_from' => 'date', 'period_to' => 'date',
         ];
     }

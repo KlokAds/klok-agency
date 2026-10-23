@@ -65,7 +65,7 @@ const props = defineProps<{
         commission: number;
         rate: number | null;
     };
-    options: { clients: Option[]; kinds: Option[] };
+    options: { clients: Option[]; kinds: Option[]; campaigns: Option[] };
 }>();
 
 const defaultRate = props.pricing.rate ? String(props.pricing.rate) : '';
@@ -104,6 +104,45 @@ const form = useForm({
 });
 
 const isUsd = (line: Line) => ['ad_spend', 'ad_budget'].includes(line.kind);
+
+// An advance line for a campaign: the USD buys that many more days, and
+// once paid (and approved) the campaign's end moves out by them on Meta.
+type CampaignOption = Option & {
+    client_id: number;
+    budget: number | null;
+    end: string | null;
+    live: boolean;
+};
+const clientCampaigns = computed(() =>
+    (props.options.campaigns as CampaignOption[]).filter(
+        (c) => c.client_id === Number(form.client_id),
+    ),
+);
+const campaignOf = (line: Line) =>
+    clientCampaigns.value.find((c) => c.value === line.campaign_id) ?? null;
+const daysFor = (line: Line): number | null => {
+    const c = campaignOf(line);
+
+    return c?.budget ? Math.floor(cents(line.usd) / c.budget) : null;
+};
+function addDaysIso(iso: string, n: number): string {
+    const d = new Date(`${iso}T00:00:00`);
+    d.setDate(d.getDate() + n);
+
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const newEnd = (line: Line): string | null => {
+    const c = campaignOf(line);
+    const days = daysFor(line);
+
+    if (!c || !days) {
+        return null;
+    }
+
+    const from = c.end && c.end > today() ? c.end : today();
+
+    return addDaysIso(from, days);
+};
 const cents = (text: string) =>
     Math.round(parseFloat((text || '0').replace(/,/g, '')) * 100) || 0;
 const rateOf = (line: Line) => parseFloat(line.rate || '0') || 0;
@@ -504,6 +543,64 @@ const errorAt = (index: number, field: string) =>
                                 }}</template
                             >
                         </p>
+                        <div
+                            v-if="line.kind === 'ad_budget'"
+                            class="grid gap-1.5"
+                        >
+                            <KField
+                                :label="t('কোন campaign-এর দিন বাড়বে')"
+                                optional
+                            >
+                                <KSelect
+                                    v-model="line.campaign_id"
+                                    :options="clientCampaigns"
+                                    clearable
+                                    :placeholder="
+                                        t('Campaign ছাড়া — শুধু আগাম টাকা')
+                                    "
+                                />
+                            </KField>
+                            <p
+                                v-if="campaignOf(line)"
+                                class="text-[12px]"
+                                :class="
+                                    daysFor(line)
+                                        ? 'text-brand-ink'
+                                        : 'text-ink-3'
+                                "
+                            >
+                                <template v-if="!campaignOf(line)?.budget">{{
+                                    t(
+                                        'এই campaign-এর দিনের budget জানা নেই — Campaign পাতায় Pilot থেকে আনুন।',
+                                    )
+                                }}</template>
+                                <template v-else-if="daysFor(line)">{{
+                                    t(
+                                        '{usd} = {days} দিন ({budget}/দিন) — টাকা এলে approve করলে Meta-তে শেষ {date} পর্যন্ত বাড়বে।',
+                                        {
+                                            usd: money(cents(line.usd), 'usd'),
+                                            days: daysFor(line) ?? 0,
+                                            budget: money(
+                                                campaignOf(line)?.budget ?? 0,
+                                                'usd',
+                                            ),
+                                            date: niceDate(newEnd(line)),
+                                        },
+                                    )
+                                }}</template>
+                                <template v-else>{{
+                                    t(
+                                        'USD দিন — {budget}/দিন হিসাবে কত দিন বাড়বে দেখাবে।',
+                                        {
+                                            budget: money(
+                                                campaignOf(line)?.budget ?? 0,
+                                                'usd',
+                                            ),
+                                        },
+                                    )
+                                }}</template>
+                            </p>
+                        </div>
                         <div
                             v-if="isUsd(line)"
                             class="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"

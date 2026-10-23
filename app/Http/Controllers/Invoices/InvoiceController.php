@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Invoices;
 
 use App\Http\Controllers\Controller;
 use App\Mail\InvoiceMail;
+use App\Models\Campaign;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
@@ -296,6 +297,7 @@ class InvoiceController extends Controller
                     'campaign_id' => $i->campaign_id,
                     'period_from' => $i->period_from?->toDateString(),
                     'period_to' => $i->period_to?->toDateString(),
+                    'days' => $i->days,
                     'results' => $i->results,
                     'clicks' => $i->clicks,
                     'usd' => $i->usd !== null ? Money::toInput($i->usd) : '',
@@ -313,6 +315,12 @@ class InvoiceController extends Controller
             'options' => [
                 'clients' => Lookups::clients(),
                 'kinds' => Lookups::options(InvoiceItem::KINDS),
+                // For an advance line: which campaign the days are for.
+                'campaigns' => Campaign::whereNotNull('client_id')->orderBy('name')->get()
+                    ->map(fn (Campaign $c) => [
+                        'value' => $c->id, 'label' => $c->name, 'client_id' => $c->client_id,
+                        'budget' => $c->dailyBudget(), 'end' => $c->lastDay()?->toDateString(), 'live' => $c->isLive(),
+                    ])->values()->all(),
             ],
         ]);
     }
