@@ -39,6 +39,7 @@ const props = defineProps<{
 
 const can = computed(() => usePage().props.auth.can);
 const editable = computed(() => !!can.value['settings.edit']);
+const inApp = /KlokFinanceApp/.test(navigator.userAgent);
 
 const keyForm = useForm({ key: '' });
 const lowForm = useForm({ card_low_usd: props.cardLow });
@@ -275,8 +276,9 @@ function phone(agent: string | null): string {
                         <template v-else>—</template>
                     </p>
                 </div>
+                <!-- Downloads only in a web browser, never inside the app itself. -->
                 <a
-                    v-if="r.url"
+                    v-if="r.url && !inApp"
                     :href="r.url"
                     class="text-[13.5px] font-medium text-brand underline underline-offset-2"
                     >{{ t('APK নামান') }}</a

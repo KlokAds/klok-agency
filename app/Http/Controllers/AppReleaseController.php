@@ -80,13 +80,15 @@ class AppReleaseController extends Controller
     public function latest(Request $request): JsonResponse
     {
         $flavor = in_array($request->query('flavor'), self::FLAVORS, true) ? (string) $request->query('flavor') : 'sms';
+        $owner = (bool) $request->user()?->hasRole(Access::OWNER);
 
         return response()->json([
             'version' => self::version($flavor),
             'name' => self::versionName($flavor),
-            'url' => self::downloadUrl($flavor),
+            // The SMS app is the Owner's alone: nobody else gets a link to it.
+            'url' => $flavor === 'sms' && ! $owner ? null : self::downloadUrl($flavor),
             // The SMS app turns forwarding on by itself only for the Owner.
-            'owner' => (bool) $request->user()?->hasRole(Access::OWNER),
+            'owner' => $owner,
         ]);
     }
 

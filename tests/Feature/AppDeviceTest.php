@@ -136,6 +136,9 @@ test('GitHub hands over a new APK and the app finds it', function () {
     expect($this->get($plain)->streamedContent())->toBe('plain apk')
         ->and($this->get($sms)->streamedContent())->toBe('sms apk');
 
+    // Nobody but the Owner gets a link to the SMS app.
+    expect($this->actingAs($this->accountant)->getJson(route('app.latest', ['flavor' => 'sms']))->json('url'))->toBeNull();
+
     // Only the Owner sees the SMS app in Settings.
     $this->actingAs($this->owner)->get('/admin/app')->assertInertia(fn ($page) => $page->has('releases', 2));
     $this->accountant->givePermissionTo('settings.view');
