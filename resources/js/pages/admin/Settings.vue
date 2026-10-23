@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SettingsSection from '@/components/SettingsSection.vue';
 import SettingsNav from '@/components/SettingsNav.vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
@@ -26,6 +26,14 @@ const props = defineProps<{
         mfs_out_percent: string;
         bank_transfer_fee: string;
     };
+    mail: {
+        host: string;
+        port: number;
+        username: string;
+        from_name: string;
+        has_password: boolean;
+        notify_email: string;
+    };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -35,6 +43,38 @@ const form = useForm({ ...props.settings });
 function save(): void {
     form.put('/admin/settings', { preserveScroll: true });
 }
+
+// The mailbox the app sends from (Hostinger): the password is never sent back.
+const mailForm = useForm({
+    host: props.mail.host,
+    port: props.mail.port,
+    username: props.mail.username,
+    password: '',
+    from_name: props.mail.from_name,
+    notify_email: props.mail.notify_email,
+});
+function saveMail(): void {
+    mailForm.put('/admin/settings/mail', {
+        preserveScroll: true,
+        onSuccess: () => mailForm.reset('password'),
+    });
+}
+const testing = ref(false);
+function testMail(): void {
+    router.post(
+        '/admin/settings/mail/test',
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => (testing.value = true),
+            onFinish: () => (testing.value = false),
+        },
+    );
+}
+const ports = computed<Option[]>(() => [
+    { value: 465, label: '465 (SSL)' },
+    { value: 587, label: '587 (TLS)' },
+]);
 
 const idleOptions = computed<Option[]>(() =>
     [15, 30, 60, 120].map((m) => ({
@@ -210,6 +250,97 @@ onMounted(() => {
                     variant="primary"
                     :loading="form.processing"
                     @click="save"
+                    >{{ t('সংরক্ষণ') }}</KButton
+                >
+            </template>
+        </SettingsSection>
+
+        <SettingsSection
+            title="Email"
+            :description="
+                t(
+                    'যে mailbox থেকে app email পাঠায় (যেমন Hostinger-এর billing@klokads.com), আর renewal-এর খবর কার কাছে যাবে।',
+                )
+            "
+            icon="mail"
+        >
+            <div class="grid gap-5 sm:grid-cols-[minmax(0,1fr)_160px]">
+                <KField label="SMTP host" :error="mailForm.errors.host">
+                    <KInput v-model="mailForm.host" :disabled="!editable" />
+                </KField>
+                <KField label="Port" :error="mailForm.errors.port">
+                    <KSegment
+                        v-model="mailForm.port"
+                        :options="ports"
+                        size="sm"
+                    />
+                </KField>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-2">
+                <KField
+                    :label="t('Mailbox (email)')"
+                    :error="mailForm.errors.username"
+                >
+                    <KInput
+                        v-model="mailForm.username"
+                        type="email"
+                        placeholder="billing@klokads.com"
+                        :disabled="!editable"
+                    />
+                </KField>
+                <KField
+                    :label="t('Mailbox-এর password')"
+                    :error="mailForm.errors.password"
+                    :hint="
+                        mail.has_password
+                            ? t(
+                                  'রাখা আছে (encrypted)। খালি রাখলে আগেরটাই থাকবে।',
+                              )
+                            : t('Hostinger → Emails-এ এই mailbox-এর password।')
+                    "
+                >
+                    <KInput
+                        v-model="mailForm.password"
+                        type="password"
+                        autocomplete="new-password"
+                        :disabled="!editable"
+                    />
+                </KField>
+                <KField
+                    :label="t('পাঠানোর নাম')"
+                    :error="mailForm.errors.from_name"
+                >
+                    <KInput
+                        v-model="mailForm.from_name"
+                        :disabled="!editable"
+                    />
+                </KField>
+                <KField
+                    :label="t('খবর যাবে এই email-এ')"
+                    :error="mailForm.errors.notify_email"
+                    :hint="
+                        t('Client contract শেষ করলে বা renewal-এর টাকা দিলে।')
+                    "
+                >
+                    <KInput
+                        v-model="mailForm.notify_email"
+                        type="email"
+                        :disabled="!editable"
+                    />
+                </KField>
+            </div>
+            <template v-if="editable" #footer>
+                <KButton
+                    icon="mail"
+                    :loading="testing"
+                    :disabled="!mail.has_password"
+                    @click="testMail"
+                    >{{ t('পরীক্ষার email পাঠান') }}</KButton
+                >
+                <KButton
+                    variant="primary"
+                    :loading="mailForm.processing"
+                    @click="saveMail"
                     >{{ t('সংরক্ষণ') }}</KButton
                 >
             </template>

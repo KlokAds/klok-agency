@@ -39,21 +39,16 @@ type Lookups = {
 const lookups = computed(() => page.props.lookups as Lookups | undefined);
 const loading = ref(false);
 
-// The jobs, in the words the old sheet used ("কোথায় কী লিখব").
+// The jobs, in the words the old sheet used ("কোথায় কী লিখব"). Two of them
+// mostly fill themselves (auto): Pilot campaigns and paid invoices.
 const JOBS = [
-    {
-        key: 'ad-spend',
-        label: 'Client-এর ad চালালাম',
-        note: 'USD খাতা · Client Spend · Pending',
-        icon: 'signal',
-        perm: 'usd.create',
-    }, // i18n
     {
         key: 'client-payment',
         label: 'Client টাকা দিল',
-        note: 'BDT খাতা · Pending → Settled',
+        note: 'Invoice-এর টাকা নিজে বসে — cash বা অন্য পথে এলে এখানে',
         icon: 'taka',
         perm: 'bdt.create',
+        auto: true,
     }, // i18n
     {
         key: 'card-charge',
@@ -97,6 +92,14 @@ const JOBS = [
         icon: 'user',
         perm: 'bdt.create',
     }, // i18n
+    {
+        key: 'ad-spend',
+        label: 'Pilot-এর বাইরের ad খরচ',
+        note: 'Pilot-এর campaign-এর খরচ নিজে আসে — শুধু বাকিগুলো',
+        icon: 'signal',
+        perm: 'usd.create',
+        auto: true,
+    }, // i18n
 ] as const;
 
 type JobKey = (typeof JOBS)[number]['key'];
@@ -110,7 +113,7 @@ const jobOptions = computed<Option[]>(() =>
         icon: j.icon,
     })),
 );
-const job = ref<JobKey>('ad-spend');
+const job = ref<JobKey>('client-payment');
 
 const blank = () => ({
     entry_date: today() as string | null,
@@ -349,9 +352,14 @@ const directions = computed<Option[]>(() => [
                     />
                     <span class="min-w-0">
                         <span
-                            class="block text-[13.5px] font-semibold"
+                            class="flex items-center gap-1.5 text-[13.5px] font-semibold"
                             :class="job === j.key && 'text-brand-ink'"
-                            >{{ t(j.label) }}</span
+                            >{{ t(j.label)
+                            }}<span
+                                v-if="'auto' in j"
+                                class="rounded bg-in-soft px-1.5 text-[10.5px] font-semibold text-in"
+                                >Auto</span
+                            ></span
                         >
                         <span class="block text-[11.5px] text-ink-3">{{
                             t(j.note)

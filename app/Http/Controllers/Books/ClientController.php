@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Books;
 use App\Http\Controllers\Controller;
 use App\Models\BdtEntry;
 use App\Models\Campaign;
+use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PilotAccount;
@@ -113,6 +114,7 @@ class ClientController extends Controller
                     'spend_7d' => $c->spend_7d, 'bill_from' => $c->bill_from?->toDateString(),
                 ]),
             'credit' => collect($books->clients())->firstWhere('id', $client->id),
+            'budget_days' => $this->budgetDays($client),
             'tasks' => Task::with('assignee:id,name')->where('client_id', $client->id)->whereNull('done_at')->orderBy('due_at')->limit(10)->get()
                 ->map(fn (Task $t) => [
                     'id' => $t->id, 'title' => $t->title, 'kind' => $t->kind, 'due_at' => $t->due_at?->format('Y-m-d\TH:i'),
@@ -125,6 +127,37 @@ class ClientController extends Controller
                 'users' => User::visible()->where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
             ],
         ]);
+    }
+
+    /**
+     * The last 30 billed days of the client's campaigns: the budget each day
+     * had (when known) against what was really spent, so a $2 budget that
+     * spent $2.12 or $1.92 shows, and what that adds up to.
+     *
+     * @return array{days: list<array{day: string, budget: ?int, spend: int, diff: ?int}>, over: int, under: int}
+     */
+    private function budgetDays(Client $client): array
+    {
+        $campaigns = Campaign::where('client_id', $client->id)->whereNotNull('bill_from')->get(['id', 'bill_from']);
+        $rows = CampaignDay::whereIn('campaign_id', $campaigns->pluck('id'))
+            ->whereDate('day', '>=', now()->subDays(29)->toDateString())
+            ->orderByDesc('day')->get()
+            ->filter(fn (CampaignDay $d) => $d->day->gte($campaigns->firstWhere('id', $d->campaign_id)?->bill_from))
+            ->groupBy(fn (CampaignDay $d) => $d->day->toDateString());
+
+        $days = $rows->map(function ($group, $day) {
+            // A day's budget is known only when every campaign that spent had one.
+            $budget = $group->contains(fn (CampaignDay $d) => $d->budget === null) ? null : (int) $group->sum('budget');
+            $spend = (int) $group->sum('spend');
+
+            return ['day' => (string) $day, 'budget' => $budget, 'spend' => $spend, 'diff' => $budget === null ? null : $spend - $budget];
+        })->values();
+
+        return [
+            'days' => array_values($days->all()),
+            'over' => (int) $days->where('diff', '>', 0)->sum('diff'),
+            'under' => (int) -$days->where('diff', '<', 0)->sum('diff'),
+        ];
     }
 
     /**

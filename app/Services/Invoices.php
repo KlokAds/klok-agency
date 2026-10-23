@@ -204,6 +204,11 @@ class Invoices
             'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($amount),
         ], ['url' => '/invoices/'.$invoice->id]));
 
+        if ($invoice->status === 'paid') {
+            // A renewal's invoice: its campaign waits for the admin's OK.
+            app(Renewals::class)->paid($invoice);
+        }
+
         return true;
     }
 

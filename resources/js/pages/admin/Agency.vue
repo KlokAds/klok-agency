@@ -8,6 +8,7 @@ import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
 import KSelect from '@/components/k/KSelect.vue';
+import KSwitch from '@/components/k/KSwitch.vue';
 import KTag from '@/components/k/KTag.vue';
 import { toast } from '@/lib/feedback';
 import { ago } from '@/lib/format';
@@ -19,6 +20,8 @@ const props = defineProps<{
         summary_time: string;
         pilot_url: string;
         pilot_connected: boolean;
+        credit_guard: boolean;
+        credit_guard_error: string | null;
     };
     tick: { url: string | null; last: string | null };
 }>();
@@ -29,6 +32,7 @@ const editable = computed(() => !!can.value['settings.edit']);
 const form = useForm({
     summary_time: props.settings.summary_time,
     pilot_url: props.settings.pilot_url,
+    credit_guard: props.settings.credit_guard,
 });
 const tokenForm = useForm({ pilot_token: '' });
 
@@ -149,7 +153,7 @@ function copy(text: string): void {
             title="Klok Pilot"
             :description="
                 t(
-                    'Klok Pilot → Agents থেকে একটা agency token বানিয়ে এখানে দিন (শুধু পড়ার অনুমতি যথেষ্ট)। তারপর প্রতিটা client-এর পাতায় তার Pilot ad account বেছে দিন।',
+                    'Klok Pilot → Agents থেকে একটা agency token বানিয়ে এখানে দিন। Campaign নিজে বন্ধ আর extend করতে token-এ campaign বদলানোর (write:campaigns) অনুমতি লাগবে।',
                 )
             "
             icon="signal"
@@ -226,6 +230,41 @@ function copy(text: string): void {
                 >
                 <KButton
                     v-if="editable"
+                    variant="primary"
+                    :loading="form.processing"
+                    @click="save"
+                    >{{ t('সংরক্ষণ') }}</KButton
+                >
+            </template>
+        </SettingsSection>
+
+        <SettingsSection
+            :title="t('Client-এর টাকা শেষ হলে')"
+            :description="
+                t(
+                    'আগে টাকা দেওয়া client-এর campaign-এ Meta-তে spend cap বসে — client যত dollar-এর টাকা দিয়েছে তার বেশি এক cent-ও খরচ হয় না। টাকা শেষ হলে campaign বন্ধ হয়; extend করলে আবার চলে।',
+                )
+            "
+            icon="shield"
+        >
+            <KSwitch
+                v-model="form.credit_guard"
+                :disabled="!editable"
+                :label="t('টাকা শেষ হলে campaign নিজে বন্ধ করুন')"
+                :hint="
+                    t(
+                        'শুধু Meta-র USD ad account। $100-এর কম cap Meta নেয় না — তখন টাকা শেষ হলে pause করা হয়।',
+                    )
+                "
+            />
+            <p
+                v-if="settings.credit_guard_error"
+                class="rounded-lg border border-out/30 bg-out-soft px-3 py-2 text-[12.5px] text-out"
+            >
+                {{ settings.credit_guard_error }}
+            </p>
+            <template v-if="editable" #footer>
+                <KButton
                     variant="primary"
                     :loading="form.processing"
                     @click="save"

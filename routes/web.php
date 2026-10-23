@@ -11,6 +11,7 @@ use App\Http\Controllers\Agency\AgencySettingsController;
 use App\Http\Controllers\Agency\CampaignController;
 use App\Http\Controllers\Agency\NotificationController;
 use App\Http\Controllers\Agency\PilotAccountController;
+use App\Http\Controllers\Agency\RenewalController;
 use App\Http\Controllers\Agency\TaskController;
 use App\Http\Controllers\Agency\TickController;
 use App\Http\Controllers\Books\BdtEntryController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\Books\WalletController;
 use App\Http\Controllers\Invoices\InvoiceController;
 use App\Http\Controllers\Invoices\PaymentSettingsController;
 use App\Http\Controllers\Invoices\PublicInvoiceController;
+use App\Http\Controllers\Invoices\PublicRenewalController;
 use App\Http\Controllers\Invoices\SmsHookController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\LocaleController;
@@ -48,10 +50,13 @@ Route::post('hooks/sms/{token}', SmsHookController::class)->middleware('throttle
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('i/{token}', [PublicInvoiceController::class, 'show'])->name('invoice.public');
     Route::get('i/{token}/status', [PublicInvoiceController::class, 'status'])->name('invoice.public.status');
+    Route::get('r/{token}', [PublicRenewalController::class, 'show'])->name('renewal.public');
     Route::get('pay/media/{kind}', [PaymentSettingsController::class, 'media'])->name('pay.media');
 });
 Route::middleware('throttle:12,1')->group(function () {
     Route::post('i/{token}/pay', [PublicInvoiceController::class, 'start'])->name('invoice.public.start');
+    Route::post('r/{token}/choose', [PublicRenewalController::class, 'choose'])->name('renewal.public.choose');
+    Route::post('r/{token}/decline', [PublicRenewalController::class, 'decline'])->name('renewal.public.decline');
     Route::post('i/{token}/cancel', [PublicInvoiceController::class, 'cancel'])->name('invoice.public.cancel');
 });
 Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1')->name('invoice.public.claim');
@@ -128,6 +133,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('campaigns/{campaign}/client', [CampaignController::class, 'link'])->middleware('can:clients.edit')->name('campaigns.link');
     Route::post('campaigns/link-suggested', [CampaignController::class, 'linkSuggested'])->middleware('can:clients.edit')->name('campaigns.link-suggested');
     Route::post('campaigns/sync', [CampaignController::class, 'sync'])->middleware('can:runs.view')->name('campaigns.sync');
+    Route::post('campaigns/{campaign}/extend', [RenewalController::class, 'extend'])->middleware(['can:clients.edit', 'throttle:20,1'])->name('campaigns.extend');
+
+    Route::get('renewals', [RenewalController::class, 'index'])->middleware('can:runs.view')->name('renewals.index');
+    Route::get('renewals/{renewal}', [RenewalController::class, 'show'])->middleware('can:runs.view')->name('renewals.show');
+    Route::post('renewals/{renewal}/approve', [RenewalController::class, 'approve'])->middleware(['can:clients.edit', 'throttle:20,1'])->name('renewals.approve');
 
     Route::get('ad-accounts', [PilotAccountController::class, 'index'])->middleware('can:runs.view')->name('ad-accounts.index');
     Route::post('ad-accounts/refresh', [PilotAccountController::class, 'refresh'])->middleware('can:runs.view')->name('ad-accounts.refresh');
@@ -180,6 +190,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('settings', [SettingController::class, 'index'])->middleware('can:settings.view')->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->middleware('can:settings.edit')->name('settings.update');
+        Route::put('settings/mail', [SettingController::class, 'mail'])->middleware('can:settings.edit')->name('settings.mail');
+        Route::post('settings/mail/test', [SettingController::class, 'testMail'])->middleware(['can:settings.edit', 'throttle:5,1'])->name('settings.mail.test');
         Route::get('payment', [PaymentSettingsController::class, 'index'])->middleware('can:settings.view')->name('payment.index');
         Route::post('payment', [PaymentSettingsController::class, 'update'])->middleware('can:settings.edit')->name('payment.update');
         Route::delete('payment/image/{kind}', [PaymentSettingsController::class, 'removeImage'])->middleware('can:settings.edit')->name('payment.image.destroy');

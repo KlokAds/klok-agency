@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Support\Access;
+use App\Support\MailSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
@@ -27,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // The mailbox saved in Settings, once something is about to send mail.
+        $this->app->resolving('mail.manager', fn () => rescue(fn () => MailSettings::apply(), report: false));
 
         // The Owner role can do everything; other roles go through permissions.
         Gate::before(fn ($user) => $user->hasRole(Access::OWNER) ? true : null);

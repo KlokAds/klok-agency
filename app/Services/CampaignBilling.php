@@ -166,10 +166,16 @@ class CampaignBilling
                         continue;
                     }
 
-                    CampaignDay::updateOrCreate(
+                    $day = CampaignDay::updateOrCreate(
                         ['campaign_id' => $campaignId, 'day' => $row['date']],
                         ['spend' => (int) round((float) $row['spend'] * 100), 'results' => (int) ($row['results'] ?? 0), 'clicks' => (int) ($row['clicks'] ?? 0)],
                     );
+
+                    // The budget is known only as it is now, so only recent days keep it.
+                    $budget = $campaigns->firstWhere('id', $campaignId)?->dailyBudget();
+                    if ($day->budget === null && $budget !== null && $row['date'] >= $today->subDay()->toDateString()) {
+                        $day->forceFill(['budget' => $budget])->save();
+                    }
                     $days++;
                 }
             }

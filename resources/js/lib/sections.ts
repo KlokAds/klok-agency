@@ -16,6 +16,20 @@ export const SECTIONS = {
             perm: 'reconcile.view',
         }, // i18n
     ],
+    campaigns: [
+        {
+            label: 'Campaign',
+            href: '/campaigns',
+            icon: 'pulse',
+            perm: 'runs.view',
+        },
+        {
+            label: 'Renewal',
+            href: '/renewals',
+            icon: 'renew',
+            perm: 'runs.view',
+        },
+    ],
     ledgers: [
         { label: 'BDT খাতা', href: '/bdt', icon: 'taka', perm: 'bdt.view' }, // i18n
         { label: 'USD খাতা', href: '/usd', icon: 'dollar', perm: 'usd.view' }, // i18n

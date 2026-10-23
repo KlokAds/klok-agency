@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
- * Reads ad performance from Klok Pilot through its MCP endpoint with an
- * agency token (Pilot → Agents). Read-only tools only: ad accounts, their
- * campaigns, and spend.
+ * Talks to Klok Pilot through its MCP endpoint with an agency token
+ * (Pilot → Agents): reads ad accounts, their campaigns and spend, and sets
+ * a prepaid campaign's end, spend cap and on/off.
  */
 class PilotClient
 {
@@ -85,6 +85,19 @@ class PilotClient
         return $this->call('campaign_daily_spend', array_filter([
             'ad_account_id' => $adAccountId, 'from' => $from, 'to' => $to, 'campaign_ids' => $campaignIds ?: null,
         ], fn ($v) => $v !== null));
+    }
+
+    /**
+     * A Meta campaign's end, daily budget, spend cap and on/off; with
+     * new_end, spend_cap or active it changes them (needs the token's
+     * write:campaigns permission).
+     *
+     * @param  array{new_end?: string, spend_cap?: float, active?: bool, spent_before?: string, reason?: string}  $change
+     * @return array{daily_budget?: float|null, spend_cap?: float|null, active?: bool, end?: string|null, extendable?: bool, why_not?: string|null, spend_cap_error?: string|null, spent_before?: float|null, currency?: string}
+     */
+    public function limits(int $adAccountId, int $campaignId, array $change = []): array
+    {
+        return $this->call('set_campaign_limits', ['ad_account_id' => $adAccountId, 'campaign_id' => $campaignId, ...$change]);
     }
 
     /**

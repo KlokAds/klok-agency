@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AdRun;
 use App\Models\Invoice;
+use App\Models\Renewal;
 
 /**
  * Ready-to-send text for a client, opened in WhatsApp or the phone's SMS app
@@ -46,6 +47,17 @@ class ClientMessage
             'amount' => Money::bdt($invoice->due()),
             'due' => $invoice->due_date ? __(', শেষ তারিখ :date', ['date' => $invoice->due_date->format('d M Y')], 'bn') : '',
             'url' => $invoice->publicUrl(),
+        ], 'bn');
+    }
+
+    /** A prepaid campaign about to end: its renewal link (always in বাংলা). */
+    public static function campaignRenewal(Renewal $renewal): string
+    {
+        return __('আসসালামু আলাইকুম :name, আপনার campaign ":campaign" :date-এ শেষ হবে। আরও কত দিন চালাবেন বেছে পেমেন্ট করুন, অথবা এখানেই শেষ করুন: :url — Klok Ads', [
+            'name' => $renewal->client?->name,
+            'campaign' => $renewal->campaign?->name,
+            'date' => $renewal->ends_on->format('d M'),
+            'url' => $renewal->publicUrl(),
         ], 'bn');
     }
 

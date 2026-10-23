@@ -30,6 +30,7 @@ class Ticker
             $reminders = $this->dueReminders();
             $summary = $this->dailySummary();
             $this->syncCampaignSpend();
+            $this->renewals();
             $this->overdueInvoices();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
@@ -43,7 +44,20 @@ class Ticker
     private function syncCampaignSpend(): void
     {
         try {
-            app(CampaignBilling::class)->syncIfDue();
+            if (app(CampaignBilling::class)->syncIfDue()) {
+                // The money left changed: caps and pauses follow it.
+                app(CampaignLimits::class)->guard();
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /** Renewal links for prepaid campaigns about to end. */
+    private function renewals(): void
+    {
+        try {
+            app(Renewals::class)->openDue();
         } catch (\Throwable $e) {
             report($e);
         }

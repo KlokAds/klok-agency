@@ -13,16 +13,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $campaign_id
  * @property CarbonImmutable $day
  * @property int $spend
+ * @property int|null $budget the campaign's daily budget that day, when known
  */
 class CampaignDay extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['campaign_id', 'day', 'spend', 'results', 'clicks'];
+    protected $fillable = ['campaign_id', 'day', 'spend', 'budget', 'results', 'clicks'];
 
     protected function casts(): array
     {
-        return ['day' => 'date', 'spend' => 'integer', 'results' => 'integer', 'clicks' => 'integer'];
+        return ['day' => 'date', 'spend' => 'integer', 'budget' => 'integer', 'results' => 'integer', 'clicks' => 'integer'];
     }
 
     /** @return BelongsTo<Campaign, $this> */

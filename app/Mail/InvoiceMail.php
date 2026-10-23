@@ -19,6 +19,8 @@ class InvoiceMail extends Mailable
     /** Mail is usable only when a real mailer is set up (not the log/array drivers). */
     public static function configured(): bool
     {
+        app('mail.manager'); // applies the mailbox saved in Settings
+
         return ! in_array(config('mail.default'), ['log', 'array', null], true)
             && ! str_ends_with((string) config('mail.from.address'), '@example.com');
     }

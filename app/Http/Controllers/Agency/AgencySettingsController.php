@@ -30,6 +30,8 @@ class AgencySettingsController extends Controller
                 'summary_time' => (string) (Setting::get('summary_time') ?: '21:00'),
                 'pilot_url' => PilotClient::url(),
                 'pilot_connected' => PilotClient::connected(),
+                'credit_guard' => Setting::get('credit_guard', '1') === '1',
+                'credit_guard_error' => Setting::get('credit_guard_error'),
             ],
             'tick' => [
                 'url' => $token !== '' ? route('agency.tick', $token) : null,
@@ -43,10 +45,12 @@ class AgencySettingsController extends Controller
         $data = $request->validate([
             'summary_time' => ['required', 'date_format:H:i'],
             'pilot_url' => ['required', 'url:https', 'max:255'],
+            'credit_guard' => ['required', 'boolean'],
         ]);
 
         Setting::put('summary_time', $data['summary_time']);
         Setting::put('pilot_url', $data['pilot_url']);
+        Setting::put('credit_guard', $data['credit_guard'] ? '1' : '0');
         $this->toast(__('সংরক্ষণ হয়েছে।'));
 
         return back();

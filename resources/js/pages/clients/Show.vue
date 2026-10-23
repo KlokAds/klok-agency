@@ -74,7 +74,19 @@ const props = defineProps<{
         credit_usd: number;
         campaign_usd: number;
         credit_left: number;
+        daily_usd: number;
+        days_left: number | null;
     } | null;
+    budget_days: {
+        days: {
+            day: string;
+            budget: number | null;
+            spend: number;
+            diff: number | null;
+        }[];
+        over: number;
+        under: number;
+    };
     tasks: OpenTask[];
     invoices: {
         id: number;
@@ -478,6 +490,20 @@ function print(): void {
                     </p>
                 </div>
             </div>
+            <p
+                v-if="credit && credit.credit_usd && credit.daily_usd"
+                class="mt-2 text-[12.5px] text-ink-3"
+            >
+                {{
+                    t(
+                        'রোজ গড়ে {amount} খরচ — বাকি টাকায় আরও প্রায় {n} দিন চলবে।',
+                        {
+                            amount: money(credit.daily_usd, 'usd'),
+                            n: credit.days_left ?? 0,
+                        },
+                    )
+                }}
+            </p>
             <p v-if="!campaigns.length" class="mt-3 text-[13px] text-ink-3">
                 {{ t('এখনো কোনো campaign এই client-এর সাথে যুক্ত নয়।') }}
             </p>
@@ -560,6 +586,92 @@ function print(): void {
             </ul>
         </section>
     </div>
+
+    <section
+        v-if="budget_days.days.length"
+        class="no-print panel mb-6 overflow-hidden"
+    >
+        <div
+            class="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5 sm:px-6"
+        >
+            <div>
+                <h2 class="text-[16px] font-bold">
+                    {{ t('Budget বনাম আসল খরচ') }}
+                </h2>
+                <p class="mt-1 text-[12.5px] text-ink-3">
+                    {{
+                        t(
+                            'শেষ ৩০ দিন — Meta কোনো দিন budget-এর চেয়ে বেশি, কোনো দিন কম খরচ করে।',
+                        )
+                    }}
+                </p>
+            </div>
+            <p class="text-[12.5px]">
+                <span class="text-wait"
+                    >{{ t('বেশি গেছে') }}
+                    <b class="num">{{
+                        money(budget_days.over, 'usd')
+                    }}</b></span
+                >
+                <span class="mx-2 text-line-2">·</span>
+                <span class="text-in"
+                    >{{ t('কম গেছে') }}
+                    <b class="num">{{
+                        money(budget_days.under, 'usd')
+                    }}</b></span
+                >
+            </p>
+        </div>
+        <div class="mt-3 max-h-[360px] overflow-auto">
+            <table class="ledger w-full min-w-[480px] text-[13px]">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-2.5 text-left sm:px-6">
+                            {{ t('দিন') }}
+                        </th>
+                        <th class="px-3 py-2.5 text-right">Budget</th>
+                        <th class="px-3 py-2.5 text-right">
+                            {{ t('খরচ') }}
+                        </th>
+                        <th class="px-5 py-2.5 text-right sm:px-6">
+                            {{ t('পার্থক্য') }}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="d in budget_days.days" :key="d.day">
+                        <td class="px-5 py-2 sm:px-6">
+                            {{ niceDate(d.day, false) }}
+                        </td>
+                        <td class="num px-3 py-2 text-right text-ink-3">
+                            {{
+                                d.budget === null ? '—' : money(d.budget, 'usd')
+                            }}
+                        </td>
+                        <td class="num px-3 py-2 text-right">
+                            {{ money(d.spend, 'usd') }}
+                        </td>
+                        <td
+                            class="num px-5 py-2 text-right sm:px-6"
+                            :class="
+                                d.diff === null || d.diff === 0
+                                    ? 'text-ink-3'
+                                    : d.diff > 0
+                                      ? 'text-wait'
+                                      : 'text-in'
+                            "
+                        >
+                            {{
+                                d.diff === null
+                                    ? '—'
+                                    : money(d.diff, 'usd', { sign: true })
+                            }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     <section class="panel overflow-hidden">
         <div class="flex items-baseline justify-between px-5 pt-5 sm:px-6">

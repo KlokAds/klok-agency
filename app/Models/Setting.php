@@ -20,7 +20,7 @@ class Setting extends Model
     protected $fillable = ['key', 'value'];
 
     /** Keys whose value is a secret: the log notes the change, never the value. */
-    public const SECRETS = ['pilot_token', 'tick_token', 'sms_device_token'];
+    public const SECRETS = ['pilot_token', 'tick_token', 'sms_device_token', 'smtp_password'];
 
     public function getActivitylogOptions(): LogOptions
     {

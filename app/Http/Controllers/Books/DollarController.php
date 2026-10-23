@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\FxBatch;
 use App\Services\Books;
+use App\Services\CampaignForecast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,7 +20,7 @@ use Inertia\Response;
  */
 class DollarController extends Controller
 {
-    public function index(Books $books): Response
+    public function index(Books $books, CampaignForecast $forecast): Response
     {
         $summary = $books->summary();
         $fifo = $books->fifo();
@@ -59,6 +60,7 @@ class DollarController extends Controller
                 'usd_at_cost' => $summary['usd_at_cost'],
             ],
             'platforms' => $summary['platforms'],
+            'forecast' => $forecast->meta(),
             'accounts' => $accounts,
             'batches' => $batches,
             'kinds' => collect(Account::KINDS)->map(fn ($l, $v) => ['value' => $v, 'label' => $l])->values(),

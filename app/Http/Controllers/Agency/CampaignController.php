@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Services\CampaignBilling;
+use App\Services\CampaignLimits;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
 use App\Support\Lookups;
@@ -58,7 +59,7 @@ class CampaignController extends Controller
         $status = $filters['status'] ?? 'all';
         $clients = Client::where('status', 'active')->orderBy('name')->get(['id', 'name']);
 
-        $campaigns = Campaign::with('client:id,name')
+        $campaigns = Campaign::with(['client:id,name', 'account', 'renewals' => fn ($q) => $q->whereNotIn('status', ['approved', 'expired'])->latest('id')])
             ->where('pilot_account_id', $account->id ?? 0)
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where('name', 'like', '%'.$term.'%'))
             ->when($status === 'live', fn ($q) => $q->whereIn('status', Campaign::LIVE))
@@ -77,7 +78,12 @@ class CampaignController extends Controller
                 'status' => $c->status,
                 'live' => $c->isLive(),
                 'objective' => $c->objective,
-                'daily_budget' => $c->daily_budget,
+                'daily_budget' => $c->dailyBudget(),
+                'spend_cap' => $c->spend_cap,
+                'paused_for_credit' => $c->paused_for_credit_at !== null,
+                'limits_error' => $c->limits_error,
+                'guarded' => $c->client_id !== null && CampaignLimits::guarded($c),
+                'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
                 'start_at' => $c->start_at?->toDateString(),
                 'stop_at' => $c->stop_at?->toDateString(),
                 'spend_total' => $c->spend_total,

@@ -18,6 +18,12 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int $pilot_account_id
  * @property int|null $client_id
  * @property int|null $daily_budget cents
+ * @property int|null $budget cents a day, as Meta last said (set_campaign_limits)
+ * @property int|null $spend_cap cents, all time, on Meta
+ * @property int|null $spent_before cents spent on Meta before bill_from
+ * @property CarbonImmutable|null $limits_at
+ * @property string|null $limits_error
+ * @property CarbonImmutable|null $paused_for_credit_at
  * @property int $spend_total cents
  * @property int $spend_7d cents
  * @property CarbonImmutable|null $start_at
@@ -34,6 +40,7 @@ class Campaign extends Model
     protected $fillable = [
         'pilot_campaign_id', 'pilot_account_id', 'external_id', 'name', 'status', 'objective', 'daily_budget',
         'start_at', 'stop_at', 'spend_total', 'spend_7d', 'last_spend_day', 'client_id', 'bill_from',
+        'budget', 'spend_cap', 'spent_before', 'limits_at', 'limits_error', 'paused_for_credit_at',
     ];
 
     protected function casts(): array
@@ -49,6 +56,11 @@ class Campaign extends Model
             'stop_at' => 'datetime',
             'last_spend_day' => 'date',
             'bill_from' => 'date',
+            'budget' => 'integer',
+            'spend_cap' => 'integer',
+            'spent_before' => 'integer',
+            'limits_at' => 'datetime',
+            'paused_for_credit_at' => 'datetime',
         ];
     }
 
@@ -74,6 +86,18 @@ class Campaign extends Model
     public function days(): HasMany
     {
         return $this->hasMany(CampaignDay::class);
+    }
+
+    /** @return HasMany<Renewal, $this> */
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(Renewal::class);
+    }
+
+    /** Cents a day: what Meta last said, else what Pilot's list showed. */
+    public function dailyBudget(): ?int
+    {
+        return $this->budget ?? $this->daily_budget;
     }
 
     public function isLive(): bool

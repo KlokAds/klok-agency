@@ -3,6 +3,8 @@ import SectionTabs from '@/components/SectionTabs.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import MetaCampaigns from '@/components/dollars/MetaCampaigns.vue';
+import type { ForecastClient } from '@/components/dollars/MetaCampaigns.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
@@ -49,6 +51,12 @@ const props = defineProps<{
         charged: number;
         due: number;
     }[];
+    forecast: {
+        clients: ForecastClient[];
+        pending: number;
+        other: number;
+        rate: number | null;
+    };
     accounts: Account[];
     batches: {
         id: number;
@@ -346,6 +354,8 @@ function saveAccount(): void {
                 </table>
             </div>
         </section>
+
+        <MetaCampaigns :forecast="forecast" />
 
         <!-- USD accounts -->
         <section class="panel min-w-0 p-5 sm:p-6 xl:col-span-2">

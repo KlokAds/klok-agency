@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { router, usePage } from '@inertiajs/vue3';
+import SectionTabs from '@/components/SectionTabs.vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
@@ -24,6 +25,11 @@ type Row = {
     live: boolean;
     objective: string | null;
     daily_budget: number | null;
+    spend_cap: number | null;
+    paused_for_credit: boolean;
+    limits_error: string | null;
+    guarded: boolean;
+    renewal: { id: number; status: string } | null;
     start_at: string | null;
     stop_at: string | null;
     spend_total: number;
@@ -129,6 +135,37 @@ function linkSuggested(): void {
     );
 }
 
+// More days by hand (the client paid some other way): the end moves on Meta.
+const extending = ref<Row | null>(null);
+const extendOpen = ref(false);
+const extendDays = ref<string>('7');
+const extendError = ref<string | null>(null);
+
+function startExtend(row: Row): void {
+    extending.value = row;
+    extendDays.value = '7';
+    extendError.value = null;
+    extendOpen.value = true;
+}
+
+function extend(): void {
+    if (!extending.value) {
+        return;
+    }
+
+    router.post(
+        `/campaigns/${extending.value.id}/extend`,
+        { days: Number.parseInt(extendDays.value, 10) || 0 },
+        {
+            preserveScroll: true,
+            onStart: () => (saving.value = true),
+            onFinish: () => (saving.value = false),
+            onSuccess: () => (extendOpen.value = false),
+            onError: (e) => (extendError.value = e.days ?? null),
+        },
+    );
+}
+
 const syncing = ref(false);
 function sync(): void {
     router.post(
@@ -144,6 +181,7 @@ function sync(): void {
 </script>
 
 <template>
+    <SectionTabs section="campaigns" />
     <PageHeader
         :eyebrow="t('Client ও Ads')"
         title="Campaign"
@@ -279,8 +317,29 @@ function sync(): void {
                                         · {{ t('দিনে') }}
                                         {{ spend(c.daily_budget) }}</template
                                     >
-                                    <template v-if="c.objective">
-                                        · {{ c.objective }}</template
+                                    <template v-if="c.stop_at">
+                                        · {{ t('শেষ') }}
+                                        {{
+                                            niceDate(c.stop_at, false)
+                                        }}</template
+                                    >
+                                    <template v-if="c.spend_cap">
+                                        · cap {{ spend(c.spend_cap) }}</template
+                                    >
+                                </p>
+                                <p
+                                    v-if="c.paused_for_credit || c.limits_error"
+                                    class="mt-1 flex flex-wrap gap-1.5 pl-4"
+                                >
+                                    <KTag
+                                        v-if="c.paused_for_credit"
+                                        tone="out"
+                                        >{{ t('টাকা শেষ — বন্ধ') }}</KTag
+                                    >
+                                    <span
+                                        v-if="c.limits_error"
+                                        class="text-[11.5px] text-wait"
+                                        >{{ c.limits_error }}</span
                                     >
                                 </p>
                             </td>
@@ -318,13 +377,30 @@ function sync(): void {
                                             }}</span
                                         >
                                     </span>
-                                    <KButton
-                                        v-if="can['clients.edit']"
-                                        size="sm"
-                                        variant="quiet"
-                                        @click="startLink(c)"
-                                        >{{ t('বদলান') }}</KButton
-                                    >
+                                    <span class="flex items-center gap-1">
+                                        <Link
+                                            v-if="c.renewal"
+                                            :href="`/renewals/${c.renewal.id}`"
+                                            class="rounded-md px-2 py-1 text-[12px] font-semibold text-brand hover:bg-brand-soft"
+                                            >Renewal</Link
+                                        >
+                                        <KButton
+                                            v-if="
+                                                c.guarded && can['clients.edit']
+                                            "
+                                            size="sm"
+                                            icon="renew"
+                                            @click="startExtend(c)"
+                                            >Extend</KButton
+                                        >
+                                        <KButton
+                                            v-if="can['clients.edit']"
+                                            size="sm"
+                                            variant="quiet"
+                                            @click="startLink(c)"
+                                            >{{ t('বদলান') }}</KButton
+                                        >
+                                    </span>
                                 </div>
                                 <div
                                     v-else-if="can['clients.edit']"
@@ -403,6 +479,52 @@ function sync(): void {
                 :disabled="!linkClient"
                 @click="saveLink"
                 >{{ t('সংরক্ষণ') }}</KButton
+            >
+        </template>
+    </KModal>
+
+    <KModal v-model="extendOpen" :title="extending?.name ?? 'Campaign'">
+        <p class="text-[13.5px] text-ink-2">
+            {{
+                t(
+                    'Campaign আরও কত দিন চলবে? শেষের তারিখ Meta-তে বাড়বে; টাকা শেষ হয়ে বন্ধ থাকলে আবার চালু হবে। Client-এর টাকা খাতায় না থাকলে spend cap আবার থামিয়ে দেবে।',
+                )
+            }}
+        </p>
+        <KField
+            :label="t('কত দিন')"
+            :error="extendError ?? undefined"
+            class="mt-4"
+            :hint="
+                extending?.stop_at
+                    ? t('এখন শেষ {date}', {
+                          date: niceDate(extending.stop_at, false),
+                      })
+                    : undefined
+            "
+        >
+            <KInput
+                v-model="extendDays"
+                inputmode="numeric"
+                class="max-w-[140px]"
+            >
+                <template #trail
+                    ><span class="text-[12.5px] text-ink-3">{{
+                        t('দিন')
+                    }}</span></template
+                >
+            </KInput>
+        </KField>
+        <template #footer>
+            <KButton variant="quiet" @click="extendOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                variant="primary"
+                icon="renew"
+                :loading="saving"
+                @click="extend"
+                >Extend</KButton
             >
         </template>
     </KModal>
