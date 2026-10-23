@@ -45,6 +45,7 @@ const props = defineProps<{
     business: Business;
     invoice: InvoiceDocument & {
         id: number;
+        uid: string;
         client_id: number;
         url: string;
         editable: boolean;
@@ -73,7 +74,7 @@ const shareOpen = ref(false);
 function markSent(): void {
     if (!props.invoice.sent_at) {
         router.post(
-            `/invoices/${props.invoice.id}/send`,
+            `/invoices/${props.invoice.uid}/send`,
             {},
             { preserveScroll: true },
         );
@@ -88,7 +89,7 @@ function copyLink(): void {
 
 function email(): void {
     router.post(
-        `/invoices/${props.invoice.id}/email`,
+        `/invoices/${props.invoice.uid}/email`,
         {},
         { preserveScroll: true, onSuccess: () => (shareOpen.value = false) },
     );
@@ -128,7 +129,7 @@ function openPay(claim: Payment | null = null): void {
 }
 
 function savePay(): void {
-    pay.post(`/invoices/${props.invoice.id}/pay`, {
+    pay.post(`/invoices/${props.invoice.uid}/pay`, {
         preserveScroll: true,
         onSuccess: () => (payOpen.value = false),
     });
@@ -143,7 +144,7 @@ async function reject(payment: Payment): Promise<void> {
         })
     ) {
         router.post(
-            `/invoices/${props.invoice.id}/payments/${payment.id}/reject`,
+            `/invoices/${props.invoice.uid}/payments/${payment.id}/reject`,
             {},
             { preserveScroll: true },
         );
@@ -161,7 +162,7 @@ async function voidInvoice(): Promise<void> {
         })
     ) {
         router.post(
-            `/invoices/${props.invoice.id}/void`,
+            `/invoices/${props.invoice.uid}/void`,
             {},
             { preserveScroll: true },
         );
@@ -249,7 +250,7 @@ const PAY_STATUS: Record<
         <KButton
             v-if="invoice.editable && can['clients.edit']"
             icon="pen"
-            :href="`/invoices/${invoice.id}/edit`"
+            :href="`/invoices/${invoice.uid}/edit`"
             >{{ t('বদলান') }}</KButton
         >
         <KButton
@@ -415,7 +416,7 @@ const PAY_STATUS: Record<
                     @update:model-value="
                         (on: boolean) =>
                             router.post(
-                                `/invoices/${invoice.id}/partial`,
+                                `/invoices/${invoice.uid}/partial`,
                                 { allow_partial: on },
                                 { preserveScroll: true },
                             )

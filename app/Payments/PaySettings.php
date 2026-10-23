@@ -16,7 +16,11 @@ class PaySettings
         'pay_bkash_number', 'pay_bkash_type', 'pay_nagad_number', 'pay_nagad_type', 'pay_rocket_number',
         'pay_qr_merchant', 'pay_qr_payload', 'pay_bank_name', 'pay_bank_branch', 'pay_bank_account_name', 'pay_bank_account_number',
         'pay_bank_routing', 'pay_bank_sms_senders', 'qr_fee_percent', 'commission_percent',
+        'pay_wallet_bkash', 'pay_wallet_nagad', 'pay_wallet_rocket', 'pay_wallet_qr', 'pay_wallet_bank',
     ];
+
+    /** The ways of paying whose money place is chosen in Settings. */
+    public const WALLET_METHODS = ['bkash', 'nagad', 'rocket', 'qr', 'bank'];
 
     public const SWITCHES = ['pay_bkash_on', 'pay_nagad_on', 'pay_rocket_on', 'pay_qr_on', 'pay_bank_on'];
 

@@ -18,6 +18,7 @@ import type { Option, Paginated } from '@/types';
 
 type Row = {
     id: number;
+    uid: string;
     number: string;
     client_id: number;
     client: string | null;
@@ -205,7 +206,7 @@ function ignore(sms: Sms): void {
                         <tr v-for="i in invoices.data" :key="i.id">
                             <td>
                                 <Link
-                                    :href="`/invoices/${i.id}`"
+                                    :href="`/invoices/${i.uid}`"
                                     class="num font-semibold text-brand-ink hover:underline"
                                     >{{ i.number }}</Link
                                 >
@@ -240,7 +241,7 @@ function ignore(sms: Sms): void {
             <ul class="divide-y divide-dashed divide-line md:hidden">
                 <li v-for="i in invoices.data" :key="i.id">
                     <Link
-                        :href="`/invoices/${i.id}`"
+                        :href="`/invoices/${i.uid}`"
                         class="flex items-center justify-between gap-3 px-4 py-3.5"
                     >
                         <span class="min-w-0">

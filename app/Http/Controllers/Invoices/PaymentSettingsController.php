@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Invoices;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentSms;
 use App\Models\Setting;
+use App\Models\Wallet;
 use App\Payments\BanglaQr;
+use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
 use App\Payments\SmsParser;
 use App\Support\Money;
@@ -44,6 +46,10 @@ class PaymentSettingsController extends Controller
         $values['qr_fee_percent'] = PaySettings::text('qr_fee_percent') ?: '1';
         $values['pay_business_name'] = PaySettings::text('pay_business_name') ?: 'Klok Ads';
         $values['commission_percent'] = PaySettings::text('commission_percent') ?: '20';
+        // Where each way of paying lands, as it stands (the chosen place, or the one it falls back to).
+        foreach (PaySettings::WALLET_METHODS as $method) {
+            $values["pay_wallet_{$method}"] = PaymentMethod::from($method)->wallet();
+        }
 
         return Inertia::render('admin/Payment', [
             'settings' => $values,
@@ -60,6 +66,7 @@ class PaymentSettingsController extends Controller
             ],
             'options' => [
                 'types' => collect(PaySettings::WALLET_TYPES)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values()->all(),
+                'wallets' => Wallet::places()->where('is_active', true)->map(fn (Wallet $w) => ['value' => $w->key, 'label' => $w->name])->values()->all(),
             ],
         ]);
     }
@@ -96,6 +103,11 @@ class PaymentSettingsController extends Controller
             'pay_bank_account_number' => ['nullable', 'required_if_accepted:pay_bank_on', 'string', 'max:40'],
             'pay_bank_routing' => ['nullable', 'string', 'max:20'],
             'pay_bank_sms_senders' => ['nullable', 'string', 'max:200'],
+            'pay_wallet_bkash' => ['nullable', Rule::in(Wallet::keys())],
+            'pay_wallet_nagad' => ['nullable', Rule::in(Wallet::keys())],
+            'pay_wallet_rocket' => ['nullable', Rule::in(Wallet::keys())],
+            'pay_wallet_qr' => ['nullable', Rule::in(Wallet::keys())],
+            'pay_wallet_bank' => ['nullable', Rule::in(Wallet::keys())],
             'qr_fee_percent' => ['required', 'numeric', 'min:0', 'max:10'],
             'commission_percent' => ['required', 'numeric', 'min:0', 'max:200'],
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:1024'],

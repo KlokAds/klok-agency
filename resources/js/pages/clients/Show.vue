@@ -92,6 +92,7 @@ const props = defineProps<{
     tasks: OpenTask[];
     invoices: {
         id: number;
+        uid: string;
         number: string;
         issue_date: string;
         status: string;
@@ -437,7 +438,7 @@ function print(): void {
                 class="border-b border-line last:border-0"
             >
                 <Link
-                    :href="`/invoices/${i.id}`"
+                    :href="`/invoices/${i.uid}`"
                     class="flex items-center gap-3 py-2.5 text-[13px]"
                 >
                     <span class="num font-semibold">{{ i.number }}</span>

@@ -25,6 +25,7 @@ export type RenewalRow = {
     usd: number | null;
     invoice: {
         id: number;
+        uid: string;
         number: string;
         total: string;
         status: string;
@@ -120,7 +121,7 @@ const options = computed<Option[]>(() => [
                         <td class="num px-3 py-3 text-right">
                             <Link
                                 v-if="r.invoice"
-                                :href="`/invoices/${r.invoice.id}`"
+                                :href="`/invoices/${r.invoice.uid}`"
                                 class="hover:text-brand"
                                 >{{ r.invoice.number }}</Link
                             >

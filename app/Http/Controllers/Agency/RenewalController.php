@@ -108,7 +108,7 @@ class RenewalController extends Controller
             'budget' => $r->budget,
             'days' => $r->days,
             'usd' => $r->usd,
-            'invoice' => $r->invoice ? ['id' => $r->invoice->id, 'number' => $r->invoice->number, 'total' => Money::bdt($r->invoice->total), 'status' => $r->invoice->status] : null,
+            'invoice' => $r->invoice ? ['id' => $r->invoice->id, 'uid' => $r->invoice->uid, 'number' => $r->invoice->number, 'total' => Money::bdt($r->invoice->total), 'status' => $r->invoice->status] : null,
             'new_end' => $r->new_end?->toDateString(),
             'decided_at' => $r->decided_at?->toIso8601String(),
             'paid_at' => $r->paid_at?->toIso8601String(),

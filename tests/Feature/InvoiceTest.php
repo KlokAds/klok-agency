@@ -10,6 +10,7 @@ use App\Models\PaymentSms;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Payments\BanglaQr;
 use App\Payments\PaymentMatcher;
 use App\Payments\PaymentMethod;
@@ -413,4 +414,42 @@ it('shows a QR with the whole due locked in, or the part the client chose when a
     Setting::put('pay_bank_sms_senders', 'IslamiBank');
     smsHook('IslamiBank', 'Islami Bank CellFin BDT 5,000.00 Received from 01711111111')->assertJson(['status' => 'matched']);
     expect($invoice->fresh()->paid)->toBe(500000)->and($invoice->fresh()->due())->toBe(990000);
+});
+
+it('gives every invoice its own code for its admin address, and old number links still open', function () {
+    $invoice = sentInvoice($this->client);
+
+    expect($invoice->uid)->toMatch('/^[0-9a-z]{26}$/')
+        ->and(route('invoices.show', $invoice))->toEndWith('/invoices/'.$invoice->uid);
+
+    $this->actingAs($this->owner)->get('/invoices/'.$invoice->uid)->assertOk()
+        ->assertInertia(fn ($page) => $page->where('invoice.uid', $invoice->uid));
+    // A link from an older notification (/invoices/{number}) still finds it.
+    $this->actingAs($this->owner)->get('/invoices/'.$invoice->id)->assertOk();
+    $this->actingAs($this->owner)->get('/invoices/nope')->assertNotFound();
+});
+
+it('books each way of paying into the account the money really reaches', function () {
+    Wallet::create(['key' => 'ibbl', 'name' => 'Islami Bank (CellFin)', 'type' => 'bank', 'opening_balance' => 0, 'is_active' => true, 'sort' => 5]);
+    Setting::put('qr_fee_percent', '1');
+
+    // Bangla QR lands in Islami Bank by itself; bank transfers stay in the bank (UCB).
+    expect(PaymentMethod::BanglaQr->wallet())->toBe('ibbl')
+        ->and(PaymentMethod::Bank->wallet())->toBe('bank');
+
+    // Chosen in Settings, it follows the choice; a place that does not exist is not taken.
+    Setting::put('pay_wallet_bank', 'ibbl');
+    expect(PaymentMethod::Bank->wallet())->toBe('ibbl');
+    Setting::put('pay_wallet_bank', 'gone');
+    expect(PaymentMethod::Bank->wallet())->toBe('bank');
+
+    // A QR payment and its fee are both booked in Islami Bank.
+    $invoice = sentInvoice($this->client);
+    $payment = $invoice->payments()->create(['method' => 'qr', 'amount' => $invoice->due(), 'status' => 'pending']);
+    app(Invoices::class)->verify($payment, $invoice->due(), $this->owner);
+
+    $payment->refresh();
+    expect($payment->wallet)->toBe('ibbl')
+        ->and(BdtEntry::find($payment->bdt_entry_id)->wallet)->toBe('ibbl')
+        ->and(BdtEntry::find($payment->fee_entry_id)->wallet)->toBe('ibbl');
 });

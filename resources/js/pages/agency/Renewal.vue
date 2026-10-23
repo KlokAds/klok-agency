@@ -230,7 +230,7 @@ const willEnd = computed(() => {
                     <dt class="text-ink-3">Invoice</dt>
                     <dd>
                         <Link
-                            :href="`/invoices/${r.invoice.id}`"
+                            :href="`/invoices/${r.invoice.uid}`"
                             class="font-medium text-brand"
                             >{{ r.invoice.number }}</Link
                         >

@@ -8,6 +8,7 @@ import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
 import KSegment from '@/components/k/KSegment.vue';
+import KSelect from '@/components/k/KSelect.vue';
 import KSwitch from '@/components/k/KSwitch.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
@@ -30,7 +31,7 @@ const props = defineProps<{
         url: string | null;
         unmatched: number;
     };
-    options: { types: Option[] };
+    options: { types: Option[]; wallets: Option[] };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -469,6 +470,41 @@ const wallets = [
                         }}
                     </li>
                 </ul>
+            </div>
+            <template v-if="editable" #footer>
+                <KButton variant="primary" :loading="saving" @click="save">{{
+                    t('সংরক্ষণ')
+                }}</KButton>
+            </template>
+        </SettingsSection>
+
+        <SettingsSection
+            :title="t('টাকা কোথায় জমা হবে')"
+            :description="
+                t(
+                    'যে উপায়ে client দেন, টাকা আসলে যে account-এ ঢোকে — খাতায় সেখানেই জমা হবে, যাতে প্রতিটা জায়গার হিসাব মেলে। নতুন জায়গা যোগ করতে: টাকা › টাকা কোথায়।',
+                )
+            "
+            icon="wallet"
+        >
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <KField
+                    v-for="m in [
+                        { key: 'bkash', label: 'bKash' },
+                        { key: 'nagad', label: 'Nagad' },
+                        { key: 'rocket', label: 'Rocket' },
+                        { key: 'qr', label: 'Bangla QR' },
+                        { key: 'bank', label: 'Bank / NPSB' },
+                    ]"
+                    :key="m.key"
+                    :label="m.label"
+                    :error="err(`pay_wallet_${m.key}`)"
+                >
+                    <KSelect
+                        v-model="values[`pay_wallet_${m.key}`]"
+                        :options="options.wallets"
+                    />
+                </KField>
             </div>
             <template v-if="editable" #footer>
                 <KButton variant="primary" :loading="saving" @click="save">{{

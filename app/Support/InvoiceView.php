@@ -17,6 +17,7 @@ class InvoiceView
     {
         return [
             'id' => $invoice->id,
+            'uid' => $invoice->uid,
             'number' => $invoice->number,
             'client_id' => $invoice->client_id,
             'client' => $invoice->client->name,

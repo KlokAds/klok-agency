@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * A bill to a client. The ad budget lines are USD at the client's rate;
@@ -60,6 +61,35 @@ class Invoice extends Model
             'voided_at' => 'datetime', 'overdue_notified_at' => 'datetime',
             'total' => 'integer', 'usd' => 'integer', 'paid' => 'integer', 'seq' => 'integer', 'allow_partial' => 'boolean',
         ];
+    }
+
+    /** Every invoice gets its own code for its admin address. */
+    protected static function booted(): void
+    {
+        static::creating(function (Invoice $invoice): void {
+            $invoice->uid ??= strtolower((string) Str::ulid());
+        });
+    }
+
+    /** /invoices/{uid}: the address does not show how many invoices there are. */
+    public function getRouteKeyName(): string
+    {
+        return 'uid';
+    }
+
+    /**
+     * The code, or (for links in older notifications) the plain number.
+     *
+     * @param  mixed  $value
+     * @param  string|null  $field
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $value = (string) $value;
+
+        return $field === null && ctype_digit($value)
+            ? static::query()->whereKey((int) $value)->first()
+            : static::query()->where($field ?? 'uid', $value)->first();
     }
 
     /** @return BelongsTo<Client, $this> */

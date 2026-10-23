@@ -162,7 +162,8 @@ class Invoices
             $fee = null;
 
             if ($method === PaymentMethod::BanglaQr) {
-                $fee = MoveFees::book((int) round($received * PaySettings::qrFeePercent() / 100), 'bank', $day, "Bangla QR fee — Invoice {$invoice->number}");
+                // The fee comes off where the QR money landed.
+                $fee = MoveFees::book((int) round($received * PaySettings::qrFeePercent() / 100), $place, $day, "Bangla QR fee — Invoice {$invoice->number}");
             }
 
             $fresh->forceFill([
@@ -207,7 +208,7 @@ class Invoices
         [$invoice, $amount] = $done;
         $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_paid', self::PAID_TITLE, '{client} · {number} · {amount}', [
             'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($amount),
-        ], ['url' => '/invoices/'.$invoice->id]));
+        ], ['url' => '/invoices/'.$invoice->uid]));
 
         if ($invoice->status === 'paid') {
             // A renewal's invoice: its campaign waits for the admin's OK.
@@ -224,7 +225,7 @@ class Invoices
 
         $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_claim', self::CLAIM_TITLE, '{client} · {number} · {method} {reference}', [
             'client' => $invoice->client->name, 'number' => $invoice->number, 'method' => $payment->method->label(), 'reference' => $payment->reference,
-        ], ['url' => '/invoices/'.$invoice->id]));
+        ], ['url' => '/invoices/'.$invoice->uid]));
     }
 
     /**
@@ -267,7 +268,7 @@ class Invoices
 
             $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_overdue', self::OVERDUE_TITLE, '{client} · {number} · {amount}', [
                 'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($invoice->due()),
-            ], ['url' => '/invoices/'.$invoice->id]));
+            ], ['url' => '/invoices/'.$invoice->uid]));
             $count++;
         }
 

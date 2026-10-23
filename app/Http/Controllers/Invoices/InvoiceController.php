@@ -130,6 +130,7 @@ class InvoiceController extends Controller
             'business' => PaySettings::business(),
             'invoice' => InvoiceView::document($invoice) + [
                 'id' => $invoice->id,
+                'uid' => $invoice->uid,
                 'client_id' => $invoice->client_id,
                 'url' => $invoice->publicUrl(),
                 'editable' => $invoice->isEditable(),
@@ -302,6 +303,7 @@ class InvoiceController extends Controller
         return Inertia::render('invoices/Form', [
             'invoice' => $invoice ? [
                 'id' => $invoice->id,
+                'uid' => $invoice->uid,
                 'number' => $invoice->number,
                 'client_id' => $invoice->client_id,
                 'issue_date' => $invoice->issue_date->toDateString(),

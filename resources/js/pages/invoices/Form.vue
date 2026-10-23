@@ -51,6 +51,7 @@ type CampaignSpend = {
 const props = defineProps<{
     invoice: {
         id: number;
+        uid: string;
         number: string;
         client_id: number;
         issue_date: string;
@@ -291,7 +292,7 @@ const kindLabel = (kind: string) =>
 
 function save(): void {
     if (props.invoice) {
-        form.put(`/invoices/${props.invoice.id}`);
+        form.put(`/invoices/${props.invoice.uid}`);
     } else {
         form.post('/invoices');
     }
@@ -318,7 +319,7 @@ const errorAt = (index: number, field: string) =>
         "
     >
         <KButton
-            :href="invoice ? `/invoices/${invoice.id}` : '/invoices'"
+            :href="invoice ? `/invoices/${invoice.uid}` : '/invoices'"
             variant="quiet"
             icon="back"
             >{{ t('ফিরে যান') }}</KButton

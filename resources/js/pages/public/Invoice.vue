@@ -70,6 +70,8 @@ const props = defineProps<{
 }>();
 
 const state = ref<State>(props.state);
+// Paid or cancelled: nothing left to pay.
+const done = computed(() => ['paid', 'void'].includes(state.value.status));
 const base = `/i/${props.token}`;
 const bdt = (poisha: number) => money(poisha, 'bdt', { round: false });
 
@@ -270,28 +272,46 @@ const STATUS_WORD: Record<string, string> = {
             </div>
         </div>
 
+        <!-- Paid or cancelled: nothing to pay, so one column; the result sits above the invoice. -->
         <main
-            class="mx-auto grid max-w-[1080px] grid-cols-1 gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch"
+            class="mx-auto grid grid-cols-1 gap-5 px-4 py-5 sm:px-6"
+            :class="
+                done
+                    ? 'max-w-[860px]'
+                    : 'max-w-[1080px] lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch'
+            "
         >
             <InvoiceDoc :invoice="doc" :business="business" />
 
-            <aside class="no-print flex flex-col gap-4 lg:sticky lg:top-5">
+            <aside
+                class="no-print gap-4"
+                :class="
+                    done
+                        ? [
+                              'order-first grid grid-cols-1',
+                              state.payments.length ? 'sm:grid-cols-2' : '',
+                          ]
+                        : 'flex flex-col lg:sticky lg:top-5'
+                "
+            >
                 <!-- Paid -->
                 <section
                     v-if="state.status === 'paid'"
-                    class="panel p-6 text-center"
+                    class="panel flex items-center gap-4 p-5"
                     :class="justPaid ? 'k-rise' : ''"
                 >
                     <span
-                        class="mx-auto grid size-16 place-items-center rounded-full bg-in-soft text-in"
-                        ><KIcon name="check" :size="32"
+                        class="grid size-12 shrink-0 place-items-center rounded-full bg-in-soft text-in"
+                        ><KIcon name="check" :size="26"
                     /></span>
-                    <p class="mt-4 text-[18px] font-bold">
-                        {{ t('পেমেন্ট পাওয়া গেছে ✓') }}
-                    </p>
-                    <p class="mt-1 text-[13px] text-ink-3">
-                        {{ t('ধন্যবাদ! এই invoice পুরো পরিশোধ হয়েছে।') }}
-                    </p>
+                    <span class="min-w-0">
+                        <span class="block text-[17px] font-bold">
+                            {{ t('পেমেন্ট পাওয়া গেছে ✓') }}
+                        </span>
+                        <span class="block text-[13px] text-ink-3">
+                            {{ t('ধন্যবাদ! এই invoice পুরো পরিশোধ হয়েছে।') }}
+                        </span>
+                    </span>
                 </section>
 
                 <section
