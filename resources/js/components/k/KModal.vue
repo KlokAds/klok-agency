@@ -12,10 +12,38 @@ const props = withDefaults(
 );
 const open = defineModel<boolean>({ default: false });
 
+// Open dialogs, oldest first: a dialog opened from another one (a confirm on
+// top of an edit form) sits above it, and Escape closes only the top one.
+const stack: symbol[] = ((globalThis as { __kModals?: symbol[] }).__kModals ??=
+    []);
+const id = Symbol('k-modal');
+const layer = ref(70);
+
+function push(): void {
+    if (!stack.includes(id)) {
+        stack.push(id);
+    }
+    layer.value = 70 + stack.length;
+}
+
+function pull(): void {
+    const at = stack.indexOf(id);
+    if (at !== -1) {
+        stack.splice(at, 1);
+    }
+    if (!stack.length) {
+        document.documentElement.style.overflow = '';
+    }
+}
+
 const panel = ref<HTMLElement | null>(null);
 let lastFocus: HTMLElement | null = null;
 
 function onKey(event: KeyboardEvent): void {
+    if (stack[stack.length - 1] !== id) {
+        return;
+    }
+
     if (event.key === 'Escape') {
         open.value = false;
     }
@@ -47,6 +75,7 @@ watch(
     async (value) => {
         if (value) {
             lastFocus = document.activeElement as HTMLElement;
+            push();
             document.addEventListener('keydown', onKey);
             document.documentElement.style.overflow = 'hidden';
             await nextTick();
@@ -57,7 +86,7 @@ watch(
                 ?.focus();
         } else {
             document.removeEventListener('keydown', onKey);
-            document.documentElement.style.overflow = '';
+            pull();
             lastFocus?.focus?.();
         }
     },
@@ -66,7 +95,7 @@ watch(
 
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', onKey);
-    document.documentElement.style.overflow = '';
+    pull();
 });
 
 const widths = {
@@ -82,7 +111,8 @@ void props;
     <Teleport to="body">
         <div
             v-if="open"
-            class="fixed inset-0 z-[70] flex items-end justify-center sm:items-start sm:p-6 sm:pt-[8vh]"
+            :style="{ zIndex: layer }"
+            class="fixed inset-0 flex items-end justify-center sm:items-start sm:p-6 sm:pt-[8vh]"
         >
             <div
                 class="k-fade absolute inset-0 bg-[rgb(10_20_18/0.45)] backdrop-blur-[2px]"

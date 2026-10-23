@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Cache;
  */
 class Ticker
 {
+    public const CARD_LOW_TITLE = 'Card-এ dollar কমে গেছে — USD কিনুন'; // i18n
+
+    public const PILOT_DOWN_TITLE = 'Klok Pilot থেকে campaign-এর খরচ আসছে না'; // i18n
+
+    /** Below this (USD, after what the platforms will still take) the card is "low". */
+    public const CARD_LOW_DEFAULT = 20;
+
     public function __construct(private Agency $agency, private Notifier $notifier, private DailySummary $summary) {}
 
     /** @return array{ended: int, reminders: int, summary: bool} */
@@ -33,6 +40,7 @@ class Ticker
             $this->renewals();
             $this->metaReceipts();
             $this->overdueInvoices();
+            $this->cardLow();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
             return compact('ended', 'reminders', 'summary');
@@ -48,6 +56,39 @@ class Ticker
             if (app(CampaignBilling::class)->syncIfDue()) {
                 // The money left changed: caps and pauses follow it.
                 app(CampaignLimits::class)->guard();
+                Cache::forget('pilot:failures');
+            }
+        } catch (\Throwable $e) {
+            report($e);
+
+            // Twice in a row (two hours) and spend is falling behind: say so, at most every six hours.
+            $failures = (int) Cache::increment('pilot:failures');
+            if ($failures >= 2 && Cache::add('pilot:down-told', true, 6 * 3600)) {
+                $this->notifier->send(null, new AgencyAlert('pilot_down', self::PILOT_DOWN_TITLE, '{error}', [
+                    'error' => mb_substr($e->getMessage(), 0, 160),
+                ], ['url' => '/campaigns']));
+            }
+        }
+    }
+
+    /**
+     * Once a day, when the card after what Meta and Google will still take
+     * is below the line set in Settings: buy dollars before ads stop.
+     */
+    private function cardLow(): void
+    {
+        if (! Cache::add('card-low:'.now()->toDateString(), true, 86400)) {
+            return;
+        }
+
+        try {
+            $after = (int) app(Books::class)->summary()['card_after'];
+            $line = (int) round(((float) (Setting::get('card_low_usd') ?: self::CARD_LOW_DEFAULT)) * 100);
+
+            if ($after < $line) {
+                $this->notifier->send(null, new AgencyAlert('card_low', self::CARD_LOW_TITLE, '{after}', [
+                    'after' => '$'.number_format($after / 100, 2),
+                ], ['url' => '/dollars']));
             }
         } catch (\Throwable $e) {
             report($e);

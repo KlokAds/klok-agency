@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Invoices;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentSms;
 use App\Models\Setting;
+use App\Notifications\AgencyAlert;
 use App\Payments\PaymentMatcher;
 use App\Payments\SmsParser;
+use App\Services\Notifier;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +22,9 @@ use Illuminate\Support\Facades\Hash;
  */
 class SmsHookController extends Controller
 {
-    public function __invoke(Request $request, string $token, SmsParser $parser, PaymentMatcher $matcher): JsonResponse
+    public const UNMATCHED_TITLE = 'Payment SMS এসেছে — কোনো invoice-এর সাথে মেলেনি'; // i18n
+
+    public function __invoke(Request $request, string $token, SmsParser $parser, PaymentMatcher $matcher, Notifier $notifier): JsonResponse
     {
         $hash = Setting::get('sms_device_token');
 
@@ -62,6 +67,14 @@ class SmsHookController extends Controller
         );
 
         $matched = $sms->wasRecentlyCreated && $matcher->forSms($sms);
+
+        if ($sms->wasRecentlyCreated && ! $matched) {
+            $notifier->send(null, new AgencyAlert('sms_unmatched', self::UNMATCHED_TITLE, '{provider} · {amount} · {payer}', [
+                'provider' => $parsed['provider'],
+                'amount' => Money::bdt((int) $parsed['amount']),
+                'payer' => $parsed['payer_number'] ?? '—',
+            ], ['url' => '/invoices']));
+        }
 
         return response()->json(['status' => $matched ? 'matched' : ($sms->wasRecentlyCreated ? 'stored' : 'duplicate')]);
     }

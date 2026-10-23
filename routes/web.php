@@ -14,6 +14,7 @@ use App\Http\Controllers\Agency\PilotAccountController;
 use App\Http\Controllers\Agency\RenewalController;
 use App\Http\Controllers\Agency\TaskController;
 use App\Http\Controllers\Agency\TickController;
+use App\Http\Controllers\AppDeviceController;
 use App\Http\Controllers\Books\BdtEntryController;
 use App\Http\Controllers\Books\ClientController;
 use App\Http\Controllers\Books\DashboardController;
@@ -63,6 +64,10 @@ Route::middleware('throttle:12,1')->group(function () {
 Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1')->name('invoice.public.claim');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // The Android app: this phone's notifications, and the phone that forwards the wallet SMS.
+    Route::post('app/device', [AppDeviceController::class, 'store'])->middleware('throttle:30,1')->name('app.device');
+    Route::post('app/sms-forwarder', [AppDeviceController::class, 'smsForwarder'])->middleware('throttle:10,1')->name('app.sms-forwarder');
+
     Route::get('dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
 
     Route::get('invoices', [InvoiceController::class, 'index'])->middleware('can:clients.view')->name('invoices.index');

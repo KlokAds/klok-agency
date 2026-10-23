@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -39,6 +42,34 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
+     * One place at a time: signing in (in the app or a browser) ends every
+     * other session of that person, and makes their other "remember this
+     * device" cookies useless, so the other place is at the sign-in page on
+     * its next click. This device keeps its own remember cookie.
+     */
+    public static function signOutElsewhere(User $user, bool $remember): void
+    {
+        DB::table((string) config('session.table', 'sessions'))
+            ->where('user_id', $user->id)
+            ->where('id', '!=', session()->getId())
+            ->delete();
+
+        $token = Str::random(60);
+        $user->forceFill(['remember_token' => $token])->saveQuietly();
+
+        if ($remember) {
+            $guard = Auth::guard('web');
+            Cookie::queue(Cookie::make(
+                $guard->getRecallerName(),
+                $user->getAuthIdentifier().'|'.$token.'|'.$user->getAuthPassword(),
+                60 * 24 * 365 * 5,
+            ));
+        }
+
+        activity('Auth')->causedBy($user)->log('signed out everywhere else');
+    }
+
+    /**
      * Deactivated accounts cannot sign in, and every sign-in is recorded.
      */
     private function configureAuthentication(): void
@@ -64,6 +95,8 @@ class FortifyServiceProvider extends ServiceProvider
                 'last_login_at' => now(),
                 'last_login_ip' => request()->ip(),
             ])->saveQuietly();
+
+            self::signOutElsewhere($event->user, $event->remember);
 
             activity('Auth')->causedBy($event->user)->withProperties([
                 'ip' => request()->ip(),
