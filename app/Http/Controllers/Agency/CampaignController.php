@@ -85,7 +85,7 @@ class CampaignController extends Controller
                 'guarded' => $c->client_id !== null && CampaignLimits::guarded($c),
                 'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
                 'start_at' => $c->start_at?->toDateString(),
-                'stop_at' => $c->stop_at?->toDateString(),
+                'stop_at' => $c->lastDay()?->toDateString(),
                 'spend_total' => $c->spend_total,
                 'spend_7d' => $c->spend_7d,
                 'last_spend_day' => $c->last_spend_day?->toDateString(),

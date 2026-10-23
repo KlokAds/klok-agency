@@ -148,7 +148,7 @@ class CampaignLimits
     {
         $campaign->loadMissing('account');
         $today = CarbonImmutable::now()->startOfDay();
-        $end = $campaign->stop_at !== null ? CarbonImmutable::parse($campaign->stop_at)->startOfDay() : $today;
+        $end = $campaign->lastDay() ?? $today;
         $newEnd = $end->max($today)->addDays($days);
 
         $change = ['new_end' => $newEnd->toDateString(), 'reason' => $reason ?? 'Klok Finance'];

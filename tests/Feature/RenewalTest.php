@@ -215,3 +215,11 @@ it('keeps the mailbox password encrypted and never sends it back', function () {
     $this->actingAs($this->owner)->get('/admin/settings')->assertOk()
         ->assertInertia(fn ($page) => $page->where('mail.has_password', true)->missing('mail.password'));
 });
+
+it('reads a midnight end as the day before', function () {
+    $this->campaign->update(['stop_at' => '2026-10-26T00:00:00+06:00']);
+    expect($this->campaign->fresh()->lastDay()->toDateString())->toBe('2026-10-25');
+
+    $this->campaign->update(['stop_at' => '2026-10-30T23:59:00+06:00']);
+    expect($this->campaign->fresh()->lastDay()->toDateString())->toBe('2026-10-30');
+});

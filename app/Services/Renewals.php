@@ -59,7 +59,7 @@ class Renewals
             ->filter(fn (Campaign $c) => CampaignLimits::guarded($c) && $c->dailyBudget() !== null && ($c->isLive() || $c->paused_for_credit_at !== null));
 
         foreach ($campaigns as $campaign) {
-            $endsOn = CarbonImmutable::parse($campaign->stop_at)->toDateString();
+            $endsOn = $campaign->lastDay()->toDateString();
 
             if (Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->exists()) {
                 continue;

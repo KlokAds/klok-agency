@@ -100,6 +100,17 @@ class Campaign extends Model
         return $this->budget ?? $this->daily_budget;
     }
 
+    /**
+     * The last day it runs (app time zone). Meta often ends a campaign at
+     * midnight, "26 Oct 00:00", which means it runs through 25 Oct.
+     */
+    public function lastDay(): ?CarbonImmutable
+    {
+        return $this->stop_at === null
+            ? null
+            : CarbonImmutable::parse($this->stop_at)->setTimezone(config('app.timezone'))->subSecond()->startOfDay();
+    }
+
     public function isLive(): bool
     {
         return in_array(strtoupper((string) $this->status), self::LIVE, true);

@@ -57,7 +57,7 @@ class RenewalController extends Controller
                 'message' => ClientMessage::links($renewal->client?->phone, ClientMessage::campaignRenewal($renewal)),
                 'invoice_id' => $renewal->invoice_id,
                 'error' => $renewal->error,
-                'stop_at' => $renewal->campaign?->stop_at?->toDateString(),
+                'stop_at' => $renewal->campaign?->lastDay()?->toDateString(),
                 'paused' => $renewal->campaign?->paused_for_credit_at !== null,
             ],
             'statuses' => Renewal::STATUSES,

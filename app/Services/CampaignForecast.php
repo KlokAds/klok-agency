@@ -85,7 +85,7 @@ class CampaignForecast
         foreach ($clients as $client) {
             $mine = $campaigns->where('client_id', $client->id)->values();
             $lines = $mine->map(function (Campaign $c) use ($byCampaign, $today) {
-                $end = $c->stop_at ? CarbonImmutable::parse($c->stop_at)->startOfDay() : null;
+                $end = $c->lastDay();
                 $daysLeft = $c->isLive() && $end !== null ? max(0, (int) $today->diffInDays($end, false) + 1) : ($c->isLive() ? null : 0);
                 $budget = $c->dailyBudget() ?? ($c->spend_7d > 0 ? (int) round($c->spend_7d / 7) : null);
 
