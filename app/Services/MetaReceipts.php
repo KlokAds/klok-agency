@@ -234,11 +234,17 @@ class MetaReceipts
         $currency = $find('/\$\s?[0-9][0-9,]*\.[0-9]{2}\s*([A-Z]{3})\b/') ?? (str_contains($text, '$') ? 'USD' : null);
         $ref = $find('/(?:ad\s+)?account\s+id\s*[:.]?\s*([0-9]{6,})/i')
             ?? $find('/transaction\s+for\.?\s*[^()\n]{1,80}\(([0-9]{6,})\)/i');
-        $date = $find('/(?:payment|billing|charge|receipt)\s+date\s*:?\s*([A-Za-z]{3,9}\.?\s+[0-9]{1,2},?\s+[0-9]{4}(?:,?\s+[0-9]{1,2}:[0-9]{2}\s*[AP]M)?)/i')
-            ?? $find('/([A-Za-z]{3,9}\.?\s+[0-9]{1,2},\s+[0-9]{4}(?:,?\s+[0-9]{1,2}:[0-9]{2}\s*[AP]M)?)/');
+        // The charge is made when the billed period ends: "Date range Oct 10, 2026, 12:00 AM - Oct 15, 2026, 11:47 PM".
+        $day = '([A-Za-z]{3,9}\.?\s+[0-9]{1,2},?\s+[0-9]{4}(?:,?\s+(?:at\s+)?[0-9]{1,2}:[0-9]{2}\s*[AP]M)?)';
+        $date = $find('/date\s+range\s*:?\s*[^
+]*?[0-9]{4}[^
+]*?\s[-–]\s*'.$day.'/i')
+            ?? $find('/(?:payment|billing|charge|receipt)\s+date\s*:?\s*'.$day.'/i')
+            // A receipt forwarded by hand: the original's date in the forward header.
+            ?? $find('/^Date:\s*(?:[A-Za-z]{3},\s*)?'.$day.'/mi');
 
         try {
-            $chargedAt = $date ? CarbonImmutable::parse($date, config('app.timezone')) : $sentAt;
+            $chargedAt = $date ? CarbonImmutable::parse(str_replace(' at ', ' ', $date), config('app.timezone')) : $sentAt;
         } catch (Throwable) {
             $chargedAt = $sentAt;
         }
@@ -248,18 +254,25 @@ class MetaReceipts
         $taken = [];
         $lines = [];
         foreach ($known as $campaign) {
-            $at = mb_stripos($text, $campaign->name);
-            while ($at !== false && isset($taken[$at])) {
-                $at = mb_stripos($text, $campaign->name, $at + 1);
-            }
-            if ($at === false) {
+            // The whole name only: "…Sales Campaign 2" is not found in "…Sales Campaign 25,938"
+            // (that is the campaign's impressions after its name).
+            $pattern = '/'.preg_quote($campaign->name, '/').'(?![\p{L}\p{N}])/iu';
+            if (! preg_match_all($pattern, $text, $hits, PREG_OFFSET_CAPTURE)) {
                 continue;
             }
 
-            $after = mb_substr($text, $at + mb_strlen($campaign->name), 240);
-            if (preg_match('/'.$money.'/', $after, $m)) {
-                $taken[$at] = true;
-                $lines[] = ['name' => $campaign->name, 'cents' => Money::toMinor($m[1]), 'campaign_id' => $campaign->id, 'at' => $at];
+            foreach ($hits[0] as [$found, $at]) {
+                if (isset($taken[$at])) {
+                    continue;
+                }
+
+                $after = substr($text, $at + strlen($found), 400);
+                if (preg_match('/'.$money.'/', $after, $m)) {
+                    $taken[$at] = true;
+                    $lines[] = ['name' => $campaign->name, 'cents' => Money::toMinor($m[1]), 'campaign_id' => $campaign->id, 'at' => $at];
+                }
+
+                break;
             }
         }
         usort($lines, fn ($a, $b) => $a['at'] <=> $b['at']);

@@ -125,3 +125,33 @@ it('joins a card charge already written by hand instead of booking it twice', fu
         ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(1)
         ->and($byHand->fresh()->allocations)->toBe(["c:{$this->leads->id}" => 600, "c:{$this->sales->id}" => 800]);
 });
+
+it('dates a charge at the end of the billed period, as on a real receipt', function () {
+    $real = <<<'TXT'
+    This is not an invoice
+    Transaction for
+    Anowar Hossain (KA) (1234567890)
+     Transaction ID
+    28843656451987316-29221893927496905
+    Payment summary
+    Amount billed
+    $10.00 USD
+     Date range
+    Oct 10, 2026, 12:00 AM - Oct 15, 2026, 11:47 PM
+    Payment method
+    Visa ···· 6903
+    Campaign Results Amount
+    GFFS 07/23/26 - Sales Campaign 25,938
+    Impressions
+     $10.00
+    Total $10.00
+    TXT;
+
+    $parsed = MetaReceipts::parse("Your Meta ads receipt (Account ID: 1234567890)\n".$real, CarbonImmutable::parse('2026-10-16 09:00'), fn () => Campaign::all()->all());
+
+    expect($parsed['charged_at']->format('Y-m-d H:i'))->toBe('2026-10-15 23:47')
+        ->and($parsed['amount'])->toBe(1000)
+        ->and($parsed['card_last4'])->toBe('6903')
+        ->and($parsed['transaction_id'])->toBe('28843656451987316-29221893927496905')
+        ->and($parsed['campaigns'])->toBe([['name' => 'GFFS 07/23/26 - Sales Campaign', 'cents' => 1000, 'campaign_id' => $this->sales->id]]);
+});
