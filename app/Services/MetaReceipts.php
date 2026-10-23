@@ -30,6 +30,12 @@ class MetaReceipts
     /** How often the mailbox is looked at. */
     public const EVERY_MINUTES = 5;
 
+    /** Receipts in these states are safely in the books, so their mail is deleted. */
+    public const DONE = ['booked', 'duplicate', 'ignored'];
+
+    /** Other read mail is kept this many days, then cleared. */
+    public const KEEP_DAYS = 30;
+
     public const BOOKED_TITLE = 'Meta receipt থেকে card charge উঠেছে'; // i18n
 
     public const UNREAD_TITLE = 'Meta receipt পড়া যায়নি — দেখে নিন'; // i18n
@@ -68,7 +74,8 @@ class MetaReceipts
                 'username' => $box['username'], 'password' => $box['password'], 'protocol' => 'imap',
             ]);
             $client->connect();
-            $messages = $client->getFolder('INBOX')?->query()->whereUnseen()->limit(50)->get() ?? [];
+            $inbox = $client->getFolder('INBOX');
+            $messages = $inbox?->query()->whereUnseen()->limit(50)->get() ?? [];
         } catch (Throwable $e) {
             Setting::putQuietly('meta_receipts_error', mb_substr($e->getMessage(), 0, 300));
 
@@ -80,16 +87,37 @@ class MetaReceipts
             $text = (string) $message->getTextBody();
             $id = (string) $message->getMessageId();
             $date = (string) $message->getDate();
-            $this->take(
+            $receipt = $this->take(
                 $id !== '' ? $id : 'uid-'.$message->getUid(),
                 (string) $message->getSubject(),
                 // The HTML part keeps the campaign table; plain text is the fallback.
                 $html !== '' ? self::textOf($html) : $text,
                 $date !== '' ? CarbonImmutable::parse($date) : CarbonImmutable::now(),
             );
-            $message->setFlag('Seen');
             $count++;
+
+            // The books keep the receipt's text, so the mailbox need not: a mail read
+            // well is deleted (the mailbox never fills up); one that could not be read stays.
+            if (in_array($receipt->status, self::DONE, true)) {
+                $message->delete(false);
+            } else {
+                $message->setFlag('Seen');
+            }
         }
+
+        // Mail read earlier: a receipt already safe in the books goes now; anything
+        // else (Gmail's forwarding codes and the like) after a month. Unreadable ones stay.
+        $cutoff = now()->subDays(self::KEEP_DAYS);
+        foreach ($inbox?->query()->whereSeen()->limit(100)->get() ?? [] as $old) {
+            $stored = MetaReceipt::where('message_id', (string) $old->getMessageId())->first();
+            $sent = (string) $old->getDate();
+            $isOld = $sent !== '' && CarbonImmutable::parse($sent)->lt($cutoff);
+
+            if ($stored !== null ? in_array($stored->status, self::DONE, true) : $isOld) {
+                $old->delete(false);
+            }
+        }
+        $client->expunge();
 
         Setting::putQuietly('meta_receipts_error', null);
         Setting::putQuietly('meta_receipts_checked_at', now()->toIso8601String());
