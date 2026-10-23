@@ -131,6 +131,18 @@ class PaymentMatcher
             return $this->settle($claim, $sms);
         }
 
+        // Already written by hand with this TrxID: the SMS is that payment's proof, not a new one.
+        $byHand = InvoicePayment::query()
+            ->where('status', 'verified')
+            ->whereRaw('upper(trim(reference)) = ?', [$sms->trx_id])
+            ->first();
+
+        if ($byHand !== null) {
+            PaymentSms::query()->whereKey($sms->id)->where('status', 'unmatched')->update(['status' => 'matched', 'invoice_payment_id' => $byHand->id]);
+
+            return true;
+        }
+
         $sessions = InvoicePayment::query()
             ->where('status', 'pending')
             ->whereIn('method', $methods)
@@ -146,6 +158,43 @@ class PaymentMatcher
         $session = $exact->count() === 1 ? $exact->first() : ($exact->isEmpty() && $sessions->count() === 1 ? $sessions->first() : null);
 
         return $session !== null && $this->settle($session, $sms);
+    }
+
+    /**
+     * A TrxID typed in by hand: is it taken already — by another payment, or by an SMS that
+     * already paid something?
+     */
+    public static function referenceUsed(string $reference, ?int $exceptPaymentId = null): bool
+    {
+        $reference = strtoupper(trim($reference));
+
+        return InvoicePayment::query()
+            ->whereIn('status', ['pending', 'verified'])
+            ->whereRaw('upper(trim(reference)) = ?', [$reference])
+            ->when($exceptPaymentId, fn (Builder $q) => $q->whereKeyNot($exceptPaymentId))
+            ->exists()
+            || PaymentSms::query()->where('trx_id', $reference)->where('status', 'matched')->exists();
+    }
+
+    /** The SMS (on the server, not yet used) of a TrxID typed in by hand, if it came. */
+    public static function smsFor(string $reference): ?PaymentSms
+    {
+        return PaymentSms::query()->where('trx_id', strtoupper(trim($reference)))->where('status', 'unmatched')->first();
+    }
+
+    /**
+     * A payment written by hand with a TrxID: its SMS is tied to it, so the SMS no longer
+     * shows as unmatched and can never pay a second invoice.
+     */
+    public function linkSms(InvoicePayment $payment): ?PaymentSms
+    {
+        $sms = filled($payment->reference) ? self::smsFor((string) $payment->reference) : null;
+
+        if ($sms !== null) {
+            PaymentSms::query()->whereKey($sms->id)->where('status', 'unmatched')->update(['status' => 'matched', 'invoice_payment_id' => $payment->id]);
+        }
+
+        return $sms;
     }
 
     /** The Owner picked the invoice an unmatched SMS belongs to. */

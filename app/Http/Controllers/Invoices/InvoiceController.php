@@ -182,7 +182,7 @@ class InvoiceController extends Controller
     }
 
     /** Money taken by hand (or a client's claim checked against the statement). */
-    public function pay(Request $request, Invoice $invoice, Invoices $invoices): RedirectResponse
+    public function pay(Request $request, Invoice $invoice, Invoices $invoices, PaymentMatcher $matcher): RedirectResponse
     {
         abort_if($invoice->status === 'void', 422);
 
@@ -201,6 +201,19 @@ class InvoiceController extends Controller
             throw ValidationException::withMessages(['amount' => __('পরিমাণ ০-এর বেশি হতে হবে।')]);
         }
 
+        // A TrxID typed in is checked against the SMS the phone sent: never used twice, and
+        // not for more than the SMS says came in.
+        $reference = filled($data['reference'] ?? null) ? trim((string) $data['reference']) : null;
+        if ($reference !== null) {
+            if (PaymentMatcher::referenceUsed($reference, isset($data['payment_id']) ? (int) $data['payment_id'] : null)) {
+                throw ValidationException::withMessages(['reference' => __('এই TrxID আগেই অন্য একটা payment-এ ব্যবহার হয়েছে।')]);
+            }
+            $sms = PaymentMatcher::smsFor($reference);
+            if ($sms !== null && (int) $sms->amount < $amount) {
+                throw ValidationException::withMessages(['amount' => __('এই TrxID-এর SMS-এ এসেছে মাত্র :amount।', ['amount' => Money::bdt((int) $sms->amount)])]);
+            }
+        }
+
         $payment = ! empty($data['payment_id'])
             ? $invoice->payments()->where('status', 'pending')->findOrFail((int) $data['payment_id'])
             : $invoice->payments()->create(['method' => $data['method'], 'amount' => $amount, 'status' => 'pending']);
@@ -212,7 +225,12 @@ class InvoiceController extends Controller
         ])->save();
 
         $invoices->verify($payment, $amount, $request->user(), $data['paid_on'], $data['wallet'], __('হাতে লেখা'));
-        $this->toast(__('পেমেন্ট লেখা হয়েছে — BDT খাতায় client পেমেন্ট হিসেবে গেছে।'));
+        $sms = $matcher->linkSms($payment);
+        $this->toast($sms !== null
+            ? __('পেমেন্ট লেখা হয়েছে — এই TrxID-এর SMS server-এ ছিল, মিলিয়ে রাখা হলো।')
+            : ($reference !== null
+                ? __('পেমেন্ট লেখা হয়েছে। এই TrxID-এর SMS এখনো আসেনি — এলে নিজে থেকে এর সাথে জুড়বে।')
+                : __('পেমেন্ট লেখা হয়েছে — BDT খাতায় client পেমেন্ট হিসেবে গেছে।')));
 
         return back();
     }

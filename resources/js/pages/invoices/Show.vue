@@ -514,7 +514,17 @@ const PAY_STATUS: Record<
                     :invalid="!!pay.errors.amount"
                 />
             </KField>
-            <KField label="TrxID / reference" optional class="sm:col-span-2">
+            <KField
+                label="TrxID / reference"
+                optional
+                class="sm:col-span-2"
+                :error="pay.errors.reference"
+                :hint="
+                    t(
+                        'TrxID দিলে server-এর SMS-এর সাথে মিলিয়ে দেখা হয় — একই TrxID দুবার নেওয়া যায় না।',
+                    )
+                "
+            >
                 <KInput v-model="pay.reference" />
             </KField>
         </div>

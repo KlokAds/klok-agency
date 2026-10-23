@@ -470,3 +470,25 @@ it('matches a bKash payment only from the number the client gave', function () {
     smsHook('bKash', 'You have received Tk 14,900.00 from 01798***432. TrxID MASKED3333 at 20/10/2026 14:27')->assertJson(['status' => 'matched']);
     expect($invoice->fresh()->status)->toBe('paid');
 });
+
+it('ties a TrxID written by hand to its SMS, before or after it comes, and never takes it twice', function () {
+    // The SMS came first and matched nothing.
+    smsHook('bKash', 'You have received Tk 5,000.00 from 01712345678. TrxID HAND111111 at 20/10/2026 14:23')->assertJson(['status' => 'stored']);
+    $invoice = sentInvoice($this->client);
+    $pay = fn (string $ref, string $amount) => $this->actingAs($this->owner)->post("/invoices/{$invoice->uid}/pay", [
+        'method' => 'bkash', 'wallet' => 'bkash', 'paid_on' => now()->toDateString(), 'amount' => $amount, 'reference' => $ref,
+    ]);
+
+    // More than the SMS says came in: refused.
+    $pay('HAND111111', '6000')->assertSessionHasErrors('amount');
+    // Right amount: written, and the SMS is tied to it.
+    $pay('HAND111111', '5000')->assertSessionHasNoErrors();
+    expect(PaymentSms::where('trx_id', 'HAND111111')->value('status'))->toBe('matched');
+    // The same TrxID again: refused.
+    $pay('hand111111', '1000')->assertSessionHasErrors('reference');
+
+    // Written by hand before its SMS: when the SMS comes, it joins that payment quietly.
+    $pay('LATER22222', '2000')->assertSessionHasNoErrors();
+    smsHook('bKash', 'You have received Tk 2,000.00 from 01712345678. TrxID LATER22222 at 20/10/2026 14:30')->assertJson(['status' => 'matched']);
+    expect($invoice->fresh()->paid)->toBe(700000);
+});
