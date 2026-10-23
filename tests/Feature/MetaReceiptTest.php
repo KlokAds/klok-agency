@@ -114,3 +114,14 @@ it('keeps the split honest: what a receipt pays a campaign comes off that campai
     expect($pending["c:{$this->sales->id}"] ?? 0)->toBe(0)
         ->and($pending["c:{$this->leads->id}"] ?? 0)->toBe(0);
 });
+
+it('joins a card charge already written by hand instead of booking it twice', function () {
+    $meta = Account::where('code', 'meta')->first();
+    $byHand = UsdEntry::create(['entry_date' => '2026-10-15', 'description' => 'FACEBK* S5LHCASSD4 (manual pay)', 'category' => 'card_charge', 'account_id' => $meta->id, 'amount' => -2000, 'status' => 'na']);
+
+    $receipt = app(MetaReceipts::class)->take('<m1@meta>', 'Your Meta ads receipt', receiptText(), CarbonImmutable::parse('2026-10-16'));
+
+    expect($receipt->usd_entry_id)->toBe($byHand->id)
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(1)
+        ->and($byHand->fresh()->allocations)->toBe(["c:{$this->leads->id}" => 600, "c:{$this->sales->id}" => 800]);
+});

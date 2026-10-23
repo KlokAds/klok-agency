@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\MetaReceipt;
 use App\Models\PilotAccount;
 use App\Models\Setting;
+use App\Models\UsdEntry;
 use App\Notifications\AgencyAlert;
 use App\Support\MailSettings;
 use App\Support\Money;
@@ -156,15 +157,38 @@ class MetaReceipts
 
         DB::transaction(function () use ($receipt, $parsed, $account) {
             $meta = Account::where('kind', 'platform')->where('code', 'meta')->firstOrFail();
-            $entry = $this->postings->cardCharge([
-                'entry_date' => $parsed['charged_at']->toDateString(),
-                'description' => 'Meta receipt'.($parsed['card_last4'] ? ' · card '.$parsed['card_last4'] : ''),
-                'account_id' => $meta->id,
-                'amount' => $parsed['amount'],
-                'notes' => trim(($account ? $account->name.' · ' : '').'Transaction '.($parsed['transaction_id'] ?? '—')),
-                'allocations' => self::allocations($parsed['campaigns'], $parsed['amount']),
-            ]);
-            $entry->forceFill(['source' => 'meta_receipt', 'source_key' => 'meta:'.($parsed['transaction_id'] ?? $receipt->message_id)])->save();
+            $allocations = self::allocations($parsed['campaigns'], $parsed['amount']);
+            $sourceKey = 'meta:'.($parsed['transaction_id'] ?? $receipt->message_id);
+
+            // The same charge already written by hand (same amount, within two days):
+            // the receipt joins that row instead of booking the charge twice.
+            $byHand = UsdEntry::where('category', 'card_charge')->where('account_id', $meta->id)->whereNull('source')
+                ->where('amount', -$parsed['amount'])
+                ->whereBetween('entry_date', [$parsed['charged_at']->subDays(2)->toDateString(), $parsed['charged_at']->addDays(2)->toDateString()])
+                ->whereNotIn('id', MetaReceipt::whereNotNull('usd_entry_id')->pluck('usd_entry_id'))
+                ->get()
+                ->sortBy(fn (UsdEntry $e) => abs($e->entry_date->diffInDays($parsed['charged_at'])))
+                ->first();
+
+            if ($byHand !== null) {
+                $byHand->forceFill([
+                    'allocations' => $byHand->allocations ?: $allocations,
+                    'source' => 'meta_receipt',
+                    'source_key' => $sourceKey,
+                    'notes' => trim(($byHand->notes ? $byHand->notes.' · ' : '').'Transaction '.($parsed['transaction_id'] ?? '—')),
+                ])->save();
+                $entry = $byHand;
+            } else {
+                $entry = $this->postings->cardCharge([
+                    'entry_date' => $parsed['charged_at']->toDateString(),
+                    'description' => 'Meta receipt'.($parsed['card_last4'] ? ' · card '.$parsed['card_last4'] : ''),
+                    'account_id' => $meta->id,
+                    'amount' => $parsed['amount'],
+                    'notes' => trim(($account ? $account->name.' · ' : '').'Transaction '.($parsed['transaction_id'] ?? '—')),
+                    'allocations' => $allocations,
+                ]);
+                $entry->forceFill(['source' => 'meta_receipt', 'source_key' => $sourceKey])->save();
+            }
 
             // Whatever the receipt paid that no campaign we know explains goes to the oldest spend.
             $unmatched = $parsed['amount'] - (int) array_sum(array_column($parsed['campaigns'], 'cents'));
