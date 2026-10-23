@@ -112,7 +112,8 @@ export async function send(user: number): Promise<number> {
     let sent = 0;
 
     try {
-        for (const item of [...offline.waiting]) {
+        // A copy: sent entries are dropped from the list while it is walked.
+        for (const item of offline.waiting.slice()) {
             if (item.user !== user || item.error) {
                 continue;
             }
