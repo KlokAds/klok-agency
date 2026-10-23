@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Account;
-use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\Client;
 use App\Models\PilotAccount;
@@ -156,16 +155,12 @@ it('bills from the campaign start when no day is given, or the day after spend a
     expect(UsdEntry::where('source', 'pilot')->pluck('amount')->all())->toBe([-400]);
 });
 
-it('starts a billing week on the day the client paid, and a new payment starts the next', function () {
-    $billing = app(CampaignBilling::class);
-    BdtEntry::create(['entry_date' => '2026-10-20', 'description' => 'GFFS', 'category' => 'client_payment', 'client_id' => $this->gffs->id, 'pay_via' => 'bank', 'amount' => 210000, 'usd_credit' => 1400]);
-    BdtEntry::create(['entry_date' => '2026-10-30', 'description' => 'GFFS', 'category' => 'client_payment', 'client_id' => $this->gffs->id, 'pay_via' => 'bank', 'amount' => 210000, 'usd_credit' => 1400]);
-    $week = $billing->weeks($this->gffs->id, '2026-10-20');
+it('runs billing weeks seven days at a time from the first billed day, whatever day they paid', function () {
+    $week = app(CampaignBilling::class)->weeks($this->gffs->id, '2026-10-19');
     $span = fn (string $day) => array_map(fn ($d) => $d->toDateString(), $week(CarbonImmutable::parse($day)));
 
-    expect($span('2026-10-20'))->toBe(['2026-10-20', '2026-10-26'])
-        ->and($span('2026-10-26'))->toBe(['2026-10-20', '2026-10-26'])
-        // No payment on the 27th: the next seven days, cut short by the payment on the 30th.
-        ->and($span('2026-10-28'))->toBe(['2026-10-27', '2026-10-29'])
-        ->and($span('2026-10-30'))->toBe(['2026-10-30', '2026-11-05']);
+    // Paid up to the 18th, paid again on the 20th: that $14 is for the 19th–25th.
+    expect($span('2026-10-19'))->toBe(['2026-10-19', '2026-10-25'])
+        ->and($span('2026-10-25'))->toBe(['2026-10-19', '2026-10-25'])
+        ->and($span('2026-10-26'))->toBe(['2026-10-26', '2026-11-01']);
 });

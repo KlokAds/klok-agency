@@ -20,8 +20,8 @@ use RuntimeException;
  * Bills clients by campaign. Campaigns and their daily spend come from Klok
  * Pilot; the spend of every campaign linked to a client, from its bill_from
  * day on, becomes one "client ad spend" row per client per week in the USD
- * book (source "pilot"). A week starts on the day the client paid and runs
- * seven days; their next payment starts a new one. Those rows are then funded, oldest first, by the
+ * book (source "pilot"): seven days one after another from the client's
+ * first billed day, the days a weekly payment covers. Those rows are then funded, oldest first, by the
  * USD credit the client's payments bought: funded rows are Settled, the
  * rest stay Pending until the client pays.
  */
@@ -282,36 +282,22 @@ class CampaignBilling
     }
 
     /**
-     * The client's billing weeks: each starts on a day they paid and runs
-     * seven days, cut short by their next payment. The first starts on the
-     * first day billed if they had not paid yet.
+     * The client's billing weeks: seven days one after another from the
+     * first day billed to them, so a week is the seven days a payment buys
+     * (a client paid up to the 18th pays on the 20th for the 19th–25th).
      *
      * @return callable(CarbonImmutable): array{0: CarbonImmutable, 1: CarbonImmutable}
      */
     public function weeks(int $clientId, mixed $firstDay): callable
     {
-        $starts = BdtEntry::where('client_id', $clientId)->whereIn('category', BdtEntry::REVENUE)->whereNotNull('entry_date')
-            ->pluck('entry_date')->map(fn ($d) => CarbonImmutable::parse($d)->startOfDay());
-        if ($firstDay !== null) {
-            $first = CarbonImmutable::parse($firstDay)->startOfDay();
-            // Payments before the first billed day only matter for where the first week starts.
-            $before = $starts->filter(fn (CarbonImmutable $d) => $d->lte($first))->max();
-            $starts = $starts->filter(fn (CarbonImmutable $d) => $d->gt($first))->push($before ?? $first);
-        }
-        $starts = $starts->unique(fn (CarbonImmutable $d) => $d->toDateString())->sort()->values();
+        $first = $firstDay !== null ? CarbonImmutable::parse($firstDay)->startOfDay() : null;
 
-        return function (CarbonImmutable $day) use ($starts): array {
+        return function (CarbonImmutable $day) use ($first): array {
             $day = $day->startOfDay();
-            $start = $starts->filter(fn (CarbonImmutable $d) => $d->lte($day))->max() ?? $day;
-            $next = $starts->first(fn (CarbonImmutable $d) => $d->gt($start));
+            $start = $first !== null && $first->lte($day) ? $first : $day;
             $from = $start->addDays(7 * intdiv((int) $start->diffInDays($day), 7));
-            $to = $from->addDays(6);
 
-            if ($next !== null && $to->gte($next)) {
-                $to = $next->subDay();
-            }
-
-            return [$from, $to];
+            return [$from, $from->addDays(6)];
         };
     }
 
