@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AppDevice;
 use App\Models\Setting;
+use App\Payments\PaySettings;
+use App\Payments\SmsParser;
 use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,6 +42,18 @@ class AppDeviceController extends Controller
     }
 
     /**
+     * Signing out in the app: this phone stops getting that person's
+     * notifications. The token itself is the proof; no session is needed.
+     */
+    public function forget(Request $request): Response
+    {
+        $data = $request->validate(['token' => ['required', 'string', 'min:20', 'max:4096']]);
+        AppDevice::where('token_hash', hash('sha256', $data['token']))->where('sms_forwarder', false)->delete();
+
+        return response()->noContent();
+    }
+
+    /**
      * Makes this phone the SMS forwarder: a fresh secret URL the app keeps
      * and posts each wallet SMS to (any older forwarder stops at once).
      */
@@ -58,6 +72,10 @@ class AppDeviceController extends Controller
         $device->forceFill(['sms_forwarder' => true])->save();
         activity('Setting')->causedBy($request->user())->log('sms forwarder set to the app on '.($device->device ?? 'a phone'));
 
-        return response()->json(['url' => route('hooks.sms', $secret)]);
+        // The phone forwards only these senders; everyone else's SMS never leave it.
+        return response()->json([
+            'url' => route('hooks.sms', $secret),
+            'senders' => array_values(array_unique([...array_merge(...array_values(SmsParser::SENDERS)), ...PaySettings::bankSenders()])),
+        ]);
     }
 }

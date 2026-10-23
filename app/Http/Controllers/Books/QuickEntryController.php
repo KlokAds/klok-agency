@@ -14,6 +14,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -201,13 +202,31 @@ class QuickEntryController extends Controller
             }
         }
 
-        $post($data);
-
-        // Paid by bank transfer: the transfer's own fee is a Bank charge from the bank.
-        if (! empty($data['bank_fee']) && ($data['wallet'] ?? null) === 'bank' && ($data['direction'] ?? 'out') !== 'in' && ($data['direction'] ?? null) !== 'repay') {
-            MoveFees::book(MoveFees::bankFee(), 'bank', $data['entry_date'], 'Bank transfer fee — '.($data['description'] ?: __('টাকা পাঠানো')));
+        // Written offline and sent later: booked once, however often it is resent.
+        $offlineId = $request->header('X-Offline-Id');
+        if ($offlineId !== null && ! Str::isUuid($offlineId)) {
+            abort(422);
         }
 
-        return $message;
+        return DB::transaction(function () use ($request, $data, $post, $message, $offlineId) {
+            if ($offlineId !== null) {
+                $taken = ! DB::table('offline_entries')->insertOrIgnore([
+                    'id' => $offlineId, 'user_id' => $request->user()->id,
+                    'type' => (string) $request->route('type'), 'created_at' => now(),
+                ]);
+                if ($taken) {
+                    return __('এই entry আগেই জমা হয়েছে।');
+                }
+            }
+
+            $post($data);
+
+            // Paid by bank transfer: the transfer's own fee is a Bank charge from the bank.
+            if (! empty($data['bank_fee']) && ($data['wallet'] ?? null) === 'bank' && ($data['direction'] ?? 'out') !== 'in' && ($data['direction'] ?? null) !== 'repay') {
+                MoveFees::book(MoveFees::bankFee(), 'bank', $data['entry_date'], 'Bank transfer fee — '.($data['description'] ?: __('টাকা পাঠানো')));
+            }
+
+            return $message;
+        });
     }
 }

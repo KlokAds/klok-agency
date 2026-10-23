@@ -19,6 +19,12 @@ export const SETTINGS_TABS = [
         icon: 'wallet',
         perm: 'settings.view',
     },
+    {
+        label: 'Phone app',
+        href: '/admin/app',
+        icon: 'bell',
+        perm: 'settings.view',
+    },
     { label: 'User', href: '/admin/users', icon: 'user', perm: 'users.view' },
     {
         label: 'Role ও Permission',

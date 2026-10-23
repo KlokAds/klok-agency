@@ -4,6 +4,8 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 /**
  * Signs the user out after a stretch of no activity — a finance screen
  * left open on a shared desk should not stay open. Warns a minute before.
+ * Not inside the Android app: it stays signed in and locks itself instead
+ * (fingerprint or PIN).
  */
 export function useIdleLogout() {
     const page = usePage();
@@ -38,6 +40,10 @@ export function useIdleLogout() {
     }
 
     onMounted(() => {
+        if (/KlokFinanceApp/.test(navigator.userAgent)) {
+            return;
+        }
+
         events.forEach((e) =>
             window.addEventListener(e, bump, { passive: true }),
         );

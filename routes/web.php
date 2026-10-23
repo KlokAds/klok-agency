@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Agency\AdRunController;
 use App\Http\Controllers\Agency\AgencySettingsController;
+use App\Http\Controllers\Agency\AppSettingsController;
 use App\Http\Controllers\Agency\CampaignController;
 use App\Http\Controllers\Agency\NotificationController;
 use App\Http\Controllers\Agency\PilotAccountController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Agency\RenewalController;
 use App\Http\Controllers\Agency\TaskController;
 use App\Http\Controllers\Agency\TickController;
 use App\Http\Controllers\AppDeviceController;
+use App\Http\Controllers\AppReleaseController;
 use App\Http\Controllers\Books\BdtEntryController;
 use App\Http\Controllers\Books\ClientController;
 use App\Http\Controllers\Books\DashboardController;
@@ -47,6 +49,9 @@ Route::get('agency/tick/{token}', TickController::class)->middleware('throttle:3
 
 // The wallet phone's SMS forwarder (token in Settings → Payment; CSRF-exempt in bootstrap/app.php).
 Route::post('hooks/sms/{token}', SmsHookController::class)->middleware('throttle:120,1')->name('hooks.sms');
+Route::get('app/download', [AppReleaseController::class, 'download'])->middleware(['signed', 'throttle:10,1'])->name('app.download');
+Route::post('hooks/app-forget', [AppDeviceController::class, 'forget'])->middleware('throttle:10,1')->name('app.device.forget');
+Route::post('hooks/app-release/{token}', [AppReleaseController::class, 'upload'])->middleware('throttle:10,1')->name('hooks.app-release');
 
 // The client's invoice page: no sign-in, the token is the key.
 Route::middleware('throttle:60,1')->group(function () {
@@ -66,6 +71,7 @@ Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middl
 Route::middleware(['auth', 'verified'])->group(function () {
     // The Android app: this phone's notifications, and the phone that forwards the wallet SMS.
     Route::post('app/device', [AppDeviceController::class, 'store'])->middleware('throttle:30,1')->name('app.device');
+    Route::get('app/latest', [AppReleaseController::class, 'latest'])->middleware('throttle:30,1')->name('app.latest');
     Route::post('app/sms-forwarder', [AppDeviceController::class, 'smsForwarder'])->middleware('throttle:10,1')->name('app.sms-forwarder');
 
     Route::get('dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
@@ -215,6 +221,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('agency/pilot-test', [AgencySettingsController::class, 'pilotTest'])->middleware(['can:settings.edit', 'throttle:10,1'])->name('agency.pilot-test');
         Route::post('agency/tick-token', [AgencySettingsController::class, 'tickToken'])->middleware('can:settings.edit')->name('agency.tick-token');
         Route::post('agency/summary-now', [AgencySettingsController::class, 'summaryNow'])->middleware(['can:settings.edit', 'throttle:3,1'])->name('agency.summary-now');
+        Route::get('app', [AppSettingsController::class, 'index'])->middleware('can:settings.view')->name('app.index');
+        Route::put('app/firebase', [AppSettingsController::class, 'firebase'])->middleware('can:settings.edit')->name('app.firebase');
+        Route::put('app/card-low', [AppSettingsController::class, 'cardLow'])->middleware('can:settings.edit')->name('app.card-low');
+        Route::post('app/test', [AppSettingsController::class, 'test'])->middleware('throttle:10,1')->name('app.test');
+        Route::delete('app/devices/{device}', [AppSettingsController::class, 'destroyDevice'])->middleware('can:settings.edit')->name('app.devices.destroy');
         Route::get('update/status', [UpdateController::class, 'status'])->middleware('throttle:20,1')->name('update.status');
         Route::post('update', [UpdateController::class, 'update'])->middleware('throttle:5,10')->name('update.run');
     });

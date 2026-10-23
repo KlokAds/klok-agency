@@ -208,3 +208,16 @@ it('sends security headers', function () {
         ->assertHeader('X-Content-Type-Options', 'nosniff')
         ->assertHeader('Cache-Control', 'no-store, private');
 });
+
+it('books an entry written offline once, however often the phone resends it', function () {
+    $id = '7b1d3c5e-2f4a-4b6c-8d9e-0a1b2c3d4e5f';
+    $entry = ['entry_date' => now()->toDateString(), 'usd' => '50', 'bdt' => '6,400', 'wallet' => 'bank'];
+
+    foreach (range(1, 3) as $try) {
+        $this->actingAs($this->owner)->post('/quick/buy-usd', $entry, ['X-Offline-Id' => $id])->assertRedirect();
+    }
+
+    expect(FxBatch::where('usd', 5000)->count())->toBe(1);
+
+    $this->actingAs($this->owner)->post('/quick/buy-usd', $entry, ['X-Offline-Id' => 'not-a-uuid'])->assertStatus(422);
+});

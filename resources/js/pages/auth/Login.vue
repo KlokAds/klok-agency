@@ -15,7 +15,12 @@ defineOptions({
 
 defineProps<{ status?: string; canResetPassword: boolean }>();
 
-const form = useForm({ email: '', password: '', remember: false });
+// The Android app stays signed in (it locks itself with a fingerprint or PIN).
+const form = useForm({
+    email: '',
+    password: '',
+    remember: /KlokFinanceApp/.test(navigator.userAgent),
+});
 
 function submit(): void {
     form.post('/login', { onFinish: () => form.reset('password') });

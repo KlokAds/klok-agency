@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import BrandMark from '@/components/BrandMark.vue';
 import GlobalSearch from '@/components/GlobalSearch.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
@@ -13,6 +13,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { useIdleLogout } from '@/composables/useIdleLogout';
 import { usePopover } from '@/composables/usePopover';
 import { locale, switchLocale, t } from '@/lib/i18n';
+import { drop, forgetPages, offline, startOffline } from '@/lib/offline';
 import { quickOpen } from '@/lib/quick-entry';
 import { sectionOf } from '@/lib/sections';
 import { SETTINGS_TABS, isSettingsPath } from '@/lib/settings-tabs';
@@ -155,8 +156,44 @@ const userMenu = usePopover(userAnchor, userPanel, { align: 'end' });
 const { resolvedAppearance, updateAppearance } = useAppearance();
 const { warning, secondsLeft, stay } = useIdleLogout();
 
-function logout(): void {
+async function logout(): Promise<void> {
+    forgetPages();
+    // The app first stops this phone getting this person's notifications.
+    await bridge()
+        ?.callHandler('signingOut')
+        .catch(() => undefined);
     router.post('/logout');
+}
+
+// No internet: pages already opened still open; quick entries wait on the phone.
+onMounted(() =>
+    startOffline(
+        () => user.value?.id ?? null,
+        () => router.reload(),
+    ),
+);
+const mine = computed(() =>
+    offline.waiting.filter((w) => w.user === user.value?.id),
+);
+const showWaiting = ref(false);
+
+/** Inside the Android app: its own settings (lock, SMS forwarding). */
+const inApp =
+    typeof navigator !== 'undefined' &&
+    /KlokFinanceApp/.test(navigator.userAgent);
+
+function bridge() {
+    return (
+        window as unknown as {
+            flutter_inappwebview?: {
+                callHandler: (name: string) => Promise<unknown>;
+            };
+        }
+    ).flutter_inappwebview;
+}
+
+function appSettings(): void {
+    void bridge()?.callHandler('appSettings');
 }
 </script>
 
@@ -381,6 +418,21 @@ function logout(): void {
                                     :title="t('2FA চালু নেই')"
                                 />
                             </Link>
+                            <button
+                                v-if="inApp"
+                                type="button"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                @click="
+                                    userMenu.close();
+                                    appSettings();
+                                "
+                            >
+                                <KIcon
+                                    name="shield"
+                                    :size="16"
+                                    class="text-ink-3"
+                                />{{ t('App lock ও SMS') }}
+                            </button>
                             <div class="my-1 h-px bg-line" />
                             <button
                                 type="button"
@@ -397,6 +449,27 @@ function logout(): void {
             <main
                 class="mx-auto w-full max-w-[1320px] flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8"
             >
+                <div
+                    v-if="!offline.online || mine.length"
+                    class="no-print mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-wait/40 bg-wait/10 px-4 py-2.5 text-[13.5px]"
+                    role="status"
+                >
+                    <span v-if="!offline.online" class="font-semibold">{{
+                        t('নেট নেই — আগে খোলা পাতা দেখা যাচ্ছে')
+                    }}</span>
+                    <button
+                        v-if="mine.length"
+                        type="button"
+                        class="font-medium underline underline-offset-2"
+                        @click="showWaiting = true"
+                    >
+                        {{
+                            t('{count} টা entry জমা হওয়ার অপেক্ষায়', {
+                                count: mine.length,
+                            })
+                        }}
+                    </button>
+                </div>
                 <slot />
             </main>
         </div>
@@ -412,6 +485,42 @@ function logout(): void {
         </button>
 
         <QuickEntry v-if="canQuick" v-model="quick" />
+
+        <KModal
+            v-model="showWaiting"
+            width="md"
+            :title="t('জমা হওয়ার অপেক্ষায়')"
+            :subtitle="
+                t('নেট এলে নিজে থেকে জমা হবে। ভুল থাকলে মুছে আবার লিখুন।')
+            "
+        >
+            <ul class="flex flex-col divide-y divide-line">
+                <li
+                    v-for="item in mine"
+                    :key="item.id"
+                    class="flex items-start gap-3 py-2.5"
+                >
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[14px] font-medium">
+                            {{ item.job }} ·
+                            <span class="num">{{
+                                item.data.amount ?? item.data.usd ?? ''
+                            }}</span>
+                        </p>
+                        <p class="text-[12.5px] text-ink-3">
+                            {{ item.data.entry_date }}
+                            {{ item.data.description ?? '' }}
+                        </p>
+                        <p v-if="item.error" class="text-[12.5px] text-out">
+                            {{ item.error }}
+                        </p>
+                    </div>
+                    <KButton variant="quiet" size="sm" @click="drop(item.id)">{{
+                        t('মুছুন')
+                    }}</KButton>
+                </li>
+            </ul>
+        </KModal>
         <KFeedbackHost />
 
         <KModal

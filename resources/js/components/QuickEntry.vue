@@ -16,6 +16,7 @@ import KSwitch from '@/components/k/KSwitch.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { keep, keepLookups, keptLookups } from '@/lib/offline';
 import { quickJob } from '@/lib/quick-entry';
 import type { Option } from '@/types';
 
@@ -37,7 +38,19 @@ type Lookups = {
     }[];
 };
 
-const lookups = computed(() => page.props.lookups as Lookups | undefined);
+const me = computed(() => page.props.auth.user?.id ?? 0);
+// With no internet the lists come from the last time they were fetched.
+const lookups = computed(
+    () =>
+        (page.props.lookups as Lookups | undefined) ??
+        keptLookups<Lookups>(me.value) ??
+        undefined,
+);
+watch(
+    () => page.props.lookups,
+    (value) => keepLookups(me.value, value),
+    { immediate: true },
+);
 const loading = ref(false);
 
 // The jobs, in the words the old sheet used ("কোথায় কী লিখব"). Two of them
@@ -156,6 +169,10 @@ watch(open, (value) => {
             job.value = jobs.value[0]?.key ?? 'ad-spend';
         }
 
+        if (!navigator.onLine) {
+            return;
+        }
+
         loading.value = true;
         router.reload({
             only: ['lookups'],
@@ -265,6 +282,17 @@ const effectiveRate = computed(() => {
 const current = computed(() => JOBS.find((j) => j.key === job.value)!);
 
 function submit(): void {
+    // No internet: kept on this phone and sent once the internet is back.
+    if (!navigator.onLine) {
+        keep(me.value, job.value, form.data());
+        open.value = false;
+        const date = form.entry_date;
+        form.reset();
+        form.entry_date = date;
+
+        return;
+    }
+
     form.post(`/quick/${job.value}`, {
         preserveScroll: true,
         onSuccess: () => {

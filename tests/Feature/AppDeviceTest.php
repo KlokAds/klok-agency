@@ -4,10 +4,16 @@ use App\Http\Controllers\Invoices\SmsHookController;
 use App\Models\AppDevice;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\AppPush;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 const PHONE_TOKEN = 'fcm-token-of-the-owners-phone-0123456789';
 
@@ -68,4 +74,61 @@ test('signing in in one place signs that person out everywhere else', function (
 
     expect(DB::table('sessions')->where('id', 'the-other-browser')->exists())->toBeFalse()
         ->and($this->owner->fresh()->remember_token)->not->toBe('old-remember-token');
+});
+
+test('the app settings page shows the phones and keeps the Firebase key encrypted', function () {
+    AppDevice::create(['user_id' => $this->owner->id, 'token_hash' => hash('sha256', PHONE_TOKEN), 'token' => PHONE_TOKEN, 'device' => 'Mozilla/5.0 (Linux; Android 14; SM-A155F)', 'app_version' => 1]);
+
+    $this->actingAs($this->owner)->get('/admin/app')->assertOk()
+        ->assertInertia(fn ($page) => $page->component('admin/App')->has('devices', 1)->where('firebase', null));
+
+    $this->actingAs($this->owner)->put('/admin/app/firebase', ['key' => '{"type":"nope"}'])->assertSessionHasErrors('key');
+
+    $key = json_encode(['type' => 'service_account', 'project_id' => 'p1', 'client_email' => 'a@p1.iam.gserviceaccount.com', 'private_key' => 'k']);
+    $this->actingAs($this->owner)->put('/admin/app/firebase', ['key' => $key])->assertRedirect();
+
+    expect(Setting::get(AppPush::SETTING))->not->toContain('service_account')
+        ->and(app(AppPush::class)->account()['project_id'])->toBe('p1');
+
+    $this->actingAs($this->accountant)->put('/admin/app/firebase', ['key' => $key])->assertForbidden();
+});
+
+test('a test notification goes to the phones of whoever asks', function () {
+    Http::fake(['oauth2.googleapis.com/*' => Http::response(['access_token' => 'tok']), 'fcm.googleapis.com/*' => Http::response(['name' => 'm1'])]);
+    Cache::put('fcm.access_token', 'tok', 600);
+    $pem = 'k';
+    Setting::put(AppPush::SETTING, Crypt::encryptString(json_encode(['project_id' => 'p1', 'client_email' => 'a@p1', 'private_key' => $pem])));
+    AppDevice::create(['user_id' => $this->owner->id, 'token_hash' => hash('sha256', PHONE_TOKEN), 'token' => PHONE_TOKEN, 'app_version' => 1]);
+
+    $this->actingAs($this->owner)->post('/admin/app/test', ['urgent' => true])->assertRedirect();
+
+    Http::assertSent(fn ($r) => str_contains($r->url(), 'fcm.googleapis.com')
+        && $r['message']['token'] === PHONE_TOKEN
+        && $r['message']['android']['notification']['channel_id'] === 'finance_urgent'
+        && $r['message']['android']['notification']['sound'] === 'default');
+});
+
+test('signing out in the app stops that phone, but never the SMS phone', function () {
+    AppDevice::create(['user_id' => $this->owner->id, 'token_hash' => hash('sha256', PHONE_TOKEN), 'token' => PHONE_TOKEN, 'app_version' => 1]);
+    $this->postJson(route('app.device.forget'), ['token' => PHONE_TOKEN])->assertNoContent();
+    expect(AppDevice::count())->toBe(0);
+
+    AppDevice::create(['user_id' => $this->owner->id, 'token_hash' => hash('sha256', PHONE_TOKEN), 'token' => PHONE_TOKEN, 'app_version' => 1, 'sms_forwarder' => true]);
+    $this->postJson(route('app.device.forget'), ['token' => PHONE_TOKEN])->assertNoContent();
+    expect(AppDevice::count())->toBe(1);
+});
+
+test('GitHub hands over a new APK and the app finds it', function () {
+    Storage::fake('local');
+    Setting::put('app_release_token', Hash::make('release-secret-0123456789'));
+
+    $this->post(route('hooks.app-release', 'wrong'), [])->assertNotFound();
+    $this->post(route('hooks.app-release', 'release-secret-0123456789'), [
+        'version' => 2, 'name' => '1.0.2', 'apk' => UploadedFile::fake()->create('app.apk', 100),
+    ])->assertOk();
+
+    $this->actingAs($this->accountant)->getJson(route('app.latest'))->assertJson(['version' => 2, 'name' => '1.0.2']);
+    $url = $this->actingAs($this->accountant)->getJson(route('app.latest'))->json('url');
+    $this->get($url)->assertOk();
+    $this->get(route('app.download'))->assertForbidden();
 });
