@@ -46,6 +46,7 @@ export const SETTINGS_TABS = [
     },
     { label: 'Trash', href: '/trash', icon: 'bin', perm: 'trash.view' },
     // Owner only (checked on the server too).
+    { label: 'Payment SMS', href: '/admin/sms', icon: 'chat', perm: 'owner' },
     { label: 'সমস্যা', href: '/admin/errors', icon: 'warn', perm: 'owner' }, // i18n
 ] as const;
 

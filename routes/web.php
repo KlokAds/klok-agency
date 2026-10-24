@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\ErrorLogController;
+use App\Http\Controllers\Admin\PaymentSmsController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\SettingController;
@@ -222,6 +223,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sessions', [SessionController::class, 'index'])->middleware('can:users.view')->name('sessions.index');
         Route::delete('sessions/{session}', [SessionController::class, 'destroy'])->middleware('can:users.edit')->name('sessions.destroy');
         Route::get('errors', [ErrorLogController::class, 'index'])->name('errors.index');
+        Route::get('sms', [PaymentSmsController::class, 'index'])->name('sms.index');
         Route::get('roles', [RoleController::class, 'index'])->middleware('can:roles.view')->name('roles.index');
         Route::post('roles', [RoleController::class, 'store'])->middleware('can:roles.create')->name('roles.store');
         Route::put('roles/{role}', [RoleController::class, 'update'])->middleware('can:roles.edit')->name('roles.update');

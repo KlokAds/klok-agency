@@ -21,6 +21,10 @@ import { SETTINGS_TABS, isSettingsPath } from '@/lib/settings-tabs';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+// Beside the name: the Owner's app, or the team's (Accountant, Viewer…).
+const roleBadge = computed(() =>
+    user.value.role === 'Owner' ? 'Owner' : 'Team',
+);
 const can = computed(() => page.props.auth.can ?? {});
 
 type NavItem = { label: string; href: string; icon: string; perm: string };
@@ -234,7 +238,9 @@ function appSettings(): void {
             :class="drawer ? 'translate-x-0' : '-translate-x-full'"
         >
             <div class="flex h-[68px] items-center px-5">
-                <Link href="/dashboard"><BrandMark light /></Link>
+                <Link href="/dashboard"
+                    ><BrandMark light :badge="roleBadge"
+                /></Link>
             </div>
 
             <nav
@@ -338,7 +344,7 @@ function appSettings(): void {
                     <KIcon name="menu" :size="20" />
                 </button>
                 <Link href="/dashboard" class="min-w-0 shrink lg:hidden"
-                    ><BrandMark :size="28" compact
+                    ><BrandMark :size="28" compact :badge="roleBadge"
                 /></Link>
 
                 <span class="flex flex-1 justify-end md:justify-start">

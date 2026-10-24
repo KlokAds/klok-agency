@@ -2,7 +2,13 @@
 import { t } from '@/lib/i18n';
 
 withDefaults(
-    defineProps<{ size?: number; light?: boolean; compact?: boolean }>(),
+    defineProps<{
+        size?: number;
+        light?: boolean;
+        compact?: boolean;
+        /** Whose app this is: Owner, Team or Client — a small tag beside the name. */
+        badge?: string | null;
+    }>(),
     { size: 34 },
 );
 </script>
@@ -41,14 +47,26 @@ withDefaults(
         <span
             class="flex min-w-0 flex-col overflow-hidden leading-none whitespace-nowrap"
         >
-            <span
-                class="truncate font-bold tracking-[-0.02em]"
-                :class="[
-                    compact ? 'text-[14.5px]' : 'text-[15px]',
-                    light ? 'text-white' : 'text-ink',
-                ]"
-                >Klok Finance</span
-            >
+            <span class="flex min-w-0 items-center gap-1.5">
+                <span
+                    class="truncate font-bold tracking-[-0.02em]"
+                    :class="[
+                        compact ? 'text-[14.5px]' : 'text-[15px]',
+                        light ? 'text-white' : 'text-ink',
+                    ]"
+                    >Klok Finance</span
+                >
+                <span
+                    v-if="badge"
+                    class="shrink-0 rounded-[5px] px-1.5 py-[3px] text-[9px] font-bold tracking-[0.06em] uppercase"
+                    :class="
+                        light
+                            ? 'bg-[#2dd4bf]/20 text-[#5eead4]'
+                            : 'bg-brand-soft text-brand'
+                    "
+                    >{{ badge }}</span
+                >
+            </span>
             <span
                 class="mt-1 truncate font-semibold"
                 :class="[

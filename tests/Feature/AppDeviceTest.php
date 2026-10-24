@@ -93,6 +93,15 @@ test('tells the Owner when the SMS phone has not checked in for hours, once, and
     expect($this->owner->notifications()->where('data->kind', 'sms_silent')->count())->toBe(1);
 });
 
+test('lists every payment SMS the server kept for the Owner only, with the invoice it paid', function () {
+    PaymentSms::create(['provider' => 'bkash', 'sender' => 'bKash', 'body' => 'You have received Tk 10.00', 'amount' => 1000, 'trx_id' => 'OLDSMS0001', 'payer_number' => '01712345678', 'status' => 'unmatched', 'received_at' => now()]);
+
+    $this->actingAs($this->owner)->get('/admin/sms')->assertOk()
+        ->assertInertia(fn ($page) => $page->component('admin/Sms')->where('sms.0.trx_id', 'OLDSMS0001')->where('sms.0.status', 'unmatched'));
+    $this->actingAs($this->owner)->get('/admin/sms?status=matched')->assertInertia(fn ($page) => $page->has('sms', 0));
+    $this->actingAs($this->accountant)->get('/admin/sms')->assertForbidden();
+});
+
 test('signing in in one place signs that person out everywhere else', function () {
     $this->owner->forceFill(['remember_token' => 'old-remember-token'])->save();
     DB::table('sessions')->insert([
