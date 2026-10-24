@@ -2,15 +2,19 @@
 
 use App\Models\Account;
 use App\Models\AdRun;
+use App\Models\Campaign;
+use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\Agency;
+use App\Services\CampaignAlerts;
 use App\Services\DailySummary;
 use App\Services\Ticker;
 use App\Support\Access;
+use Carbon\CarbonImmutable;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
 use Illuminate\Support\Facades\Crypt;
@@ -144,29 +148,6 @@ it('runs the tick from the secret URL only', function () {
     $this->get('/agency/tick/secret-token-123')->assertOk()->assertJsonPath('ok', true);
 });
 
-it('reads ad results from Klok Pilot for the daily summary', function () {
-    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
-    PilotAccount::create(['pilot_id' => 7, 'name' => 'GFFS Ads', 'client_id' => $this->client->id]);
-
-    Http::fake([
-        'pilot.klokads.com/*' => Http::response([
-            'jsonrpc' => '2.0', 'id' => 1,
-            'result' => ['content' => [['type' => 'text', 'text' => json_encode([
-                'currency' => 'USD',
-                'campaigns' => [['results' => 30], ['results' => 10]],
-                'totals' => ['spend' => 14.0, 'results' => 40, 'clicks' => 210],
-            ])]]],
-        ]),
-    ]);
-
-    $summary = app(DailySummary::class)->build();
-
-    expect($summary['ads'][0])->toMatchArray(['client' => 'GFFS', 'account' => 'GFFS Ads', 'spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
-
-    Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer agency-token')
-        && $r['method'] === 'tools/call' && $r['params']['name'] === 'ad_account_performance' && $r['params']['arguments']['ad_account_id'] === 7);
-});
-
 it('sends a missed summary for yesterday the next morning, then today\'s in the evening', function () {
     $this->travelTo(now()->setTime(8, 0));
     Setting::putQuietly('summary_sent_on', now()->subDays(2)->toDateString());
@@ -185,54 +166,71 @@ it('sends a missed summary for yesterday the next morning, then today\'s in the 
     expect($this->owner->notifications()->where('data->kind', 'summary')->count())->toBe(2);
 });
 
-it('works out a past day from Pilot as the difference of two windows', function () {
-    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
-    PilotAccount::create(['pilot_id' => 7, 'name' => 'GFFS Ads', 'client_id' => $this->client->id]);
+function linkedCampaign(string $name, ?CarbonImmutable $stop, ?int $clientId, string $currency = 'USD'): Campaign
+{
+    static $n = 0;
+    $n++;
+    $account = PilotAccount::firstOrCreate(['pilot_id' => $currency === 'BDT' ? 8 : 7], ['name' => $currency === 'BDT' ? 'Edge Meta' : 'GFFS Ads', 'currency' => $currency, 'platform' => 'meta']);
 
-    Http::fake(function ($request) {
-        $days = $request['params']['arguments']['days'];
+    return Campaign::create([
+        'pilot_campaign_id' => 100 + $n, 'pilot_account_id' => $account->id, 'name' => $name, 'status' => 'ACTIVE',
+        'stop_at' => $stop, 'client_id' => $clientId, 'bill_from' => now()->subWeek()->toDateString(), 'spend_total' => 0, 'spend_7d' => 0,
+    ]);
+}
 
-        return Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => [
-            'currency' => 'USD',
-            'totals' => $days === 2 ? ['spend' => 20.0, 'results' => 50, 'clicks' => 300] : ['spend' => 6.0, 'results' => 10, 'clicks' => 90],
-        ]]]);
-    });
-
-    $summary = app(DailySummary::class)->build(now()->subDay());
-
-    expect($summary['ads'][0])->toMatchArray(['spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
-});
-
-it('counts what every Pilot account spent today and the Meta campaigns that end tomorrow', function () {
+it('sums only the clients\' campaigns for the day and counts those ending tomorrow', function () {
     $this->travelTo(now()->setTime(21, 0));
-    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
-    PilotAccount::create(['pilot_id' => 7, 'name' => 'GFFS Ads', 'client_id' => $this->client->id]);
-    PilotAccount::create(['pilot_id' => 8, 'name' => 'Edge Meta', 'currency' => 'BDT']);
-    $midnight = now()->addDays(2)->startOfDay()->toIso8601String();
+    $edge = Client::create(['name' => 'Edge', 'type' => 'client', 'status' => 'active']);
+    $sales = linkedCampaign('Sales', CarbonImmutable::now()->addDays(2)->startOfDay(), $this->client->id);
+    $later = linkedCampaign('Later', CarbonImmutable::now()->addDays(5), $this->client->id);
+    $taka = linkedCampaign('Fair', null, $edge->id, 'BDT');
+    $loose = linkedCampaign('Not ours', CarbonImmutable::now()->addDays(2)->startOfDay(), null);
+    $today = now()->toDateString();
 
-    Http::fake(function ($request) use ($midnight) {
-        $args = $request['params']['arguments'];
-        $content = $request['params']['name'] === 'ad_account_campaigns'
-            ? ['campaigns' => $args['ad_account_id'] === 7 ? [
-                ['campaign_id' => 1, 'name' => 'Sales', 'status' => 'ACTIVE', 'stop_time' => $midnight, 'spend_7d' => 10.2],
-                ['campaign_id' => 2, 'name' => 'Old', 'status' => 'ACTIVE', 'stop_time' => now()->subMonth()->toIso8601String(), 'spend_7d' => 0],
-                ['campaign_id' => 3, 'name' => 'Later', 'status' => 'ACTIVE', 'stop_time' => now()->addDays(5)->toIso8601String(), 'spend_7d' => 4],
-            ] : []]
-            : ['currency' => $args['ad_account_id'] === 7 ? 'USD' : 'BDT', 'totals' => ['spend' => $args['ad_account_id'] === 7 ? 12.4 : 310.0, 'results' => 3]];
-
-        return Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => $content]]);
-    });
+    CampaignDay::create(['campaign_id' => $sales->id, 'day' => $today, 'spend' => 340, 'results' => 10, 'clicks' => 50]);
+    CampaignDay::create(['campaign_id' => $later->id, 'day' => $today, 'spend' => 100, 'results' => 0, 'clicks' => 5]);
+    CampaignDay::create(['campaign_id' => $taka->id, 'day' => $today, 'spend' => 31000, 'results' => 2, 'clicks' => 3]);
+    CampaignDay::create(['campaign_id' => $loose->id, 'day' => $today, 'spend' => 9999, 'results' => 9, 'clicks' => 9]);
+    CampaignDay::create(['campaign_id' => $sales->id, 'day' => now()->subDay()->toDateString(), 'spend' => 200, 'results' => 4, 'clicks' => 20]);
 
     $summary = app(DailySummary::class)->build();
 
-    expect($summary['spent_usd'])->toBe(1240)
+    expect($summary['spent_usd'])->toBe(440)
         ->and($summary['spent_bdt'])->toBe(31000)
-        ->and(array_column($summary['ads'], 'client'))->toBe(['Edge Meta', 'GFFS'])
-        ->and($summary['ending'])->toHaveCount(1)
-        ->and($summary['ending'][0])->toMatchArray(['client' => 'GFFS', 'title' => 'Sales', 'end_on' => now()->addDay()->toDateString()]);
+        ->and($summary['campaigns'])->toBe(3)
+        ->and(array_column($summary['ads'], 'client'))->toBe(['Edge', 'GFFS'])
+        ->and($summary['ads'][1])->toMatchArray(['spend' => 4.4, 'results' => 10, 'campaigns' => 2])
+        ->and(array_column($summary['ending'], 'title'))->toBe(['Sales']);
+
+    expect(app(DailySummary::class)->build(now()->subDay())['spent_usd'])->toBe(200);
 
     app(DailySummary::class)->send();
-    expect($this->owner->notifications()->where('data->kind', 'summary')->sole()->data['params'])->toMatchArray(['spent' => "12.40 + \u{09F3}310", 'ending' => 1]);
+    expect($this->owner->notifications()->where('data->kind', 'summary')->sole()->data['params'])
+        ->toMatchArray(['count' => 3, 'spent' => "4.40 + \u{09F3}310", 'ending' => 1]);
+});
+
+it('tells about each client campaign once: two days and a day before in the evening, hours before, and its spend', function () {
+    $this->travelTo(now()->setTime(10, 0));
+    $soon = linkedCampaign('Soon', CarbonImmutable::now()->addHours(2), $this->client->id);
+    $tomorrow = linkedCampaign('Tomorrow', CarbonImmutable::now()->addDays(2)->startOfDay(), $this->client->id);
+    $twoDays = linkedCampaign('Two days', CarbonImmutable::now()->addDays(3)->startOfDay(), $this->client->id);
+    linkedCampaign('Not ours', CarbonImmutable::now()->addHours(2), null);
+    CampaignDay::create(['campaign_id' => $tomorrow->id, 'day' => now()->toDateString(), 'spend' => 176, 'results' => 13, 'clicks' => 97]);
+    $sent = fn (string $kind) => $this->owner->notifications()->where('data->kind', $kind)->get()->pluck('data.params.campaign')->sort()->values()->all();
+
+    // Morning: only the one stopping within hours.
+    app(CampaignAlerts::class)->run();
+    expect($sent('campaign_ending'))->toBe(['Soon'])
+        ->and($sent('campaign_spend'))->toBe([]);
+
+    // Evening: the day-before and two-days-before notes, and each campaign's spend; once each.
+    $this->travelTo(now()->setTime(21, 30));
+    app(CampaignAlerts::class)->run();
+    app(CampaignAlerts::class)->run();
+
+    expect($sent('campaign_ending'))->toBe(['Soon', 'Tomorrow', 'Two days'])
+        ->and($sent('campaign_spend'))->toBe(['Tomorrow'])
+        ->and($this->owner->notifications()->where('data->kind', 'campaign_spend')->sole()->data['params']['spend'])->toBe('$1.76');
 });
 
 it('lists Pilot ad accounts with their campaigns and links them to clients', function () {

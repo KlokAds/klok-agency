@@ -38,9 +38,11 @@ class Ticker
         try {
             $ended = $this->agency->closeEnded();
             $reminders = $this->dueReminders();
-            $summary = $this->dailySummary();
             $this->syncCampaignSpend();
             $this->renewals();
+            // The evening's campaign notes read the day's spend fresh; the summary then counts the same.
+            $this->campaignAlerts();
+            $summary = $this->dailySummary();
             $this->metaReceipts();
             $this->overdueInvoices();
             $this->cardLow();
@@ -118,6 +120,16 @@ class Ticker
     {
         try {
             app(MetaReceipts::class)->checkIfDue();
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /** One notification per client campaign: ending, today's spend; and money running out. */
+    private function campaignAlerts(): void
+    {
+        try {
+            app(CampaignAlerts::class)->run();
         } catch (\Throwable $e) {
             report($e);
         }

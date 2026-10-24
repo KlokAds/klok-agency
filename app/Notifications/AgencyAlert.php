@@ -20,7 +20,7 @@ use Illuminate\Notifications\Notification;
 class AgencyAlert extends Notification
 {
     /** Kinds that need someone now. */
-    public const URGENT = ['invoice_paid', 'invoice_claim', 'credit_out', 'renewal_paid', 'card_low', 'pilot_down'];
+    public const URGENT = ['invoice_paid', 'invoice_claim', 'credit_out', 'credit_low', 'renewal_paid', 'card_low', 'pilot_down'];
 
     /**
      * @param  array<string, string|int|float|null>  $params
@@ -109,7 +109,7 @@ class AgencyAlert extends Notification
     {
         return match (true) {
             in_array($this->kind, ['invoice_paid', 'invoice_claim', 'invoice_overdue'], true) => 'money',
-            in_array($this->kind, ['credit_out', 'ended', 'pilot_down', 'campaign_changed'], true), str_starts_with($this->kind, 'renewal') => 'ads',
+            in_array($this->kind, ['credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_changed', 'campaign_ending', 'campaign_spend'], true), str_starts_with($this->kind, 'renewal') => 'ads',
             str_starts_with($this->kind, 'did_') => 'activity',
             in_array($this->kind, ['card_low', 'meta_receipt'], true) => 'dollars',
             $this->kind === 'summary' => 'summary',

@@ -32,8 +32,8 @@ class Notifier
         'tasks' => ['label' => 'কাজ ও reminder', 'permission' => null, 'push' => true], // i18n
     ];
 
-    /** A campaign stopping or about to stop: every Owner hears of it, whatever they switched off. */
-    public const OWNERS_ALWAYS = ['renewal_open', 'credit_out', 'ended', 'pilot_down'];
+    /** A campaign stopping, about to stop or its day's spend: every Owner hears of it, whatever they switched off. */
+    public const OWNERS_ALWAYS = ['renewal_open', 'credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_ending', 'campaign_spend'];
 
     /**
      * How one person gets one group: on at all, on the phone, by email.
