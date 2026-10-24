@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Http\Controllers\Invoices\SmsHookController;
+use App\Models\PaymentSms;
 use App\Models\Setting;
 use App\Models\Task;
 use App\Notifications\AgencyAlert;
@@ -78,6 +80,12 @@ class Ticker
     {
         if (Cache::add('notifications-pruned:'.now()->toDateString(), true, 86400)) {
             rescue(fn () => DB::table('notifications')->whereNotNull('read_at')->where('read_at', '<', now()->subDays(60))->delete());
+        }
+
+        // Money SMS no invoice took, and ones the Owner set aside: only invoices need SMS.
+        if (Cache::add('sms-pruned:'.now()->format('Y-m-d-H'), true, 3600)) {
+            rescue(fn () => PaymentSms::query()->whereIn('status', ['unmatched', 'ignored'])
+                ->where('received_at', '<', now()->subHours(SmsHookController::KEEP_UNMATCHED_HOURS))->delete());
         }
     }
 

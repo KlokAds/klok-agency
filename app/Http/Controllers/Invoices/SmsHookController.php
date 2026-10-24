@@ -5,11 +5,8 @@ namespace App\Http\Controllers\Invoices;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentSms;
 use App\Models\Setting;
-use App\Notifications\AgencyAlert;
 use App\Payments\PaymentMatcher;
 use App\Payments\SmsParser;
-use App\Services\Notifier;
-use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,12 +16,17 @@ use Illuminate\Support\Facades\Hash;
  * Receives SMS forwarded by the Android phone holding the agency's wallet
  * SIM. Accepts the field names used by common SMS-forwarder apps
  * (from/sender/address, text/message/body); an empty body is a heartbeat.
+ *
+ * Only money SMS are kept, and only to pay invoices: one no invoice takes
+ * sends no notification and is deleted after a day (App\Services\Ticker),
+ * long enough for a TrxID the client types in a little later.
  */
 class SmsHookController extends Controller
 {
-    public const UNMATCHED_TITLE = 'Payment SMS এসেছে — কোনো invoice-এর সাথে মেলেনি'; // i18n
+    /** How long a money SMS no invoice took stays on the server. */
+    public const KEEP_UNMATCHED_HOURS = 24;
 
-    public function __invoke(Request $request, string $token, SmsParser $parser, PaymentMatcher $matcher, Notifier $notifier): JsonResponse
+    public function __invoke(Request $request, string $token, SmsParser $parser, PaymentMatcher $matcher): JsonResponse
     {
         $hash = Setting::get('sms_device_token');
 
@@ -42,15 +44,8 @@ class SmsHookController extends Controller
         $parsed = $parser->parse($sender, $body);
         $receivedAt = $this->timestamp($this->first($request, ['receivedStamp', 'sentStamp', 'timestamp', 'received_at', 'date']));
 
+        // Not money coming in (an OTP, an offer, money going out): not kept at all.
         if ($parsed === null) {
-            PaymentSms::create([
-                'provider' => $parser->providerFor($sender) ?? 'unknown',
-                'sender' => mb_substr($sender ?: '?', 0, 60),
-                'body' => mb_substr($body, 0, 2000),
-                'status' => 'ignored',
-                'received_at' => $receivedAt,
-            ]);
-
             return response()->json(['status' => 'ignored']);
         }
 
@@ -67,14 +62,6 @@ class SmsHookController extends Controller
         );
 
         $matched = $sms->wasRecentlyCreated && $matcher->forSms($sms);
-
-        if ($sms->wasRecentlyCreated && ! $matched) {
-            $notifier->send(null, new AgencyAlert('sms_unmatched', self::UNMATCHED_TITLE, '{provider} · {amount} · {payer}', [
-                'provider' => $parsed['provider'],
-                'amount' => Money::bdt((int) $parsed['amount']),
-                'payer' => $parsed['payer_number'] ?? '—',
-            ], ['url' => '/invoices']));
-        }
 
         return response()->json(['status' => $matched ? 'matched' : ($sms->wasRecentlyCreated ? 'stored' : 'duplicate')]);
     }

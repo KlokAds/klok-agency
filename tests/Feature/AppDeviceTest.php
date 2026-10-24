@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Invoices\SmsHookController;
 use App\Models\AppDevice;
+use App\Models\PaymentSms;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\AppPush;
+use App\Services\Ticker;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
 use Illuminate\Http\UploadedFile;
@@ -50,17 +52,24 @@ test('only the owner can make a phone the SMS forwarder', function () {
         ->assertJson(['status' => 'ignored']);
 });
 
-test('a payment SMS no invoice takes tells whoever keeps the money book, not the Owner', function () {
+test('a payment SMS no invoice takes tells nobody and is gone after a day; other SMS are not kept', function () {
     Setting::put('sms_device_token', Hash::make('device-secret-0123456789'));
+    $hook = route('hooks.sms', 'device-secret-0123456789');
 
-    $this->postJson(route('hooks.sms', 'device-secret-0123456789'), [
+    $this->postJson($hook, [
         'from' => 'bKash',
         'text' => 'You have received Tk 777.00 from 01712345678. TrxID NOMATCH777 at 20/10/2026 14:23',
-    ])->assertOk();
+    ])->assertJson(['status' => 'stored']);
+    $this->postJson($hook, ['from' => 'bKash', 'text' => 'Your bKash verification code is 123456'])->assertJson(['status' => 'ignored']);
 
-    expect($this->accountant->notifications()->count())->toBe(1)
-        ->and($this->accountant->notifications()->first()->data['title'] ?? null)->toBe(SmsHookController::UNMATCHED_TITLE)
-        ->and($this->owner->notifications()->count())->toBe(0);
+    expect(DB::table('notifications')->count())->toBe(0)
+        ->and(PaymentSms::count())->toBe(1);
+
+    // Still there for a TrxID typed in a little later; a day on, gone.
+    $this->travel(SmsHookController::KEEP_UNMATCHED_HOURS + 2)->hours();
+    app(Ticker::class)->run();
+
+    expect(PaymentSms::count())->toBe(0);
 });
 
 test('signing in in one place signs that person out everywhere else', function () {

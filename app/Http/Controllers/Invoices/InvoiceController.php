@@ -294,8 +294,9 @@ class InvoiceController extends Controller
     {
         abort_unless($request->user()->hasRole(Access::OWNER), 403);
 
+        // Not an invoice's money: nothing to keep it for.
         if ($sms->status === 'unmatched') {
-            $sms->forceFill(['status' => 'ignored'])->save();
+            $sms->delete();
         }
 
         return back();

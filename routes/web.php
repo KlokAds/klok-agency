@@ -41,9 +41,18 @@ use App\Http\Controllers\Invoices\PublicRenewalController;
 use App\Http\Controllers\Invoices\SmsHookController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\LocaleController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard')->name('home');
+
+// An old or mistyped address (the Crater days' /admin, /home …) opens the sign-in page, or the
+// dashboard when signed in, instead of a 404. Files (build/, storage/) and hooks still 404.
+Route::fallback(function (Request $request) {
+    abort_if($request->expectsJson() || $request->is('build/*', 'storage/*', 'hooks/*', 'api/*') || str_contains($request->path(), '.'), 404);
+
+    return redirect()->route($request->user() ? 'dashboard' : 'login');
+});
 
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
 

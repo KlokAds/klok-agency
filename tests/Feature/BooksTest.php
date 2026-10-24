@@ -93,7 +93,10 @@ it('opens a client statement', function () {
 });
 
 it('has no public sign-up', function () {
-    $this->get('/register')->assertNotFound();
+    // An unknown address goes to the sign-in page; there is nothing to sign up with.
+    $this->get('/register')->assertRedirect(route('login'));
+    expect($this->post('/register', ['name' => 'X', 'email' => 'x@example.com', 'password' => 'password-1234'])->status())->toBeIn([404, 405]);
+    $this->assertDatabaseMissing('users', ['email' => 'x@example.com']);
 });
 
 it('keeps a viewer read-only on the server', function () {
