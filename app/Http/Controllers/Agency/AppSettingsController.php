@@ -103,7 +103,7 @@ class AppSettingsController extends Controller
             $this->toast(__('আপনার কোনো phone-এ app নেই।'), 'error');
         } else {
             $reached = $push->send($devices, [
-                'title' => __('Klok Finance — test notification'),
+                'title' => __('KlokOne — test notification'),
                 'body' => __('শব্দ হলো? তাহলে সব ঠিক আছে।'),
                 'level' => $request->boolean('urgent') ? 'urgent' : 'normal',
                 'url' => '/admin/app',

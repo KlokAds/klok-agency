@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * What the Klok Finance Android app tells the server: this phone's Firebase
+ * What the KlokOne Android app tells the server: this phone's Firebase
  * token under whoever is signed in (so their notifications reach it), and —
  * on the Owner's phone holding the agency's wallet SIM — that it forwards
  * the payment SMS. Clients never run this app: they pay on the invoice page.

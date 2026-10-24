@@ -23,6 +23,14 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 "retry" -> result.success(SmsForwarder.retry(this, call.argument<String>("id") ?: ""))
                 "beat" -> Thread { val ok = SmsForwarder.beat(this); runOnUiThread { result.success(ok) } }.start()
+                "cleanLog" -> result.success(SmsForwarder.cleanLog(this, call.argument<Int>("days") ?: 30))
+                "importInbox" -> {
+                    val days = call.argument<Int>("days") ?: 3
+                    Thread {
+                        val count = try { SmsForwarder.importInbox(this, days) } catch (e: Exception) { -1 }
+                        runOnUiThread { result.success(count) }
+                    }.start()
+                }
                 "defaultIgnore" -> result.success(SmsForwarder.DEFAULT_IGNORE.joinToString("\n"))
                 else -> result.notImplemented()
             }

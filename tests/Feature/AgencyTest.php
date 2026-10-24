@@ -229,6 +229,10 @@ it('tells about each client campaign once: two days and a day before in the even
     app(CampaignAlerts::class)->run();
     app(CampaignAlerts::class)->run();
 
+    // A midnight stop reads as the night before it, never "12:00 AM" of the next day.
+    $tomorrowNote = $this->owner->notifications()->where('data->kind', 'campaign_ending')->get()->first(fn ($n) => $n->data['params']['campaign'] === 'Tomorrow');
+    expect($tomorrowNote->data['params']['time'])->toBe(now()->addDay()->format('j M').' রাত শেষে (রাত 12টায়) বন্ধ');
+
     expect($sent('campaign_ending'))->toBe(['Soon', 'Tomorrow', 'Two days'])
         ->and($sent('campaign_spend'))->toBe(['Tomorrow'])
         ->and($this->owner->notifications()->where('data->kind', 'campaign_spend')->sole()->data['params']['spend'])->toBe('$1.76');

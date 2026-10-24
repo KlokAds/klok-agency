@@ -1,4 +1,4 @@
-"""Turns the android/ folder that `flutter create` makes into Klok Finance's app: the package
+"""Turns the android/ folder that `flutter create` makes into KlokOne's app: the package
 name, Firebase, signing (the same key every time, so a new APK installs over the old one),
 permissions, our Kotlin and the notification icon. Run from mobile/.
 
@@ -84,7 +84,7 @@ patch(manifest, r'(\n(\s*)<activity)', r'''
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="finance_normal" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/finance_teal" />\1''')
-patch(manifest, r'android:label="[^"]*"', 'android:label="Klok Finance"')
+patch(manifest, r'android:label="[^"]*"', 'android:label="KlokOne"')
 # Our Application: reports a crash to the server (see android-src/CrashReporter.kt).
 patch(manifest, r'android:name="\$\{applicationName\}"', 'android:name=".FinanceApplication"')
 # Other apps (browser, phone, WhatsApp) for outside links.

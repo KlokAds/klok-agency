@@ -1,5 +1,5 @@
 /*
- * Klok Finance service worker.
+ * KlokOne service worker.
  *
  * Keeps on the phone:
  *  - the built files (they never change once built, so cache-first);

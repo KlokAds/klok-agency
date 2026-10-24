@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Notifications to Klok Finance's Android app through Firebase Cloud
+ * Notifications to KlokOne's Android app through Firebase Cloud
  * Messaging, the way chat apps get theirs. Every one rings: urgent ones pop
  * up on the screen with a loud sound, the rest come with the usual sound.
  * Firebase keeps a message for a week, so a phone that was off or without

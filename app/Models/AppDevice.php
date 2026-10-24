@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One phone running the Klok Finance app, for one person.
+ * One phone running the KlokOne app, for one person.
  *
  * @property int $id
  * @property int $user_id

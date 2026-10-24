@@ -151,7 +151,7 @@ class CampaignLimits
         $end = $campaign->lastDay() ?? $today;
         $newEnd = $end->max($today)->addDays($days);
 
-        $change = ['new_end' => $newEnd->toDateString(), 'reason' => $reason ?? 'Klok Finance'];
+        $change = ['new_end' => $newEnd->toDateString(), 'reason' => $reason ?? 'KlokOne'];
 
         if ($campaign->paused_for_credit_at !== null) {
             $change['active'] = true;
@@ -205,7 +205,7 @@ class CampaignLimits
             return false;
         }
 
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['spend_cap' => round($cap / 100, 2), 'reason' => 'Client credit (Klok Finance)']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['spend_cap' => round($cap / 100, 2), 'reason' => 'Client credit (KlokOne)']);
         $this->remember($campaign, $read);
         $campaign->limits_error = $read['spend_cap_error'] ?? null;
         $campaign->saveQuietly();
@@ -215,7 +215,7 @@ class CampaignLimits
 
     private function pause(Campaign $campaign, string $clientName): void
     {
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => false, 'reason' => 'Client credit used up (Klok Finance)']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => false, 'reason' => 'Client credit used up (KlokOne)']);
         $this->remember($campaign, $read);
         $campaign->paused_for_credit_at = now();
         $campaign->saveQuietly();

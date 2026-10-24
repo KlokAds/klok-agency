@@ -11,7 +11,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * One notification: in the bell, and on the phones running the Klok Finance
+ * One notification: in the bell, and on the phones running the KlokOne
  * app. Text is kept in বাংলা source form with its parameters, and translated
  * when shown, so each reader sees their language. Every one rings on the
  * phone; urgent ones (money in, money out, something to approve or fix) pop
@@ -69,7 +69,7 @@ class AgencyAlert extends Notification
             ->subject($app['title'])
             ->greeting($app['title'])
             ->line((string) ($app['body'] ?? ''))
-            ->action(__('Klok Finance-এ দেখুন', [], (string) ($notifiable->locale ?? 'bn')), url($app['url'] ?? '/notifications'));
+            ->action(__('KlokOne-এ দেখুন', [], (string) ($notifiable->locale ?? 'bn')), url($app['url'] ?? '/notifications'));
     }
 
     /** @return array<string, mixed> */

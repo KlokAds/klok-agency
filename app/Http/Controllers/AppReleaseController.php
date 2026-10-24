@@ -76,7 +76,7 @@ class AppReleaseController extends Controller
         // Every phone hears of it now; each app looks for its own kind and installs it itself.
         // One tag, so the plain and the SMS upload make one notification, not two.
         rescue(fn () => app(AppPush::class)->send(AppDevice::all(), [
-            'title' => __('Klok Finance-এর নতুন version :name', ['name' => $data['name']]),
+            'title' => __('KlokOne-এর নতুন version :name', ['name' => $data['name']]),
             'body' => __('App খুললে নিজে থেকে নতুনটা বসে যাবে — login আর setting থেকে যায়।'),
             'level' => 'normal',
             'kind' => 'app_update',

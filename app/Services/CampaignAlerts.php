@@ -66,9 +66,9 @@ class CampaignAlerts
             $days = (int) $now->startOfDay()->diffInDays($campaign->lastDay(), false);
 
             [$stage, $body] = match (true) {
-                $stop->lte($now->addHours(self::SOON_HOURS)) => ['soon', '{client} · {campaign} — শেষ হবে {time}'], // i18n
-                $evening && $days === 1 => ['d1', '{client} · {campaign} — কাল শেষ ({date})'], // i18n
-                $evening && $days === 2 => ['d2', '{client} · {campaign} — পরশু শেষ ({date})'], // i18n
+                $stop->lte($now->addHours(self::SOON_HOURS)) => ['soon', '{client} · {campaign} — কয়েক ঘণ্টার মধ্যে: {time}'], // i18n
+                $evening && $days === 1 => ['d1', '{client} · {campaign} — কাল শেষ: {time}'], // i18n
+                $evening && $days === 2 => ['d2', '{client} · {campaign} — পরশু শেষ: {time}'], // i18n
                 default => [null, null],
             };
 
@@ -80,7 +80,8 @@ class CampaignAlerts
                 'client' => $campaign->client?->name,
                 'campaign' => $campaign->name,
                 'date' => $campaign->lastDay()?->format('j M'),
-                'time' => $stop->format('j M, g:i A'),
+                // "25 Oct রাত শেষে (রাত 12টায়) বন্ধ", never a bare "26 Oct 12:00 AM".
+                'time' => $campaign->stopsText(),
             ], ['url' => '/campaigns?account='.$campaign->pilot_account_id]));
             $sent++;
         }

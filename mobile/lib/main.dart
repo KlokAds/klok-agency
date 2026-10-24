@@ -71,7 +71,7 @@ Future<void> setUpNotifications() async {
 /// In the open app Android shows nothing by itself, so the app shows it, on the same channel.
 Future<void> showAlert(RemoteMessage message) async {
   final data = message.data;
-  final title = message.notification?.title ?? data['title'] ?? 'Klok Finance';
+  final title = message.notification?.title ?? data['title'] ?? 'KlokOne';
   final body = message.notification?.body ?? data['body'] ?? '';
   final loud = data['level'] == 'urgent';
   final channel = loud ? urgent : normal;
@@ -177,7 +177,7 @@ class FinanceApp extends StatelessWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: darkMode,
       builder: (context, dark, _) => MaterialApp(
-        title: 'Klok Finance',
+        title: 'KlokOne',
         debugShowCheckedModeBanner: false,
         theme: appTheme(dark),
         // Over every screen (the site and the app's own settings alike).
@@ -243,7 +243,7 @@ class Lock {
 }
 
 /// Asks for whatever the lock is (to open the app, or before changing the lock itself).
-Future<bool> confirmIdentity(BuildContext context, {String reason = 'Klok Finance খুলতে'}) async {
+Future<bool> confirmIdentity(BuildContext context, {String reason = 'KlokOne খুলতে'}) async {
   final mode = await Lock.mode();
   if (mode == 'off') {
     return true;
@@ -322,7 +322,7 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
     var ok = current == 'off';
     try {
       if (current == 'bio') {
-        ok = await Lock.finger('Klok Finance খুলতে আঙুলের ছাপ দিন');
+        ok = await Lock.finger('KlokOne খুলতে আঙুলের ছাপ দিন');
       }
     } catch (error, stack) {
       unawaited(report('lock', error, stack));
@@ -343,7 +343,7 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
     }
     asking = true;
     try {
-      if (await Lock.finger('Klok Finance খুলতে আঙুলের ছাপ দিন') && mounted) {
+      if (await Lock.finger('KlokOne খুলতে আঙুলের ছাপ দিন') && mounted) {
         setState(() => locked = false);
       }
     } finally {
@@ -384,7 +384,7 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
                           children: [
                             const Icon(Icons.fingerprint, size: 76, color: Color(0xFF2DD4BF)),
                             const SizedBox(height: 18),
-                            const Text('Klok Finance', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+                            const Text('KlokOne', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
                             const SizedBox(height: 28),
                             FilledButton.icon(
                               style: FilledButton.styleFrom(backgroundColor: teal),
@@ -828,7 +828,7 @@ class _SitePageState extends State<SitePage> {
     final prefs = await SharedPreferences.getInstance();
     final status = await Permission.sms.request();
     if (!status.isGranted) {
-      return 'SMS পড়ার অনুমতি দেওয়া হয়নি। Phone-এর Settings › Apps › Klok Finance › Permissions থেকে দিন।';
+      return 'SMS পড়ার অনুমতি দেওয়া হয়নি। Phone-এর Settings › Apps › KlokOne › Permissions থেকে দিন।';
     }
     final current = token ?? await FirebaseMessaging.instance.getToken();
     handedOver = null;
@@ -1369,18 +1369,11 @@ class _SettingsPageState extends State<SettingsPage> {
               fix: 'এখনই পাঠাও',
             ),
             ListTile(
-              leading: const Icon(Icons.forum_outlined),
-              title: const Text('Payment SMS-এর তালিকা'),
-              subtitle: const Text('কোনটা পৌঁছেছে, কোনটা আটকে আছে, কোন invoice-এ মিলেছে'),
+              leading: const CircleAvatar(backgroundColor: teal, child: Icon(Icons.forum, color: Colors.white)),
+              title: const Text('SMS Center', style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: const Text('সব payment SMS, কোন invoice-এ মিলেছে, sender, বাদ পড়া SMS খোঁজা'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SmsLogPage())).then((_) => load()),
-            ),
-            ListTile(
-              leading: const Icon(Icons.filter_alt_outlined),
-              title: const Text('কোন SMS যাবে'),
-              subtitle: const Text('OTP/PIN-এর শব্দ বাদ, আর কোন sender-এর SMS যায়'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SmsFilterPage())),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SmsCenterPage(site: widget.site))).then((_) => load()),
             ),
           ],
           ],
@@ -1413,26 +1406,119 @@ ThemeData appTheme(bool dark) => ThemeData(
       useMaterial3: true,
     );
 
-class SmsLogPage extends StatefulWidget {
-  const SmsLogPage({super.key});
+/// One payment SMS as the SMS Center shows it: from the server (what it made of it) or from
+/// this phone's own log (still waiting, stuck, or kept on the phone).
+class SmsItem {
+  SmsItem({
+    required this.key,
+    required this.status,
+    required this.sender,
+    required this.at,
+    this.amount,
+    this.body = '',
+    this.trx,
+    this.payer,
+    this.invoice,
+    this.invoiceUrl,
+    this.client,
+    this.error,
+    this.localId,
+  });
 
-  @override
-  State<SmsLogPage> createState() => _SmsLogPageState();
+  final String key;
+  final String status; // matched · unmatched · refund · pending · failed · skipped · synced
+  final String sender;
+  final int at;
+  final int? amount;
+  final String body;
+  final String? trx;
+  final String? payer;
+  final String? invoice;
+  final String? invoiceUrl;
+  final String? client;
+  final String? error;
+  final String? localId;
+
+  bool get waiting => status == 'pending' || status == 'failed';
 }
 
-class _SmsLogPageState extends State<SmsLogPage> {
-  List<Map<String, dynamic>> lines = [];
-  String tab = 'all';
+const _months = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+const _weekdays = ['সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার', 'রবিবার'];
+
+String taka(int poisha) {
+  final whole = (poisha / 100).round().toString();
+  final out = StringBuffer();
+  for (var i = 0; i < whole.length; i++) {
+    if (i > 0 && (whole.length - i) % 3 == 0) out.write(',');
+    out.write(whole[i]);
+  }
+  return '৳$out';
+}
+
+String dayTitle(DateTime d) {
+  final today = DateTime.now();
+  final same = (DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+  if (same(d, today)) return 'আজ · ${d.day} ${_months[d.month - 1]}';
+  if (same(d, today.subtract(const Duration(days: 1)))) return 'গতকাল · ${d.day} ${_months[d.month - 1]}';
+  return '${_weekdays[d.weekday - 1]}, ${d.day} ${_months[d.month - 1]}';
+}
+
+String clock(DateTime d) {
+  final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
+  return '$h:${d.minute.toString().padLeft(2, '0')} ${d.hour < 12 ? 'AM' : 'PM'}';
+}
+
+String agoText(DateTime at) {
+  final d = DateTime.now().difference(at);
+  if (d.inMinutes < 1) return 'এইমাত্র';
+  if (d.inHours < 1) return '${d.inMinutes} মিনিট আগে';
+  if (d.inDays < 1) return '${d.inHours} ঘণ্টা আগে';
+  return '${d.inDays} দিন আগে';
+}
+
+/// The Owner's SMS Center: what came in and what became of it, the senders, and the phone's
+/// own state — all in one place, in three tabs.
+class SmsCenterPage extends StatefulWidget {
+  const SmsCenterPage({super.key, required this.site});
+
+  final _SitePageState site;
+
+  @override
+  State<SmsCenterPage> createState() => _SmsCenterPageState();
+}
+
+class _SmsCenterPageState extends State<SmsCenterPage> {
+  int tab = 0;
+  bool loading = true;
+  bool syncing = false;
+  String? serverError;
+
+  List<Map<String, dynamic>> history = [];
+  List<Map<String, dynamic>> week = [];
+  List<Map<String, dynamic>> senders = [];
+  Map<String, dynamic> catalog = {};
+  List<Map<String, dynamic>> log = [];
+  Set<String> disabled = {};
+  List<String> words = [];
+  DateTime? lastSeen;
+  DateTime? lastOk;
+  int pending = 0;
+  bool smsOn = false;
+  bool smsAllowed = false;
+  bool batteryFree = false;
+
+  String filter = 'all';
+  String search = '';
   Timer? timer;
 
-  static const tabs = {'all': 'সব', 'pending': 'অপেক্ষায়', 'synced': 'পৌঁছেছে', 'failed': 'আটকে আছে'};
+  static const filters = {'all': 'সব', 'matched': 'মিলেছে', 'unmatched': 'মেলেনি', 'pending': 'অপেক্ষায়', 'failed': 'আটকে', 'refund': 'Refund'};
 
   @override
   void initState() {
     super.initState();
     load();
-    // Fresh while open: a retry or a new SMS shows up by itself.
-    timer = Timer.periodic(const Duration(seconds: 4), (_) => load());
+    // Fresh while open: a new SMS or a retry shows up by itself.
+    timer = Timer.periodic(const Duration(seconds: 15), (_) => load(quiet: true));
   }
 
   @override
@@ -1441,244 +1527,911 @@ class _SmsLogPageState extends State<SmsLogPage> {
     super.dispose();
   }
 
-  Future<void> load() async {
+  Future<void> load({bool quiet = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
     final raw = await smsChannel.invokeMethod<String>('log').catchError((_) => '[]');
-    final list = (jsonDecode(raw ?? '[]') as List).whereType<Map>().map((m) => m.cast<String, dynamic>()).toList();
-    if (mounted) {
-      setState(() => lines = list);
+    final count = await smsChannel.invokeMethod<int>('pending').catchError((_) => 0);
+    final allowed = await Permission.sms.isGranted;
+    final battery = await Permission.ignoreBatteryOptimizations.isGranted;
+    final savedWords = prefs.getString('sms.ignore') ?? await smsChannel.invokeMethod<String>('defaultIgnore').catchError((_) => '') ?? '';
+    final result = await widget.site.request('GET', '/app/sms-center');
+    final body = result?.body;
+    if (!mounted) return;
+    setState(() {
+      loading = false;
+      log = (jsonDecode(raw ?? '[]') as List).whereType<Map>().map((m) => m.cast<String, dynamic>()).toList();
+      pending = count ?? 0;
+      smsAllowed = allowed;
+      batteryFree = battery;
+      smsOn = prefs.getString('sms.url') != null && prefs.getString('sms.error') == null;
+      disabled = (prefs.getString('sms.disabled') ?? '').split(',').where((s) => s.isNotEmpty).toSet();
+      words = savedWords.split('\n').map((w) => w.trim()).where((w) => w.isNotEmpty).toList();
+      final ok = prefs.getInt('sms.last_ok');
+      lastOk = ok != null ? DateTime.fromMillisecondsSinceEpoch(ok) : null;
+      if (result?.status == 200 && body is Map) {
+        serverError = null;
+        history = ((body['history'] as List?) ?? []).whereType<Map>().map((m) => m.cast<String, dynamic>()).toList();
+        week = ((body['week'] as List?) ?? []).whereType<Map>().map((m) => m.cast<String, dynamic>()).toList();
+        senders = ((body['senders'] as List?) ?? []).whereType<Map>().map((m) => m.cast<String, dynamic>()).toList();
+        catalog = (body['catalog'] as Map?)?.cast<String, dynamic>() ?? {};
+        final seen = body['last_seen'];
+        lastSeen = seen is String ? DateTime.tryParse(seen)?.toLocal() : null;
+      } else if (!quiet) {
+        serverError = 'Server থেকে তালিকা আনা গেল না — নেট আর login দেখুন। Phone-এর নিজের তালিকা দেখানো হচ্ছে।';
+      }
+    });
+  }
+
+  /// Everything, newest first: the server's SMS, and this phone's ones still on their way.
+  List<SmsItem> get items {
+    final out = <SmsItem>[];
+    final trxs = <String>{};
+    for (final h in history) {
+      final trx = h['trx_id'] as String?;
+      if (trx != null) trxs.add(trx);
+      out.add(SmsItem(
+        key: 's${h['id']}',
+        status: '${h['status']}',
+        sender: '${h['sender'] ?? h['provider'] ?? ''}',
+        at: (h['at'] as num?)?.toInt() ?? 0,
+        amount: (h['amount'] as num?)?.toInt(),
+        body: '${h['body'] ?? ''}',
+        trx: trx,
+        payer: h['payer'] as String?,
+        invoice: h['invoice'] as String?,
+        invoiceUrl: h['invoice_url'] as String?,
+        client: h['client'] as String?,
+      ));
+    }
+    for (final l in log) {
+      final text = '${l['text'] ?? ''}';
+      final status = '${l['status'] ?? 'pending'}';
+      // A sent one the server has is already above (by its TrxID in the text).
+      if (status == 'synced' && trxs.any((t) => text.contains(t))) continue;
+      out.add(SmsItem(
+        key: 'l${l['id']}',
+        status: status,
+        sender: '${l['from'] ?? ''}',
+        at: (l['at'] as num?)?.toInt() ?? 0,
+        amount: amountIn(text),
+        body: status == 'skipped' ? 'OTP বা code-এর SMS ("${l['why']}") — phone থেকে বের হয়নি।' : text,
+        invoice: l['invoice'] as String?,
+        error: l['error'] as String?,
+        localId: '${l['id']}',
+      ));
+    }
+    out.sort((a, b) => b.at.compareTo(a.at));
+    return out;
+  }
+
+  static int? amountIn(String text) {
+    final m = RegExp(r'(?:Tk|BDT)\.?\s*([\d,]+(?:\.\d{1,2})?)', caseSensitive: false).firstMatch(text);
+    if (m == null) return null;
+    final value = double.tryParse(m.group(1)!.replaceAll(',', ''));
+    return value == null ? null : (value * 100).round();
+  }
+
+  bool matchesFilter(SmsItem i) {
+    final byStatus = switch (filter) {
+      'all' => true,
+      'failed' => i.status == 'failed' || i.status == 'skipped',
+      'unmatched' => i.status == 'unmatched' || i.status == 'synced',
+      _ => i.status == filter,
+    };
+    if (!byStatus) return false;
+    if (search.isEmpty) return true;
+    final q = search.toLowerCase();
+    return [i.sender, i.body, i.trx ?? '', i.invoice ?? '', i.client ?? '', i.payer ?? ''].any((s) => s.toLowerCase().contains(q));
+  }
+
+  Future<void> sync() async {
+    setState(() => syncing = true);
+    final imported = await smsChannel.invokeMethod<int>('importInbox', {'days': 3}).catchError((_) => 0) ?? 0;
+    await smsChannel.invokeMethod('flush').catchError((_) => null);
+    await smsChannel.invokeMethod('beat').catchError((_) => false);
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await load();
+    if (!mounted) return;
+    setState(() => syncing = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(imported > 0 ? '$imported টা বাদ পড়া SMS খুঁজে পাঠানো হলো।' : 'সব ঠিক আছে — বাদ পড়া কোনো SMS নেই।'),
+    ));
+  }
+
+  void openInvoice(String url) {
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    widget.site.web?.loadUrl(urlRequest: URLRequest(url: WebUri('$site$url')));
+  }
+
+  // ------------------------------------------------------------------ dashboard
+
+  Widget statTile(String label, String value, IconData icon, Color color, {String? sub, VoidCallback? onTap}) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerHighest.withAlpha(120),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(icon, size: 18, color: color),
+                const SizedBox(width: 6),
+                Expanded(child: Text(label, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant), overflow: TextOverflow.ellipsis)),
+              ]),
+              const SizedBox(height: 8),
+              Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+              if (sub != null) Text(sub, style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget weekChart() {
+    final scheme = Theme.of(context).colorScheme;
+    final top = week.fold<int>(1, (m, d) => max(m, (d['amount'] as num?)?.toInt() ?? 0));
+    final total = week.fold<int>(0, (s, d) => s + ((d['amount'] as num?)?.toInt() ?? 0));
+    const short = ['সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি', 'রবি'];
+    return Card(
+      elevation: 0,
+      color: scheme.surfaceContainerHighest.withAlpha(120),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Expanded(child: Text('গত ৭ দিনে এসেছে', style: TextStyle(fontWeight: FontWeight.w700))),
+              Text(taka(total), style: const TextStyle(fontWeight: FontWeight.w700, color: teal)),
+            ]),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 120,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (final d in week)
+                    Expanded(
+                      child: Tooltip(
+                        message: '${taka((d['amount'] as num?)?.toInt() ?? 0)} · ${d['count']} টা SMS',
+                        triggerMode: TooltipTriggerMode.tap,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Container(
+                                height: max(4.0, 92 * (((d['amount'] as num?)?.toInt() ?? 0) / top)),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                  color: ((d['amount'] as num?)?.toInt() ?? 0) == 0 ? scheme.outlineVariant : teal.withAlpha(90),
+                                ),
+                                alignment: Alignment.bottomCenter,
+                                child: FractionallySizedBox(
+                                  heightFactor: ((d['amount'] as num?)?.toInt() ?? 0) == 0 ? 0.0 : (((d['matched'] as num?)?.toInt() ?? 0) / ((d['amount'] as num).toInt())).clamp(0.0, 1.0),
+                                  child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: teal)),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                short[(DateTime.tryParse('${d['day']}') ?? DateTime.now()).weekday - 1],
+                                style: TextStyle(fontSize: 10.5, color: scheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(children: [
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: teal, borderRadius: BorderRadius.circular(3))),
+              Text('  invoice-এ মিলেছে    ', style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant)),
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: teal.withAlpha(90), borderRadius: BorderRadius.circular(3))),
+              Text('  বাকি', style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant)),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  (String, Color) statusLook(String status) => switch (status) {
+        'matched' => ('মিলেছে', const Color(0xFF16A34A)),
+        'refund' => ('Refund', const Color(0xFF7C3AED)),
+        'unmatched' || 'synced' => ('মেলেনি', const Color(0xFF0EA5E9)),
+        'failed' => ('আটকে আছে', const Color(0xFFDC2626)),
+        'skipped' => ('পাঠানো হয়নি', Colors.grey),
+        _ => ('অপেক্ষায়', const Color(0xFFD97706)),
+      };
+
+  void details(SmsItem i) {
+    final (label, color) = statusLook(i.status);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Expanded(child: Text(i.sender, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700))),
+                Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+              ]),
+              const SizedBox(height: 4),
+              Text('${dayTitle(DateTime.fromMillisecondsSinceEpoch(i.at))} · ${clock(DateTime.fromMillisecondsSinceEpoch(i.at))}',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 14),
+              SelectableText(i.body, style: const TextStyle(height: 1.45)),
+              const SizedBox(height: 14),
+              if (i.amount != null) Text('টাকা: ${taka(i.amount!)}'),
+              if (i.payer != null) Text('যে নম্বর থেকে: ${i.payer}'),
+              if (i.trx != null)
+                Row(children: [
+                  Expanded(child: Text('TrxID: ${i.trx}')),
+                  TextButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: i.trx!));
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.copy, size: 16),
+                    label: const Text('Copy'),
+                  ),
+                ]),
+              if (i.error != null && i.waiting) Text(i.error!, style: const TextStyle(color: Color(0xFFDC2626))),
+              const SizedBox(height: 10),
+              if (i.invoiceUrl != null)
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    openInvoice(i.invoiceUrl!);
+                  },
+                  icon: const Icon(Icons.receipt_long),
+                  label: Text('Invoice ${i.invoice}${i.client != null ? ' · ${i.client}' : ''} খুলুন'),
+                ),
+              if (i.waiting && i.localId != null)
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await smsChannel.invokeMethod('retry', {'id': i.localId});
+                    await Future<void>.delayed(const Duration(seconds: 2));
+                    await load();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('আবার পাঠাও'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget smsCard(SmsItem i) {
+    final scheme = Theme.of(context).colorScheme;
+    final (label, color) = statusLook(i.status);
+    return Material(
+      color: scheme.surfaceContainerHighest.withAlpha(110),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => details(i),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: color.withAlpha(36),
+                    child: Text(i.sender.isEmpty ? '?' : i.sender.substring(0, 1).toUpperCase(),
+                        style: TextStyle(color: color, fontWeight: FontWeight.w800)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(i.sender, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
+                        Text(clock(DateTime.fromMillisecondsSinceEpoch(i.at)), style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (i.amount != null)
+                        Text(taka(i.amount!), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: i.status == 'refund' ? color : null)),
+                      Container(
+                        margin: const EdgeInsets.only(top: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: color.withAlpha(36), borderRadius: BorderRadius.circular(20)),
+                        child: Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(i.body, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: scheme.onSurfaceVariant, height: 1.35, fontSize: 13)),
+              if (i.invoice != null || (i.error != null && i.waiting) || (i.waiting && i.localId != null)) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    if (i.invoice != null)
+                      Flexible(child: ActionChip(
+                        avatar: const Icon(Icons.receipt_long, size: 16),
+                        label: Text('${i.invoice}${i.client != null ? ' · ${i.client}' : ''}', overflow: TextOverflow.ellipsis),
+                        onPressed: i.invoiceUrl != null ? () => openInvoice(i.invoiceUrl!) : null,
+                        visualDensity: VisualDensity.compact,
+                      )),
+                    if (i.error != null && i.waiting)
+                      Expanded(child: Text(i.error!, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 12))),
+                    if (i.invoice == null && !(i.error != null && i.waiting)) const Spacer(),
+                    if (i.waiting && i.localId != null)
+                      TextButton.icon(
+                        onPressed: () async {
+                          await smsChannel.invokeMethod('retry', {'id': i.localId});
+                          await Future<void>.delayed(const Duration(seconds: 2));
+                          await load();
+                        },
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('Retry'),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget dashboard() {
+    final scheme = Theme.of(context).colorScheme;
+    final all = items;
+    final now = DateTime.now();
+    final today = all.where((i) {
+      final d = DateTime.fromMillisecondsSinceEpoch(i.at);
+      return d.year == now.year && d.month == now.month && d.day == now.day && i.status != 'refund' && i.status != 'skipped';
+    }).toList();
+    final shown = all.where(matchesFilter).toList();
+    final live = smsOn && smsAllowed && lastSeen != null && DateTime.now().difference(lastSeen!) < const Duration(hours: 3);
+
+    final rows = <Widget>[];
+    String? lastDay;
+    for (final i in shown) {
+      final d = DateTime.fromMillisecondsSinceEpoch(i.at);
+      final title = dayTitle(d);
+      if (title != lastDay) {
+        lastDay = title;
+        rows.add(Padding(
+          padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
+          child: Text(title, style: TextStyle(fontWeight: FontWeight.w700, color: scheme.onSurfaceVariant)),
+        ));
+      }
+      rows.add(Padding(padding: const EdgeInsets.only(bottom: 8), child: smsCard(i)));
+    }
+
+    return RefreshIndicator(
+      onRefresh: load,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          // The phone, at a glance, and the one button that puts most things right.
+          Card(
+            elevation: 0,
+            color: scheme.surfaceContainerHighest.withAlpha(150),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(dayTitle(now), style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+                        const SizedBox(height: 4),
+                        Row(children: [
+                          Container(width: 9, height: 9, decoration: BoxDecoration(shape: BoxShape.circle, color: live ? const Color(0xFF16A34A) : const Color(0xFFDC2626))),
+                          const SizedBox(width: 7),
+                          Expanded(
+                            child: Text(
+                              live ? 'SMS forward চালু' : (smsOn ? 'Server-এ খবর যাচ্ছে না' : 'SMS forward বন্ধ'),
+                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ]),
+                        const SizedBox(height: 2),
+                        Text(lastSeen != null ? 'Server-এ শেষ খবর ${agoText(lastSeen!)}' : 'Server-এ এখনো খবর যায়নি',
+                            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5)),
+                      ],
+                    ),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: syncing ? null : sync,
+                    icon: syncing ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.sync),
+                    label: const Text('Sync'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (serverError != null)
+            Padding(padding: const EdgeInsets.only(top: 8), child: Text(serverError!, style: const TextStyle(color: Color(0xFFD97706), fontSize: 12.5))),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.3,
+            children: [
+              statTile('আজ এসেছে', taka(today.fold<int>(0, (s, i) => s + (i.amount ?? 0))), Icons.south_west, teal, sub: '${today.length} টা SMS'),
+              statTile('আজ invoice-এ মিলেছে', '${today.where((i) => i.status == 'matched').length}', Icons.task_alt, const Color(0xFF16A34A),
+                  onTap: () => setState(() => filter = 'matched')),
+              statTile('অপেক্ষায়', '${all.where((i) => i.status == 'pending').length}', Icons.schedule_send, const Color(0xFFD97706),
+                  onTap: () => setState(() => filter = 'pending')),
+              statTile('আটকে / মেলেনি', '${all.where((i) => i.status == 'failed').length} / ${all.where((i) => i.status == 'unmatched').length}',
+                  Icons.error_outline, const Color(0xFFDC2626), onTap: () => setState(() => filter = 'failed')),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (week.isNotEmpty) weekChart(),
+          const SizedBox(height: 14),
+          TextField(
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: 'TrxID, নম্বর, invoice বা client খুঁজুন',
+              filled: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              isDense: true,
+            ),
+            onChanged: (v) => setState(() => search = v.trim()),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: [
+              for (final e in filters.entries)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(label: Text(e.value), selected: filter == e.key, onSelected: (_) => setState(() => filter = e.key)),
+                ),
+            ]),
+          ),
+          if (loading) const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
+          if (!loading && rows.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(child: Text(all.isEmpty ? 'এখনো কোনো payment SMS আসেনি।' : 'এখানে কিছু নেই।', style: TextStyle(color: scheme.onSurfaceVariant))),
+            ),
+          ...rows,
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------------ senders
+
+  Future<void> saveDisabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('sms.disabled', disabled.join(','));
+  }
+
+  Future<void> changeSender(String name, {required bool add}) async {
+    final result = await widget.site.request(add ? 'POST' : 'DELETE', '/app/sms-senders', {'name': name});
+    final body = result?.body;
+    if (result?.status == 200 && body is Map) {
+      final prefs = await SharedPreferences.getInstance();
+      final forms = (body['forms'] as List?) ?? [];
+      if (forms.isNotEmpty) {
+        await prefs.setString('sms.senders', forms.join(','));
+      }
+      await load(quiet: true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(add ? '$name যোগ হয়েছে — এখন থেকে এর SMS-ও যাবে।' : '$name বাদ দেওয়া হয়েছে।')));
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('হলো না — নেট আর login দেখুন।')));
     }
   }
 
-  String when(int ms) {
-    final at = DateTime.fromMillisecondsSinceEpoch(ms);
-    String two(int n) => n.toString().padLeft(2, '0');
-    final h = at.hour % 12 == 0 ? 12 : at.hour % 12;
-    return '${at.day}/${at.month} · $h:${two(at.minute)} ${at.hour < 12 ? 'AM' : 'PM'}';
-  }
-
-  /// What the server made of it, in words.
-  String outcome(Map<String, dynamic> line) {
-    final invoice = line['invoice'];
-    return switch (line['server']) {
-      'matched' => invoice != null ? 'Invoice $invoice-এ মিলেছে' : 'Invoice-এর সাথে মিলেছে',
-      'stored' => 'পৌঁছেছে — কোনো invoice-এর সাথে মেলেনি',
-      'duplicate' => 'আগেই পৌঁছেছিল',
-      'ignored' => 'পৌঁছেছে — টাকা আসার SMS নয়',
-      'refund' => 'Refund হিসেবে লেখা হয়েছে',
-      _ => 'পৌঁছেছে',
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final shown = tab == 'all' ? lines : lines.where((l) => l['status'] == tab || (tab == 'failed' && l['status'] == 'skipped')).toList();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment SMS'),
-        actions: [
-          IconButton(
-            tooltip: 'সব আবার পাঠাও',
-            icon: const Icon(Icons.sync),
-            onPressed: () async {
-              await smsChannel.invokeMethod('flush');
-              await Future<void>.delayed(const Duration(seconds: 2));
-              await load();
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: Row(
-              children: [
-                for (final e in tabs.entries)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text('${e.value} ${e.key == 'all' ? lines.length : lines.where((l) => l['status'] == e.key || (e.key == 'failed' && l['status'] == 'skipped')).length}'),
-                      selected: tab == e.key,
-                      onSelected: (_) => setState(() => tab = e.key),
+  void addSheet() {
+    final input = TextEditingController();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        var query = '';
+        return StatefulBuilder(
+          builder: (context, setSheet) {
+            final have = senders.map((s) => '${s['name']}'.toLowerCase().replaceAll(' ', '')).toSet();
+            List<String> pick(String kind) => ((catalog[kind] as List?) ?? [])
+                .map((e) => '$e')
+                .where((n) => !have.contains(n.toLowerCase().replaceAll(' ', '')) && n.toLowerCase().contains(query.toLowerCase()))
+                .toList();
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * .75,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Sender যোগ করুন', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text('তালিকা থেকে বাছুন, বা SMS-এ ঠিক যে নামে আসে সেটা লিখুন।', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: input,
+                      decoration: InputDecoration(
+                        hintText: 'যেমন: BRAC BANK বা 01844242613',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.add_circle),
+                          tooltip: 'যোগ করুন',
+                          onPressed: () {
+                            final name = input.text.trim();
+                            if (name.isEmpty) return;
+                            Navigator.of(context).pop();
+                            changeSender(name, add: true);
+                          },
+                        ),
+                        filled: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      ),
+                      onChanged: (v) => setSheet(() => query = v.trim()),
                     ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: shown.isEmpty
-                ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(lines.isEmpty ? 'এখনো কোনো payment SMS আসেনি।' : 'এখানে কিছু নেই।', textAlign: TextAlign.center)))
-                : RefreshIndicator(
-                    onRefresh: load,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-                      itemCount: shown.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, i) {
-                        final line = shown[i];
-                        final status = line['status'] as String? ?? 'pending';
-                        final (label, color) = switch (status) {
-                          'synced' => ('পৌঁছেছে', const Color(0xFF16A34A)),
-                          'failed' => ('আটকে আছে', const Color(0xFFDC2626)),
-                          'skipped' => ('পাঠানো হয়নি', Colors.grey),
-                          _ => ('অপেক্ষায়', const Color(0xFFD97706)),
-                        };
-                        final error = line['error'] as String?;
-                        return Card(
-                          margin: EdgeInsets.zero,
-                          elevation: 0,
-                          color: scheme.surfaceContainerHighest.withAlpha(110),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          for (final kind in ['mfs', 'bank']) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Text(kind == 'mfs' ? 'Mobile wallet' : 'Bank', style: const TextStyle(fontWeight: FontWeight.w700)),
+                            ),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(child: Text('${line['from'] ?? ''}', style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700))),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                                      decoration: BoxDecoration(color: color.withAlpha(36), borderRadius: BorderRadius.circular(20)),
-                                      child: Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  status == 'skipped' ? 'OTP বা code-এর SMS ("${line['why']}") — phone থেকে বের হয়নি।' : '${line['text'] ?? ''}',
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: scheme.onSurfaceVariant, height: 1.35),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        [
-                                          if (line['at'] is int) when(line['at'] as int),
-                                          if (status == 'synced') outcome(line),
-                                        ].join(' · '),
-                                        style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-                                      ),
-                                    ),
-                                    if (status == 'failed' || status == 'pending')
-                                      TextButton.icon(
-                                        onPressed: () async {
-                                          await smsChannel.invokeMethod('retry', {'id': line['id']});
-                                          await Future<void>.delayed(const Duration(seconds: 2));
-                                          await load();
-                                        },
-                                        icon: const Icon(Icons.refresh, size: 18),
-                                        label: const Text('আবার পাঠাও'),
-                                      ),
-                                  ],
-                                ),
-                                if (error != null && status != 'synced')
-                                  Text(error, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 12.5)),
+                                for (final name in pick(kind))
+                                  ActionChip(
+                                    avatar: const Icon(Icons.add, size: 16),
+                                    label: Text(name),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      changeSender(name, add: true);
+                                    },
+                                  ),
                               ],
                             ),
-                          ),
-                        );
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget sendersTab() {
+    final scheme = Theme.of(context).colorScheme;
+    return RefreshIndicator(
+      onRefresh: load,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          Row(children: [
+            const Expanded(child: Text('যাদের SMS যায়', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
+            IconButton(onPressed: load, icon: const Icon(Icons.refresh), tooltip: 'নতুন করে আনো'),
+            FilledButton.icon(onPressed: addSheet, icon: const Icon(Icons.add), label: const Text('যোগ')),
+          ]),
+          Text('বন্ধ করলে শুধু এই phone থেকে ওই sender-এর SMS যাবে না। মুছলে server-ও আর চিনবে না।',
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5)),
+          const SizedBox(height: 10),
+          for (final s in senders)
+            Card(
+              elevation: 0,
+              margin: const EdgeInsets.only(bottom: 8),
+              color: scheme.surfaceContainerHighest.withAlpha(110),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: teal.withAlpha(40),
+                  child: Icon(s['kind'] == 'bank' ? Icons.account_balance : Icons.account_balance_wallet, color: teal, size: 20),
+                ),
+                title: Text('${s['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: Text(
+                  disabled.contains('${s['name']}')
+                      ? 'বন্ধ — এই phone থেকে যায় না'
+                      : '${switch (s['kind']) { 'bkash' => 'bKash', 'nagad' => 'Nagad', 'rocket' => 'Rocket', _ => 'Bank' }} · চালু, SMS যাচ্ছে',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (s['fixed'] != true)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'মুছুন',
+                        onPressed: () async {
+                          final yes = await showDialog<bool>(
+                            context: context,
+                            builder: (c) => AlertDialog(
+                              title: Text('${s['name']} মুছবেন?'),
+                              content: const Text('এর SMS আর server-এ যাবে না, কোনো payment-ও মিলবে না।'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('না')),
+                                FilledButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('মুছুন')),
+                              ],
+                            ),
+                          );
+                          if (yes == true) await changeSender('${s['name']}', add: false);
+                        },
+                      ),
+                    Switch(
+                      value: !disabled.contains('${s['name']}'),
+                      onChanged: (on) async {
+                        setState(() => on ? disabled.remove('${s['name']}') : disabled.add('${s['name']}'));
+                        await saveDisabled();
                       },
                     ),
-                  ),
+                  ],
+                ),
+              ),
+            ),
+          if (senders.isEmpty && !loading)
+            Padding(padding: const EdgeInsets.all(24), child: Text('তালিকা আনা যায়নি — নেট দেখে উপর থেকে টেনে আবার চেষ্টা করুন।', style: TextStyle(color: scheme.onSurfaceVariant))),
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------------ settings
+
+  Widget section(String title, List<Widget> children) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(padding: const EdgeInsets.fromLTRB(4, 6, 4, 8), child: Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: teal, letterSpacing: .4))),
+          Card(
+            elevation: 0,
+            margin: EdgeInsets.zero,
+            color: scheme.surfaceContainerHighest.withAlpha(110),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Column(children: children),
           ),
         ],
       ),
     );
   }
-}
 
-/// The words that keep an SMS on the phone (one per line), and the senders it listens to.
-class SmsFilterPage extends StatefulWidget {
-  const SmsFilterPage({super.key});
-
-  @override
-  State<SmsFilterPage> createState() => _SmsFilterPageState();
-}
-
-class _SmsFilterPageState extends State<SmsFilterPage> {
-  List<String> words = [];
-  List<String> senders = [];
-  final input = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    load();
+  Widget check(bool ok, String title, String sub, {String? fix, VoidCallback? onFix}) {
+    return ListTile(
+      leading: Icon(ok ? Icons.check_circle : Icons.error, color: ok ? const Color(0xFF16A34A) : const Color(0xFFDC2626)),
+      title: Text(title),
+      subtitle: Text(sub),
+      trailing: fix == null ? null : TextButton(onPressed: onFix, child: Text(fix)),
+    );
   }
 
-  Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString('sms.ignore') ?? await smsChannel.invokeMethod<String>('defaultIgnore').catchError((_) => '') ?? '';
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      words = saved.split('\n').map((w) => w.trim()).where((w) => w.isNotEmpty).toList();
-      senders = (prefs.getString('sms.senders') ?? '').split(',').where((s) => s.isNotEmpty).toList();
-    });
+  Widget bar(String label, int value, int top, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: Row(children: [
+        SizedBox(width: 74, child: Text(label, style: const TextStyle(fontSize: 13))),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(value: top == 0 ? 0 : value / top, minHeight: 12, color: color, backgroundColor: color.withAlpha(30)),
+          ),
+        ),
+        SizedBox(width: 42, child: Text('$value', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.w700))),
+      ]),
+    );
   }
 
-  Future<void> save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('sms.ignore', words.join('\n'));
+  Widget settingsTab() {
+    final all = items;
+    final counts = {
+      'synced': all.where((i) => ['matched', 'unmatched', 'refund', 'synced'].contains(i.status)).length,
+      'pending': all.where((i) => i.status == 'pending').length,
+      'failed': all.where((i) => i.status == 'failed').length,
+      'skipped': all.where((i) => i.status == 'skipped').length,
+    };
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        section('PHONE-এর অবস্থা', [
+          SwitchListTile(
+            value: smsOn,
+            title: const Text('এই phone থেকে payment SMS পাঠাও'),
+            subtitle: const Text('Wallet-এর SIM যে phone-এ, শুধু সেখানে'),
+            onChanged: (on) async {
+              final prefs = await SharedPreferences.getInstance();
+              if (!on) {
+                await prefs.remove('sms.url');
+                await prefs.setBool('sms.off', true);
+              } else {
+                final why = await widget.site.enableSms();
+                if (why != null && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(why)));
+                }
+              }
+              await load();
+            },
+          ),
+          check(smsAllowed, 'SMS পড়ার অনুমতি', smsAllowed ? 'দেওয়া আছে' : 'নেই — payment ধরা যাবে না', fix: smsAllowed ? null : 'দিন', onFix: () async {
+            final status = await Permission.sms.request();
+            if (status.isPermanentlyDenied || status.isRestricted) await openAppSettings();
+            await load();
+          }),
+          check(batteryFree, 'Battery saver থেকে বাদ', batteryFree ? 'হ্যাঁ — app বন্ধ থাকলেও SMS যাবে' : 'না — phone app থামিয়ে দিতে পারে',
+              fix: batteryFree ? null : 'ঠিক করুন', onFix: () async {
+            await Permission.ignoreBatteryOptimizations.request();
+            await load();
+          }),
+          check(
+            lastSeen != null && DateTime.now().difference(lastSeen!) < const Duration(hours: 3),
+            'Server-এর সাথে যোগাযোগ',
+            lastSeen != null ? 'শেষ খবর ${agoText(lastSeen!)}${lastOk != null ? ' · শেষ SMS ${agoText(lastOk!)}' : ''}' : 'এখনো খবর যায়নি',
+            fix: 'পরীক্ষা',
+            onFix: () async {
+              final ok = await smsChannel.invokeMethod<bool>('beat').catchError((_) => false) ?? false;
+              await load();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'Server পেয়েছে — সব ঠিক আছে।' : 'Server-এ পৌঁছাল না — নেট দেখুন।')));
+              }
+            },
+          ),
+          const ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text('Phone-এর App info-তে'),
+            subtitle: Text('"Manage app if unused" বন্ধ রাখুন, নাহলে Android নিজে SMS-এর অনুমতি তুলে নিতে পারে।'),
+          ),
+        ]),
+        section('হিসাব', [
+          const SizedBox(height: 8),
+          bar('পৌঁছেছে', counts['synced']!, all.length, const Color(0xFF16A34A)),
+          bar('অপেক্ষায়', counts['pending']!, all.length, const Color(0xFFD97706)),
+          bar('আটকে', counts['failed']!, all.length, const Color(0xFFDC2626)),
+          bar('OTP, বাদ', counts['skipped']!, all.length, Colors.grey),
+          const SizedBox(height: 8),
+        ]),
+        section('বাদ পড়া SMS', [
+          ListTile(
+            leading: const Icon(Icons.manage_search),
+            title: const Text('Phone-এর inbox থেকে খুঁজে পাঠাও'),
+            subtitle: const Text('Forward বন্ধ থাকার সময় যা এসেছিল — একই TrxID দুবার লেখা হয় না'),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Wrap(spacing: 8, children: [
+              for (final days in [1, 3, 7, 30])
+                OutlinedButton(
+                  onPressed: () async {
+                    final n = await smsChannel.invokeMethod<int>('importInbox', {'days': days}).catchError((_) => -1) ?? -1;
+                    await smsChannel.invokeMethod('flush').catchError((_) => null);
+                    await Future<void>.delayed(const Duration(seconds: 2));
+                    await load();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(n < 0 ? 'Inbox পড়া গেল না — SMS-এর অনুমতি দেখুন।' : n == 0 ? 'বাদ পড়া কোনো SMS নেই।' : '$n টা SMS পাঠানো হলো।'),
+                      ));
+                    }
+                  },
+                  child: Text(days == 1 ? 'আজ' : '$days দিন'),
+                ),
+            ]),
+          ),
+        ]),
+        section('এই শব্দ থাকলে যাবে না', [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text('OTP, PIN, code-এর SMS phone থেকে বের হয় না (টাকা আসার SMS সবসময় যায়)।',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12.5)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final w in words)
+                InputChip(
+                  label: Text(w),
+                  onDeleted: () async {
+                    setState(() => words.remove(w));
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('sms.ignore', words.join('\n'));
+                  },
+                ),
+              ActionChip(
+                avatar: const Icon(Icons.add, size: 16),
+                label: const Text('শব্দ যোগ'),
+                onPressed: () async {
+                  final input = TextEditingController();
+                  final word = await showDialog<String>(
+                    context: context,
+                    builder: (c) => AlertDialog(
+                      title: const Text('নতুন শব্দ'),
+                      content: TextField(controller: input, autofocus: true, decoration: const InputDecoration(hintText: 'যেমন: password')),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.of(c).pop(), child: const Text('বাতিল')),
+                        FilledButton(onPressed: () => Navigator.of(c).pop(input.text.trim().toLowerCase()), child: const Text('যোগ')),
+                      ],
+                    ),
+                  );
+                  if (word != null && word.isNotEmpty && !words.contains(word)) {
+                    setState(() => words.add(word));
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('sms.ignore', words.join('\n'));
+                  }
+                },
+              ),
+            ]),
+          ),
+        ]),
+        section('জায়গা', [
+          for (final days in [7, 30])
+            ListTile(
+              leading: const Icon(Icons.cleaning_services_outlined),
+              title: Text('$days দিনের পুরনো তালিকা মুছুন'),
+              subtitle: const Text('শুধু এই phone-এর তালিকা — server-এর হিসাব থাকে'),
+              onTap: () async {
+                final n = await smsChannel.invokeMethod<int>('cleanLog', {'days': days}).catchError((_) => 0) ?? 0;
+                await load();
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$n টা মুছে গেছে।')));
+              },
+            ),
+        ]),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13);
     return Scaffold(
-      appBar: AppBar(title: const Text('কোন SMS যাবে')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text('এই শব্দ থাকলে যাবে না', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-          const SizedBox(height: 4),
-          Text('OTP, PIN বা code-এর SMS phone থেকেই বের হয় না — sender bKash বা bank হলেও।', style: muted),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: TextField(controller: input, decoration: const InputDecoration(hintText: 'যেমন: password', border: OutlineInputBorder(), isDense: true))),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: () async {
-                  final word = input.text.trim().toLowerCase();
-                  if (word.isEmpty || words.contains(word)) {
-                    return;
-                  }
-                  setState(() => words.add(word));
-                  input.clear();
-                  await save();
-                },
-                child: const Text('যোগ করুন'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          for (final word in words)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(word),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline, color: Color(0xFFDC2626)),
-                onPressed: () async {
-                  setState(() => words.remove(word));
-                  await save();
-                },
-              ),
-            ),
-          const Divider(height: 32),
-          const Text('যাদের SMS যায়', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-          const SizedBox(height: 4),
-          Text('এই তালিকা server থেকে আসে, app খুললেই নতুন হয়। বদলাতে: Settings › Payment › bank-এর SMS sender।', style: muted),
-          const SizedBox(height: 8),
-          Wrap(spacing: 8, runSpacing: 8, children: [for (final s in senders) Chip(label: Text(s))]),
-          if (senders.isEmpty) Text('SMS forward চালু হলে তালিকা আসবে।', style: muted),
+      appBar: AppBar(
+        title: const Text('SMS Center'),
+        actions: [
+          if (tab == 0)
+            IconButton(onPressed: syncing ? null : sync, icon: const Icon(Icons.sync), tooltip: 'Sync'),
+        ],
+      ),
+      body: [dashboard(), sendersTab(), settingsTab()][tab],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: tab,
+        onDestinationSelected: (i) => setState(() => tab = i),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.filter_alt_outlined), selectedIcon: Icon(Icons.filter_alt), label: 'Sender'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Setting'),
         ],
       ),
     );

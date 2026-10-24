@@ -99,7 +99,7 @@ class SettingController extends Controller
         $to = MailSettings::form()['notify_email'];
 
         try {
-            Mail::raw(__('Klok Finance থেকে পরীক্ষার email — এটা পেলে email ঠিক আছে।'), fn ($m) => $m->to($to)->subject('Klok Finance test'));
+            Mail::raw(__('KlokOne থেকে পরীক্ষার email — এটা পেলে email ঠিক আছে।'), fn ($m) => $m->to($to)->subject('KlokOne test'));
         } catch (\Throwable $e) {
             return back()->withErrors(['mail' => __('Email যায়নি: :error', ['error' => mb_substr($e->getMessage(), 0, 200)])]);
         }

@@ -1,6 +1,6 @@
 name: Android app
 
-# Builds Klok Finance's Android app (mobile/) in the cloud. Only when its version in
+# Builds KlokOne's Android app (mobile/) in the cloud. Only when its version in
 # mobile/pubspec.yaml is raised (a new +number), or by hand from the Actions tab: the pages
 # inside the app come from the site, so most changes need no new APK at all. The APK goes up
 # as a release and to the server, where the app finds it and offers it.
@@ -66,8 +66,8 @@ jobs:
         if: steps.version.outputs.build == 'yes'
         with:
           tag_name: finance-app-v${{ steps.version.outputs.number }}
-          name: Klok Finance app ${{ steps.version.outputs.name }}
-          body: "Klok Finance's Android app. klok-finance.apk is for everyone; klok-finance-sms.apk (forwards payment SMS) only for the Owner's phone. Install over the earlier one; sign-in and settings stay."
+          name: KlokOne app ${{ steps.version.outputs.name }}
+          body: "KlokOne's Android app. klok-finance.apk is for everyone; klok-finance-sms.apk (forwards payment SMS) only for the Owner's phone. Install over the earlier one; sign-in and settings stay."
           files: |
             mobile/klok-finance.apk
             mobile/klok-finance-sms.apk

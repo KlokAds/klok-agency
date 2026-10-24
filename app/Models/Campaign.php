@@ -112,6 +112,24 @@ class Campaign extends Model
             : CarbonImmutable::parse($this->stop_at)->setTimezone(config('app.timezone'))->subSecond()->startOfDay();
     }
 
+    /**
+     * When it stops, said so nobody misreads it: Meta's "26 Oct 12:00 AM" is the night of
+     * 25 Oct, so a midnight end reads "25 Oct রাত শেষে (রাত 12টায়) বন্ধ"; any other time is
+     * given as it is.
+     */
+    public function stopsText(): ?string
+    {
+        if ($this->stop_at === null) {
+            return null;
+        }
+
+        $stop = CarbonImmutable::parse($this->stop_at)->setTimezone(config('app.timezone'));
+
+        return $stop->format('H:i') === '00:00'
+            ? __(':date রাত শেষে (রাত 12টায়) বন্ধ', ['date' => $stop->subDay()->format('j M')])
+            : __(':date, :time-এ বন্ধ', ['date' => $stop->format('j M'), 'time' => $stop->format('g:i A')]);
+    }
+
     /** Switched on and not past its end (Meta keeps an ended campaign ACTIVE). */
     public function isLive(): bool
     {

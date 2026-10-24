@@ -5,7 +5,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import { initializeFeedback } from '@/lib/feedback';
 import { initializeLocale, t } from '@/lib/i18n';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Klok Finance';
+const appName = import.meta.env.VITE_APP_NAME || 'KlokOne';
 
 void createInertiaApp({
     title: (title) => (title ? `${t(title)} · ${appName}` : appName),

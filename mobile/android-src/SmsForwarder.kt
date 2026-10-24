@@ -54,9 +54,13 @@ object SmsForwarder {
 
     private fun url(context: Context): String? = flutter(context).getString("flutter.sms.url", null)
 
-    private fun senders(context: Context): Set<String> =
-        (flutter(context).getString("flutter.sms.senders", "") ?: "")
+    /** The senders the server named, less those switched off on this phone. */
+    private fun senders(context: Context): Set<String> {
+        val off = (flutter(context).getString("flutter.sms.disabled", "") ?: "")
             .split(',').map { normalise(it) }.filter { it.isNotEmpty() }.toSet()
+        return (flutter(context).getString("flutter.sms.senders", "") ?: "")
+            .split(',').map { normalise(it) }.filter { it.isNotEmpty() && it !in off }.toSet()
+    }
 
     fun ignoreWords(context: Context): List<String> {
         val saved = flutter(context).getString("flutter.sms.ignore", null) ?: return DEFAULT_IGNORE
@@ -88,6 +92,55 @@ object SmsForwarder {
     fun log(context: Context): String = read(context, LOG).toString()
 
     fun clearLog(context: Context) = write(context, JSONArray(), LOG)
+
+    /** Keeps only the log lines of the last [days] days. */
+    @Synchronized
+    fun cleanLog(context: Context, days: Int): Int {
+        val since = System.currentTimeMillis() - days * 86_400_000L
+        val items = read(context, LOG)
+        val kept = JSONArray()
+        for (i in 0 until items.length()) {
+            if (items.getJSONObject(i).optLong("at") >= since) kept.put(items.getJSONObject(i))
+        }
+        write(context, kept, LOG)
+        return items.length() - kept.length()
+    }
+
+    /**
+     * Payment SMS already in the phone's inbox from the last [days] days — ones that came while
+     * forwarding was off or another app was in use — sent now. One the log already has is not
+     * sent again; the server books each TrxID once anyway.
+     */
+    fun importInbox(context: Context, days: Int): Int {
+        if (url(context) == null) return 0
+        val since = System.currentTimeMillis() - days * 86_400_000L
+        val known = HashSet<String>()
+        val log = read(context, LOG)
+        for (i in 0 until log.length()) known.add(log.getJSONObject(i).optString("text"))
+        var queued = 0
+        val cursor = context.contentResolver.query(
+            android.net.Uri.parse("content://sms/inbox"),
+            arrayOf("address", "body", "date"),
+            "date >= ?", arrayOf(since.toString()), "date ASC",
+        ) ?: return 0
+        try {
+            while (cursor.moveToNext()) {
+                val from = cursor.getString(0)
+                val text = cursor.getString(1)
+                if (from == null || text == null || text in known) {
+                    continue
+                }
+                if (enqueue(context, from, text, cursor.getLong(2))) {
+                    known.add(text)
+                    queued++
+                }
+            }
+        } finally {
+            cursor.close()
+        }
+        if (queued > 0) schedule(context)
+        return queued
+    }
 
     /** Adds a log line at the top, or updates the one with this id where it is; the oldest fall off. */
     @Synchronized

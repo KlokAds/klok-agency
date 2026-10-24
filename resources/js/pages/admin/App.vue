@@ -93,7 +93,7 @@ function phone(agent: string | null): string {
         :title="t('Phone app')"
         :lead="
             t(
-                'Klok Finance-এর Android app: শব্দসহ notification, payment SMS forward, আর app-এর নতুন version।',
+                'KlokOne-এর Android app: শব্দসহ notification, payment SMS forward, আর app-এর নতুন version।',
             )
         "
     />

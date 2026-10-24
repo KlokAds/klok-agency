@@ -54,7 +54,7 @@ withDefaults(
                         compact ? 'text-[14.5px]' : 'text-[15px]',
                         light ? 'text-white' : 'text-ink',
                     ]"
-                    >Klok Finance</span
+                    >KlokOne</span
                 >
                 <span
                     v-if="badge"
