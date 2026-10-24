@@ -102,12 +102,50 @@ const method = computed(() =>
 const busy = ref(false);
 const error = ref<string | null>(null);
 const justPaid = ref(false);
+// The thank-you over the page, with paper falling, the moment the money is confirmed.
+const celebrate = ref(false);
+const CONFETTI_COLORS = [
+    '#14b8a6',
+    '#2dd4bf',
+    '#f59e0b',
+    '#ef4444',
+    '#8b5cf6',
+    '#3b82f6',
+    '#ec4899',
+    '#22c55e',
+];
+/** The payment that just paid it, for the thank-you's details. */
+const lastPayment = computed(
+    () =>
+        [...state.value.payments]
+            .filter((p) => p.status === 'verified')
+            .sort((a, b) => b.at.localeCompare(a.at))[0] ?? null,
+);
+function viewReceipt(): void {
+    celebrate.value = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function printReceipt(): void {
+    celebrate.value = false;
+    window.setTimeout(() => window.print(), 250);
+}
+const confetti = Array.from({ length: 90 }, (_, i) => ({
+    left: Math.random() * 100,
+    delay: Math.random() * 1.8,
+    duration: 2.6 + Math.random() * 2.2,
+    size: 6 + Math.random() * 7,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    round: i % 3 === 0,
+    drift: (Math.random() - 0.5) * 140,
+    spin: (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 720),
+}));
 
 watch(
     () => state.value.status,
     (now, before) => {
         if (now === 'paid' && before !== 'paid') {
             justPaid.value = true;
+            celebrate.value = true;
         }
     },
 );
@@ -158,6 +196,19 @@ onBeforeUnmount(() => {
 });
 
 const payer = ref('');
+const needsPayer = (key: string | null) =>
+    key === 'bkash' || key === 'nagad' || key === 'rocket';
+/** One line under each way of paying, so the choice is clear before tapping. */
+function howTo(key: string): string {
+    if (key === 'qr') {
+        return t('যেকোনো bank বা wallet app দিয়ে scan');
+    }
+    if (key === 'bank') {
+        return 'NPSB / BEFTN / RTGS';
+    }
+    const m = props.methods[key];
+    return m?.number ? `Send Money · ${m.number}` : 'Send Money';
+}
 const payerError = ref<string | null>(null);
 // An invoice that allows part payments: how much to pay now (taka; empty = all that is due).
 const payNow = ref('');
@@ -171,6 +222,12 @@ async function start(key: string): Promise<void> {
     error.value = null;
 
     if (key === 'bank') {
+        return;
+    }
+
+    // bKash, Nagad, Rocket: the paying number is step 2 — asked for, not an error.
+    if (needsPayer(key) && payer.value.trim() === '') {
+        payerError.value = null;
         return;
     }
 
@@ -703,6 +760,30 @@ const STATUS_WORD: Record<string, string> = {
                             })
                         }}
                     </h2>
+                    <ol
+                        v-if="keys.length"
+                        class="mt-3 grid grid-cols-3 gap-2 text-center text-[11.5px] leading-tight text-ink-3"
+                    >
+                        <li
+                            v-for="(step, i) in [
+                                t('উপায় বাছুন'),
+                                t('টাকা পাঠান'),
+                                t('নিজে থেকে মিলে যাবে'),
+                            ]"
+                            :key="i"
+                            class="flex flex-col items-center gap-1"
+                        >
+                            <span
+                                class="grid size-6 place-items-center rounded-full text-[12px] font-bold"
+                                :class="
+                                    i === 0 || (i === 1 && chosen)
+                                        ? 'bg-brand text-white'
+                                        : 'bg-sunken text-ink-3'
+                                "
+                                >{{ i + 1 }}</span
+                            >{{ step }}
+                        </li>
+                    </ol>
 
                     <p
                         v-if="state.checking"
@@ -746,27 +827,16 @@ const STATUS_WORD: Record<string, string> = {
                         </KField>
                     </div>
 
-                    <!-- bKash, Nagad, Rocket: the number the money comes from (only that SMS can match). -->
-                    <div v-if="wallets.some((k) => k !== 'qr')" class="mt-4">
-                        <KField
-                            :label="t('কোন নম্বর থেকে পাঠাবেন?')"
-                            :hint="
-                                t(
-                                    'যে নম্বর থেকে টাকা পাঠাবেন, ঠিক সেটাই দিন — অন্য নম্বর থেকে পাঠালে নিজে থেকে মিলবে না। শুধু bKash, Nagad, Rocket-এ লাগে।',
-                                )
-                            "
-                            :error="payerError ?? undefined"
-                        >
-                            <KInput
-                                v-model="payer"
-                                type="tel"
-                                inputmode="tel"
-                                placeholder="01XXXXXXXXX"
-                            />
-                        </KField>
-                    </div>
-
-                    <div v-if="keys.length" class="mt-4 grid grid-cols-2 gap-2">
+                    <p
+                        v-if="keys.length"
+                        class="mt-5 mb-2 text-[13px] font-semibold text-ink"
+                    >
+                        {{ t('১. কীভাবে দেবেন?') }}
+                    </p>
+                    <div
+                        v-if="keys.length"
+                        class="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                    >
                         <button
                             v-for="key in [
                                 ...wallets,
@@ -774,7 +844,7 @@ const STATUS_WORD: Record<string, string> = {
                             ]"
                             :key="key"
                             type="button"
-                            class="flex min-h-12 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-[13.5px] font-semibold transition-colors"
+                            class="flex min-h-16 items-center gap-3 rounded-xl border-2 px-3.5 py-3 text-left text-[14.5px] font-semibold transition-colors"
                             :class="
                                 chosen === key
                                     ? 'border-brand bg-brand-soft'
@@ -791,18 +861,58 @@ const STATUS_WORD: Record<string, string> = {
                                           ? 'list'
                                           : 'wallet'
                                 "
-                                :size="17"
-                                class="text-brand"
-                            /><span class="flex flex-col leading-tight"
+                                :size="22"
+                                class="shrink-0 text-brand"
+                            /><span
+                                class="flex min-w-0 flex-1 flex-col leading-tight"
                                 >{{ methods[key].label
                                 }}<span
-                                    v-if="state.charges?.[key]"
-                                    class="text-[11px] font-medium text-ink-3"
-                                    >+{{ bdt(state.charges[key]) }}
-                                    {{ t('charge') }}</span
+                                    class="mt-0.5 truncate text-[12px] font-medium text-ink-3"
+                                    >{{ howTo(key) }}</span
                                 ></span
+                            ><span
+                                v-if="state.charges?.[key]"
+                                class="shrink-0 rounded-full bg-wait-soft px-2 py-0.5 text-[11px] font-semibold text-wait"
+                                >+{{ bdt(state.charges[key]) }}</span
                             >
                         </button>
+                    </div>
+
+                    <!-- 2. bKash, Nagad, Rocket: the number the money comes from (only that SMS can match). -->
+                    <div
+                        v-if="needsPayer(chosen) && !state.session"
+                        class="mt-5 rounded-xl border border-brand/40 bg-brand-soft p-4"
+                    >
+                        <p class="mb-2 text-[13px] font-semibold text-ink">
+                            {{
+                                t('২. কোন {wallet} নম্বর থেকে পাঠাবেন?', {
+                                    wallet: method?.label ?? '',
+                                })
+                            }}
+                        </p>
+                        <KField
+                            :hint="
+                                t(
+                                    'ঠিক যে নম্বর থেকে পাঠাবেন সেটাই দিন — তাহলেই টাকা নিজে থেকে মিলে যাবে।',
+                                )
+                            "
+                            :error="payerError ?? undefined"
+                        >
+                            <KInput
+                                v-model="payer"
+                                type="tel"
+                                inputmode="tel"
+                                placeholder="01XXXXXXXXX"
+                            />
+                        </KField>
+                        <KButton
+                            variant="primary"
+                            block
+                            class="mt-3"
+                            :loading="busy"
+                            @click="chosen && start(chosen)"
+                            >{{ t('এগিয়ে যান') }}</KButton
+                        >
                     </div>
 
                     <p v-if="error" class="mt-3 text-[12.5px] text-out">
@@ -982,5 +1092,165 @@ const STATUS_WORD: Record<string, string> = {
                 })
             }}<template v-if="business.phone"> · {{ business.phone }}</template>
         </footer>
+
+        <Teleport to="body">
+            <div
+                v-if="celebrate"
+                class="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-4"
+                role="dialog"
+                aria-modal="true"
+                @click.self="celebrate = false"
+            >
+                <div
+                    class="pointer-events-none absolute inset-0 overflow-hidden"
+                    aria-hidden="true"
+                >
+                    <span
+                        v-for="(c, i) in confetti"
+                        :key="i"
+                        class="confetti"
+                        :style="{
+                            left: c.left + '%',
+                            width: c.size + 'px',
+                            height: (c.round ? c.size : c.size * 0.45) + 'px',
+                            background: c.color,
+                            borderRadius: c.round ? '50%' : '2px',
+                            animationDelay: c.delay + 's',
+                            animationDuration: c.duration + 's',
+                            '--drift': c.drift + 'px',
+                            '--spin': c.spin + 'deg',
+                        }"
+                    />
+                </div>
+                <div
+                    class="panel k-rise relative w-full max-w-sm overflow-hidden text-center shadow-2xl"
+                >
+                    <div class="bg-brand-soft px-7 pt-7 pb-5">
+                        <span
+                            class="pop mx-auto grid size-16 place-items-center rounded-full bg-in text-white"
+                            ><KIcon name="check" :size="34"
+                        /></span>
+                        <h2 class="mt-4 text-[22px] font-bold">
+                            {{ t('অভিনন্দন!') }}
+                        </h2>
+                        <p class="mt-1 text-[14.5px] text-ink-2">
+                            {{ t('আপনার পুরো পেমেন্ট আমরা পেয়েছি।') }}
+                        </p>
+                        <p class="num mt-3 text-[32px] font-bold text-ink">
+                            {{ bdt(state.paid) }}
+                        </p>
+                    </div>
+                    <dl
+                        class="grid grid-cols-1 gap-2 px-7 py-5 text-left text-[13px]"
+                    >
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-ink-3">Invoice</dt>
+                            <dd class="num font-semibold">
+                                {{ invoice.number }}
+                            </dd>
+                        </div>
+                        <div
+                            v-if="lastPayment"
+                            class="flex justify-between gap-3"
+                        >
+                            <dt class="text-ink-3">{{ t('কীভাবে') }}</dt>
+                            <dd class="font-semibold">
+                                {{
+                                    methods[lastPayment.method]?.label ??
+                                    lastPayment.method
+                                }}
+                            </dd>
+                        </div>
+                        <div
+                            v-if="lastPayment?.reference"
+                            class="flex justify-between gap-3"
+                        >
+                            <dt class="text-ink-3">TrxID</dt>
+                            <dd class="num font-semibold">
+                                {{ lastPayment.reference }}
+                            </dd>
+                        </div>
+                        <div
+                            v-if="lastPayment"
+                            class="flex justify-between gap-3"
+                        >
+                            <dt class="text-ink-3">{{ t('তারিখ') }}</dt>
+                            <dd class="num font-semibold">
+                                {{ new Date(lastPayment.at).toLocaleString() }}
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-ink-3">{{ t('অবস্থা') }}</dt>
+                            <dd class="font-semibold text-in">
+                                {{ t('পুরো পরিশোধ') }}
+                            </dd>
+                        </div>
+                    </dl>
+                    <div class="grid grid-cols-1 gap-2 px-7 pb-6">
+                        <KButton variant="primary" block @click="viewReceipt">{{
+                            t('রসিদ দেখুন')
+                        }}</KButton>
+                        <KButton block icon="print" @click="printReceipt">{{
+                            t('Download / Print')
+                        }}</KButton>
+                        <p class="mt-2 text-[12px] text-ink-3">
+                            {{
+                                t('{name}-এর সাথে থাকার জন্য ধন্যবাদ।', {
+                                    name: business.name,
+                                })
+                            }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
+
+<style scoped>
+.confetti {
+    position: absolute;
+    top: -16px;
+    opacity: 0;
+    animation-name: confetti-fall;
+    animation-timing-function: cubic-bezier(0.25, 0.4, 0.55, 1);
+    animation-fill-mode: forwards;
+}
+
+@keyframes confetti-fall {
+    0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    85% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(var(--drift), 105vh, 0) rotate(var(--spin));
+    }
+}
+
+.pop {
+    animation: pop 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+@keyframes pop {
+    from {
+        transform: scale(0.2);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Paper only for those who like motion. */
+@media (prefers-reduced-motion: reduce) {
+    .confetti {
+        display: none;
+    }
+    .pop {
+        animation: none;
+    }
+}
+</style>
