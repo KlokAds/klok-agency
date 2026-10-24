@@ -471,7 +471,7 @@ const PAY_STATUS: Record<
         :subtitle="invoice.client ?? undefined"
     >
         <p
-            class="rounded-xl bg-sunken p-3 text-[13px] whitespace-pre-line text-ink-2"
+            class="rounded-xl bg-sunken p-3 text-[13px] wrap-anywhere whitespace-pre-line text-ink-2"
         >
             {{ share.text }}
         </p>

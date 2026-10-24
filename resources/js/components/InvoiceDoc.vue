@@ -145,7 +145,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                 </p>
                 <p
                     v-if="business.address"
-                    class="inv-muted mt-1 max-w-xs text-[12.5px] leading-relaxed whitespace-pre-line"
+                    class="inv-muted mt-1 max-w-xs text-[12.5px] leading-relaxed wrap-anywhere whitespace-pre-line"
                 >
                     {{ business.address }}
                 </p>
@@ -311,7 +311,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
             <div class="max-w-sm text-[12.5px]">
                 <template v-if="invoice.notes">
                     <p class="inv-label">{{ t('Note') }}</p>
-                    <p class="inv-muted mt-1 whitespace-pre-line">
+                    <p class="inv-muted mt-1 wrap-anywhere whitespace-pre-line">
                         {{ invoice.notes }}
                     </p>
                 </template>

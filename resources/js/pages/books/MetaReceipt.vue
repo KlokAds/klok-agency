@@ -42,7 +42,7 @@ defineProps<{
             }}</span>
         </div>
         <pre
-            class="mt-4 max-h-[70vh] overflow-auto rounded-lg bg-sunken p-4 text-[12.5px] leading-relaxed whitespace-pre-wrap"
+            class="mt-4 max-h-[70vh] overflow-auto rounded-lg bg-sunken p-4 text-[12.5px] leading-relaxed wrap-anywhere whitespace-pre-wrap"
             >{{ receipt.body }}</pre>
     </section>
 </template>
