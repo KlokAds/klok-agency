@@ -5,6 +5,7 @@ use App\Models\AppDevice;
 use App\Models\PaymentSms;
 use App\Models\Setting;
 use App\Models\User;
+use App\Payments\PaySettings;
 use App\Services\AppPush;
 use App\Services\Ticker;
 use App\Support\Access;
@@ -100,6 +101,29 @@ test('lists every payment SMS the server kept for the Owner only, with the invoi
         ->assertInertia(fn ($page) => $page->component('admin/Sms')->where('sms.0.trx_id', 'OLDSMS0001')->where('sms.0.status', 'unmatched'));
     $this->actingAs($this->owner)->get('/admin/sms?status=matched')->assertInertia(fn ($page) => $page->has('sms', 0));
     $this->actingAs($this->accountant)->get('/admin/sms')->assertForbidden();
+});
+
+test('gives the phone its SMS history and week, and lets the Owner add and remove a bank sender', function () {
+    PaymentSms::create(['provider' => 'bkash', 'sender' => 'bKash', 'body' => 'You have received Tk 31.00', 'amount' => 3100, 'trx_id' => 'CENTER0001', 'status' => 'unmatched', 'received_at' => now()]);
+
+    $this->actingAs($this->owner)->getJson('/app/sms-center')->assertOk()
+        ->assertJsonPath('history.0.trx_id', 'CENTER0001')
+        ->assertJsonPath('week.6.amount', 3100)
+        ->assertJsonCount(7, 'week')
+        ->assertJsonPath('senders.0.name', 'bkash');
+
+    $this->actingAs($this->owner)->postJson('/app/sms-senders', ['name' => 'BRAC BANK'])->assertOk()
+        ->assertJsonFragment(['name' => 'bracbank', 'kind' => 'bank', 'fixed' => false]);
+    expect(PaySettings::bankSenders())->toContain('bracbank');
+
+    // A wallet's own name is already known: not added twice as a bank.
+    $this->actingAs($this->owner)->postJson('/app/sms-senders', ['name' => 'bKash'])->assertOk();
+    expect(PaySettings::bankSenders())->not->toContain('bkash');
+
+    $this->actingAs($this->owner)->deleteJson('/app/sms-senders', ['name' => 'BRAC BANK'])->assertOk();
+    expect(PaySettings::bankSenders())->not->toContain('bracbank');
+
+    $this->actingAs($this->accountant)->getJson('/app/sms-center')->assertForbidden();
 });
 
 test('signing in in one place signs that person out everywhere else', function () {

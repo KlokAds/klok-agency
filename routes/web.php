@@ -21,6 +21,7 @@ use App\Http\Controllers\Agency\TickController;
 use App\Http\Controllers\AppCrashController;
 use App\Http\Controllers\AppDeviceController;
 use App\Http\Controllers\AppReleaseController;
+use App\Http\Controllers\AppSmsController;
 use App\Http\Controllers\Books\BdtEntryController;
 use App\Http\Controllers\Books\ClientController;
 use App\Http\Controllers\Books\DashboardController;
@@ -89,6 +90,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('app/device', [AppDeviceController::class, 'store'])->middleware('throttle:30,1')->name('app.device');
     Route::get('app/latest', [AppReleaseController::class, 'latest'])->middleware('throttle:30,1')->name('app.latest');
     Route::post('app/sms-forwarder', [AppDeviceController::class, 'smsForwarder'])->middleware('throttle:10,1')->name('app.sms-forwarder');
+    Route::get('app/sms-center', [AppSmsController::class, 'index'])->middleware('throttle:60,1')->name('app.sms-center');
+    Route::post('app/sms-senders', [AppSmsController::class, 'store'])->middleware('throttle:30,1')->name('app.sms-senders.store');
+    Route::delete('app/sms-senders', [AppSmsController::class, 'destroy'])->middleware('throttle:30,1')->name('app.sms-senders.destroy');
 
     Route::get('dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
 
