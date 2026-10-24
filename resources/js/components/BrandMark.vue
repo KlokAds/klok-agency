@@ -8,8 +8,9 @@ withDefaults(
 </script>
 
 <template>
-    <span class="inline-flex items-center gap-2.5">
+    <span class="inline-flex max-w-full min-w-0 items-center gap-2.5">
         <svg
+            class="shrink-0"
             :width="size"
             :height="size"
             viewBox="0 0 64 64"
@@ -37,7 +38,9 @@ withDefaults(
             />
         </svg>
         <!-- compact: the phone top bar — same two lines, tighter, never wrapping -->
-        <span class="flex flex-col leading-none whitespace-nowrap">
+        <span
+            class="flex min-w-0 flex-col overflow-hidden leading-none whitespace-nowrap"
+        >
             <span
                 class="font-bold tracking-[-0.02em]"
                 :class="[

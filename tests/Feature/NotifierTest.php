@@ -52,6 +52,13 @@ it('never tells someone about their own work, and an important one always reache
         ->and($this->owner->notifications()->count())->toBe(1);
 });
 
+it('tells the Owner when a campaign is about to stop, also with ads switched off', function () {
+    app(Notifier::class)->send($this->anowar->id, new AgencyAlert('renewal_open', 'Campaign ending', '{client}', ['client' => 'GFFS']));
+
+    expect($this->anowar->notifications()->count())->toBe(1)
+        ->and($this->owner->notifications()->count())->toBe(1);
+});
+
 it('tells the Owner, quietly, what the accountant did', function () {
     ActivityAlerts::reset();
     $this->actingAs($this->anowar)->post('/quick/expense', [

@@ -324,7 +324,7 @@ function appSettings(): void {
         <!-- Main -->
         <div class="flex min-w-0 flex-col">
             <header
-                class="no-print sticky top-0 z-30 flex h-[60px] items-center gap-3 border-b border-line bg-paper/90 px-4 backdrop-blur sm:px-6 lg:h-[68px] lg:px-8"
+                class="no-print sticky top-0 z-30 flex h-[60px] min-w-0 items-center gap-1 border-b border-line bg-paper/90 px-3 backdrop-blur sm:gap-3 sm:px-6 lg:h-[68px] lg:px-8"
             >
                 <button
                     type="button"
@@ -334,7 +334,7 @@ function appSettings(): void {
                 >
                     <KIcon name="menu" :size="20" />
                 </button>
-                <Link href="/dashboard" class="lg:hidden"
+                <Link href="/dashboard" class="min-w-0 shrink lg:hidden"
                     ><BrandMark :size="28" compact
                 /></Link>
 

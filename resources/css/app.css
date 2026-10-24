@@ -123,6 +123,13 @@
         scrollbar-width: thin;
     }
 
+    /* Nothing may make the page wider than the phone (a big system font, a long name): a wider
+       page lets the phone zoom out and leaves a gap at the side. clip, not hidden, keeps sticky. */
+    html,
+    body {
+        overflow-x: clip;
+    }
+
     body {
         font-family: var(--font-sans);
         line-height: 1.5;

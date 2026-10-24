@@ -32,6 +32,9 @@ class Notifier
         'tasks' => ['label' => 'কাজ ও reminder', 'permission' => null, 'push' => true], // i18n
     ];
 
+    /** A campaign stopping or about to stop: every Owner hears of it, whatever they switched off. */
+    public const OWNERS_ALWAYS = ['renewal_open', 'credit_out', 'ended', 'pilot_down'];
+
     /**
      * How one person gets one group: on at all, on the phone, by email.
      *
@@ -58,7 +61,7 @@ class Notifier
     {
         $group = $alert?->group() ?? 'tasks';
         $permission = self::GROUPS[$group]['permission'] ?? null;
-        $important = (bool) ($alert?->extra['important'] ?? false);
+        $important = (bool) ($alert?->extra['important'] ?? false) || in_array($alert?->kind, self::OWNERS_ALWAYS, true);
         $active = User::query()->where('is_active', true)->with('roles')->get();
         $isOwner = fn (User $u) => $u->hasRole(Access::OWNER);
 
