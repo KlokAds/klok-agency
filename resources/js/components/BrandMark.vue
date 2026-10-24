@@ -42,7 +42,7 @@ withDefaults(
             class="flex min-w-0 flex-col overflow-hidden leading-none whitespace-nowrap"
         >
             <span
-                class="font-bold tracking-[-0.02em]"
+                class="truncate font-bold tracking-[-0.02em]"
                 :class="[
                     compact ? 'text-[14.5px]' : 'text-[15px]',
                     light ? 'text-white' : 'text-ink',
@@ -50,7 +50,7 @@ withDefaults(
                 >Klok Finance</span
             >
             <span
-                class="mt-1 font-semibold"
+                class="mt-1 truncate font-semibold"
                 :class="[
                     compact
                         ? 'text-[9.5px] tracking-[0.1em]'

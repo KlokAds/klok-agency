@@ -144,6 +144,9 @@ const isActive = (href: string) =>
 
 // The switch always names the other language, written in that language.
 const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN')); // i18n
+const switchLabel = computed(
+    () => (locale.value === 'en' ? 'বাংলায় দেখুন' : 'Switch to English'), // i18n
+);
 
 const drawer = ref(false);
 watch(path, () => (drawer.value = false));
@@ -353,9 +356,10 @@ function appSettings(): void {
 
                 <NotificationBell />
 
+                <!-- On a phone these two sit in the user menu, so the name in the bar has room. -->
                 <button
                     type="button"
-                    class="h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken hover:text-ink"
+                    class="hidden h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken hover:text-ink sm:block"
                     :aria-label="
                         locale === 'en' ? 'বাংলায় দেখুন' : 'Switch to English' // i18n
                     "
@@ -366,7 +370,7 @@ function appSettings(): void {
 
                 <button
                     type="button"
-                    class="grid size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken hover:text-ink"
+                    class="hidden size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken hover:text-ink sm:grid"
                     :aria-label="
                         resolvedAppearance === 'dark'
                             ? 'Light mode'
@@ -458,6 +462,44 @@ function appSettings(): void {
                                     :size="16"
                                     class="text-ink-3"
                                 />{{ t('App-এর setting') }}
+                            </button>
+                            <button
+                                type="button"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                @click="
+                                    userMenu.close();
+                                    switchLocale(locale === 'en' ? 'bn' : 'en');
+                                "
+                            >
+                                <span
+                                    class="grid w-4 place-items-center text-[11px] font-bold text-ink-3"
+                                    >{{ otherLanguage }}</span
+                                >{{ switchLabel }}
+                            </button>
+                            <button
+                                type="button"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                @click="
+                                    updateAppearance(
+                                        resolvedAppearance === 'dark'
+                                            ? 'light'
+                                            : 'dark',
+                                    )
+                                "
+                            >
+                                <KIcon
+                                    :name="
+                                        resolvedAppearance === 'dark'
+                                            ? 'sun'
+                                            : 'moon'
+                                    "
+                                    :size="16"
+                                    class="text-ink-3"
+                                />{{
+                                    resolvedAppearance === 'dark'
+                                        ? 'Light mode'
+                                        : 'Dark mode'
+                                }}
                             </button>
                             <div class="my-1 h-px bg-line" />
                             <button
