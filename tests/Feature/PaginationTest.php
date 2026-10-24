@@ -19,7 +19,7 @@ it('pages the client list and filters it by status and name', function () {
     foreach (range(1, 35) as $i) {
         Client::create(['name' => sprintf('Client %02d', $i), 'type' => 'client', 'status' => 'active']);
     }
-    Client::create(['name' => 'Old Shop', 'type' => 'associate', 'status' => 'inactive']);
+    Client::create(['name' => 'Old Shop', 'status' => 'inactive']);
 
     $this->actingAs($this->owner)->get('/clients')
         ->assertInertia(fn ($page) => $page->component('clients/Index')

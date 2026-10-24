@@ -29,7 +29,6 @@ type Figures = {
 type Client = {
     id: number;
     name: string;
-    type: string;
     status: string;
     phone: string | null;
     email: string | null;
@@ -40,9 +39,9 @@ type Client = {
 
 const props = defineProps<{
     clients: Paginated<Client>;
-    filters: { q?: string | null; status: string; type?: string | null };
+    filters: { q?: string | null; status: string };
     totals: { margin: number; spent: number; pending: number };
-    options: { types: Option[]; statuses: Option[] };
+    options: { statuses: Option[] };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -50,13 +49,11 @@ const can = computed(() => usePage().props.auth.can);
 const { filters } = useFilters('/clients', {
     q: props.filters.q ?? null,
     status: props.filters.status,
-    type: props.filters.type ?? null,
 });
 
 const open = ref(false);
 const form = useForm({
     name: '',
-    type: 'client',
     status: 'active',
     phone: '',
     email: '',
@@ -128,14 +125,6 @@ const showOptions = computed<Option[]>(() => [
             class="w-full max-w-xs"
         />
         <KSegment v-model="filters.status" :options="showOptions" size="sm" />
-        <KSelect
-            v-model="filters.type"
-            :options="options.types"
-            :placeholder="t('সব ধরন')"
-            clearable
-            size="sm"
-            class="w-40"
-        />
     </div>
 
     <p
@@ -164,7 +153,6 @@ const showOptions = computed<Option[]>(() => [
                     </p>
                 </div>
                 <div class="flex shrink-0 gap-1">
-                    <KTag v-if="c.type === 'associate'">Associate</KTag>
                     <KTag v-if="c.status === 'inactive'" tone="neutral"
                         >Inactive</KTag
                     >
@@ -227,9 +215,6 @@ const showOptions = computed<Option[]>(() => [
             >
                 <KInput v-model="form.name" :invalid="!!form.errors.name" />
             </KField>
-            <KField :label="t('ধরন')"
-                ><KSegment v-model="form.type" :options="options.types"
-            /></KField>
             <KField :label="t('অবস্থা')"
                 ><KSegment v-model="form.status" :options="options.statuses"
             /></KField>

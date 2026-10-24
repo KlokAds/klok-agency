@@ -11,7 +11,8 @@ class Client extends Model
 {
     use Audited, SoftDeletes;
 
-    public const TYPES = ['client' => 'Client', 'associate' => 'Associate'];
+    /** Every one is a client (the old "associate" kind was only a label and is gone). */
+    public const TYPES = ['client' => 'Client'];
 
     public const STATUSES = ['active' => 'Active', 'inactive' => 'Inactive'];
 

@@ -35,7 +35,6 @@ class ClientController extends Controller
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in([...array_keys(Client::STATUSES), 'all'])],
-            'type' => ['nullable', Rule::in(array_keys(Client::TYPES))],
         ]);
         $filters['status'] ??= 'active';
         $figures = collect($books->clients())->keyBy('id');
@@ -48,14 +47,12 @@ class ClientController extends Controller
                 ->orWhere('company', 'like', "%{$term}%")
                 ->orWhere('notes', 'like', "%{$term}%")))
             ->when($filters['status'] !== 'all', fn ($q) => $q->where('status', $filters['status']))
-            ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->orderBy('name')
             ->paginate(Paging::size($request))
             ->withQueryString()
             ->through(fn (Client $c) => [
                 'id' => $c->id,
                 'name' => $c->name,
-                'type' => $c->type,
                 'status' => $c->status,
                 'phone' => $c->phone,
                 'email' => $c->email,
@@ -73,7 +70,6 @@ class ClientController extends Controller
                 'pending' => $live->sum('usd_pending'),
             ],
             'options' => [
-                'types' => Lookups::options(Client::TYPES),
                 'statuses' => Lookups::options(Client::STATUSES),
             ],
         ]);
@@ -107,7 +103,7 @@ class ClientController extends Controller
         });
 
         return Inertia::render('clients/Show', [
-            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days']),
+            'client' => $client->only(['id', 'name', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days']),
             'figures' => $figures,
             'statement' => $statement,
             'campaigns' => Campaign::with('account:id,name')->where('client_id', $client->id)
@@ -227,7 +223,7 @@ class ClientController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Client::create($this->validated($request));
+        Client::create($this->validated($request) + ['type' => 'client']);
         $this->toast(__('নতুন client যোগ হয়েছে।'));
 
         return back();
@@ -258,7 +254,6 @@ class ClientController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:120', Rule::unique('clients', 'name')->ignore($client?->id)],
-            'type' => ['required', Rule::in(array_keys(Client::TYPES))],
             'status' => ['required', Rule::in(array_keys(Client::STATUSES))],
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:255'],

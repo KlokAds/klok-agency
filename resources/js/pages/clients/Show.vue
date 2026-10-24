@@ -23,7 +23,6 @@ import type { Option } from '@/types';
 type Client = {
     id: number;
     name: string;
-    type: string;
     status: string;
     phone: string | null;
     email: string | null;
@@ -210,10 +209,6 @@ const form = useForm({
     renew_days: props.client.renew_days ? String(props.client.renew_days) : '',
 });
 
-const types: Option[] = [
-    { value: 'client', label: 'Client' },
-    { value: 'associate', label: 'Associate' },
-];
 const statuses: Option[] = [
     { value: 'active', label: 'Active' },
     { value: 'inactive', label: 'Inactive' },
@@ -246,7 +241,7 @@ function print(): void {
 
 <template>
     <PageHeader
-        :eyebrow="client.type === 'associate' ? 'Associate' : 'Client'"
+        eyebrow="Client"
         :title="client.name"
         :lead="client.notes ?? undefined"
     >
@@ -774,9 +769,6 @@ function print(): void {
                 :error="form.errors.name"
                 class="sm:col-span-2"
                 ><KInput v-model="form.name" :invalid="!!form.errors.name"
-            /></KField>
-            <KField :label="t('ধরন')"
-                ><KSegment v-model="form.type" :options="types"
             /></KField>
             <KField :label="t('অবস্থা')"
                 ><KSegment v-model="form.status" :options="statuses"
