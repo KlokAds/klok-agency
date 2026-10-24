@@ -564,6 +564,52 @@ const wallets = [
                         >
                     </KInput>
                 </KField>
+                <p class="text-[12.5px] text-ink-3 sm:col-span-2">
+                    {{
+                        t(
+                            'Client-এর payment charge — invoice-এর টাকার উপরে client দেয়, আর আমাদের আয় হিসেবে লেখা হয়। 0 দিলে নেওয়া হয় না।',
+                        )
+                    }}
+                </p>
+                <KField
+                    :label="t('bKash / Nagad / Rocket charge (%)')"
+                    :error="err('pay_charge_mfs')"
+                >
+                    <KInput
+                        v-model="values['pay_charge_mfs']"
+                        inputmode="decimal"
+                    >
+                        <template #trail
+                            ><span class="text-[13px] font-semibold text-ink-3"
+                                >%</span
+                            ></template
+                        >
+                    </KInput>
+                </KField>
+                <KField
+                    :label="t('Bangla QR charge (%)')"
+                    :error="err('pay_charge_qr')"
+                >
+                    <KInput
+                        v-model="values['pay_charge_qr']"
+                        inputmode="decimal"
+                    >
+                        <template #trail
+                            ><span class="text-[13px] font-semibold text-ink-3"
+                                >%</span
+                            ></template
+                        >
+                    </KInput>
+                </KField>
+                <KField
+                    :label="t('Bank / NPSB charge (৳)')"
+                    :error="err('pay_charge_bank')"
+                >
+                    <KInput
+                        v-model="values['pay_charge_bank']"
+                        inputmode="decimal"
+                    />
+                </KField>
             </div>
             <template v-if="editable" #footer>
                 <KButton variant="primary" :loading="saving" @click="save">{{

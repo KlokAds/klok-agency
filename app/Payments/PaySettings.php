@@ -16,6 +16,7 @@ class PaySettings
         'pay_bkash_number', 'pay_bkash_type', 'pay_nagad_number', 'pay_nagad_type', 'pay_rocket_number',
         'pay_qr_merchant', 'pay_qr_payload', 'pay_bank_name', 'pay_bank_branch', 'pay_bank_account_name', 'pay_bank_account_number',
         'pay_bank_routing', 'pay_bank_sms_senders', 'qr_fee_percent', 'commission_percent',
+        'pay_charge_mfs', 'pay_charge_qr', 'pay_charge_bank',
         'pay_wallet_bkash', 'pay_wallet_nagad', 'pay_wallet_rocket', 'pay_wallet_qr', 'pay_wallet_bank',
     ];
 
@@ -39,6 +40,30 @@ class PaySettings
     public static function qrFeePercent(): float
     {
         return (float) (Setting::get('qr_fee_percent') ?? '1');
+    }
+
+    /** What the client pays on top for each way of paying: a % for wallets and Bangla QR, taka for a bank transfer. */
+    public const CHARGE_DEFAULTS = ['pay_charge_mfs' => '1', 'pay_charge_qr' => '1', 'pay_charge_bank' => '10'];
+
+    /**
+     * The charge (poisha, whole taka) a client adds when paying $base this
+     * way: bKash, Nagad, Rocket and Bangla QR a % rounded up, a bank
+     * transfer (NPSB) a fixed amount, cash nothing.
+     */
+    public static function charge(PaymentMethod $method, int $base): int
+    {
+        $setting = fn (string $key) => max(0.0, (float) (Setting::get($key) ?? self::CHARGE_DEFAULTS[$key]));
+
+        if ($base <= 0) {
+            return 0;
+        }
+
+        return match ($method) {
+            PaymentMethod::Bkash, PaymentMethod::Nagad, PaymentMethod::Rocket => (int) ceil($base * $setting('pay_charge_mfs') / 10000) * 100,
+            PaymentMethod::BanglaQr => (int) ceil($base * $setting('pay_charge_qr') / 10000) * 100,
+            PaymentMethod::Bank => (int) round($setting('pay_charge_bank') * 100),
+            PaymentMethod::Cash => 0,
+        };
     }
 
     /** @return array{name: string, address: string, phone: string, email: string, logo: string|null} */

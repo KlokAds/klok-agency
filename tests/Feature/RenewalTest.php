@@ -173,6 +173,12 @@ it('makes an auto-renewal client\'s invoice by itself, and extends the campaign 
     $renewal = Renewal::sole();
     $invoice = Invoice::sole();
 
+    // Its dates follow the campaign: due on its last day, and the 7 days start the day after.
+    $from = now()->addDays(2);
+    expect($invoice->issue_date->toDateString())->toBe(now()->toDateString())
+        ->and($invoice->due_date->toDateString())->toBe(now()->addDay()->toDateString())
+        ->and($invoice->items()->sole()->description)->toContain('7 days ('.$from->format('j M').' – '.$from->addDays(6)->format('j M Y').')');
+
     // 7 days × $2, sent, and the team told to pass it on (not to send a link).
     expect($invoice->usd)->toBe(1400)
         ->and($invoice->status)->toBe('sent')

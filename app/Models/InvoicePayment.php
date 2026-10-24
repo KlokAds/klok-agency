@@ -26,6 +26,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int|null $usd_credit
  * @property int|null $bdt_entry_id
  * @property int|null $fee_entry_id
+ * @property int $charge poisha of amount that is the client's payment charge, not the invoice's
+ * @property int|null $charge_entry_id
  * @property CarbonImmutable|null $verified_at
  * @property int|null $verified_by
  * @property string|null $note
@@ -41,14 +43,14 @@ class InvoicePayment extends Model
     ];
 
     protected $fillable = [
-        'invoice_id', 'method', 'amount', 'status', 'reference', 'sender', 'expires_at', 'paid_on', 'wallet', 'usd_credit',
-        'bdt_entry_id', 'fee_entry_id', 'verified_at', 'verified_by', 'note',
+        'invoice_id', 'method', 'amount', 'charge', 'status', 'reference', 'sender', 'expires_at', 'paid_on', 'wallet', 'usd_credit',
+        'bdt_entry_id', 'fee_entry_id', 'charge_entry_id', 'verified_at', 'verified_by', 'note',
     ];
 
     protected function casts(): array
     {
         return [
-            'method' => PaymentMethod::class, 'amount' => 'integer', 'usd_credit' => 'integer',
+            'method' => PaymentMethod::class, 'amount' => 'integer', 'charge' => 'integer', 'usd_credit' => 'integer',
             'expires_at' => 'datetime', 'paid_on' => 'date', 'verified_at' => 'datetime',
         ];
     }

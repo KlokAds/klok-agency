@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Invoice;
@@ -143,6 +144,11 @@ class Invoices
             $method = $fresh->method;
             $day = $date ?? now()->toDateString();
             $place = $wallet ?? $method->wallet();
+            // The client's payment charge is only what came in beyond the invoice's due, so a
+            // client who sent just the due still pays the invoice in full.
+            $charge = min((int) $fresh->charge, max(0, $received - $invoice->due()));
+            $arrived = $received;
+            $received -= $charge;
             $paid = $invoice->paid + $received;
             $credit = $this->usdShare($invoice, $received, $paid);
             $reference = $fresh->reference ? ' · '.$fresh->reference : '';
@@ -163,12 +169,26 @@ class Invoices
 
             if ($method === PaymentMethod::BanglaQr) {
                 // The fee comes off where the QR money landed.
-                $fee = MoveFees::book((int) round($received * PaySettings::qrFeePercent() / 100), $place, $day, "Bangla QR fee — Invoice {$invoice->number}");
+                $fee = MoveFees::book((int) round($arrived * PaySettings::qrFeePercent() / 100), $place, $day, "Bangla QR fee — Invoice {$invoice->number}");
             }
+
+            // The charge is the agency's: other income, in the same place as the payment.
+            $chargeEntry = $charge > 0 ? BdtEntry::create([
+                'entry_date' => $day,
+                'description' => "{$invoice->client->name} — payment charge, Invoice {$invoice->number} ({$method->label()})",
+                'category' => 'other_income',
+                'client_id' => $invoice->client_id,
+                'pay_via' => $method->payVia(),
+                'wallet' => $place,
+                'amount' => $charge,
+                'notes' => "Invoice {$invoice->number}",
+            ]) : null;
 
             $fresh->forceFill([
                 'status' => 'verified',
-                'amount' => $received,
+                'amount' => $arrived,
+                'charge' => $charge,
+                'charge_entry_id' => $chargeEntry?->id,
                 'paid_on' => $day,
                 'wallet' => $place,
                 'usd_credit' => $credit ?: null,

@@ -40,9 +40,11 @@ type State = {
     payable: boolean;
     auto: boolean;
     allow_partial: boolean;
+    charges?: Record<string, number>;
     session: {
         method: string;
         amount: number;
+        charge?: number;
         qr: string | null;
         sender: string | null;
         extra: number;
@@ -86,6 +88,14 @@ const doc = computed<InvoiceDocument>(() => ({
 const keys = computed(() => Object.keys(props.methods));
 const wallets = computed(() => keys.value.filter((k) => k !== 'bank'));
 const chosen = ref<string | null>(props.state.session?.method ?? null);
+// What was sent, as most will have: the due plus this way's payment charge.
+const claimPlaceholder = computed(() =>
+    String(
+        (state.value.due +
+            (chosen.value ? (state.value.charges?.[chosen.value] ?? 0) : 0)) /
+            100,
+    ),
+);
 const method = computed(() =>
     chosen.value ? (props.methods[chosen.value] ?? null) : null,
 );
@@ -390,6 +400,16 @@ const STATUS_WORD: Record<string, string> = {
                             >
                         </div>
                         <p
+                            v-if="state.session.charge"
+                            class="mt-2 text-[12px] text-ink-3"
+                        >
+                            {{
+                                t('এর মধ্যে {charge} payment charge।', {
+                                    charge: bdt(state.session.charge),
+                                })
+                            }}
+                        </p>
+                        <p
                             v-if="state.session.extra > 0"
                             class="mt-2 text-[12px] text-wait"
                         >
@@ -485,6 +505,16 @@ const STATUS_WORD: Record<string, string> = {
                                         amount: bdt(state.session.amount),
                                     },
                                 )
+                            }}
+                        </p>
+                        <p
+                            v-if="state.session.qr && state.session.charge"
+                            class="mt-1 text-[12px] text-ink-3"
+                        >
+                            {{
+                                t('এর মধ্যে {charge} payment charge।', {
+                                    charge: bdt(state.session.charge),
+                                })
                             }}
                         </p>
                         <p
@@ -763,7 +793,15 @@ const STATUS_WORD: Record<string, string> = {
                                 "
                                 :size="17"
                                 class="text-brand"
-                            />{{ methods[key].label }}
+                            /><span class="flex flex-col leading-tight"
+                                >{{ methods[key].label
+                                }}<span
+                                    v-if="state.charges?.[key]"
+                                    class="text-[11px] font-medium text-ink-3"
+                                    >+{{ bdt(state.charges[key]) }}
+                                    {{ t('charge') }}</span
+                                ></span
+                            >
                         </button>
                     </div>
 
@@ -780,8 +818,24 @@ const STATUS_WORD: Record<string, string> = {
                             {{
                                 t(
                                     '{amount} এই account-এ পাঠান (NPSB / BEFTN / RTGS):',
-                                    { amount: bdt(state.due) },
+                                    {
+                                        amount: bdt(
+                                            state.due +
+                                                (state.charges?.bank ?? 0),
+                                        ),
+                                    },
                                 )
+                            }}
+                        </p>
+                        <p
+                            v-if="state.charges?.bank"
+                            class="mt-1 text-[12px] text-ink-3"
+                        >
+                            {{
+                                t('বাকি {due} + {charge} payment charge।', {
+                                    due: bdt(state.due),
+                                    charge: bdt(state.charges.bank),
+                                })
                             }}
                         </p>
                         <dl
@@ -847,7 +901,7 @@ const STATUS_WORD: Record<string, string> = {
                                 <KInput
                                     v-model="claim.amount"
                                     inputmode="decimal"
-                                    :placeholder="String(state.due / 100)"
+                                    :placeholder="claimPlaceholder"
                                 />
                             </KField>
                             <KButton

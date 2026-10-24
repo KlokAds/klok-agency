@@ -62,6 +62,7 @@ const form = useForm({
     email: '',
     company: '',
     notes: '',
+    renew_days: '',
 });
 
 function save(): void {
@@ -238,8 +239,23 @@ const showOptions = computed<Option[]>(() => [
             <KField label="Email" optional :error="form.errors.email"
                 ><KInput v-model="form.email" type="email"
             /></KField>
-            <KField label="Company" optional class="sm:col-span-2"
+            <KField label="Company" optional
                 ><KInput v-model="form.company"
+            /></KField>
+            <KField
+                :label="t('Auto renewal invoice (দিন)')"
+                optional
+                :error="form.errors.renew_days"
+                :hint="
+                    t(
+                        'Campaign শেষের ২ দিন আগে এত দিনের invoice নিজে তৈরি হবে; টাকা এলে campaign নিজে বাড়বে। খালি রাখলে client link থেকে দিন বাছবে।',
+                    )
+                "
+                ><KInput
+                    v-model="form.renew_days"
+                    inputmode="numeric"
+                    :placeholder="t('যেমন 7')"
+                    :invalid="!!form.errors.renew_days"
             /></KField>
             <KField label="Note" optional class="sm:col-span-2"
                 ><KTextarea

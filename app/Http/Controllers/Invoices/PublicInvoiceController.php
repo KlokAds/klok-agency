@@ -122,9 +122,13 @@ class PublicInvoiceController extends Controller
         $session = $invoice->payments()->where('status', 'pending')->whereNotNull('expires_at')->latest('id')->first();
         $invoice->payments()->where('status', 'pending')->whereNotNull('expires_at')->update(['status' => 'expired']);
 
+        // The payment charge for this way rides along; verifying takes it only from what is beyond the due.
+        $charge = $session !== null && $session->method === $method ? $session->charge : PaySettings::charge($method, $invoice->due());
+
         $payment = $invoice->payments()->create([
             'method' => $method->value,
-            'amount' => isset($data['amount']) && $data['amount'] !== '' ? (int) round((float) $data['amount'] * 100) : ($session->amount ?? $invoice->due()),
+            'amount' => isset($data['amount']) && $data['amount'] !== '' ? (int) round((float) $data['amount'] * 100) : ($session->amount ?? $invoice->due() + $charge),
+            'charge' => $charge,
             'reference' => $reference,
             'sender' => trim($data['sender']),
             'status' => 'pending',
@@ -166,6 +170,10 @@ class PublicInvoiceController extends Controller
             'payable' => $invoice->isPayable(),
             'auto' => PaySettings::autoVerify(),
             'allow_partial' => $invoice->allow_partial,
+            // Each way's payment charge on what is due, for the buttons and the bank details.
+            'charges' => collect(PaySettings::methods())->keys()
+                ->mapWithKeys(fn (string $key) => [$key => PaySettings::charge(PaymentMethod::from($key), $invoice->status === 'void' ? 0 : $invoice->due())])
+                ->all(),
             'session' => $session ? [
                 'method' => $session->method->value,
                 'amount' => $session->amount,
@@ -174,7 +182,8 @@ class PublicInvoiceController extends Controller
                 // The amount in the URL makes a new picture whenever the amount changes.
                 'qr' => $session->method === PaymentMethod::BanglaQr && PaySettings::banglaQr() !== null
                     ? route('invoice.public.qr', [$invoice->public_token, 'a' => $session->amount]) : null,
-                'extra' => max(0, $session->amount - $invoice->due()),
+                'charge' => $session->charge,
+                'extra' => max(0, $session->amount - $session->charge - $invoice->due()),
                 'seconds_left' => max(0, (int) now()->diffInSeconds($session->expires_at, false)),
             ] : null,
             'checking' => $invoice->payments->contains(fn (InvoicePayment $p) => $p->isClaim()),

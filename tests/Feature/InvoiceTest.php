@@ -37,6 +37,61 @@ beforeEach(function () {
     foreach (['pay_bkash_on' => '1', 'pay_bkash_number' => '01700000001', 'pay_nagad_on' => '1', 'pay_nagad_number' => '01700000002', 'pay_bank_on' => '1', 'pay_bank_name' => 'DBBL', 'pay_bank_account_name' => 'Klok Ads', 'pay_bank_account_number' => '1234567890'] as $key => $value) {
         Setting::put($key, $value);
     }
+    // These tests count the invoice's own amounts; the payment charge has its own tests.
+    foreach (array_keys(PaySettings::CHARGE_DEFAULTS) as $key) {
+        Setting::put($key, '0');
+    }
+});
+
+it('adds the payment charge on top: 1% for bKash and Bangla QR, ৳10 for NPSB, and books it as income', function () {
+    foreach (PaySettings::CHARGE_DEFAULTS as $key => $default) {
+        Setting::put($key, $default);
+    }
+    $invoice = sentInvoice($this->client); // ৳14,900
+
+    expect(PaySettings::charge(PaymentMethod::Bkash, 1490000))->toBe(14900)
+        ->and(PaySettings::charge(PaymentMethod::BanglaQr, 218120))->toBe(2200) // ৳21.81 rounds up to ৳22
+        ->and(PaySettings::charge(PaymentMethod::Bank, 1490000))->toBe(1000)
+        ->and(PaySettings::charge(PaymentMethod::Cash, 1490000))->toBe(0);
+
+    // The client page shows each way's charge, and the bKash session asks for due + 1%.
+    $this->get(route('invoice.public', $invoice->public_token))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('state.charges.bkash', 14900)->where('state.charges.bank', 1000));
+    $this->postJson(route('invoice.public.start', $invoice->public_token), ['method' => 'bkash', 'payer' => '01712345678'])->assertOk()
+        ->assertJsonPath('session.amount', 1504900)
+        ->assertJsonPath('session.charge', 14900)
+        ->assertJsonPath('session.extra', 0);
+
+    $this->postJson(route('hooks.sms', SMS_TOKEN), [
+        'from' => 'bKash', 'text' => 'You have received Tk 15,049.00 from 01712345678. Fee Tk 0.00. Balance Tk 20,000.00. TrxID CHG1234567 at '.now()->format('d/m/Y H:i'),
+    ])->assertJson(['status' => 'matched']);
+
+    // The invoice takes its ৳14,900; the ৳149 is our income in the same place.
+    $payment = $invoice->payments()->where('status', 'verified')->sole();
+    expect($invoice->fresh()->status)->toBe('paid')
+        ->and($invoice->fresh()->paid)->toBe(1490000)
+        ->and($payment->amount)->toBe(1504900)
+        ->and($payment->charge)->toBe(14900)
+        ->and(BdtEntry::find($payment->bdt_entry_id)->amount)->toBe(1490000)
+        ->and(BdtEntry::find($payment->charge_entry_id))->category->toBe('other_income')
+        ->and(BdtEntry::find($payment->charge_entry_id)->amount)->toBe(14900);
+});
+
+it('pays the invoice in full when the client sends only the due, without taking a charge', function () {
+    Setting::put('pay_charge_bank', '10');
+    $invoice = sentInvoice($this->client);
+
+    // A bank transfer of just ৳14,900 (no ৳10): confirmed by hand, the invoice is paid, no charge row.
+    $this->postJson(route('invoice.public.claim', $invoice->public_token), ['method' => 'bank', 'reference' => 'NPSB778899', 'sender' => 'City Bank'])->assertOk();
+    $claim = $invoice->payments()->where('reference', 'NPSB778899')->sole();
+    expect($claim->charge)->toBe(1000)
+        ->and($claim->amount)->toBe(1491000);
+
+    app(Invoices::class)->verify($claim, 1490000, $this->owner);
+
+    expect($invoice->fresh()->status)->toBe('paid')
+        ->and($claim->fresh()->charge)->toBe(0)
+        ->and($claim->fresh()->charge_entry_id)->toBeNull();
 });
 
 /** An invoice for ৳14,900: $100 of ads at ৳137 plus a ৳1,200 service fee. */

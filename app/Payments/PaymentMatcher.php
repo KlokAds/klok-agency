@@ -45,8 +45,10 @@ class PaymentMatcher
     {
         $this->expireStale();
 
-        // Whole taka, so the client can type it exactly.
+        // Whole taka, so the client can type it exactly; the payment charge for this way goes on top.
         $base = (int) ceil(($wanted !== null ? min($wanted, $invoice->due()) : $invoice->due()) / 100) * 100;
+        $charge = PaySettings::charge($method, $base);
+        $base += $charge;
 
         $existing = $invoice->payments()
             ->where('status', 'pending')
@@ -63,7 +65,7 @@ class PaymentMatcher
         // One open session per invoice: switching wallets closes the other.
         $invoice->payments()->where('status', 'pending')->whereNotNull('expires_at')->update(['status' => 'expired']);
 
-        return DB::transaction(function () use ($invoice, $method, $payerNumber, $base): InvoicePayment {
+        return DB::transaction(function () use ($invoice, $method, $payerNumber, $base, $charge): InvoicePayment {
             $amount = $base;
 
             while ($this->openSessions($method)->where('amount', $amount)->lockForUpdate()->exists()) {
@@ -73,6 +75,7 @@ class PaymentMatcher
             $payment = $invoice->payments()->create([
                 'method' => $method->value,
                 'amount' => $amount,
+                'charge' => $charge,
                 'sender' => $payerNumber,
                 'status' => 'pending',
                 'expires_at' => now()->addMinutes(self::SESSION_MINUTES),
@@ -264,7 +267,8 @@ class PaymentMatcher
 
     protected function settle(InvoicePayment $payment, PaymentSms $sms, ?User $by = null): bool
     {
-        if ((int) $sms->amount < $payment->amount && $by === null) {
+        // Without the payment charge is still enough (the invoice is paid; no charge is taken).
+        if ((int) $sms->amount < $payment->amount - (int) $payment->charge && $by === null) {
             $payment->forceFill(['note' => __('এই TrxID-এর SMS পাওয়া গেছে, কিন্তু এসেছে মাত্র :amount।', ['amount' => Money::bdt((int) $sms->amount)])])->save();
 
             return false;
