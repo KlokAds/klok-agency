@@ -21,17 +21,19 @@ export type Notice = {
 
 export type DaySummary = {
     spent_usd: number;
+    spent_bdt?: number;
     pending_usd: number;
     pending_count: number;
     tasks_due: number;
     ending: {
-        id: number;
+        id: number | string;
         client: string | null;
         title: string;
         end_on: string;
     }[];
     ads: {
         client: string;
+        account?: string;
         currency: string;
         spend: number;
         results: number;
@@ -103,7 +105,10 @@ const tone = computed(() =>
                         >{{ t('আজ ad খরচ') }}
                         <b class="num text-ink">{{
                             money(item.summary.spent_usd, 'usd')
-                        }}</b></span
+                        }}</b
+                        ><b v-if="item.summary.spent_bdt" class="num text-ink">
+                            + {{ money(item.summary.spent_bdt, 'bdt') }}</b
+                        ></span
                     >
                     <span
                         >{{ t('Client দেবে') }}
@@ -135,12 +140,17 @@ const tone = computed(() =>
                     <table class="w-full">
                         <tr
                             v-for="a in item.summary.ads"
-                            :key="a.client"
+                            :key="a.account ?? a.client"
                             class="border-t border-line"
                         >
                             <td class="py-1.5 font-medium">{{ a.client }}</td>
                             <td class="num py-1.5 text-right">
-                                {{ a.currency === 'USD' ? '$' : ''
+                                {{
+                                    a.currency === 'USD'
+                                        ? '$'
+                                        : a.currency === 'BDT'
+                                          ? String.fromCharCode(0x09f3)
+                                          : ''
                                 }}{{ a.spend.toFixed(2) }}
                             </td>
                             <td class="num py-1.5 text-right">

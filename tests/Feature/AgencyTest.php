@@ -203,6 +203,38 @@ it('works out a past day from Pilot as the difference of two windows', function 
     expect($summary['ads'][0])->toMatchArray(['spend' => 14.0, 'results' => 40, 'cpr' => 0.35, 'clicks' => 210]);
 });
 
+it('counts what every Pilot account spent today and the Meta campaigns that end tomorrow', function () {
+    $this->travelTo(now()->setTime(21, 0));
+    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
+    PilotAccount::create(['pilot_id' => 7, 'name' => 'GFFS Ads', 'client_id' => $this->client->id]);
+    PilotAccount::create(['pilot_id' => 8, 'name' => 'Edge Meta', 'currency' => 'BDT']);
+    $midnight = now()->addDays(2)->startOfDay()->toIso8601String();
+
+    Http::fake(function ($request) use ($midnight) {
+        $args = $request['params']['arguments'];
+        $content = $request['params']['name'] === 'ad_account_campaigns'
+            ? ['campaigns' => $args['ad_account_id'] === 7 ? [
+                ['campaign_id' => 1, 'name' => 'Sales', 'status' => 'ACTIVE', 'stop_time' => $midnight, 'spend_7d' => 10.2],
+                ['campaign_id' => 2, 'name' => 'Old', 'status' => 'ACTIVE', 'stop_time' => now()->subMonth()->toIso8601String(), 'spend_7d' => 0],
+                ['campaign_id' => 3, 'name' => 'Later', 'status' => 'ACTIVE', 'stop_time' => now()->addDays(5)->toIso8601String(), 'spend_7d' => 4],
+            ] : []]
+            : ['currency' => $args['ad_account_id'] === 7 ? 'USD' : 'BDT', 'totals' => ['spend' => $args['ad_account_id'] === 7 ? 12.4 : 310.0, 'results' => 3]];
+
+        return Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => $content]]);
+    });
+
+    $summary = app(DailySummary::class)->build();
+
+    expect($summary['spent_usd'])->toBe(1240)
+        ->and($summary['spent_bdt'])->toBe(31000)
+        ->and(array_column($summary['ads'], 'client'))->toBe(['Edge Meta', 'GFFS'])
+        ->and($summary['ending'])->toHaveCount(1)
+        ->and($summary['ending'][0])->toMatchArray(['client' => 'GFFS', 'title' => 'Sales', 'end_on' => now()->addDay()->toDateString()]);
+
+    app(DailySummary::class)->send();
+    expect($this->owner->notifications()->where('data->kind', 'summary')->sole()->data['params'])->toMatchArray(['spent' => "12.40 + \u{09F3}310", 'ending' => 1]);
+});
+
 it('lists Pilot ad accounts with their campaigns and links them to clients', function () {
     Setting::put('pilot_token', Crypt::encryptString('agency-token'));
     Http::fake(function ($request) {

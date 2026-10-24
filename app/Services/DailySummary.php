@@ -10,6 +10,7 @@ use App\Models\UsdEntry;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Support\Access;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Throwable;
 
@@ -38,10 +39,14 @@ class DailySummary
 
         $ads = [];
         $pilotError = null;
+        $endings = $ending->map(fn ($r) => ['id' => $r->id, 'client' => $r->client?->name, 'title' => $r->title, 'end_on' => $r->end_on->toDateString()]);
 
         if (PilotClient::connected()) {
-            $accounts = PilotAccount::with('client:id,name,status')->whereNotNull('client_id')->orderBy('name')->get()
-                ->filter(fn (PilotAccount $a) => $a->client?->status === 'active');
+            // Every ad account in Pilot, the agency's own and not-yet-linked ones too; only a
+            // client who stopped is left out.
+            $accounts = PilotAccount::with('client:id,name,status')->orderBy('name')->get()
+                ->filter(fn (PilotAccount $a) => $a->client === null || $a->client->status === 'active');
+            $spentPilot = ['USD' => 0.0, 'BDT' => 0.0];
 
             foreach ($accounts as $account) {
                 try {
@@ -55,30 +60,80 @@ class DailySummary
                 $totals = $report['totals'] ?? [];
                 $results = (int) ($totals['results'] ?? 0);
                 $spend = (float) ($totals['spend'] ?? 0);
+                $currency = $report['currency'] ?? 'USD';
+                $spentPilot[$currency === 'BDT' ? 'BDT' : 'USD'] += $spend;
 
-                $ads[] = [
-                    'client' => $account->client?->name,
-                    'account' => $account->name,
-                    'currency' => $report['currency'] ?? 'USD',
-                    'spend' => round($spend, 2),
-                    'results' => $results,
-                    'cpr' => $results > 0 ? round($spend / $results, 2) : null,
-                    'clicks' => (int) ($totals['clicks'] ?? 0),
-                    'campaigns' => count($report['campaigns'] ?? []),
-                ];
+                if ($spend > 0 || $results > 0 || $account->client !== null) {
+                    $ads[] = [
+                        'client' => $account->client->name ?? $account->name,
+                        'account' => $account->name,
+                        'currency' => $currency,
+                        'spend' => round($spend, 2),
+                        'results' => $results,
+                        'cpr' => $results > 0 ? round($spend / $results, 2) : null,
+                        'clicks' => (int) ($totals['clicks'] ?? 0),
+                        'campaigns' => count($report['campaigns'] ?? []),
+                    ];
+                }
+
+                // Meta campaigns that stop by the end of the next day and are still spending.
+                if ($daysBack === 0) {
+                    $endings = $endings->concat($this->endingCampaigns($account, $day));
+                }
             }
+
+            // What the ads really spent, from Pilot; the books only get it when it is written in.
+            $spent = max($spent, (int) round($spentPilot['USD'] * 100));
+            $spentBdt = (int) round($spentPilot['BDT'] * 100);
         }
 
         return [
             'date' => $today,
             'spent_usd' => $spent,
+            'spent_bdt' => $spentBdt ?? 0,
             'pending_usd' => -(int) $pending->sum('amount'),
             'pending_count' => $pending->count(),
-            'ending' => $ending->map(fn ($r) => ['id' => $r->id, 'client' => $r->client?->name, 'title' => $r->title, 'end_on' => $r->end_on->toDateString()])->values()->all(),
+            'ending' => $endings->values()->all(),
             'tasks_due' => $dueTasks,
             'ads' => $ads,
             'pilot_error' => $pilotError,
         ];
+    }
+
+    /**
+     * One ad account's live campaigns that stop today or tomorrow. Meta keeps an ended campaign
+     * "ACTIVE", so only those that spent in the last week count.
+     *
+     * @return list<array{id: string, client: string|null, title: string, end_on: string}>
+     */
+    private function endingCampaigns(PilotAccount $account, CarbonInterface $day): array
+    {
+        try {
+            $campaigns = ($this->pilot ?? app(PilotClient::class))->campaigns($account->pilot_id)['campaigns'] ?? [];
+        } catch (Throwable) {
+            return [];
+        }
+
+        $last = $day->copy()->addDay()->endOfDay();
+        $out = [];
+
+        foreach ($campaigns as $c) {
+            $stop = empty($c['stop_time']) ? null : Carbon::parse($c['stop_time'])->timezone(config('app.timezone'));
+
+            if ($stop === null || ($c['status'] ?? '') !== 'ACTIVE' || (float) ($c['spend_7d'] ?? 0) <= 0 || $stop->lt(now()) || $stop->copy()->subSecond()->gt($last)) {
+                continue;
+            }
+
+            $out[] = [
+                'id' => 'meta-'.($c['campaign_id'] ?? $c['external_id'] ?? count($out)),
+                'client' => $account->client->name ?? $account->name,
+                'title' => (string) ($c['name'] ?? ''),
+                // A stop at midnight is the end of the day before.
+                'end_on' => $stop->copy()->subSecond()->toDateString(),
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -117,7 +172,9 @@ class DailySummary
             ->get();
 
         $alert = new AgencyAlert('summary', $late ? 'গতকালের ads আর কাজের সারসংক্ষেপ' : 'আজকের ads আর কাজের সারসংক্ষেপ', $late ? 'গতকাল খরচ ${spent} · {ending}টা ad শেষ হচ্ছে · {tasks}টা কাজ বাকি' : 'আজ খরচ ${spent} · {ending}টা ad কাল শেষ · {tasks}টা কাজ বাকি', [ // i18n
-            'spent' => number_format($summary['spent_usd'] / 100, 2),
+            // "$12.40", and "+ ৳310" for accounts billed in taka.
+            'spent' => number_format($summary['spent_usd'] / 100, 2)
+                .($summary['spent_bdt'] > 0 ? " + \u{09F3}".number_format($summary['spent_bdt'] / 100) : ''),
             'ending' => count($summary['ending']),
             'tasks' => $summary['tasks_due'],
         ], ['url' => '/notifications', 'summary' => $summary]);
