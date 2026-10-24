@@ -136,7 +136,8 @@ it('reminds the person a task is given to, and the owner only when they follow t
     expect($staff->notifications()->where('data->kind', 'task')->count())->toBe(1)
         ->and($this->owner->notifications()->where('data->kind', 'task')->count())->toBe(0);
 
-    $this->actingAs($staff)->getJson('/notifications/feed')->assertJsonPath('items.0.kind', 'task');
+    // The same tick may also say the card is low, in the same second: the task is in the feed, in either order.
+    expect(collect($this->actingAs($staff)->getJson('/notifications/feed')->json('items'))->pluck('kind'))->toContain('task');
     $this->actingAs($staff)->post('/notifications/read-all')->assertRedirect();
     expect($staff->unreadNotifications()->count())->toBe(0);
 });
