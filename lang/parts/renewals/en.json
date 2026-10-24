@@ -139,6 +139,7 @@
     "{who} USD খাতায় লিখেছেন": "{who} wrote in the USD book",
     "{who} USD খাতার একটা entry মুছেছেন": "{who} deleted a USD book entry",
     "{who} invoice পাঠিয়েছেন": "{who} sent an invoice",
+    "{who} invoice বদলেছেন": "{who} edited an invoice",
     "{who} invoice বাতিল করেছেন": "{who} cancelled an invoice",
     "{who} খরচ লিখেছেন": "{who} entered an expense",
     "{who} টাকা এক জায়গা থেকে আরেক জায়গায় নিয়েছেন": "{who} moved money between places",

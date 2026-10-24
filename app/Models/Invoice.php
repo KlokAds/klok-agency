@@ -127,10 +127,13 @@ class Invoice extends Model
         return max(0, $this->total - $this->paid);
     }
 
-    /** Can still be changed: not shared with the client yet, and nothing paid. */
+    /**
+     * Can still be changed (a mistake fixed): nothing paid on it yet, also once the client has the
+     * link — their page shows the new figures.
+     */
     public function isEditable(): bool
     {
-        return $this->status === 'sent' && $this->sent_at === null && (int) $this->paid === 0;
+        return $this->status === 'sent' && (int) $this->paid === 0;
     }
 
     /** Still to pay, and its due date has passed. */

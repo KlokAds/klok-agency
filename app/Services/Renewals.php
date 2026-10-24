@@ -41,6 +41,9 @@ class Renewals
 
     public const PAID_TITLE = 'Renewal-এর টাকা এসেছে — approve করুন'; // i18n
 
+    /** The renewal invoice's line for spend not paid yet; it buys no days. */
+    public const DUE_LINE = 'Previous ad spend not yet paid';
+
     public const INVOICED_TITLE = 'Renewal invoice তৈরি — client-কে পাঠান'; // i18n
 
     public const EXTENDED_TITLE = 'Renewal-এর টাকা এসেছে — campaign বাড়ানো হয়েছে'; // i18n
@@ -172,7 +175,7 @@ class Renewals
             ];
             // Spend already run is owed at the batches that paid for it; the new days at today's rate.
             $dueRate = Invoices::rateFor(UsdEntry::where('source', 'pilot')->where('client_id', $renewal->client_id)->where('status', 'pending')->get()) ?? $rate;
-            $items = $due > 0 ? [$line('Previous ad spend not yet paid', $due, $dueRate)] : [];
+            $items = $due > 0 ? [$line(self::DUE_LINE, $due, $dueRate)] : [];
             $invoice = $this->invoices->save([
                 'client_id' => $renewal->client_id,
                 'issue_date' => now()->toDateString(),
@@ -197,6 +200,23 @@ class Renewals
 
             return $invoice;
         });
+    }
+
+    /**
+     * A renewal's invoice was edited before any payment: the days it buys are
+     * what its advance lines now cover at the daily budget (the line for
+     * earlier unpaid spend does not buy days).
+     */
+    public function invoiceEdited(Invoice $invoice): void
+    {
+        $renewal = Renewal::where('invoice_id', $invoice->id)->where('status', 'invoiced')->first();
+
+        if ($renewal === null || ! $renewal->budget) {
+            return;
+        }
+
+        $usd = (int) $invoice->items()->where('kind', 'ad_budget')->where('description', '!=', self::DUE_LINE)->sum('usd');
+        $renewal->forceFill(['usd' => $usd, 'days' => intdiv($usd, (int) $renewal->budget)])->save();
     }
 
     /** The client ends the contract: the admin hears, Meta is left as it is. */

@@ -337,15 +337,28 @@ it('lists only the client\'s own campaigns on the invoice, ended ones marked', f
         ->and($list[1]['live'])->toBeTrue();
 });
 
-it('locks an invoice once it has been sent to the client', function () {
+it('can still fix a sent invoice until money comes in, and then locks it', function () {
+    $line = fn (int $amount) => ['kind' => 'service', 'description' => 'Page management', 'usd' => null, 'rate' => null, 'amount' => $amount, 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null];
     $invoice = app(Invoices::class)->save([
         'client_id' => $this->client->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null,
-        'items' => [['kind' => 'service', 'description' => 'Page management', 'usd' => null, 'rate' => null, 'amount' => 120000, 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null]],
+        'items' => [$line(120000)],
     ]);
-    expect($invoice->isEditable())->toBeTrue();
-
     $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/send")->assertRedirect();
+    $popup = $invoice->payments()->create(['method' => 'bkash', 'amount' => 120000, 'status' => 'pending', 'expires_at' => now()->addMinutes(30)]);
 
+    // Sent, nothing paid: a mistake can be fixed; the pay popup for the old amount closes.
+    expect($invoice->fresh()->isEditable())->toBeTrue();
+    $this->actingAs($this->owner)->get("/invoices/{$invoice->id}/edit")->assertOk();
+    $this->actingAs($this->owner)->put("/invoices/{$invoice->id}", [
+        'client_id' => $this->client->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null,
+        'items' => [$line(1000)], // taka, as the form sends it
+    ])->assertRedirect();
+
+    expect($invoice->fresh()->total)->toBe(100000)
+        ->and($popup->fresh()->status)->toBe('expired');
+
+    // Money in: locked.
+    $invoice->forceFill(['paid' => 50000, 'status' => 'partial'])->save();
     expect($invoice->fresh()->isEditable())->toBeFalse();
     $this->actingAs($this->owner)->get("/invoices/{$invoice->id}/edit")->assertRedirect();
 });

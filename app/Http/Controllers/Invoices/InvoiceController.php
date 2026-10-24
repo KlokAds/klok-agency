@@ -14,6 +14,7 @@ use App\Payments\PaymentMatcher;
 use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
 use App\Services\Invoices;
+use App\Services\Renewals;
 use App\Support\Access;
 use App\Support\ClientMessage;
 use App\Support\InvoiceView;
@@ -23,6 +24,7 @@ use App\Support\Paging;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -115,7 +117,13 @@ class InvoiceController extends Controller
     {
         abort_unless($invoice->isEditable(), 422);
 
-        $invoices->save($this->validated($request), $invoice);
+        DB::transaction(function () use ($request, $invoice, $invoices) {
+            $invoices->save($this->validated($request), $invoice);
+            // A pay popup still open asks for the old amount: the client opens a new one.
+            $invoice->payments()->where('status', 'pending')->whereNull('reference')->update(['status' => 'expired', 'expires_at' => null]);
+            // A renewal's invoice: the days it buys follow the edited lines.
+            app(Renewals::class)->invoiceEdited($invoice);
+        });
         $this->toast(__('Invoice আপডেট হয়েছে।'));
 
         return redirect()->route('invoices.show', $invoice);

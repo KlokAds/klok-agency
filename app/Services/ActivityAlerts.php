@@ -84,6 +84,8 @@ class ActivityAlerts
                 $event === 'created' => $this->alert('did_invoice', '{who} নতুন invoice বানিয়েছেন', '{number} · {client} · {amount}', compact('who', 'number', 'client') + ['amount' => $total], $url), // i18n
                 $event === 'updated' && ($new['status'] ?? null) === 'sent' && ($old['status'] ?? null) === 'draft' => $this->alert('did_invoice_sent', '{who} invoice পাঠিয়েছেন', '{number} · {client} · {amount}', compact('who', 'number', 'client') + ['amount' => $total], $url), // i18n
                 $event === 'updated' && ($new['status'] ?? null) === 'void' => $this->alert('did_invoice_void', '{who} invoice বাতিল করেছেন', '{number} · {client} · {amount}', compact('who', 'number', 'client') + ['amount' => $total], $url, important: true), // i18n
+                // Its lines, dates or client changed (not a payment or its sending): an edit.
+                $event === 'updated' && array_diff(array_keys($new), ['paid', 'status', 'paid_at', 'sent_at', 'viewed_at', 'updated_at']) !== [] => $this->alert('did_invoice_edit', '{who} invoice বদলেছেন', '{number} · {client}', compact('who', 'number', 'client'), $url), // i18n
                 default => null,
             };
         }
