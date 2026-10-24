@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Http\Controllers\Invoices\SmsHookController;
+use App\Models\AppDevice;
 use App\Models\PaymentSms;
 use App\Models\Setting;
 use App\Models\Task;
 use App\Notifications\AgencyAlert;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +20,11 @@ use Illuminate\Support\Facades\DB;
 class Ticker
 {
     public const CARD_LOW_TITLE = 'Card-এ dollar কমে গেছে — USD কিনুন'; // i18n
+
+    public const SMS_SILENT_TITLE = 'Payment SMS-এর phone থেকে খবর নেই — phone দেখুন'; // i18n
+
+    /** The SMS app says it is alive every hour; this long without a word and the Owner hears. */
+    public const SMS_SILENT_HOURS = 3;
 
     public const PILOT_DOWN_TITLE = 'Klok Pilot থেকে campaign-এর খরচ আসছে না'; // i18n
 
@@ -46,6 +53,7 @@ class Ticker
             $this->metaReceipts();
             $this->overdueInvoices();
             $this->cardLow();
+            $this->smsSilent();
             $this->pruneNotifications();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
@@ -113,6 +121,31 @@ class Ticker
         } catch (\Throwable $e) {
             report($e);
         }
+    }
+
+    /**
+     * The phone that forwards payment SMS checks in every hour (app 1.0.6 on). When it has
+     * not for a few hours, payments stop confirming by themselves: the Owner hears, at most
+     * every six hours, with when it was last heard from.
+     */
+    private function smsSilent(): void
+    {
+        $phone = AppDevice::where('sms_forwarder', true)->latest('last_seen_at')->first();
+
+        if ($phone === null || (int) $phone->app_version < 7 || ! filled(Setting::get('sms_device_token'))) {
+            return;
+        }
+
+        $last = Setting::get('sms_last_seen') ?: Setting::where('key', 'sms_device_token')->value('updated_at');
+        $last = $last ? CarbonImmutable::parse((string) $last) : null;
+
+        if ($last === null || $last->gt(now()->subHours(self::SMS_SILENT_HOURS)) || ! Cache::add('sms-silent-told', true, 6 * 3600)) {
+            return;
+        }
+
+        $this->notifier->send(null, new AgencyAlert('sms_silent', self::SMS_SILENT_TITLE, 'শেষ খবর {ago} — internet, battery saver আর SMS-এর অনুমতি দেখুন', [ // i18n
+            'ago' => $last->diffForHumans(),
+        ], ['url' => '/admin/app', 'important' => true]));
     }
 
     /** Meta's receipts from the receipts mailbox become card charges. */

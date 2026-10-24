@@ -13,8 +13,17 @@ class MainActivity : FlutterFragmentActivity() {
                 "pending" -> result.success(SmsForwarder.pending(this))
                 "flush" -> {
                     SmsForwarder.schedule(this)
+                    SmsForwarder.keepAlive(this)
                     result.success(null)
                 }
+                "log" -> result.success(SmsForwarder.log(this))
+                "clearLog" -> {
+                    SmsForwarder.clearLog(this)
+                    result.success(null)
+                }
+                "retry" -> result.success(SmsForwarder.retry(this, call.argument<String>("id") ?: ""))
+                "beat" -> Thread { val ok = SmsForwarder.beat(this); runOnUiThread { result.success(ok) } }.start()
+                "defaultIgnore" -> result.success(SmsForwarder.DEFAULT_IGNORE.joinToString("\n"))
                 else -> result.notImplemented()
             }
         }

@@ -72,6 +72,27 @@ test('a payment SMS no invoice takes tells nobody and is gone after a day; other
     expect(PaymentSms::count())->toBe(0);
 });
 
+test('tells the Owner when the SMS phone has not checked in for hours, once, and only from the app that checks in', function () {
+    Setting::put('sms_device_token', Hash::make('device-secret-0123456789'));
+    $phone = AppDevice::create(['user_id' => $this->owner->id, 'token_hash' => hash('sha256', PHONE_TOKEN), 'token' => PHONE_TOKEN, 'app_version' => 6, 'sms_forwarder' => true]);
+    Setting::putQuietly('sms_last_seen', now()->subHours(5)->toIso8601String());
+
+    // 1.0.5 does not check in: no alarm from it.
+    app(Ticker::class)->run();
+    expect($this->owner->notifications()->where('data->kind', 'sms_silent')->count())->toBe(0);
+
+    $phone->forceFill(['app_version' => 7])->save();
+    app(Ticker::class)->run();
+    app(Ticker::class)->run();
+    expect($this->owner->notifications()->where('data->kind', 'sms_silent')->count())->toBe(1);
+
+    // The hourly check-in (an empty SMS) keeps it quiet.
+    Cache::forget('sms-silent-told');
+    $this->postJson(route('hooks.sms', 'device-secret-0123456789'), ['from' => 'heartbeat', 'text' => ''])->assertJson(['status' => 'heartbeat']);
+    app(Ticker::class)->run();
+    expect($this->owner->notifications()->where('data->kind', 'sms_silent')->count())->toBe(1);
+});
+
 test('signing in in one place signs that person out everywhere else', function () {
     $this->owner->forceFill(['remember_token' => 'old-remember-token'])->save();
     DB::table('sessions')->insert([

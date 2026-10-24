@@ -78,6 +78,34 @@ it('adds the payment charge on top: 1% for bKash, ৳10 for NPSB, none on Bangla
         ->and(BdtEntry::find($payment->charge_entry_id)->amount)->toBe(14900);
 });
 
+it('tells the phone which invoice an SMS paid, and takes the same money sent back to that number as its refund', function () {
+    Setting::put('pay_charge_mfs', '1');
+    $invoice = sentInvoice($this->client, ['total' => 300000]); // ৳3,000, + ৳30 on bKash
+
+    $this->postJson(route('invoice.public.start', $invoice->public_token), ['method' => 'bkash', 'payer' => '01712345678'])->assertOk()
+        ->assertJsonPath('session.amount', 303000);
+    smsHook('bKash', 'You have received Tk 3,030.00 from 01712345678. Fee Tk 0.00. Balance Tk 3,035.82. TrxID PAYBACK001 at '.now()->format('d/m/Y H:i'))
+        ->assertJson(['status' => 'matched', 'invoice' => $invoice->number]);
+    $payment = $invoice->payments()->where('status', 'verified')->sole();
+    expect($invoice->fresh()->status)->toBe('paid');
+
+    // The same ৳3,030 sent back to that number: the payment leaves the books, the invoice is due again.
+    smsHook('bKash', 'Send Money Tk 3,030.00 to 01712345678 successful. Ref test. Fee Tk 5.00. Balance Tk 0.82. TrxID BACK123456 at '.now()->format('d/m/Y H:i'))
+        ->assertJson(['status' => 'refund', 'invoice' => $invoice->number]);
+
+    expect($invoice->fresh()->status)->toBe('sent')
+        ->and($invoice->fresh()->paid)->toBe(0)
+        ->and($payment->fresh()->status)->toBe('refunded')
+        ->and(BdtEntry::find($payment->bdt_entry_id))->toBeNull()
+        ->and(BdtEntry::find($payment->charge_entry_id))->toBeNull()
+        ->and(BdtEntry::where('category', 'expense')->latest('id')->first()->amount)->toBe(-500)
+        ->and($this->owner->notifications()->where('data->kind', 'invoice_refund')->count())->toBe(1);
+
+    // Sent again (a resend), or to someone else: nothing more happens.
+    smsHook('bKash', 'Send Money Tk 3,030.00 to 01712345678 successful. Fee Tk 5.00. TrxID BACK123456 at '.now()->format('d/m/Y H:i'))->assertJson(['status' => 'ignored']);
+    smsHook('bKash', 'Send Money Tk 50.00 to 01899999999 successful. Fee Tk 0.00. TrxID OTHER12345 at '.now()->format('d/m/Y H:i'))->assertJson(['status' => 'ignored']);
+});
+
 it('pays the invoice in full when the client sends only the due, without taking a charge', function () {
     Setting::put('pay_charge_bank', '10');
     $invoice = sentInvoice($this->client);

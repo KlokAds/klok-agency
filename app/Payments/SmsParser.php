@@ -73,6 +73,35 @@ class SmsParser
         ];
     }
 
+    /**
+     * Money the wallet itself sent to a number ("Send Money Tk 31.00 to 01712345678
+     * successful. Fee Tk 0.00 … TrxID …"): the refund of a client's payment, when it
+     * goes back to the number that paid.
+     *
+     * @return array{provider: string, amount: int, to: string, fee: int, trx_id: string}|null
+     */
+    public function parseSent(string $sender, string $body): ?array
+    {
+        $provider = $this->providerFor($sender);
+
+        if (! in_array($provider, ['bkash', 'nagad', 'rocket'], true) || ! preg_match('/\bsend\s*money\b/i', $body)) {
+            return null;
+        }
+
+        $number = '([\d,]+(?:\.\d{1,2})?)';
+        $amount = preg_match("/send\\s*money\\s+(?:Tk|BDT)\\.?\\s*{$number}/i", $body, $m) || preg_match("/Amount:?\\s*(?:Tk|BDT)\\.?\\s*{$number}/i", $body, $m)
+            ? Money::toMinor($m[1]) : null;
+        $to = preg_match('/\b(?:to|Receiver:?|Recipient:?)\s*(\+?8?8?01[3-9]\d{8})/i', $body, $t) ? $t[1] : null;
+        $fee = preg_match("/Fee:?\\s*(?:Tk|BDT)\\.?\\s*{$number}/i", $body, $f) ? (int) Money::toMinor($f[1]) : 0;
+        $trxId = $this->trxId($body);
+
+        if ($amount === null || $amount <= 0 || $to === null || $trxId === null) {
+            return null;
+        }
+
+        return ['provider' => $provider, 'amount' => $amount, 'to' => $to, 'fee' => $fee, 'trx_id' => $trxId];
+    }
+
     /** Money coming in, not a Send Money / Cash Out / Payment the account itself made. */
     protected function isIncoming(string $body, string $provider): bool
     {

@@ -38,6 +38,7 @@ class InvoicePayment extends Model
     public const STATUSES = [
         'pending' => 'যাচাই বাকি', // i18n
         'verified' => 'পাওয়া গেছে', // i18n
+        'refunded' => 'ফেরত দেওয়া', // i18n
         'rejected' => 'বাতিল', // i18n
         'expired' => 'সময় শেষ', // i18n
     ];

@@ -29,6 +29,8 @@ class Invoices
 {
     public const PAID_TITLE = 'Invoice-এর টাকা পাওয়া গেছে'; // i18n
 
+    public const REFUND_TITLE = 'Payment ফেরত দেওয়া হয়েছে — invoice আবার বাকি'; // i18n
+
     public const OVERDUE_TITLE = 'Invoice-এর মেয়াদ পার হয়ে গেছে'; // i18n
 
     public const CLAIM_TITLE = 'Client পেমেন্টের তথ্য দিয়েছে — যাচাই করুন'; // i18n
@@ -250,6 +252,59 @@ class Invoices
             // A renewal's invoice: its campaign waits for the admin's OK.
             app(Renewals::class)->paid($invoice);
         }
+
+        return true;
+    }
+
+    /**
+     * A confirmed payment given back (the wallet sent the money back to the number that paid):
+     * its rows leave the books — the payment, its charge and its QR fee — and the invoice is
+     * due again by its share. The wallet's own fee for sending it back is a bank charge.
+     */
+    public function refund(InvoicePayment $payment, int $fee = 0, ?string $date = null, ?string $reference = null): bool
+    {
+        $done = DB::transaction(function () use ($payment, $fee, $date, $reference) {
+            $fresh = InvoicePayment::lockForUpdate()->findOrFail($payment->id);
+            /** @var Invoice $invoice */
+            $invoice = Invoice::with('client')->lockForUpdate()->findOrFail($fresh->invoice_id);
+
+            if ($fresh->status !== 'verified') {
+                return false;
+            }
+
+            $share = (int) (BdtEntry::find($fresh->bdt_entry_id)->amount ?? 0);
+            BdtEntry::whereKey(array_filter([$fresh->bdt_entry_id, $fresh->charge_entry_id, $fresh->fee_entry_id]))->get()->each->delete();
+
+            $paid = max(0, $invoice->paid - $share);
+            $invoice->forceFill([
+                'paid' => $paid,
+                'status' => $paid >= $invoice->total ? 'paid' : ($paid > 0 ? 'partial' : 'sent'),
+                'paid_at' => $paid >= $invoice->total ? $invoice->paid_at : null,
+            ])->save();
+
+            $day = $date ?? now()->toDateString();
+            MoveFees::book($fee, (string) ($fresh->wallet ?? $fresh->method->wallet()), $day, "{$fresh->method->label()} send money fee — refund, Invoice {$invoice->number}");
+
+            $fresh->forceFill([
+                'status' => 'refunded',
+                'note' => trim(($fresh->note ? $fresh->note.' · ' : '').'Refund'.($reference ? ' '.$reference : '').' '.$day),
+            ])->save();
+
+            activity('Invoice')->performedOn($invoice)->withProperties([
+                'number' => $invoice->number, 'payment' => $fresh->id, 'amount' => $fresh->amount, 'reference' => $reference,
+            ])->log('payment refunded');
+
+            return [$invoice, $fresh];
+        });
+
+        if ($done === false) {
+            return false;
+        }
+
+        [$invoice, $fresh] = $done;
+        $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_refund', self::REFUND_TITLE, '{client} · {number} · {amount}', [
+            'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($fresh->amount),
+        ], ['url' => '/invoices/'.$invoice->uid]));
 
         return true;
     }

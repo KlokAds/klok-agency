@@ -6,9 +6,11 @@ import android.content.Intent
 import android.provider.Telephony
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -23,17 +25,30 @@ import java.util.concurrent.TimeUnit
  * Payment SMS forwarding, done natively so it works with the app closed.
  *
  * Only SMS from the senders the server named (bKash, NAGAD, 16216, the bank) are
- * touched; everyone else's never leave the phone. Each one is first written to a
- * queue on the phone, then sent by WorkManager whenever there is internet, again
- * and again until the server says it has it, so a payment SMS is never lost —
- * not without internet, not after a restart. The server books each TrxID once,
- * so a resend never books it twice.
+ * touched; everyone else's never leave the phone, and neither does one with an OTP,
+ * PIN or code in it. Each one is first written to a queue on the phone, then sent by
+ * WorkManager whenever there is internet, again and again until the server says it
+ * has it, so a payment SMS is never lost — not without internet, not after a restart.
+ * The server books each TrxID once, so a resend never books it twice.
+ *
+ * The phone also keeps a short log of what it sent and what the server made of it
+ * (matched an invoice, kept, not money), shown in the app with a retry; and once an
+ * hour it tells the server it is alive, so a phone that stopped forwarding is noticed.
  */
 object SmsForwarder {
     /** Flutter's shared_preferences file, where the app keeps the hook URL and senders. */
     private const val FLUTTER = "FlutterSharedPreferences"
     private const val QUEUE = "klok_sms_queue"
+    private const val LOG = "klok_sms_log"
     private const val WORK = "sms-forward"
+    private const val BEAT = "sms-heartbeat"
+    private const val LOG_SIZE = 150
+
+    /** Never sent, whatever the sender: the words of one-time codes. */
+    val DEFAULT_IGNORE = listOf(
+        "otp", "one time password", "verification code", "verification number", "security code",
+        "access code", "auth code", "login code", "confirmation code", "your code is", "use code", "pin",
+    )
 
     private fun flutter(context: Context) = context.getSharedPreferences(FLUTTER, Context.MODE_PRIVATE)
 
@@ -43,32 +58,101 @@ object SmsForwarder {
         (flutter(context).getString("flutter.sms.senders", "") ?: "")
             .split(',').map { normalise(it) }.filter { it.isNotEmpty() }.toSet()
 
+    fun ignoreWords(context: Context): List<String> {
+        val saved = flutter(context).getString("flutter.sms.ignore", null) ?: return DEFAULT_IGNORE
+        return saved.split('\n').map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+    }
+
     fun normalise(sender: String) = sender.lowercase().replace(Regex("\\s+"), "")
 
+    /** A word on its own (so "pin" is not found inside "shopping"). */
+    private fun hasWord(text: String, word: String): Boolean =
+        Regex("(^|[^\\p{L}\\p{N}])" + Regex.escape(word) + "($|[^\\p{L}\\p{N}])").containsMatchIn(text)
+
     @Synchronized
-    private fun read(context: Context): JSONArray =
+    private fun read(context: Context, name: String = QUEUE): JSONArray =
         try {
-            JSONArray(context.getSharedPreferences(QUEUE, Context.MODE_PRIVATE).getString("items", "[]"))
+            JSONArray(context.getSharedPreferences(name, Context.MODE_PRIVATE).getString("items", "[]"))
         } catch (e: Exception) {
             JSONArray()
         }
 
     @Synchronized
-    private fun write(context: Context, items: JSONArray) {
-        context.getSharedPreferences(QUEUE, Context.MODE_PRIVATE).edit().putString("items", items.toString()).commit()
+    private fun write(context: Context, items: JSONArray, name: String = QUEUE) {
+        context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().putString("items", items.toString()).commit()
     }
 
     fun pending(context: Context): Int = read(context).length()
+
+    /** The log, newest first, as JSON for the app. */
+    fun log(context: Context): String = read(context, LOG).toString()
+
+    fun clearLog(context: Context) = write(context, JSONArray(), LOG)
+
+    /** Adds a log line at the top, or updates the one with this id where it is; the oldest fall off. */
+    @Synchronized
+    private fun note(context: Context, id: String, fill: (JSONObject) -> Unit) {
+        val items = read(context, LOG)
+        for (i in 0 until items.length()) {
+            if (items.getJSONObject(i).optString("id") == id) {
+                fill(items.getJSONObject(i))
+                write(context, items, LOG)
+                return
+            }
+        }
+        val line = JSONObject().put("id", id)
+        fill(line)
+        val out = JSONArray().put(line)
+        for (i in 0 until minOf(items.length(), LOG_SIZE - 1)) {
+            out.put(items.getJSONObject(i))
+        }
+        write(context, out, LOG)
+    }
 
     @Synchronized
     fun enqueue(context: Context, from: String, text: String, at: Long): Boolean {
         if (url(context) == null || !senders(context).contains(normalise(from))) {
             return false
         }
+        val id = UUID.randomUUID().toString()
+        val lower = text.lowercase()
+        // Money coming in always goes, even when the bank adds "never share your PIN/OTP" to it.
+        val money = Regex("\\b(received|credited|deposited|cash\\s*in)\\b").containsMatchIn(lower)
+        val word = if (money) null else ignoreWords(context).firstOrNull { hasWord(lower, it) }
+        if (word != null) {
+            // Kept off the server, and off the log too: only that one was held back, and why.
+            note(context, id) { it.put("from", from).put("text", "").put("at", at).put("status", "skipped").put("why", word) }
+            return false
+        }
         val items = read(context)
-        items.put(JSONObject().put("id", UUID.randomUUID().toString()).put("from", from).put("text", text).put("at", at))
+        items.put(JSONObject().put("id", id).put("from", from).put("text", text).put("at", at))
         write(context, items)
+        note(context, id) { it.put("from", from).put("text", text).put("at", at).put("status", "pending") }
         return true
+    }
+
+    /** Sends one log line again (a failed or stuck one). */
+    @Synchronized
+    fun retry(context: Context, id: String): Boolean {
+        val items = read(context, LOG)
+        for (i in 0 until items.length()) {
+            val line = items.getJSONObject(i)
+            if (line.optString("id") == id && line.optString("text").isNotEmpty()) {
+                val queue = read(context)
+                var queued = false
+                for (j in 0 until queue.length()) {
+                    if (queue.getJSONObject(j).optString("id") == id) queued = true
+                }
+                if (!queued) {
+                    queue.put(JSONObject().put("id", id).put("from", line.optString("from")).put("text", line.optString("text")).put("at", line.optLong("at")))
+                    write(context, queue)
+                }
+                note(context, id) { it.put("status", "pending").remove("error") }
+                schedule(context)
+                return true
+            }
+        }
+        return false
     }
 
     @Synchronized
@@ -92,6 +176,32 @@ object SmsForwarder {
         WorkManager.getInstance(context).enqueueUniqueWork(WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
+    /** Once an hour, with internet: "this phone still forwards". */
+    fun keepAlive(context: Context) {
+        val request = PeriodicWorkRequestBuilder<SmsHeartbeat>(1, TimeUnit.HOURS)
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(BEAT, ExistingPeriodicWorkPolicy.KEEP, request)
+    }
+
+    /** An empty SMS is the heartbeat; the server notes the time and nothing else. */
+    fun beat(context: Context): Boolean {
+        val target = url(context) ?: return true
+        val (status, _) = try {
+            post(target, false, JSONObject().put("from", "heartbeat").put("text", ""))
+        } catch (e: Exception) {
+            return false
+        }
+        if (status == 404) {
+            flutter(context).edit().putString("flutter.sms.error", "revoked").apply()
+            return true
+        }
+        if (status in 200..299) {
+            flutter(context).edit().putLong("flutter.sms.last_beat", System.currentTimeMillis()).apply()
+        }
+        return status in 200..299
+    }
+
     /**
      * @param quick the try made the moment an SMS arrives: short timeouts, to finish inside the
      *              few seconds Android gives a receiver.
@@ -102,31 +212,42 @@ object SmsForwarder {
         val items = read(context)
         for (i in 0 until items.length()) {
             val item = items.getJSONObject(i)
-            val status = try {
+            val id = item.getString("id")
+            val (status, body) = try {
                 post(target, quick, JSONObject()
                     .put("from", item.getString("from"))
                     .put("text", item.getString("text"))
                     .put("receivedStamp", item.getLong("at")))
             } catch (e: Exception) {
+                note(context, id) { it.put("error", "নেট নেই — আবার চেষ্টা হবে") }
                 return false
             }
             when {
                 status in 200..299 -> {
-                    remove(context, item.getString("id"))
+                    remove(context, id)
                     flutter(context).edit().putLong("flutter.sms.last_ok", System.currentTimeMillis()).apply()
+                    val answer = try { JSONObject(body) } catch (e: Exception) { JSONObject() }
+                    note(context, id) {
+                        it.put("status", "synced").put("server", answer.optString("status")).put("sent_at", System.currentTimeMillis()).remove("error")
+                        if (answer.has("invoice")) it.put("invoice", answer.optString("invoice"))
+                    }
                 }
                 // The forwarding was moved to another phone or turned off on the server.
                 status == 404 -> {
                     flutter(context).edit().putString("flutter.sms.error", "revoked").apply()
+                    note(context, id) { it.put("status", "failed").put("error", "এই phone-এর forward বন্ধ — app-এ আবার চালু করুন") }
                     return false
                 }
-                else -> return false
+                else -> {
+                    note(context, id) { it.put("status", "failed").put("error", "Server উত্তর দিল $status — আবার চেষ্টা হবে") }
+                    return false
+                }
             }
         }
         return read(context).length() == 0
     }
 
-    private fun post(target: String, quick: Boolean, body: JSONObject): Int {
+    private fun post(target: String, quick: Boolean, body: JSONObject): Pair<Int, String> {
         val connection = URL(target).openConnection() as HttpURLConnection
         try {
             connection.requestMethod = "POST"
@@ -136,7 +257,13 @@ object SmsForwarder {
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Accept", "application/json")
             connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-            return connection.responseCode
+            val code = connection.responseCode
+            val text = try {
+                (if (code < 400) connection.inputStream else connection.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
+            } catch (e: Exception) {
+                ""
+            }
+            return code to text
         } finally {
             connection.disconnect()
         }
@@ -146,6 +273,14 @@ object SmsForwarder {
 class SmsWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result =
         if (SmsForwarder.flush(applicationContext)) Result.success() else Result.retry()
+}
+
+class SmsHeartbeat(context: Context, params: WorkerParameters) : Worker(context, params) {
+    override fun doWork(): Result {
+        // Anything still waiting goes first; then "alive".
+        SmsForwarder.flush(applicationContext)
+        return if (SmsForwarder.beat(applicationContext)) Result.success() else Result.retry()
+    }
 }
 
 /** Android hands every incoming SMS here, even with the app closed. */
