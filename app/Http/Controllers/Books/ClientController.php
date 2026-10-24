@@ -107,7 +107,7 @@ class ClientController extends Controller
         });
 
         return Inertia::render('clients/Show', [
-            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id']),
+            'client' => $client->only(['id', 'name', 'type', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days']),
             'figures' => $figures,
             'statement' => $statement,
             'campaigns' => Campaign::with('account:id,name')->where('client_id', $client->id)
@@ -265,6 +265,7 @@ class ClientController extends Controller
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'manager_id' => ['nullable', 'exists:users,id'],
+            'renew_days' => ['nullable', 'integer', 'min:1', 'max:90'],
         ], [], ['name' => __('নাম')]);
     }
 }

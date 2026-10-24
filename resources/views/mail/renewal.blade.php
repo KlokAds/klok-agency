@@ -18,6 +18,22 @@ Approve and Klok Pilot moves the campaign's end on Meta by {{ $renewal->days }} 
 <x-mail::button :url="$url">
 Review & approve
 </x-mail::button>
+@elseif ($event === 'extended')
+# Renewal paid: campaign extended
+
+**{{ $renewal->client?->name }}** paid for **{{ $renewal->days }} more days** of **{{ $renewal->campaign?->name }}**, and it now runs to **{{ $renewal->new_end?->format('d M Y') }}** on Meta.
+
+<x-mail::table>
+| | |
+|:--|--:|
+| Invoice | {{ $renewal->invoice?->number }} |
+| Paid | {{ $total }} |
+| Ad budget | {{ $usd }} |
+</x-mail::table>
+
+<x-mail::button :url="$url">
+Open in Klok Finance
+</x-mail::button>
 @else
 # Contract ended: no extension
 

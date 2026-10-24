@@ -15,7 +15,7 @@ class Client extends Model
 
     public const STATUSES = ['active' => 'Active', 'inactive' => 'Inactive'];
 
-    protected $fillable = ['name', 'type', 'status', 'manager_id', 'phone', 'email', 'company', 'notes'];
+    protected $fillable = ['name', 'type', 'status', 'manager_id', 'renew_days', 'phone', 'email', 'company', 'notes'];
 
     /** @return HasMany<PilotAccount, $this> */
     public function pilotAccounts(): HasMany

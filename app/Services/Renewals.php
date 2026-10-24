@@ -25,6 +25,10 @@ use RuntimeException;
  * the admin hears by email and in the app, and their OK moves the end on
  * Meta. Ending the contract is only told to the admin; nothing changes on
  * Meta, the campaign stops on its end date as planned.
+ *
+ * A client with "auto renewal" days (Client::renew_days) skips the choice:
+ * the invoice for that many days is made at once and the team is told to
+ * send it, and once it is paid in full the campaign is extended by itself.
  */
 class Renewals
 {
@@ -36,6 +40,10 @@ class Renewals
     public const DECLINED_TITLE = 'Client contract শেষ করেছে — extend লাগবে না'; // i18n
 
     public const PAID_TITLE = 'Renewal-এর টাকা এসেছে — approve করুন'; // i18n
+
+    public const INVOICED_TITLE = 'Renewal invoice তৈরি — client-কে পাঠান'; // i18n
+
+    public const EXTENDED_TITLE = 'Renewal-এর টাকা এসেছে — campaign বাড়ানো হয়েছে'; // i18n
 
     public function __construct(private Invoices $invoices, private CampaignLimits $limits, private Notifier $notifier, private Books $books) {}
 
@@ -73,7 +81,14 @@ class Renewals
         foreach ($campaigns as $campaign) {
             $endsOn = $campaign->lastDay()->toDateString();
 
-            if (Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->exists()) {
+            $existing = Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->first();
+
+            // A link made before the client was switched to auto renewal still gets its invoice.
+            if ($existing !== null) {
+                if ($existing->status === 'open' && $existing->invoice_id === null && $campaign->client?->renew_days) {
+                    $count += $this->autoInvoice($existing) ? 1 : 0;
+                }
+
                 continue;
             }
 
@@ -87,12 +102,43 @@ class Renewals
             ]);
             $count++;
 
+            if ($campaign->client?->renew_days && $this->autoInvoice($renewal)) {
+                continue;
+            }
+
             $this->notifier->send($campaign->client?->manager_id, new AgencyAlert('renewal_open', self::OPENED_TITLE, '{client} · {campaign} · {date}', [
                 'client' => $campaign->client?->name, 'campaign' => $campaign->name, 'date' => CarbonImmutable::parse($endsOn)->format('j M'),
             ], ['url' => '/renewals/'.$renewal->id]));
         }
 
         return $count;
+    }
+
+    /**
+     * Auto renewal: the invoice for the client's set days, made now, and the
+     * team told to send it. False (the link stays, as without auto) when it
+     * cannot be priced.
+     */
+    private function autoInvoice(Renewal $renewal): bool
+    {
+        $renewal->loadMissing(['client', 'campaign']);
+
+        try {
+            $invoice = $this->choose($renewal, (int) $renewal->client->renew_days);
+        } catch (RuntimeException $e) {
+            report($e);
+
+            return false;
+        }
+
+        $this->notifier->send($renewal->client->manager_id, new AgencyAlert('renewal_invoiced', self::INVOICED_TITLE, '{client} · {campaign} · {days} দিন · {amount}', [ // i18n
+            'client' => $renewal->client->name,
+            'campaign' => $renewal->campaign?->name,
+            'days' => $renewal->client->renew_days,
+            'amount' => Money::bdt($invoice->total),
+        ], ['url' => '/invoices/'.$invoice->uid]));
+
+        return true;
     }
 
     /**
@@ -182,7 +228,7 @@ class Renewals
 
         if ($renewal !== null) {
             $renewal->forceFill(['status' => 'paid', 'paid_at' => now()])->save();
-            $this->tell($renewal, 'paid', self::PAID_TITLE);
+            $this->paidNow($renewal);
 
             return;
         }
@@ -211,8 +257,30 @@ class Renewals
                 'budget' => $campaign->dailyBudget(), 'days' => $line->days, 'usd' => $line->usd, 'invoice_id' => $invoice->id,
                 'status' => 'paid', 'decided_at' => $renewal->decided_at ?? now(), 'paid_at' => now(),
             ])->save();
-            $this->tell($renewal, 'paid', self::PAID_TITLE);
+            $this->paidNow($renewal);
         }
+    }
+
+    /**
+     * Paid in full: an auto-renewal client's campaign is extended at once;
+     * otherwise, or when Meta refuses, it waits for the admin's OK.
+     */
+    private function paidNow(Renewal $renewal): void
+    {
+        $renewal->loadMissing(['client', 'campaign']);
+
+        if ($renewal->client?->renew_days && $renewal->campaign !== null) {
+            try {
+                $end = $this->approve($renewal);
+                $this->tell($renewal, 'extended', self::EXTENDED_TITLE, __(' · :date পর্যন্ত', ['date' => $end->format('j M')]));
+
+                return;
+            } catch (RuntimeException) {
+                // Kept on the renewal (error); the admin's OK tries again.
+            }
+        }
+
+        $this->tell($renewal, 'paid', self::PAID_TITLE);
     }
 
     /**
@@ -220,7 +288,7 @@ class Renewals
      *
      * @throws RuntimeException when Pilot or Meta refuses (kept on the renewal)
      */
-    public function approve(Renewal $renewal, User $by): CarbonImmutable
+    public function approve(Renewal $renewal, ?User $by = null): CarbonImmutable
     {
         if ($renewal->status !== 'paid') {
             throw new RuntimeException(__('শুধু টাকা আসা renewal approve করা যায়।'));
@@ -234,20 +302,20 @@ class Renewals
             throw $e;
         }
 
-        $renewal->forceFill(['status' => 'approved', 'new_end' => $end->toDateString(), 'approved_at' => now(), 'approved_by' => $by->id, 'error' => null])->save();
+        $renewal->forceFill(['status' => 'approved', 'new_end' => $end->toDateString(), 'approved_at' => now(), 'approved_by' => $by?->id, 'error' => null])->save();
 
         return $end;
     }
 
     /** The bell, and an email to the admin when mail is set up. */
-    private function tell(Renewal $renewal, string $event, string $title): void
+    private function tell(Renewal $renewal, string $event, string $title, string $more = ''): void
     {
         $renewal->loadMissing(['campaign', 'client', 'invoice']);
 
         $this->notifier->send($renewal->client?->manager_id, new AgencyAlert('renewal_'.$event, $title, '{client} · {campaign}{amount}', [
             'client' => $renewal->client?->name,
             'campaign' => $renewal->campaign?->name,
-            'amount' => $event === 'paid' && $renewal->invoice ? ' · '.Money::bdt($renewal->invoice->total) : '',
+            'amount' => (in_array($event, ['paid', 'extended'], true) && $renewal->invoice ? ' · '.Money::bdt($renewal->invoice->total) : '').$more,
         ], ['url' => '/renewals/'.$renewal->id]));
 
         if (InvoiceMail::configured()) {

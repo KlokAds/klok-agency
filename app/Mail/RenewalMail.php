@@ -20,9 +20,11 @@ class RenewalMail extends Mailable
     {
         $who = ($this->renewal->client->name ?? 'Client').' — '.($this->renewal->campaign->name ?? 'campaign');
 
-        return new Envelope(subject: $this->event === 'paid'
-            ? "Renewal paid, approve: {$who}"
-            : "Contract ended, no extension: {$who}");
+        return new Envelope(subject: match ($this->event) {
+            'paid' => "Renewal paid, approve: {$who}",
+            'extended' => "Renewal paid, campaign extended: {$who}",
+            default => "Contract ended, no extension: {$who}",
+        });
     }
 
     public function content(): Content

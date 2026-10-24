@@ -30,6 +30,7 @@ type Client = {
     company: string | null;
     notes: string | null;
     manager_id: number | null;
+    renew_days: number | null;
 };
 
 type OpenTask = {
@@ -206,6 +207,7 @@ const form = useForm({
     email: props.client.email ?? '',
     company: props.client.company ?? '',
     notes: props.client.notes ?? '',
+    renew_days: props.client.renew_days ? String(props.client.renew_days) : '',
 });
 
 const types: Option[] = [
@@ -797,6 +799,21 @@ function print(): void {
                     :options="options.users"
                     :placeholder="t('কেউ না')"
                     clearable
+            /></KField>
+            <KField
+                :label="t('Auto renewal invoice (দিন)')"
+                optional
+                :error="form.errors.renew_days"
+                :hint="
+                    t(
+                        'Campaign শেষের ২ দিন আগে এত দিনের invoice নিজে তৈরি হবে; টাকা এলে campaign নিজে বাড়বে। খালি রাখলে client link থেকে দিন বাছবে।',
+                    )
+                "
+                ><KInput
+                    v-model="form.renew_days"
+                    inputmode="numeric"
+                    :placeholder="t('যেমন 7')"
+                    :invalid="!!form.errors.renew_days"
             /></KField>
             <KField label="Note" optional class="sm:col-span-2"
                 ><KTextarea v-model="form.notes"

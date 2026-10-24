@@ -163,6 +163,50 @@ it('makes the renewal link two days before the end, and the client pays for more
         ->and($renewal->fresh()->new_end->toDateString())->toBe($newEnd);
 });
 
+it('makes an auto-renewal client\'s invoice by itself, and extends the campaign once it is paid', function () {
+    payGffs($this, '1500', '10');
+    Mail::fake();
+    app(CampaignLimits::class)->refresh($this->campaign, true);
+    $this->gffs->update(['renew_days' => 7]);
+
+    expect(app(Renewals::class)->openDue())->toBe(1);
+    $renewal = Renewal::sole();
+    $invoice = Invoice::sole();
+
+    // 7 days × $2, sent, and the team told to pass it on (not to send a link).
+    expect($invoice->usd)->toBe(1400)
+        ->and($invoice->status)->toBe('sent')
+        ->and($renewal->status)->toBe('invoiced')
+        ->and($renewal->days)->toBe(7)
+        ->and($this->owner->notifications()->where('data->kind', 'renewal_invoiced')->count())->toBe(1)
+        ->and($this->owner->notifications()->where('data->kind', 'renewal_open')->count())->toBe(0);
+
+    // Paid in full: no OK needed, Pilot moves the end 7 days on.
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/pay", [
+        'method' => 'bank', 'wallet' => 'bank', 'paid_on' => now()->toDateString(), 'amount' => (string) ($invoice->total / 100),
+    ])->assertRedirect();
+
+    $newEnd = now()->addDay()->addDays(7)->toDateString();
+    expect($renewal->fresh()->status)->toBe('approved')
+        ->and($renewal->fresh()->approved_by)->toBeNull()
+        ->and(collect($this->limits)->last()['new_end'])->toBe($newEnd)
+        ->and($this->owner->notifications()->where('data->kind', 'renewal_extended')->count())->toBe(1)
+        ->and($this->owner->notifications()->where('data->kind', 'renewal_paid')->count())->toBe(0);
+});
+
+it('gives a link already open its invoice once the client is switched to auto renewal', function () {
+    payGffs($this, '1500', '10');
+    app(CampaignLimits::class)->refresh($this->campaign, true);
+
+    expect(app(Renewals::class)->openDue())->toBe(1)
+        ->and(Invoice::count())->toBe(0);
+
+    $this->gffs->update(['renew_days' => 5]);
+    expect(app(Renewals::class)->openDue())->toBe(1)
+        ->and(Invoice::sole()->usd)->toBe(1000)
+        ->and(app(Renewals::class)->openDue())->toBe(0);
+});
+
 it('tells the admin when the client ends the contract', function () {
     payGffs($this, '1500', '10');
     Mail::fake();
