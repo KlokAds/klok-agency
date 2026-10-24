@@ -43,7 +43,8 @@ class PaymentSettingsController extends Controller
             $values[$key] = PaySettings::on($key);
         }
 
-        $values['qr_fee_percent'] = PaySettings::text('qr_fee_percent') ?: '1';
+        $values['qr_fee_percent'] = PaySettings::text('qr_fee_percent') ?: '0.4';
+        $values['qr_fee_free_below'] = PaySettings::text('qr_fee_free_below') ?: '2000';
         foreach (PaySettings::CHARGE_DEFAULTS as $key => $default) {
             $values[$key] = Setting::get($key) ?? $default;
         }
@@ -113,7 +114,7 @@ class PaymentSettingsController extends Controller
             'pay_wallet_bank' => ['nullable', Rule::in(Wallet::keys())],
             'qr_fee_percent' => ['required', 'numeric', 'min:0', 'max:10'],
             'pay_charge_mfs' => ['nullable', 'numeric', 'min:0', 'max:10'],
-            'pay_charge_qr' => ['nullable', 'numeric', 'min:0', 'max:10'],
+            'qr_fee_free_below' => ['nullable', 'numeric', 'min:0', 'max:1000000'],
             'pay_charge_bank' => ['nullable', 'numeric', 'min:0', 'max:500'],
             'commission_percent' => ['required', 'numeric', 'min:0', 'max:200'],
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:1024'],

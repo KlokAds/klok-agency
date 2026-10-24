@@ -16,7 +16,7 @@ class PaySettings
         'pay_bkash_number', 'pay_bkash_type', 'pay_nagad_number', 'pay_nagad_type', 'pay_rocket_number',
         'pay_qr_merchant', 'pay_qr_payload', 'pay_bank_name', 'pay_bank_branch', 'pay_bank_account_name', 'pay_bank_account_number',
         'pay_bank_routing', 'pay_bank_sms_senders', 'qr_fee_percent', 'commission_percent',
-        'pay_charge_mfs', 'pay_charge_qr', 'pay_charge_bank',
+        'pay_charge_mfs', 'pay_charge_bank', 'qr_fee_free_below',
         'pay_wallet_bkash', 'pay_wallet_nagad', 'pay_wallet_rocket', 'pay_wallet_qr', 'pay_wallet_bank',
     ];
 
@@ -37,18 +37,43 @@ class PaySettings
         return Setting::get($key) === '1';
     }
 
+    /** The bank's Bangla QR fee (%), on a payment from the free limit up (0.4% here; some banks 0.7%). */
     public static function qrFeePercent(): float
     {
-        return (float) (Setting::get('qr_fee_percent') ?? '1');
+        return (float) (Setting::get('qr_fee_percent') ?? '0.4');
     }
 
-    /** What the client pays on top for each way of paying: a % for wallets and Bangla QR, taka for a bank transfer. */
-    public const CHARGE_DEFAULTS = ['pay_charge_mfs' => '1', 'pay_charge_qr' => '1', 'pay_charge_bank' => '10'];
+    /** A Bangla QR payment below this (taka) carries no bank fee. */
+    public static function qrFeeFreeBelow(): int
+    {
+        return (int) round((float) (Setting::get('qr_fee_free_below') ?? '2000') * 100);
+    }
+
+    /** The bank fee (poisha) a Bangla QR payment of $amount is expected to lose: what lands is the rest. */
+    public static function qrFee(int $amount): int
+    {
+        return $amount < self::qrFeeFreeBelow() ? 0 : (int) round($amount * self::qrFeePercent() / 100);
+    }
+
+    /**
+     * How far short of the QR amount the bank's SMS may come and still be
+     * that payment (poisha): its fee plus a taka for the poisha it rounds.
+     */
+    public static function qrShortBy(int $amount): int
+    {
+        return (int) ceil($amount * max(self::qrFeePercent(), 1.0) / 100) + 100;
+    }
+
+    /**
+     * What the client pays on top for each way of paying: a % for wallets, taka for a bank
+     * transfer. Bangla QR never: the bank's rules keep its amount to the invoice's own.
+     */
+    public const CHARGE_DEFAULTS = ['pay_charge_mfs' => '1', 'pay_charge_bank' => '10'];
 
     /**
      * The charge (poisha, whole taka) a client adds when paying $base this
-     * way: bKash, Nagad, Rocket and Bangla QR a % rounded up, a bank
-     * transfer (NPSB) a fixed amount, cash nothing.
+     * way: bKash, Nagad and Rocket a % rounded up, a bank transfer (NPSB) a
+     * fixed amount; Bangla QR and cash nothing.
      */
     public static function charge(PaymentMethod $method, int $base): int
     {
@@ -60,9 +85,8 @@ class PaySettings
 
         return match ($method) {
             PaymentMethod::Bkash, PaymentMethod::Nagad, PaymentMethod::Rocket => (int) ceil($base * $setting('pay_charge_mfs') / 10000) * 100,
-            PaymentMethod::BanglaQr => (int) ceil($base * $setting('pay_charge_qr') / 10000) * 100,
             PaymentMethod::Bank => (int) round($setting('pay_charge_bank') * 100),
-            PaymentMethod::Cash => 0,
+            PaymentMethod::BanglaQr, PaymentMethod::Cash => 0,
         };
     }
 

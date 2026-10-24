@@ -43,14 +43,15 @@ beforeEach(function () {
     }
 });
 
-it('adds the payment charge on top: 1% for bKash and Bangla QR, ৳10 for NPSB, and books it as income', function () {
+it('adds the payment charge on top: 1% for bKash, ৳10 for NPSB, none on Bangla QR, and books it as income', function () {
     foreach (PaySettings::CHARGE_DEFAULTS as $key => $default) {
         Setting::put($key, $default);
     }
     $invoice = sentInvoice($this->client); // ৳14,900
 
     expect(PaySettings::charge(PaymentMethod::Bkash, 1490000))->toBe(14900)
-        ->and(PaySettings::charge(PaymentMethod::BanglaQr, 218120))->toBe(2200) // ৳21.81 rounds up to ৳22
+        ->and(PaySettings::charge(PaymentMethod::Bkash, 218120))->toBe(2200) // ৳21.81 rounds up to ৳22
+        ->and(PaySettings::charge(PaymentMethod::BanglaQr, 1490000))->toBe(0) // the bank's rules: QR stays the invoice's amount
         ->and(PaySettings::charge(PaymentMethod::Bank, 1490000))->toBe(1000)
         ->and(PaySettings::charge(PaymentMethod::Cash, 1490000))->toBe(0);
 
@@ -333,6 +334,32 @@ it('books the Bangla QR fee from the bank when a QR payment is confirmed', funct
         ->and($fee->wallet)->toBe('bank')
         ->and($fee->amount)->toBe(-14900)
         ->and($fee->head->name)->toBe('Bank charge');
+});
+
+it('takes a Bangla QR payment that lands short by the bank\'s fee, and books the gap as the fee', function () {
+    Setting::put('pay_qr_on', '1');
+    Setting::put('pay_qr_image', 'payments/qr.png');
+    Setting::put('qr_fee_percent', '0.4');
+    $invoice = sentInvoice($this->client); // ৳14,900
+
+    // The QR asks for the invoice's own amount; the bank keeps 0.4% (৳59.60) and the poisha round.
+    $this->postJson("/i/{$invoice->public_token}/pay", ['method' => 'qr'])->assertOk()
+        ->assertJsonPath('session.amount', 1490000)
+        ->assertJsonPath('session.charge', 0);
+    smsHook('bKash', 'You have received payment Tk 14,840.50 from 01812345678. TrxID QRSHORT123 at 20/10/2026 10:01')->assertJson(['status' => 'matched']);
+
+    $payment = InvoicePayment::where('status', 'verified')->sole();
+    expect($invoice->fresh()->status)->toBe('paid')
+        ->and($payment->amount)->toBe(1490000)
+        ->and(BdtEntry::findOrFail($payment->bdt_entry_id)->amount)->toBe(1490000)
+        ->and(BdtEntry::findOrFail($payment->fee_entry_id)->amount)->toBe(-5950);
+
+    // Below ৳2,000 the bank keeps nothing, and much less than the QR is not that payment.
+    expect(PaySettings::qrFee(199900))->toBe(0)
+        ->and(PaySettings::qrFee(250000))->toBe(1000);
+    $small = sentInvoice($this->client, ['total' => 150000]);
+    $this->postJson("/i/{$small->public_token}/pay", ['method' => 'qr'])->assertOk();
+    smsHook('bKash', 'You have received payment Tk 1,400.00 from 01812345678. TrxID QRFAR12345 at 20/10/2026 10:05')->assertJson(['status' => 'stored']);
 });
 
 it('lets the Owner give an unmatched SMS to an invoice', function () {

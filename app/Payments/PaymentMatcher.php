@@ -103,12 +103,13 @@ class PaymentMatcher
                 ->where('received_at', '>=', now()->subDays(self::WINDOW_DAYS))
                 ->first();
         } else {
-            $candidates = $sms->where('amount', $payment->amount)
+            $candidates = $sms->whereBetween('amount', [$payment->amount - $this->shortBy($payment), $payment->amount])
                 ->where('received_at', '>=', $payment->created_at->subMinutes(self::SESSION_MINUTES))
                 ->get()
                 ->filter(fn (PaymentSms $candidate): bool => $this->samePayer($payment->sender, $candidate->payer_number));
+            $exact = $candidates->where('amount', $payment->amount);
 
-            $sms = $candidates->count() === 1 ? $candidates->first() : null;
+            $sms = $exact->count() === 1 ? $exact->first() : ($exact->isEmpty() && $candidates->count() === 1 ? $candidates->first() : null);
         }
 
         return $sms instanceof PaymentSms && $this->settle($payment, $sms);
@@ -150,15 +151,19 @@ class PaymentMatcher
             ->where('status', 'pending')
             ->whereIn('method', $methods)
             ->whereNull('reference')
-            ->where('amount', $sms->amount)
+            // A Bangla QR session may get a little less: the bank takes its fee before the SMS.
+            ->whereBetween('amount', [$sms->amount, $sms->amount + PaySettings::qrShortBy((int) $sms->amount * 2)])
             ->where('created_at', '<=', $sms->received_at->addMinutes(5))
             ->where('expires_at', '>=', $sms->received_at->subMinutes(self::GRACE_MINUTES))
             ->get()
+            ->filter(fn (InvoicePayment $payment): bool => $payment->amount - $sms->amount <= $this->shortBy($payment))
             ->filter(fn (InvoicePayment $payment): bool => $this->samePayer($payment->sender, $sms->payer_number));
 
-        // Prefer the session on the exact wallet over a Bangla QR one; never guess between equals.
+        // Prefer the session on the exact wallet, then the exact amount; never guess between equals.
         $exact = $sessions->filter(fn (InvoicePayment $p) => $p->method->value === $sms->provider);
-        $session = $exact->count() === 1 ? $exact->first() : ($exact->isEmpty() && $sessions->count() === 1 ? $sessions->first() : null);
+        $pool = $exact->isNotEmpty() ? $exact : $sessions;
+        $same = $pool->where('amount', $sms->amount);
+        $session = $same->count() === 1 ? $same->first() : ($same->isEmpty() && $pool->count() === 1 ? $pool->first() : null);
 
         return $session !== null && $this->settle($session, $sms);
     }
@@ -228,6 +233,12 @@ class PaymentMatcher
             ->update(['status' => 'expired']);
     }
 
+    /** How far short of a payment its SMS may come: only Bangla QR, by the bank's fee. */
+    protected function shortBy(InvoicePayment $payment): int
+    {
+        return $payment->method === PaymentMethod::BanglaQr ? PaySettings::qrShortBy((int) $payment->amount) : 0;
+    }
+
     /** @return Builder<InvoicePayment> */
     protected function openSessions(PaymentMethod $method): Builder
     {
@@ -267,8 +278,9 @@ class PaymentMatcher
 
     protected function settle(InvoicePayment $payment, PaymentSms $sms, ?User $by = null): bool
     {
-        // Without the payment charge is still enough (the invoice is paid; no charge is taken).
-        if ((int) $sms->amount < $payment->amount - (int) $payment->charge && $by === null) {
+        // Without the payment charge is still enough (the invoice is paid; no charge is taken), and a
+        // Bangla QR payment may come short by the bank's fee.
+        if ((int) $sms->amount < $payment->amount - (int) $payment->charge - $this->shortBy($payment) && $by === null) {
             $payment->forceFill(['note' => __('এই TrxID-এর SMS পাওয়া গেছে, কিন্তু এসেছে মাত্র :amount।', ['amount' => Money::bdt((int) $sms->amount)])])->save();
 
             return false;

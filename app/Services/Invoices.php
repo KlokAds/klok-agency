@@ -144,6 +144,20 @@ class Invoices
             $method = $fresh->method;
             $day = $date ?? now()->toDateString();
             $place = $wallet ?? $method->wallet();
+            // Bangla QR: the bank keeps its fee before the money lands. The client paid the QR's
+            // amount (it is the invoice's), and the fee is ours: when what landed is a little short,
+            // the gap is the fee; otherwise the bank's rule (free below the limit, else its %).
+            $qrFee = 0;
+            if ($method === PaymentMethod::BanglaQr) {
+                $short = (int) $fresh->amount - $received;
+
+                if ($short > 0 && $short <= PaySettings::qrShortBy((int) $fresh->amount)) {
+                    $qrFee = $short;
+                    $received = (int) $fresh->amount;
+                } else {
+                    $qrFee = PaySettings::qrFee($received);
+                }
+            }
             // The client's payment charge is only what came in beyond the invoice's due, so a
             // client who sent just the due still pays the invoice in full.
             $charge = min((int) $fresh->charge, max(0, $received - $invoice->due()));
@@ -167,9 +181,9 @@ class Invoices
 
             $fee = null;
 
-            if ($method === PaymentMethod::BanglaQr) {
+            if ($qrFee > 0) {
                 // The fee comes off where the QR money landed.
-                $fee = MoveFees::book((int) round($arrived * PaySettings::qrFeePercent() / 100), $place, $day, "Bangla QR fee — Invoice {$invoice->number}");
+                $fee = MoveFees::book($qrFee, $place, $day, "Bangla QR fee — Invoice {$invoice->number}");
             }
 
             // The charge is the agency's: other income, in the same place as the payment.
@@ -218,16 +232,18 @@ class Invoices
                 'bdt_entry_id' => $entry->id, 'auto' => $by === null,
             ])->log($by ? 'payment verified' : 'payment auto-verified');
 
-            return [$invoice, $received];
+            return [$invoice, $received, $qrFee];
         });
 
         if ($done === false) {
             return false;
         }
 
-        [$invoice, $amount] = $done;
+        [$invoice, $amount, $qrFee] = $done;
         $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_paid', self::PAID_TITLE, '{client} · {number} · {amount}', [
-            'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($amount),
+            'client' => $invoice->client->name, 'number' => $invoice->number,
+            // Bangla QR: what the bank kept, and what landed with us.
+            'amount' => Money::bdt($amount).($qrFee > 0 ? __(' · bank fee :fee কেটে জমা :landed', ['fee' => Money::bdt($qrFee), 'landed' => Money::bdt($amount - $qrFee)]) : ''),
         ], ['url' => '/invoices/'.$invoice->uid]));
 
         if ($invoice->status === 'paid') {

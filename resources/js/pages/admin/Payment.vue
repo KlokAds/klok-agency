@@ -548,7 +548,7 @@ const wallets = [
                     :label="t('Bangla QR fee (%)')"
                     :hint="
                         t(
-                            'QR-এ টাকা এলে এই fee ব্যাংক থেকে Bank charge খরচ হিসেবে লেখা হয় — client-এর কাছ থেকে নেওয়া হয় না।',
+                            'Bank QR-এর টাকা থেকে এই fee কাটে (কোনো bank 0.4%, কোনোটা 0.7%) — আমাদের খরচ, client-এর কাছ থেকে নেওয়া হয় না।',
                         )
                     "
                     :error="err('qr_fee_percent')"
@@ -564,10 +564,19 @@ const wallets = [
                         >
                     </KInput>
                 </KField>
+                <KField
+                    :label="t('এর নিচে QR fee নেই (৳)')"
+                    :error="err('qr_fee_free_below')"
+                >
+                    <KInput
+                        v-model="values['qr_fee_free_below']"
+                        inputmode="decimal"
+                    />
+                </KField>
                 <p class="text-[12.5px] text-ink-3 sm:col-span-2">
                     {{
                         t(
-                            'Client-এর payment charge — invoice-এর টাকার উপরে client দেয়, আর আমাদের আয় হিসেবে লেখা হয়। 0 দিলে নেওয়া হয় না।',
+                            'Client-এর payment charge (bKash ও bank-এ) — invoice-এর টাকার উপরে client দেয়, আর আমাদের আয় হিসেবে লেখা হয়। Bangla QR-এ নেওয়া হয় না। 0 দিলে নেওয়া হয় না।',
                         )
                     }}
                 </p>
@@ -577,21 +586,6 @@ const wallets = [
                 >
                     <KInput
                         v-model="values['pay_charge_mfs']"
-                        inputmode="decimal"
-                    >
-                        <template #trail
-                            ><span class="text-[13px] font-semibold text-ink-3"
-                                >%</span
-                            ></template
-                        >
-                    </KInput>
-                </KField>
-                <KField
-                    :label="t('Bangla QR charge (%)')"
-                    :error="err('pay_charge_qr')"
-                >
-                    <KInput
-                        v-model="values['pay_charge_qr']"
                         inputmode="decimal"
                     >
                         <template #trail

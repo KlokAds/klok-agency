@@ -143,6 +143,8 @@ class InvoiceController extends Controller
                 'url' => $invoice->publicUrl(),
                 'editable' => $invoice->isEditable(),
                 'payable' => $invoice->isPayable(),
+                // If the rest comes by Bangla QR: the bank's fee, and what lands with us.
+                'qr_fee' => $invoice->isPayable() ? PaySettings::qrFee($invoice->due()) : 0,
                 'allow_partial' => $invoice->allow_partial,
                 'created_at' => $invoice->created_at?->toIso8601String(),
                 'sent_at' => $invoice->sent_at?->toIso8601String(),

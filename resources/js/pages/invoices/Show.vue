@@ -50,6 +50,7 @@ const props = defineProps<{
         url: string;
         editable: boolean;
         payable: boolean;
+        qr_fee?: number;
         allow_partial: boolean;
         created_at: string | null;
         sent_at: string | null;
@@ -422,6 +423,21 @@ const PAY_STATUS: Record<
                             )
                     "
                 />
+                <p
+                    v-if="invoice.qr_fee"
+                    class="mt-4 rounded-lg bg-wait-soft px-3 py-2 text-[12.5px] text-ink-2"
+                >
+                    {{
+                        t(
+                            'Bangla QR-এ এলে bank {fee} fee কাটবে — আমাদের জমা হবে প্রায় {landed}। Client-এর QR-এ পুরো {due}-ই থাকে।',
+                            {
+                                fee: bdt(invoice.qr_fee),
+                                landed: bdt(invoice.due - invoice.qr_fee),
+                                due: bdt(invoice.due),
+                            },
+                        )
+                    }}
+                </p>
             </section>
 
             <section class="panel p-5 text-[13px]">
