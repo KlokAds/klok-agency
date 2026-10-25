@@ -228,6 +228,15 @@ class Lock {
 
   static Future<bool> hasPin() async => (await _p).getString('lock.pin') != null;
 
+  /// The phone's own PIN / pattern screen, for when the finger is not read.
+  static Future<bool> phonePin(String reason) async {
+    try {
+      return await const MethodChannel('klok/lock').invokeMethod<bool>('phoneCredential', {'reason': reason}) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Before the fingerprint is switched on: it must really be there and really pass.
   /// Unlike [finger], a phone with no fingerprint set up says no, with why.
   static Future<String?> fingerOk(String reason) async {
@@ -264,7 +273,8 @@ Future<bool> confirmIdentity(BuildContext context, {String reason = 'KlokOne খ
     return true;
   }
   if (mode == 'bio') {
-    return Lock.finger(reason);
+    // The finger, or the phone's own PIN / pattern when the finger is not read.
+    return await Lock.finger(reason) || await Lock.phonePin(reason);
   }
   if (!context.mounted) {
     return false;
@@ -366,6 +376,21 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
     }
   }
 
+  /// The phone's own PIN / pattern, when the fingerprint does not work.
+  Future<void> phonePin() async {
+    if (asking) {
+      return;
+    }
+    asking = true;
+    try {
+      if (await Lock.phonePin('KlokOne খুলতে phone-এর PIN / pattern দিন') && mounted) {
+        setState(() => locked = false);
+      }
+    } finally {
+      asking = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -406,6 +431,13 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
                               onPressed: unlock,
                               icon: const Icon(Icons.lock_open),
                               label: const Text('আঙুলের ছাপ দিয়ে খুলুন'),
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton.icon(
+                              style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                              onPressed: phonePin,
+                              icon: const Icon(Icons.dialpad),
+                              label: const Text('Phone-এর PIN / pattern দিয়ে খুলুন'),
                             ),
                           ],
                         ),

@@ -1,5 +1,8 @@
 package com.klokads.finance
 
+import android.app.Activity
+import android.app.KeyguardManager
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -27,8 +30,40 @@ class MainActivity : FlutterFragmentActivity() {
         android.webkit.CookieManager.getInstance().flush()
     }
 
+    private var credentialResult: MethodChannel.Result? = null
+
+    /** The phone's own PIN / pattern / password screen came back. */
+    @Deprecated("startActivityForResult keeps the prompt simple here")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == CREDENTIAL) {
+            credentialResult?.success(resultCode == Activity.RESULT_OK)
+            credentialResult = null
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // The phone's PIN / pattern when the finger is not read (a dirty or broken sensor):
+        // some phones' fingerprint prompt has no way to it.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "klok/lock").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "phoneCredential" -> {
+                    val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+                    @Suppress("DEPRECATION")
+                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && keyguard.isDeviceSecure) keyguard.createConfirmDeviceCredentialIntent("KlokOne", call.argument<String>("reason")) else null
+                    if (intent == null) {
+                        result.success(false)
+                    } else {
+                        credentialResult?.success(false)
+                        credentialResult = result
+                        @Suppress("DEPRECATION")
+                        startActivityForResult(intent, CREDENTIAL)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "klok/sms").setMethodCallHandler { call, result ->
             when (call.method) {
                 "pending" -> result.success(SmsForwarder.pending(this))
@@ -74,5 +109,9 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+    }
+
+    companion object {
+        private const val CREDENTIAL = 7301
     }
 }
