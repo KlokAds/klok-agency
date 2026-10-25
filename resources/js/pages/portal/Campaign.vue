@@ -266,14 +266,15 @@ async function stopIt(): Promise<void> {
                 t('{days} দিন বাড়ান ও pay করুন', { days: renewDays })
             }}</KButton
         >
-        <button
+        <KButton
             v-if="renew.status !== 'declined'"
-            type="button"
-            class="mt-3 w-full text-center text-[13px] font-semibold text-ink-3 hover:text-out"
+            variant="danger"
+            block
+            icon="close"
+            class="mt-3"
             @click="stopIt"
+            >{{ t('আর চালাবো না — campaign থামুক') }}</KButton
         >
-            {{ t('আর চালাবো না') }}
-        </button>
     </section>
 
     <div class="mt-5">

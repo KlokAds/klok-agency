@@ -9,6 +9,7 @@ import {
     watch,
 } from 'vue';
 import InvoiceDoc from '@/components/InvoiceDoc.vue';
+import PortalLayout from '@/layouts/PortalLayout.vue';
 import type { Business, InvoiceDocument } from '@/components/InvoiceDoc.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
@@ -230,6 +231,7 @@ const dayChoices = [7, 15, 30];
 const daysBusy = ref(false);
 const daysError = ref<string | null>(null);
 const pickDays = ref<number | null>(null);
+const otherOpen = ref(false);
 const daysPrice = (d: number) =>
     state.value.renewal?.budget && state.value.renewal.rate
         ? Math.round(state.value.renewal.budget * d * state.value.renewal.rate)
@@ -242,6 +244,7 @@ const errorText = (e: unknown) =>
 
 // Signed in (a client in the app, or the team): a way back to their own home.
 const signedIn = computed(() => Boolean(usePage().props.auth?.user));
+const isClient = computed(() => usePage().props.auth?.user?.role === 'Client');
 
 async function setDays(d: number): Promise<void> {
     const days = Math.min(90, Math.max(1, Math.round(d)));
@@ -401,16 +404,23 @@ const STATUS_WORD: Record<string, string> = {
 
 <template>
     <Head :title="`Invoice ${invoice.number}`" />
-    <div class="min-h-dvh bg-paper text-ink">
+    <!-- A client in the app sees it inside their portal (its bar and tabs); others, the page alone. -->
+    <component
+        :is="isClient ? PortalLayout : 'div'"
+        :class="isClient ? '' : 'min-h-dvh bg-paper text-ink'"
+    >
         <div
-            class="no-print mx-auto flex max-w-[1080px] items-center justify-between gap-3 px-4 pt-5 sm:px-6"
+            class="no-print mx-auto flex max-w-[1080px] items-center justify-between gap-3"
+            :class="isClient ? '' : 'px-4 pt-5 sm:px-6'"
         >
             <!-- In the app or signed in: back to their own home (the portal, or the books). -->
             <Link
                 v-if="signedIn"
-                href="/"
+                :href="isClient ? '/portal/invoices' : '/'"
                 class="flex min-w-0 items-center gap-1.5 rounded-lg py-1 pr-2 text-[13.5px] font-semibold text-brand hover:bg-sunken"
-                ><KIcon name="back" :size="18" />{{ t('হোম') }}</Link
+                ><KIcon name="back" :size="18" />{{
+                    isClient ? t('সব invoice') : t('হোম')
+                }}</Link
             >
             <p v-else class="truncate text-[13px] font-semibold text-ink-2">
                 {{ business.name }}
@@ -493,21 +503,53 @@ const STATUS_WORD: Record<string, string> = {
                                 >{{ bdt(daysPrice(d) ?? 0) }}</span
                             >
                         </button>
+                        <!-- Any other number of days: a choice like the rest, then a box to type it. -->
+                        <button
+                            type="button"
+                            class="flex h-14 flex-col items-center justify-center rounded-xl border-2 text-[14.5px] font-semibold transition-colors"
+                            :class="
+                                otherOpen ||
+                                (state.renewal.days &&
+                                    !dayChoices.includes(state.renewal.days))
+                                    ? 'border-brand bg-brand-soft text-brand'
+                                    : 'border-line-2'
+                            "
+                            @click="otherOpen = true"
+                        >
+                            {{
+                                state.renewal.days &&
+                                !dayChoices.includes(state.renewal.days)
+                                    ? t('{n} দিন', { n: state.renewal.days })
+                                    : t('অন্য')
+                            }}
+                            <span class="text-[11px] font-medium text-ink-3">{{
+                                t('নিজে লিখুন')
+                            }}</span>
+                        </button>
+                    </div>
+                    <div v-if="otherOpen" class="mt-3 flex gap-2">
                         <input
                             v-model.number="pickDays"
                             type="number"
                             min="1"
                             max="90"
                             inputmode="numeric"
-                            :placeholder="
-                                state.renewal.days &&
-                                !dayChoices.includes(state.renewal.days)
-                                    ? String(state.renewal.days)
-                                    : t('অন্য')
-                            "
-                            class="h-14 rounded-xl border-2 border-line-2 bg-transparent text-center text-[15px] font-semibold"
-                            @change="pickDays && setDays(pickDays)"
+                            :placeholder="t('কত দিন? (১–৯০)')"
+                            class="h-12 min-w-0 flex-1 rounded-xl border-2 border-brand bg-transparent px-4 text-[15px] font-semibold"
+                            @keyup.enter="pickDays && setDays(pickDays)"
                         />
+                        <KButton
+                            variant="primary"
+                            :loading="daysBusy"
+                            :disabled="!pickDays"
+                            @click="
+                                pickDays &&
+                                setDays(pickDays).then(
+                                    () => (otherOpen = false),
+                                )
+                            "
+                            >{{ t('ঠিক আছে') }}</KButton
+                        >
                     </div>
                     <p class="mt-2 text-[12.5px] text-ink-3">
                         {{
@@ -519,13 +561,19 @@ const STATUS_WORD: Record<string, string> = {
                     <p v-if="daysError" class="mt-2 text-[13px] text-out">
                         {{ daysError }}
                     </p>
-                    <button
-                        type="button"
-                        class="mt-3 text-[13px] font-semibold text-ink-3 hover:text-out"
-                        @click="stopRenewal"
-                    >
-                        {{ t('আর চালাবো না') }}
-                    </button>
+                    <div class="mt-4 border-t border-line pt-4">
+                        <p class="text-[13px] text-ink-3">
+                            {{ t('চালু রাখতে না চাইলে:') }}
+                        </p>
+                        <KButton
+                            variant="danger"
+                            block
+                            icon="close"
+                            class="mt-2"
+                            @click="stopRenewal"
+                            >{{ t('আর চালাবো না — campaign থামুক') }}</KButton
+                        >
+                    </div>
                 </section>
                 <section
                     v-if="state.renewal?.declined"
@@ -1368,7 +1416,7 @@ const STATUS_WORD: Record<string, string> = {
                 </div>
             </div>
         </Teleport>
-    </div>
+    </component>
 </template>
 
 <style scoped>

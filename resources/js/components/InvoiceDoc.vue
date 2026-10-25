@@ -510,9 +510,10 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
     box-shadow: none;
 }
 
+/* Dark: the amount due in the brand's teal, not a white slab on a dark page. */
 .dark .inv-due {
-    background: #e7eeeb;
-    color: #0c1311;
+    background: #0f766e;
+    color: #ffffff;
 }
 
 .dark .inv-out {
