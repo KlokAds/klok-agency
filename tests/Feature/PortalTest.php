@@ -84,9 +84,10 @@ it('shows a linked client only their own campaigns, spend over a period, and inv
     $this->actingAs($user->fresh())->get('/portal/campaigns?range=custom&from='.now()->subDays(12)->toDateString().'&to='.now()->subDays(8)->toDateString())
         ->assertInertia(fn ($page) => $page->where('totals.spend', 500));
 
-    // By default the whole life of each campaign: the old day counts too, a bar a week past three months.
+    // The list opens on today; 'from the start' is the whole life: the old day counts too, a bar a week past three months.
     CampaignDay::create(['campaign_id' => $this->mine->id, 'day' => now()->subDays(120)->toDateString(), 'spend' => 300, 'results' => 2, 'clicks' => 4]);
-    $this->actingAs($user->fresh())->get('/portal/campaigns')
+    $this->actingAs($user->fresh())->get('/portal/campaigns')->assertInertia(fn ($page) => $page->where('range.key', 'today'));
+    $this->actingAs($user->fresh())->get('/portal/campaigns?range=all')
         ->assertInertia(fn ($page) => $page->where('range.key', 'all')->where('totals.spend', 976)->where('totals.results', 20)
             ->where('series', fn ($series) => count($series) <= 19));
 

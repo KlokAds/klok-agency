@@ -156,7 +156,7 @@ class PortalController extends Controller
     {
         $client = $this->client($request);
         $campaigns = Campaign::with('account:id,platform,currency,problem')->where('client_id', $client->id)->get();
-        [$from, $to, $range] = $this->range($request, $this->firstDay($campaigns->pluck('id')->map(fn ($id) => (int) $id)->all()));
+        [$from, $to, $range] = $this->range($request, $this->firstDay($campaigns->pluck('id')->map(fn ($id) => (int) $id)->all()), 'today');
         $days = CampaignDay::whereIn('campaign_id', $campaigns->pluck('id'))->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->get();
 
         $rows = $campaigns->map(function (Campaign $c) use ($days) {
@@ -413,10 +413,10 @@ class PortalController extends Controller
     }
 
     /** @return array{0: CarbonImmutable, 1: CarbonImmutable, 2: string} */
-    private function range(Request $request, ?CarbonImmutable $first = null): array
+    private function range(Request $request, ?CarbonImmutable $first = null, string $default = 'all'): array
     {
-        // A campaign's whole life by default: every taka and result it made.
-        $key = in_array($request->query('range'), self::RANGES, true) ? (string) $request->query('range') : 'all';
+        // A campaign's whole life by default (the list opens on today): every taka and result it made.
+        $key = in_array($request->query('range'), self::RANGES, true) ? (string) $request->query('range') : $default;
         $today = CarbonImmutable::now()->startOfDay();
 
         if ($key === 'all') {

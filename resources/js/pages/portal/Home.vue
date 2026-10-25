@@ -361,44 +361,53 @@ const low = computed(
             </div>
         </div>
 
+        <!-- Three even cells: a one-word label, the figure, one small line under it. -->
         <div
             v-if="credit.paid > 0"
-            class="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-white/[0.08] p-3 text-center"
+            class="mt-5 grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-white/[0.08] py-3 text-center"
         >
-            <p>
-                <span class="block text-[11.5px] text-white/65">{{
-                    credit.round
-                        ? t('{date}-এ দেওয়া', { date: credit.round.since })
-                        : t('দেওয়া')
-                }}</span>
-                <b class="num text-[15px]">{{
+            <p class="px-1">
+                <span
+                    class="block text-[11.5px] whitespace-nowrap text-white/65"
+                    >{{ t('দেওয়া') }}</span
+                >
+                <b class="num mt-0.5 block text-[16px]">{{
                     money(credit.round?.paid ?? credit.paid, 'usd')
                 }}</b>
                 <span
-                    v-if="credit.round && credit.round.carried > 0"
-                    class="num block text-[10.5px] text-white/60"
+                    class="num mt-0.5 block text-[10.5px] whitespace-nowrap text-white/55"
+                    >{{ credit.round?.since ?? t('এ পর্যন্ত') }}</span
+                >
+            </p>
+            <p class="px-1">
+                <span
+                    class="block text-[11.5px] whitespace-nowrap text-white/65"
+                    >{{ t('খরচ') }}</span
+                >
+                <b class="num mt-0.5 block text-[16px]">{{
+                    money(credit.round?.spent ?? credit.spent, 'usd')
+                }}</b>
+                <span
+                    class="mt-0.5 block text-[10.5px] whitespace-nowrap text-white/55"
                     >{{
-                        t('+ আগের {amount}', {
-                            amount: money(credit.round.carried, 'usd'),
-                        })
+                        credit.round
+                            ? t('{date} থেকে', { date: credit.round.since })
+                            : t('এ পর্যন্ত')
                     }}</span
                 >
             </p>
-            <p>
-                <span class="block text-[11.5px] text-white/65">{{
-                    credit.round ? t('তারপর খরচ') : t('খরচ')
-                }}</span>
-                <b class="num text-[15px]">{{
-                    money(credit.round?.spent ?? credit.spent, 'usd')
-                }}</b>
-            </p>
-            <p>
-                <span class="block text-[11.5px] text-white/65">{{
-                    t('দিনে')
-                }}</span>
-                <b class="num text-[15px]">{{
+            <p class="px-1">
+                <span
+                    class="block text-[11.5px] whitespace-nowrap text-white/65"
+                    >{{ t('দিনে') }}</span
+                >
+                <b class="num mt-0.5 block text-[16px]">{{
                     credit.daily > 0 ? money(credit.daily, 'usd') : '—'
                 }}</b>
+                <span
+                    class="mt-0.5 block text-[10.5px] whitespace-nowrap text-white/55"
+                    >{{ t('গড়ে') }}</span
+                >
             </p>
         </div>
 
