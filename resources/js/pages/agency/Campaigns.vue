@@ -344,8 +344,165 @@ function sync(): void {
                 :title="t('কোনো campaign পাওয়া যায়নি')"
                 :body="t('অন্য account বা filter দেখুন, বা Pilot থেকে আনুন।')"
             />
-            <div v-else class="overflow-x-auto">
-                <table class="w-full min-w-[760px] text-[13px]">
+            <!-- Phone: one card a campaign — name and state first, the money, then what to do. -->
+            <ul
+                v-if="campaigns.data.length"
+                class="divide-y divide-line sm:hidden"
+            >
+                <li v-for="c in campaigns.data" :key="c.id" class="p-4">
+                    <div class="flex items-start gap-2.5">
+                        <span
+                            class="mt-1.5 size-2.5 shrink-0 rounded-full"
+                            :class="c.live ? 'bg-in' : 'bg-line-2'"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[14.5px] leading-snug font-semibold">
+                                {{ c.name }}
+                            </p>
+                            <p class="mt-0.5 text-[12px] text-ink-3">
+                                {{
+                                    c.live
+                                        ? t('চালু')
+                                        : c.ended
+                                          ? t('শেষ হয়েছে')
+                                          : t('বন্ধ')
+                                }}
+                                <template v-if="c.daily_budget">
+                                    · {{ t('দিনে') }}
+                                    {{ spend(c.daily_budget) }}</template
+                                >
+                                <template v-if="c.ends_at">
+                                    · {{ c.ended ? '' : t('শেষ') + ' '
+                                    }}{{ endsAt(c.ends_at) }}</template
+                                >
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-3 grid grid-cols-3 divide-x divide-line rounded-xl bg-sunken py-2 text-center"
+                    >
+                        <p>
+                            <span class="block text-[11px] text-ink-3">{{
+                                t('৭ দিনে')
+                            }}</span>
+                            <b class="num text-[13.5px]">{{
+                                spend(c.spend_7d)
+                            }}</b>
+                        </p>
+                        <p>
+                            <span class="block text-[11px] text-ink-3">{{
+                                t('মোট খরচ')
+                            }}</span>
+                            <b class="num text-[13.5px]">{{
+                                spend(c.spend_total)
+                            }}</b>
+                        </p>
+                        <p>
+                            <span class="block text-[11px] text-ink-3">{{
+                                t('শেষ খরচ')
+                            }}</span>
+                            <b class="num text-[13.5px]">{{
+                                c.last_spend_day
+                                    ? niceDate(c.last_spend_day, false)
+                                    : '—'
+                            }}</b>
+                        </p>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <span
+                            v-if="c.client_id"
+                            class="mr-auto min-w-0 text-[12.5px]"
+                        >
+                            <b class="font-semibold">{{ c.client }}</b>
+                            <span class="text-ink-3">
+                                ·
+                                {{
+                                    t('{date} থেকে', {
+                                        date: niceDate(
+                                            c.bill_from ?? '',
+                                            false,
+                                        ),
+                                    })
+                                }}</span
+                            >
+                        </span>
+                        <KTag
+                            v-else-if="!can['clients.edit']"
+                            tone="wait"
+                            class="mr-auto"
+                            >{{ t('Client বাছা হয়নি') }}</KTag
+                        >
+                        <template v-if="c.controllable && can['runs.edit']">
+                            <KButton
+                                v-if="c.live"
+                                size="sm"
+                                variant="plain"
+                                :loading="busyId === c.id"
+                                @click="setActive(c, false)"
+                                >{{ t('থামান') }}</KButton
+                            >
+                            <KButton
+                                v-else
+                                size="sm"
+                                :loading="busyId === c.id"
+                                @click="setActive(c, true)"
+                                >{{ t('চালু করুন') }}</KButton
+                            >
+                            <KButton
+                                size="sm"
+                                variant="plain"
+                                @click="startBudget(c)"
+                                >Budget</KButton
+                            >
+                        </template>
+                        <KButton
+                            v-if="
+                                c.client_id && c.guarded && can['clients.edit']
+                            "
+                            size="sm"
+                            variant="plain"
+                            icon="renew"
+                            @click="startExtend(c)"
+                            >Extend</KButton
+                        >
+                        <KButton
+                            v-if="c.client_id && can['clients.edit']"
+                            size="sm"
+                            variant="plain"
+                            icon="pen"
+                            @click="startLink(c)"
+                            >{{ t('Client বদলান') }}</KButton
+                        >
+                        <template
+                            v-else-if="!c.client_id && can['clients.edit']"
+                        >
+                            <KButton
+                                v-if="c.suggested"
+                                size="sm"
+                                @click="startLink(c, c.suggested.id)"
+                                >{{ c.suggested.name }} ?</KButton
+                            >
+                            <KButton
+                                size="sm"
+                                variant="plain"
+                                icon="plus"
+                                @click="startLink(c)"
+                                >{{ t('Client বাছুন') }}</KButton
+                            >
+                        </template>
+                    </div>
+                </li>
+            </ul>
+
+            <div
+                v-if="campaigns.data.length"
+                class="hidden overflow-x-auto sm:block"
+            >
+                <table
+                    class="w-full min-w-[760px] text-[13px] [&_th]:whitespace-nowrap"
+                >
                     <thead>
                         <tr
                             class="border-b border-line text-left text-[12.5px] font-semibold text-ink-3"
@@ -478,7 +635,7 @@ function sync(): void {
                                             c.client
                                         }}</span>
                                         <span
-                                            class="block text-[11.5px] text-ink-3"
+                                            class="block text-[11.5px] whitespace-nowrap text-ink-3"
                                             >{{
                                                 t('{date} থেকে', {
                                                     date: niceDate(
@@ -508,9 +665,10 @@ function sync(): void {
                                         <KButton
                                             v-if="can['clients.edit']"
                                             size="sm"
-                                            variant="quiet"
+                                            variant="plain"
+                                            icon="pen"
                                             @click="startLink(c)"
-                                            >{{ t('বদলান') }}</KButton
+                                            >{{ t('Client বদলান') }}</KButton
                                         >
                                     </span>
                                 </div>
