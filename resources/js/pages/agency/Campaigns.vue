@@ -321,14 +321,16 @@ function sync(): void {
                 />
             </div>
             <div
-                class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+                class="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-between"
             >
                 <KSegment
                     v-model="filters.status"
                     :options="statuses"
                     size="sm"
                 />
-                <p class="num text-[13px] text-ink-3">
+                <p
+                    class="num w-full text-center text-[13px] text-ink-3 sm:w-auto sm:text-left"
+                >
                     {{ covers }}
                     ·
                     {{
