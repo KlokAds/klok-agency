@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Renewal;
+use App\Models\UsdEntry;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Services\Books;
@@ -38,6 +40,9 @@ class PortalController extends Controller
 
     /** The periods a client can look at; "custom" takes from and to. */
     public const RANGES = ['today', 'yesterday', '7d', '15d', '30d', '90d', '180d', '365d', 'custom'];
+
+    /** Money from the client (and back to them) in the BDT book: what they paid, in full. */
+    public const PAID = ['client_payment', 'service_income', 'client_refund'];
 
     public function register(): Response
     {
@@ -114,6 +119,21 @@ class PortalController extends Controller
             'running' => $campaigns->filter(fn (Campaign $c) => $c->isLive())->values()->map(fn (Campaign $c) => $this->campaignCard($c))->all(),
             'due' => ['count' => $due->count(), 'amount' => (int) $due->sum(fn (Invoice $i) => $i->due())],
             'next_invoice' => ($next = $due->sortBy('due_date')->first()) ? $this->invoiceRow($next) : null,
+            // Everything so far, as the client sees it: what the ads spent, and every taka they
+            // paid with its date — the whole amount they gave, never split into our share.
+            'lifetime' => [
+                'spent_usd' => -(int) UsdEntry::where('client_id', $client->id)->where('category', 'client_spend')->sum('amount'),
+                'paid_bdt' => (int) BdtEntry::where('client_id', $client->id)->whereIn('category', self::PAID)->sum('amount'),
+            ],
+            'payments' => BdtEntry::where('client_id', $client->id)->whereIn('category', self::PAID)
+                ->orderByDesc('entry_date')->orderByDesc('id')->limit(50)->get()
+                ->map(fn (BdtEntry $e) => [
+                    'date' => $e->entry_date?->format('j M Y'),
+                    'amount' => $e->amount,
+                    'via' => BdtEntry::PAY_VIA[$e->pay_via ?? ''] ?? null,
+                    'invoice' => preg_match('/\bInvoice ([A-Z]+-\d+)/', (string) $e->notes.' '.$e->description, $m) ? $m[1] : null,
+                    'refund' => $e->category === 'client_refund',
+                ])->all(),
             // The KlokOne Android app, offered when the portal is open in a browser.
             'app' => AppReleaseController::downloadUrl('plain') !== null ? AppReleaseController::versionName('plain') : null,
         ]);
@@ -129,9 +149,11 @@ class PortalController extends Controller
         $rows = $campaigns->map(function (Campaign $c) use ($days) {
             $mine = $days->where('campaign_id', $c->id);
 
-            return [...$this->campaignCard($c), ...$this->totals($mine)];
-        })->filter(fn (array $r) => $r['live'] || $r['spend'] > 0)
-            ->sortByDesc(fn (array $r) => [$r['live'] ? 1 : 0, $r['spend']])->values()->all();
+            return [...$this->campaignCard($c), ...$this->totals($mine), 'stop_at' => $c->stop_at?->getTimestamp() ?? PHP_INT_MAX];
+        })
+            // Every campaign of theirs: running ones first, then the rest, the latest to end first.
+            ->sortBy([fn (array $a, array $b) => [$b['live'], $b['stop_at']] <=> [$a['live'], $a['stop_at']]])
+            ->values()->all();
 
         return Inertia::render('portal/Campaigns', [
             'range' => ['key' => $range, 'from' => $from->toDateString(), 'to' => $to->toDateString()],

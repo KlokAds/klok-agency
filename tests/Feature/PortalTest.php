@@ -120,6 +120,13 @@ it('tells the client of a new invoice, its payment, the day\'s result and a camp
     app(Invoices::class)->verify($payment, 100000, $this->owner);
     expect($kinds())->toContain('client_paid');
 
+    // Home shows every taka they paid, with its date and invoice — the whole amount.
+    $this->actingAs($user->fresh())->get('/portal')
+        ->assertInertia(fn ($page) => $page->where('lifetime.paid_bdt', 100000)
+            ->where('payments.0.amount', 100000)
+            ->where('payments.0.invoice', $invoice->number)
+            ->where('payments.0.refund', false));
+
     // The evening: the day's result, and the campaign that ends tomorrow — in plain words.
     $this->travelTo(now()->setTime(21, 30));
     app(CampaignAlerts::class)->run();

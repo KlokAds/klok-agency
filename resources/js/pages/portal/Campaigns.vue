@@ -33,6 +33,16 @@ const props = defineProps<{
 
 const cur = (c: string) => (c === 'BDT' ? 'bdt' : 'usd');
 
+// Running ones on top, the ended and paused below (the server sends them in that order).
+const groups = computed(() => [
+    { key: 'live', title: 'চলছে', list: props.campaigns.filter((c) => c.live) }, // i18n
+    {
+        key: 'done',
+        title: 'শেষ বা থামানো',
+        list: props.campaigns.filter((c) => !c.live),
+    }, // i18n
+]);
+
 // All the same kind (all sales, all messages): say so; mixed is plain "Result".
 const totalName = computed(() => {
     const names = [...new Set(props.campaigns.map((c) => c.result_name))];
@@ -83,66 +93,78 @@ const totalName = computed(() => {
 
     <section class="mt-6 grid grid-cols-1 gap-3">
         <p v-if="!campaigns.length" class="panel p-5 text-[14px] text-ink-3">
-            {{ t('এই সময়ে কোনো campaign চলেনি।') }}
+            {{ t('এখনো কোনো campaign নেই।') }}
         </p>
-        <Link
-            v-for="c in campaigns"
-            :key="c.id"
-            :href="`/portal/campaigns/${c.id}?range=${range.key}${range.key === 'custom' ? `&from=${range.from}&to=${range.to}` : ''}`"
-            class="panel block p-4 transition-colors hover:border-brand sm:p-5"
-        >
-            <span class="flex flex-wrap items-center gap-2">
-                <span
-                    class="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
-                    :class="
-                        c.live
-                            ? 'bg-in-soft text-in'
-                            : c.ended
-                              ? 'bg-sunken text-ink-3'
-                              : 'bg-wait-soft text-wait'
-                    "
-                    >{{
-                        c.live ? t('চলছে') : c.ended ? t('শেষ') : t('থামানো')
-                    }}</span
-                >
-                <span
-                    class="min-w-0 flex-1 truncate text-[15px] font-semibold"
-                    >{{ c.name }}</span
-                >
-            </span>
-            <span
-                v-if="c.stops"
-                class="mt-1.5 block text-[12.5px] text-ink-3"
-                >{{ c.stops }}</span
+        <template v-for="g in groups" :key="g.key">
+            <h2
+                v-if="g.list.length"
+                class="mt-2 text-[14px] font-bold text-ink-2"
             >
-            <span
-                class="mt-3 grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-4"
+                {{ t(g.title) }} · {{ g.list.length }}
+            </h2>
+            <Link
+                v-for="c in g.list"
+                :key="c.id"
+                :href="`/portal/campaigns/${c.id}?range=${range.key}${range.key === 'custom' ? `&from=${range.from}&to=${range.to}` : ''}`"
+                class="panel block p-4 transition-colors hover:border-brand sm:p-5"
             >
-                <span class="text-ink-3"
-                    >{{ t('খরচ') }}
-                    <b class="num block text-[15px] text-ink">{{
-                        money(c.spend, cur(c.currency))
-                    }}</b></span
+                <span class="flex flex-wrap items-center gap-2">
+                    <span
+                        class="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                        :class="
+                            c.live
+                                ? 'bg-in-soft text-in'
+                                : c.ended
+                                  ? 'bg-sunken text-ink-3'
+                                  : 'bg-wait-soft text-wait'
+                        "
+                        >{{
+                            c.live
+                                ? t('চলছে')
+                                : c.ended
+                                  ? t('শেষ')
+                                  : t('থামানো')
+                        }}</span
+                    >
+                    <span
+                        class="min-w-0 flex-1 truncate text-[15px] font-semibold"
+                        >{{ c.name }}</span
+                    >
+                </span>
+                <span
+                    v-if="c.stops"
+                    class="mt-1.5 block text-[12.5px] text-ink-3"
+                    >{{ c.stops }}</span
                 >
-                <span class="text-ink-3"
-                    >{{ c.result_name }}
-                    <b class="num block text-[15px] text-ink">{{
-                        c.results
-                    }}</b></span
+                <span
+                    class="mt-3 grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-4"
                 >
-                <span class="text-ink-3"
-                    >{{ t('প্রতি result-এ') }}
-                    <b class="num block text-[15px] text-ink">{{
-                        c.cpr !== null ? money(c.cpr, cur(c.currency)) : '—'
-                    }}</b></span
-                >
-                <span class="text-ink-3"
-                    >Click
-                    <b class="num block text-[15px] text-ink">{{
-                        c.clicks
-                    }}</b></span
-                >
-            </span>
-        </Link>
+                    <span class="text-ink-3"
+                        >{{ t('খরচ') }}
+                        <b class="num block text-[15px] text-ink">{{
+                            money(c.spend, cur(c.currency))
+                        }}</b></span
+                    >
+                    <span class="text-ink-3"
+                        >{{ c.result_name }}
+                        <b class="num block text-[15px] text-ink">{{
+                            c.results
+                        }}</b></span
+                    >
+                    <span class="text-ink-3"
+                        >{{ t('প্রতি result-এ') }}
+                        <b class="num block text-[15px] text-ink">{{
+                            c.cpr !== null ? money(c.cpr, cur(c.currency)) : '—'
+                        }}</b></span
+                    >
+                    <span class="text-ink-3"
+                        >Click
+                        <b class="num block text-[15px] text-ink">{{
+                            c.clicks
+                        }}</b></span
+                    >
+                </span>
+            </Link>
+        </template>
     </section>
 </template>

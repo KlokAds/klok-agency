@@ -37,6 +37,14 @@ const props = defineProps<{
     due: { count: number; amount: number };
     next_invoice: InvoiceRow | null;
     app?: string | null;
+    lifetime?: { spent_usd: number; paid_bdt: number };
+    payments?: {
+        date: string | null;
+        amount: number;
+        via: string | null;
+        invoice: string | null;
+        refund: boolean;
+    }[];
 }>();
 
 // Inside the KlokOne app there is nothing to download.
@@ -230,6 +238,62 @@ const low = computed(
             >
         </div>
         <SpendChart :series="week" />
+    </section>
+
+    <!-- Everything so far: what the ads spent, and every payment with its date. -->
+    <section v-if="lifetime" class="panel mt-6 p-5">
+        <h2 class="text-[16px] font-bold">{{ t('এ পর্যন্ত মোট') }}</h2>
+        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div class="rounded-xl bg-sunken p-4">
+                <p class="text-[12.5px] text-ink-3">{{ t('বিজ্ঞাপনে খরচ') }}</p>
+                <p class="num mt-1 text-[22px] font-bold">
+                    {{ money(lifetime.spent_usd, 'usd') }}
+                </p>
+            </div>
+            <div class="rounded-xl bg-sunken p-4">
+                <p class="text-[12.5px] text-ink-3">{{ t('আপনি দিয়েছেন') }}</p>
+                <p class="num mt-1 text-[22px] font-bold">
+                    {{ money(lifetime.paid_bdt, 'bdt') }}
+                </p>
+            </div>
+            <div class="rounded-xl bg-sunken p-4">
+                <p class="text-[12.5px] text-ink-3">
+                    {{ t('বিজ্ঞাপনের জন্য বাকি') }}
+                </p>
+                <p
+                    class="num mt-1 text-[22px] font-bold"
+                    :class="credit.left <= 0 ? 'text-out' : 'text-in'"
+                >
+                    {{ money(credit.left, 'usd') }}
+                </p>
+            </div>
+        </div>
+
+        <h3 class="mt-5 text-[14px] font-bold">{{ t('পেমেন্টের ইতিহাস') }}</h3>
+        <p v-if="!payments?.length" class="mt-2 text-[13px] text-ink-3">
+            {{ t('এখনো কোনো পেমেন্ট নেই।') }}
+        </p>
+        <ul v-else class="mt-2 divide-y divide-line">
+            <li
+                v-for="(p, i) in payments"
+                :key="i"
+                class="flex items-center justify-between gap-3 py-2.5 text-[13.5px]"
+            >
+                <span class="min-w-0">
+                    <span class="block font-medium">{{ p.date }}</span>
+                    <span class="block truncate text-[12px] text-ink-3">
+                        {{ p.refund ? t('ফেরত') : (p.via ?? t('পেমেন্ট')) }}
+                        <template v-if="p.invoice"> · {{ p.invoice }}</template>
+                    </span>
+                </span>
+                <span
+                    class="num shrink-0 font-semibold"
+                    :class="p.refund ? 'text-out' : 'text-in'"
+                    >{{ p.refund ? '−' : '+'
+                    }}{{ money(Math.abs(p.amount), 'bdt') }}</span
+                >
+            </li>
+        </ul>
     </section>
 
     <!-- What runs now -->
