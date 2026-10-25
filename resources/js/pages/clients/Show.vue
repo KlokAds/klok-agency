@@ -475,7 +475,8 @@ function print(): void {
                 <KButton
                     v-if="can['clients.edit']"
                     size="sm"
-                    variant="quiet"
+                    variant="danger"
+                    icon="close"
                     @click="unlink(u)"
                     >{{ t('সরান') }}</KButton
                 >
@@ -621,9 +622,13 @@ function print(): void {
                 "
                 class="mt-2 flex justify-end"
             >
-                <KButton size="sm" variant="quiet" @click="refundOpen = true">{{
-                    t('বাকি credit ফেরত দিন')
-                }}</KButton>
+                <KButton
+                    size="sm"
+                    variant="plain"
+                    icon="undo"
+                    @click="refundOpen = true"
+                    >{{ t('বাকি credit ফেরত দিন') }}</KButton
+                >
             </div>
             <p
                 v-if="credit && credit.credit_usd && credit.daily_usd"
