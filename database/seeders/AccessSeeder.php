@@ -20,6 +20,8 @@ class AccessSeeder extends Seeder
 
         // Owner passes every check through Gate::before, so it holds no rows.
         Role::findOrCreate(Access::OWNER, 'web');
+        // Clients hold no permissions: the portal checks the link to their client instead.
+        Role::findOrCreate(Access::CLIENT, 'web');
 
         Role::findOrCreate('Accountant', 'web')->syncPermissions([
             'dashboard.view',

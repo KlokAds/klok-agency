@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAccountIsUsable;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\KeepClientsInPortal;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TickOnTraffic;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SecurityHeaders::class,
             SetLocale::class,
             EnsureAccountIsUsable::class,
+            KeepClientsInPortal::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             TickOnTraffic::class,

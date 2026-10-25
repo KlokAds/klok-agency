@@ -40,6 +40,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->roles->first()?->name,
+                    'client' => $user->client_id !== null,
                     'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
                     'must_change_password' => $user->must_change_password,
                 ] : null,
@@ -49,7 +50,7 @@ class HandleInertiaRequests extends Middleware
             'idleMinutes' => fn () => $user ? (int) Setting::get('idle_minutes', 30) : null,
             'unread' => fn () => $user ? $user->unreadNotifications()->count() : 0,
             // Loaded only when the quick-entry panel opens (partial reload).
-            'lookups' => Inertia::optional(fn () => $user ? [
+            'lookups' => Inertia::optional(fn () => $user && ! $user->isClient() ? [
                 // Inactive clients stay pickable: they can still owe money.
                 'clients' => Lookups::clients(),
                 'accounts' => Lookups::accounts(),

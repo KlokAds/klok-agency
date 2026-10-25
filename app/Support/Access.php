@@ -10,6 +10,9 @@ class Access
 {
     public const OWNER = 'Owner';
 
+    /** A client's own people: no permissions here, only their portal (/portal). */
+    public const CLIENT = 'Client';
+
     public const MODULES = [
         'dashboard' => ['label' => 'Dashboard', 'actions' => ['view']],
         'usd' => ['label' => 'USD খাতা', 'actions' => ['view', 'create', 'edit', 'delete']], // i18n

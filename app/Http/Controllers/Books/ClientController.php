@@ -17,6 +17,7 @@ use App\Services\Books;
 use App\Services\CampaignBilling;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
+use App\Support\Access;
 use App\Support\InvoiceView;
 use App\Support\Lookups;
 use App\Support\Money;
@@ -102,8 +103,15 @@ class ClientController extends Controller
             return $row;
         });
 
+        $person = fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'phone' => $u->phone, 'company' => $u->company, 'since' => $u->created_at?->format('j M Y')];
+
         return Inertia::render('clients/Show', [
             'client' => $client->only(['id', 'name', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days']),
+            // The client's own people on the portal, and sign-ups still waiting for a client.
+            'portal' => [
+                'users' => User::where('client_id', $client->id)->orderBy('name')->get()->map($person)->all(),
+                'waiting' => User::role(Access::CLIENT)->whereNull('client_id')->latest()->limit(50)->get()->map($person)->all(),
+            ],
             'figures' => $figures,
             'statement' => $statement,
             'campaigns' => Campaign::with('account:id,name')->where('client_id', $client->id)
@@ -247,6 +255,28 @@ class ClientController extends Controller
         $this->toast(__('Client Trash-এ গেছে।'));
 
         return redirect()->route('clients.index');
+    }
+
+    /** A portal sign-up is this client's person: they see its campaigns and invoices from now on. */
+    public function linkPortalUser(Request $request, Client $client): RedirectResponse
+    {
+        $data = $request->validate(['user_id' => ['required', 'integer']]);
+        $user = User::role(Access::CLIENT)->whereNull('client_id')->whereKey($data['user_id'])->firstOrFail();
+        $user->forceFill(['client_id' => $client->id])->save();
+        activity('Client')->performedOn($client)->causedBy($request->user())->log("portal user {$user->email} linked");
+        $this->toast(__(':name এখন :client-এর portal দেখবেন।', ['name' => $user->name, 'client' => $client->name]));
+
+        return back();
+    }
+
+    public function unlinkPortalUser(Request $request, Client $client, User $user): RedirectResponse
+    {
+        abort_unless($user->client_id === $client->id, 404);
+        $user->forceFill(['client_id' => null])->save();
+        activity('Client')->performedOn($client)->causedBy($request->user())->log("portal user {$user->email} unlinked");
+        $this->toast(__(':name আর এই client-এর কিছু দেখবেন না।', ['name' => $user->name]));
+
+        return back();
     }
 
     /** @return array<string, mixed> */

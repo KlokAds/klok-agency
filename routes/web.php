@@ -41,6 +41,7 @@ use App\Http\Controllers\Invoices\PaymentSettingsController;
 use App\Http\Controllers\Invoices\PublicInvoiceController;
 use App\Http\Controllers\Invoices\PublicRenewalController;
 use App\Http\Controllers\Invoices\SmsHookController;
+use App\Http\Controllers\PortalController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\LocaleController;
 use Illuminate\Http\Request;
@@ -84,6 +85,18 @@ Route::middleware('throttle:12,1')->group(function () {
     Route::post('i/{token}/cancel', [PublicInvoiceController::class, 'cancel'])->name('invoice.public.cancel');
 });
 Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1')->name('invoice.public.claim');
+
+// The client portal: sign-up for anyone, the rest for a signed-in client's own person.
+Route::middleware('guest')->group(function () {
+    Route::get('portal/register', [PortalController::class, 'register'])->name('portal.register');
+    Route::post('portal/register', [PortalController::class, 'signUp'])->middleware('throttle:5,1')->name('portal.signup');
+});
+Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
+    Route::get('/', [PortalController::class, 'home'])->name('home');
+    Route::get('campaigns', [PortalController::class, 'campaigns'])->name('campaigns');
+    Route::get('campaigns/{campaign}', [PortalController::class, 'campaign'])->name('campaign');
+    Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // The Android app: this phone's notifications, and the phone that forwards the wallet SMS.
@@ -156,6 +169,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clients', [ClientController::class, 'index'])->middleware('can:clients.view')->name('clients.index');
     Route::get('clients/{client}', [ClientController::class, 'show'])->middleware('can:clients.view')->name('clients.show');
     Route::post('clients', [ClientController::class, 'store'])->middleware('can:clients.create')->name('clients.store');
+    Route::post('clients/{client}/portal-users', [ClientController::class, 'linkPortalUser'])->middleware('can:clients.edit')->name('clients.portal.link');
+    Route::delete('clients/{client}/portal-users/{user}', [ClientController::class, 'unlinkPortalUser'])->middleware('can:clients.edit')->name('clients.portal.unlink');
     Route::post('clients/{client}/refund', [ClientController::class, 'refund'])->middleware(['can:bdt.create', 'throttle:10,1'])->name('clients.refund');
     Route::put('clients/{client}', [ClientController::class, 'update'])->middleware('can:clients.edit')->name('clients.update');
     Route::delete('clients/{client}', [ClientController::class, 'destroy'])->middleware('can:clients.delete')->name('clients.destroy');

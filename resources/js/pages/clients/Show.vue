@@ -41,6 +41,15 @@ type OpenTask = {
     overdue: boolean;
 };
 
+type PortalPerson = {
+    id: number;
+    name: string;
+    email: string;
+    phone: string | null;
+    company: string | null;
+    since: string | null;
+};
+
 const props = defineProps<{
     client: Client;
     figures: {
@@ -102,6 +111,10 @@ const props = defineProps<{
     }[];
     pilot: { days: number; accounts: PilotAccount[] } | null;
     options: { users: Option[]; wallets: Option[] };
+    portal: {
+        users: PortalPerson[];
+        waiting: PortalPerson[];
+    };
 }>();
 
 // The client's ad accounts in Klok Pilot: last 1 / 7 / 30 days.
@@ -165,6 +178,34 @@ const clientOptions = computed<Option[]>(() => [
 ]);
 
 const can = computed(() => usePage().props.auth.can);
+
+// Portal: a sign-up waiting for a client becomes this client's person.
+const linkUser = ref<number | null>(null);
+function link(): void {
+    if (!linkUser.value) {
+        return;
+    }
+    router.post(
+        `/clients/${props.client.id}/portal-users`,
+        { user_id: linkUser.value },
+        { preserveScroll: true, onSuccess: () => (linkUser.value = null) },
+    );
+}
+async function unlink(person: PortalPerson): Promise<void> {
+    if (
+        !(await confirmAction({
+            title: t('{name}-কে portal থেকে সরাবেন?', { name: person.name }),
+            body: t('উনি আর এই client-এর campaign বা invoice দেখবেন না।'),
+            confirm: t('সরান'),
+            danger: true,
+        }))
+    ) {
+        return;
+    }
+    router.delete(`/clients/${props.client.id}/portal-users/${person.id}`, {
+        preserveScroll: true,
+    });
+}
 
 // Unspent advance given back: the money goes out, the credit is 0.
 const refundOpen = ref(false);
@@ -405,6 +446,71 @@ function print(): void {
                 </template>
             </div>
         </div>
+    </section>
+
+    <section class="no-print panel mb-6 p-5 sm:p-6">
+        <h2 class="text-[16px] font-bold">{{ t('Client portal') }}</h2>
+        <p class="mt-1 text-[13px] text-ink-3">
+            {{
+                t(
+                    'যাঁরা এখানে যুক্ত, তাঁরা login করে এই client-এর campaign, খরচ, result আর invoice দেখেন — অন্য কিছু না।',
+                )
+            }}
+        </p>
+        <ul v-if="portal.users.length" class="mt-3 divide-y divide-line">
+            <li
+                v-for="u in portal.users"
+                :key="u.id"
+                class="flex items-center gap-3 py-2.5 text-[13.5px]"
+            >
+                <span class="min-w-0 flex-1">
+                    <span class="block font-semibold">{{ u.name }}</span>
+                    <span class="block truncate text-[12.5px] text-ink-3"
+                        >{{ u.email
+                        }}<template v-if="u.phone">
+                            · {{ u.phone }}</template
+                        ></span
+                    >
+                </span>
+                <KButton
+                    v-if="can['clients.edit']"
+                    size="sm"
+                    variant="quiet"
+                    @click="unlink(u)"
+                    >{{ t('সরান') }}</KButton
+                >
+            </li>
+        </ul>
+        <div
+            v-if="can['clients.edit'] && portal.waiting.length"
+            class="mt-4 flex flex-wrap items-end gap-2"
+        >
+            <KField
+                :label="t('Register করে অপেক্ষায় আছেন')"
+                class="min-w-0 flex-1"
+            >
+                <KSelect
+                    v-model="linkUser"
+                    :options="
+                        portal.waiting.map((w) => ({
+                            value: w.id,
+                            label: `${w.name}${w.company ? ' · ' + w.company : ''} · ${w.phone ?? w.email}`,
+                        }))
+                    "
+                    :placeholder="t('কাকে যুক্ত করবেন?')"
+                />
+            </KField>
+            <KButton variant="primary" :disabled="!linkUser" @click="link">{{
+                t('যুক্ত করুন')
+            }}</KButton>
+        </div>
+        <p v-else-if="!portal.users.length" class="mt-3 text-[13px] text-ink-3">
+            {{
+                t(
+                    'এখনো কেউ নেই। Client-কে login পাতার "account খুলুন" থেকে register করতে বলুন, তারপর এখানে যুক্ত করুন।',
+                )
+            }}
+        </p>
     </section>
 
     <section class="no-print panel mb-6 p-5 sm:p-6">

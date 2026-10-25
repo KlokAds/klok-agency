@@ -23,7 +23,11 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 // Beside the name: the Owner's app, or the team's (Accountant, Viewer…).
 const roleBadge = computed(() =>
-    user.value.role === 'Owner' ? 'Owner' : 'Team',
+    user.value.role === 'Owner'
+        ? 'Owner'
+        : user.value.role === 'Client'
+          ? 'Client'
+          : 'Team',
 );
 const can = computed(() => page.props.auth.can ?? {});
 

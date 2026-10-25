@@ -91,6 +91,15 @@ function submit(): void {
         >
     </form>
 
+    <p class="mt-5 text-center text-[13.5px] text-ink-3">
+        {{ t('আমাদের client? নিজের campaign আর invoice দেখতে') }}
+        <Link
+            href="/portal/register"
+            class="font-semibold text-brand hover:underline"
+            >{{ t('account খুলুন') }}</Link
+        >
+    </p>
+
     <a
         v-if="app && !inApp"
         href="/app/get"

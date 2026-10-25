@@ -3,6 +3,8 @@ export type User = {
     name: string;
     email: string;
     role: string | null;
+    /** A client's own person, linked to their client (the portal shows their figures). */
+    client?: boolean;
     two_factor_enabled: boolean;
     must_change_password: boolean;
 };
