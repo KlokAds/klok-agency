@@ -224,6 +224,9 @@ class CampaignLimits
         $this->notifier->send($campaign->client?->manager_id, new AgencyAlert('credit_out', self::PAUSED_TITLE, '{client} · {campaign}', [
             'client' => $clientName, 'campaign' => $campaign->name,
         ], ['url' => '/campaigns?account='.$campaign->pilot_account_id]));
+        app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_paused', ClientNotifier::PAUSED_TITLE, '{campaign} — pay করলেই আবার চালু হবে', [ // i18n
+            'campaign' => $campaign->name,
+        ], ['url' => '/portal/invoices']));
     }
 
     /**

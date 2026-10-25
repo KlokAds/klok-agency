@@ -49,6 +49,11 @@ class AgencyAlert extends Notification
             return [...$channels, AppChannel::class];
         }
 
+        // A client's own person: their phone, and email too — that is how most clients read.
+        if ($notifiable->isClient()) {
+            return [...$channels, AppChannel::class, ...(filled($notifiable->email) && MailSettings::ready() ? ['mail'] : [])];
+        }
+
         $prefs = Notifier::prefs($notifiable, $this->group());
         if ($prefs['push'] || ! empty($this->extra['important'])) {
             $channels[] = AppChannel::class;

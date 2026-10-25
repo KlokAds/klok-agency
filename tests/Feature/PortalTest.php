@@ -5,11 +5,16 @@ use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PilotAccount;
+use App\Models\Setting;
 use App\Models\User;
+use App\Notifications\AgencyAlert;
+use App\Services\CampaignAlerts;
 use App\Services\Invoices;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
     $this->seed([AccessSeeder::class, BooksSeeder::class]);
@@ -90,6 +95,42 @@ it('shows a linked client only their own campaigns, spend over a period, and inv
     // Unlinked: back to waiting.
     $this->actingAs($this->owner)->delete("/clients/{$this->gffs->id}/portal-users/{$user->id}")->assertRedirect();
     $this->actingAs($user->fresh())->get('/portal')->assertInertia(fn ($page) => $page->component('portal/Pending'));
+});
+
+it('tells the client of a new invoice, its payment, the day\'s result and a campaign ending — by email too', function () {
+    $user = signUp();
+    $user->forceFill(['client_id' => $this->gffs->id])->save();
+    Mail::fake();
+    Setting::put('smtp_username', 'billing@klokads.com');
+    Setting::put('smtp_password', Crypt::encryptString('x'));
+    $kinds = fn () => $user->fresh()->notifications()->pluck('data')->pluck('kind')->all();
+
+    // A new invoice, shared: the client hears, with the link to pay.
+    $line = ['kind' => 'service', 'description' => 'Page', 'usd' => null, 'rate' => null, 'amount' => 100000, 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null];
+    $invoice = app(Invoices::class)->save(['client_id' => $this->gffs->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null, 'items' => [$line]]);
+    app(Invoices::class)->markSent($invoice);
+    expect($kinds())->toContain('client_invoice')
+        ->and($user->fresh()->notifications()->where('data->kind', 'client_invoice')->sole()->data['url'])->toBe($invoice->publicUrl());
+
+    // Paid by bank, confirmed by hand: thanks.
+    $payment = $invoice->payments()->create(['method' => 'bank', 'amount' => 100000, 'status' => 'pending']);
+    app(Invoices::class)->verify($payment, 100000, $this->owner);
+    expect($kinds())->toContain('client_paid');
+
+    // The evening: the day's result, and the campaign that ends tomorrow — in plain words.
+    $this->travelTo(now()->setTime(21, 30));
+    app(CampaignAlerts::class)->run();
+    $ending = $user->fresh()->notifications()->where('data->kind', 'client_ending')->sole();
+    expect($kinds())->toContain('client_summary')
+        ->and($ending->data['params']['time'])->toBe(now()->addDay()->format('j M').' রাত শেষে (রাত 12টায়) বন্ধ');
+
+    // Email as well as the bell and the phone.
+    expect((new AgencyAlert('client_paid', 'x'))->via($user->fresh()))->toContain('mail');
+
+    // The portal's list, which reads them.
+    $this->actingAs($user->fresh())->get('/portal/notifications')
+        ->assertInertia(fn ($page) => $page->component('portal/Notifications')->has('notifications', 4));
+    expect($user->fresh()->unreadNotifications()->count())->toBe(0);
 });
 
 it('does not let anyone link a staff account to a client', function () {

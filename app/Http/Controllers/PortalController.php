@@ -174,6 +174,25 @@ class PortalController extends Controller
         ]);
     }
 
+    /** What the client was told: invoices, payments, the day's result, endings. Opened is read. */
+    public function notifications(Request $request): Response
+    {
+        $user = $request->user();
+        $list = $user->notifications()->latest()->limit(100)->get()->map(fn ($n) => [
+            'id' => $n->id,
+            'kind' => $n->data['kind'] ?? 'info',
+            'title' => $n->data['title'] ?? '',
+            'body' => $n->data['body'] ?? null,
+            'params' => $n->data['params'] ?? [],
+            'url' => $n->data['url'] ?? null,
+            'read' => $n->read_at !== null,
+            'at' => $n->created_at->toIso8601String(),
+        ]);
+        $user->unreadNotifications()->update(['read_at' => now()]);
+
+        return Inertia::render('portal/Notifications', ['notifications' => $list]);
+    }
+
     /** The client this person belongs to; one still waiting is sent home to the waiting page. */
     private function client(Request $request): Client
     {

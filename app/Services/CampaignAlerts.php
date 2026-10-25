@@ -83,6 +83,10 @@ class CampaignAlerts
                 // "25 Oct রাত শেষে (রাত 12টায়) বন্ধ", never a bare "26 Oct 12:00 AM".
                 'time' => $campaign->stopsText(),
             ], ['url' => '/campaigns?account='.$campaign->pilot_account_id]));
+            // The client hears too, in the same plain words.
+            app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_ending', ClientNotifier::ENDING_TITLE, '{campaign} — {time}। চালু রাখতে চাইলে invoice pay করুন।', [ // i18n
+                'campaign' => $campaign->name, 'time' => $campaign->stopsText(),
+            ], ['url' => '/portal/campaigns/'.$campaign->id]));
             $sent++;
         }
 
@@ -113,6 +117,19 @@ class CampaignAlerts
             ], ['url' => '/campaigns?account='.$campaign->pilot_account_id]));
         }
 
+        // Each client, once: the day in one line, in their portal and on their phone.
+        foreach ($days->groupBy('campaign.client_id') as $clientId => $rows) {
+            $currency = $rows->first()->campaign->account?->currency;
+            $spend = (int) $rows->sum('spend');
+            $results = (int) $rows->sum('results');
+
+            app(ClientNotifier::class)->send((int) $clientId, new AgencyAlert('client_summary', ClientNotifier::SUMMARY_TITLE, 'খরচ {spend} · {results}টা result{cpr}', [ // i18n
+                'spend' => self::money($spend, $currency),
+                'results' => $results,
+                'cpr' => $results > 0 ? ' · '.__('প্রতি result :amount', ['amount' => self::money((int) round($spend / $results), $currency)]) : '',
+            ], ['url' => '/portal']));
+        }
+
         return $days->count();
     }
 
@@ -139,6 +156,10 @@ class CampaignAlerts
                 'daily' => self::money($daily),
                 'days' => number_format($left / $daily, 1),
             ], ['url' => '/clients/'.$client['id']]));
+            app(ClientNotifier::class)->send((int) $client['id'], new AgencyAlert('client_credit_low', ClientNotifier::LOW_TITLE, 'বাকি {left} — আর প্রায় {days} দিন চলবে। বিজ্ঞাপন না থামাতে এখনই pay করুন।', [ // i18n
+                'left' => self::money($left),
+                'days' => number_format($left / $daily, 1),
+            ], ['url' => '/portal']));
             $sent++;
         }
 

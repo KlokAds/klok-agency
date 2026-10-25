@@ -16,6 +16,7 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const path = computed(() => page.url.split('?')[0]);
 const linked = computed(() => Boolean(user.value?.client));
+const unread = computed(() => Number(page.props.unread ?? 0));
 
 const tabs = [
     { label: 'হোম', href: '/portal', icon: 'desk' }, // i18n
@@ -75,6 +76,19 @@ async function logout(): Promise<void> {
                     >
                 </nav>
                 <span class="flex-1" />
+                <Link
+                    v-if="linked"
+                    href="/portal/notifications"
+                    class="relative grid size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken"
+                    :aria-label="t('Notification')"
+                >
+                    <KIcon name="bell" />
+                    <span
+                        v-if="unread > 0"
+                        class="absolute top-1 right-1 grid min-w-4 place-items-center rounded-full bg-out px-1 text-[10px] font-bold text-white"
+                        >{{ unread > 9 ? '9+' : unread }}</span
+                    >
+                </Link>
                 <button
                     type="button"
                     class="h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken"

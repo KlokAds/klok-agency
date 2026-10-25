@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->grou
     Route::get('campaigns', [PortalController::class, 'campaigns'])->name('campaigns');
     Route::get('campaigns/{campaign}', [PortalController::class, 'campaign'])->name('campaign');
     Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
+    Route::get('notifications', [PortalController::class, 'notifications'])->name('notifications');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

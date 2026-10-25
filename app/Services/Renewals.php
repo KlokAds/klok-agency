@@ -293,6 +293,9 @@ class Renewals
             try {
                 $end = $this->approve($renewal);
                 $this->tell($renewal, 'extended', self::EXTENDED_TITLE, __(' · :date পর্যন্ত', ['date' => $end->format('j M')]));
+                app(ClientNotifier::class)->send($renewal->client_id, new AgencyAlert('client_extended', ClientNotifier::EXTENDED_TITLE, '{campaign} — {days} দিন বাড়ল, এখন {time}', [ // i18n
+                    'campaign' => $renewal->campaign->name, 'days' => $renewal->days, 'time' => $renewal->campaign->fresh()?->stopsText(),
+                ], ['url' => '/portal/campaigns/'.$renewal->campaign_id]));
 
                 return;
             } catch (RuntimeException) {

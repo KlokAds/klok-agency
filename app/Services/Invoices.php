@@ -116,6 +116,13 @@ class Invoices
     {
         if ($invoice->sent_at === null) {
             $invoice->forceFill(['sent_at' => now()])->save();
+
+            // The client's own people hear of it too, with the link to pay.
+            app(ClientNotifier::class)->send($invoice->client_id, new AgencyAlert('client_invoice', ClientNotifier::INVOICE_TITLE, '{amount}{date} — এই link-এ দেখুন ও pay করুন', [ // i18n
+                'number' => $invoice->number,
+                'amount' => Money::bdt($invoice->due()),
+                'date' => $invoice->due_date ? ' · '.__('শেষ তারিখ :date', ['date' => $invoice->due_date->format('j M')]) : '',
+            ], ['url' => $invoice->publicUrl()]));
         }
     }
 
@@ -248,6 +255,11 @@ class Invoices
             'amount' => Money::bdt($amount).($qrFee > 0 ? __(' · bank fee :fee কেটে জমা :landed', ['fee' => Money::bdt($qrFee), 'landed' => Money::bdt($amount - $qrFee)]) : ''),
         ], ['url' => '/invoices/'.$invoice->uid]));
 
+        $full = $invoice->status === 'paid';
+        app(ClientNotifier::class)->send($invoice->client_id, new AgencyAlert($full ? 'client_paid' : 'client_part_paid', $full ? ClientNotifier::PAID_TITLE : ClientNotifier::PART_TITLE, $full ? 'Invoice {number} · {amount} — পুরো পরিশোধ হয়েছে' : 'Invoice {number} · {amount} পাওয়া গেছে · বাকি {due}', [ // i18n
+            'number' => $invoice->number, 'amount' => Money::bdt($amount), 'due' => Money::bdt($invoice->due()),
+        ], ['url' => $invoice->publicUrl()]));
+
         if ($invoice->status === 'paid') {
             // A renewal's invoice: its campaign waits for the admin's OK.
             app(Renewals::class)->paid($invoice);
@@ -305,6 +317,9 @@ class Invoices
         $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_refund', self::REFUND_TITLE, '{client} · {number} · {amount}', [
             'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($fresh->amount),
         ], ['url' => '/invoices/'.$invoice->uid]));
+        app(ClientNotifier::class)->send($invoice->client_id, new AgencyAlert('client_refund', ClientNotifier::REFUND_TITLE, 'Invoice {number} · {amount} ফেরত গেছে', [ // i18n
+            'number' => $invoice->number, 'amount' => Money::bdt($fresh->amount),
+        ], ['url' => $invoice->publicUrl()]));
 
         return true;
     }
@@ -360,6 +375,9 @@ class Invoices
             $this->notifier->send($invoice->client->manager_id ?? null, new AgencyAlert('invoice_overdue', self::OVERDUE_TITLE, '{client} · {number} · {amount}', [
                 'client' => $invoice->client->name, 'number' => $invoice->number, 'amount' => Money::bdt($invoice->due()),
             ], ['url' => '/invoices/'.$invoice->uid]));
+            app(ClientNotifier::class)->send($invoice->client_id, new AgencyAlert('client_overdue', ClientNotifier::OVERDUE_TITLE, '{amount} বাকি — বিজ্ঞাপন না থামাতে এখনই pay করুন', [ // i18n
+                'number' => $invoice->number, 'amount' => Money::bdt($invoice->due()),
+            ], ['url' => $invoice->publicUrl()]));
             $count++;
         }
 
