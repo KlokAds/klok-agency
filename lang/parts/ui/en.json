@@ -179,5 +179,12 @@
     "Button না খুললে": "If the button does not open,",
     "এখানে চাপুন": "tap here",
     "শুভেচ্ছান্তে,": "Best regards,",
-    "Klok Ads টিম": "The Klok Ads team"
+    "Klok Ads টিম": "The Klok Ads team",
+    "আপনার account-এর তথ্য বদলানো হয়েছে": "Your account details were changed",
+    "{what} বদলানো হয়েছে। আপনি না করে থাকলে সাথে সাথে Klok Ads-কে জানান।": "{what} changed. If it was not you, tell Klok Ads at once.",
+    ":what বদলানো হয়েছে — এই email আর আপনার account-এর sign-in email নয়। আপনি না করে থাকলে সাথে সাথে Klok Ads-কে জানান।": ":what changed — this address is no longer your account's sign-in email. If it was not you, tell Klok Ads at once.",
+    "নাম": "Name",
+    "Phone নম্বর": "Phone number",
+    "প্রতিষ্ঠানের নাম": "Company name",
+    "নিরাপত্তা": "Security"
 }

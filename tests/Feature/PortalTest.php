@@ -9,6 +9,7 @@ use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\UsdEntry;
 use App\Models\User;
+use App\Notifications\AccountChanged;
 use App\Notifications\AgencyAlert;
 use App\Services\CampaignAlerts;
 use App\Services\Invoices;
@@ -17,6 +18,7 @@ use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     $this->seed([AccessSeeder::class, BooksSeeder::class]);
@@ -167,11 +169,17 @@ it('tells the client of a new invoice, its payment, the day\'s result and a camp
 it('lets a client change their own name, email, phone and password, and tells the Owner', function () {
     $user = signUp();
     $user->forceFill(['client_id' => $this->gffs->id])->save();
+    Setting::put('smtp_username', 'billing@klokads.com');
+    Setting::put('smtp_password', Crypt::encryptString('x'));
+    Mail::fake();
 
     $this->actingAs($user->fresh())->patch('/settings/profile', [
         'name' => 'Akbor Hossain', 'email' => 'akbor@gffs.test', 'phone' => '01812345678', 'company' => 'GFFS',
     ])->assertRedirect();
 
+    // The person hears of it themselves (bell, phone and email), and the old address gets an email.
+    expect($user->fresh()->notifications()->where('data->kind', 'account_changed')->count())->toBe(1)
+        ->and(AccountChanged::alert($user, ['Email'])->via($user->fresh()))->toContain('mail');
     expect($user->fresh())->name->toBe('Akbor Hossain')->email->toBe('akbor@gffs.test')->phone->toBe('01812345678')
         ->and($this->owner->notifications()->where('data->kind', 'portal_profile')->sole()->data['params']['what'])->toContain('email');
 
@@ -184,6 +192,19 @@ it('lets a client change their own name, email, phone and password, and tells th
     $this->owner->forceFill(['email' => 'owner@klok.test'])->save();
     $this->actingAs($this->owner)->patch('/settings/profile', ['name' => 'Owner', 'email' => 'other@klok.test'])->assertRedirect();
     expect($this->owner->fresh()->email)->toBe('owner@klok.test');
+});
+
+it('emails the old address when the sign-in email changes', function () {
+    $user = signUp();
+    $user->forceFill(['client_id' => $this->gffs->id])->save();
+    Setting::put('smtp_username', 'billing@klokads.com');
+    Setting::put('smtp_password', Crypt::encryptString('x'));
+    Notification::fake();
+
+    $this->actingAs($user->fresh())->patch('/settings/profile', ['name' => 'Rahim', 'email' => 'new@gffs.test', 'phone' => '01712345678', 'company' => 'GFFS Ltd'])->assertRedirect();
+
+    Notification::assertSentOnDemand(AccountChanged::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === 'rahim@gffs.test');
+    Notification::assertSentTo($user->fresh(), AgencyAlert::class, fn (AgencyAlert $n) => $n->kind === 'account_changed');
 });
 
 it('does not let anyone link a staff account to a client', function () {

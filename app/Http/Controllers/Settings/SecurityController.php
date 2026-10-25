@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
+use App\Notifications\AccountChanged;
 use App\Notifications\AgencyAlert;
 use App\Providers\FortifyServiceProvider;
 use App\Services\Notifier;
@@ -69,6 +70,9 @@ class SecurityController extends Controller
         // no longer sign it in, so an app update (which restarts the app) signed it out.
         FortifyServiceProvider::signOutElsewhere($user, true);
         activity('Auth')->causedBy($user)->log('password changed');
+
+        // The person hears of it on every device and by email, in case it was not them.
+        rescue(fn () => $user->notify(AccountChanged::alert($user, [__('Password')])));
 
         if ($user->isClient()) {
             app(Notifier::class)->send(null, new AgencyAlert('portal_profile', ProfileController::CLIENT_CHANGED_TITLE, '{name} · {client} · password', [

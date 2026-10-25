@@ -59,7 +59,8 @@ class AgencyAlert extends Notification
         if (($prefs['push'] || ! empty($this->extra['important'])) && empty($this->extra['no_push'])) {
             $channels[] = AppChannel::class;
         }
-        if ($prefs['email'] && filled($notifiable->email) && MailSettings::ready()) {
+        // A change to their own account is always emailed too, in case it was not them.
+        if (($prefs['email'] || $this->kind === 'account_changed') && filled($notifiable->email) && MailSettings::ready()) {
             $channels[] = 'mail';
         }
 
