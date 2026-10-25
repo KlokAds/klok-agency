@@ -136,7 +136,9 @@ const totalName = computed(() => {
 
         <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div class="panel p-4">
-                <p class="text-[12.5px] text-ink-3">{{ t('খরচ') }}</p>
+                <p class="text-[12.5px] text-ink-3">
+                    {{ t('Meta-র হিসাবে খরচ') }}
+                </p>
                 <p class="num mt-1 text-[22px] font-bold">
                     {{ money(totals.spend, 'usd') }}
                 </p>

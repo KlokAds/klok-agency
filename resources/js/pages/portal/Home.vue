@@ -124,7 +124,9 @@ const low = computed(
     <!-- Everything so far, small, first thing on the page. -->
     <section class="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <div class="panel p-3.5">
-            <p class="text-[12px] text-ink-3">{{ t('বিজ্ঞাপনে খরচ') }}</p>
+            <p class="text-[12px] text-ink-3">
+                {{ t('বিজ্ঞাপনের ডলার নিয়েছেন') }}
+            </p>
             <p class="num mt-0.5 text-[18px] font-bold">
                 {{ money(lifetime?.spent_usd ?? credit.spent, 'usd') }}
             </p>
