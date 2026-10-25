@@ -89,7 +89,14 @@ it('tells the phone which invoice an SMS paid, and takes the same money sent bac
     $payment = $invoice->payments()->where('status', 'verified')->sole();
     expect($invoice->fresh()->status)->toBe('paid');
 
-    // The same ৳3,030 sent back to that number: the payment leaves the books, the invoice is due again.
+    // The same ৳3,030 sent back to that number with no refund asked: only the Owner is told.
+    smsHook('bKash', 'Send Money Tk 3,030.00 to 01712345678 successful. Ref test. Fee Tk 5.00. Balance Tk 3.82. TrxID NOASK00001 at '.now()->format('d/m/Y H:i'))
+        ->assertJson(['status' => 'ignored']);
+    expect($invoice->fresh()->status)->toBe('paid')
+        ->and($this->owner->notifications()->where('data->kind', 'refund_check')->count())->toBe(1);
+
+    // The client asked for it back (the portal's request): now the Send Money is the refund.
+    activity('Client')->performedOn($this->client)->log('refund asked');
     smsHook('bKash', 'Send Money Tk 3,030.00 to 01712345678 successful. Ref test. Fee Tk 5.00. Balance Tk 0.82. TrxID BACK123456 at '.now()->format('d/m/Y H:i'))
         ->assertJson(['status' => 'refund', 'invoice' => $invoice->number]);
 
@@ -234,7 +241,11 @@ it('asks a second open session on the same wallet for one taka more', function (
         ->and($c->amount)->toBe(1490000)
         ->and($matcher->startSession($first, PaymentMethod::Bkash)->id)->toBe($a->id);
 
-    smsHook('bKash', 'You have received Tk 14,901.00 from 01711111111. TrxID SECOND1234 at 20/10/2026 14:25')->assertJson(['status' => 'matched']);
+    // From GFFS's own number (01711111111) it would be GFFS's money, never Other's: it waits for the Owner.
+    smsHook('bKash', 'You have received Tk 14,901.00 from 01711111111. TrxID GFFSNUM001 at 20/10/2026 14:25')->assertJson(['status' => 'stored']);
+    expect($second->fresh()->status)->toBe('sent');
+
+    smsHook('bKash', 'You have received Tk 14,901.00 from 01799999999. TrxID SECOND1234 at 20/10/2026 14:25')->assertJson(['status' => 'matched']);
 
     expect($second->fresh()->status)->toBe('paid')->and($first->fresh()->status)->toBe('sent');
 });

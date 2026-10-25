@@ -38,6 +38,8 @@ object AppUpdater {
     fun install(context: Context, url: String, onDone: (String) -> Unit) {
         Thread {
             try {
+                val target = URL(url)
+                require(target.protocol == "https" && target.host == "billing.klokads.com") { "not our site" }
                 val apk = File(context.cacheDir, "update.apk")
                 download(url, apk)
                 // The new version replaces this one at once: the sign-in cookies go to disk first.
@@ -45,7 +47,7 @@ object AppUpdater {
                 commit(context, apk)
                 onDone("started")
             } catch (e: Throwable) {
-                onDone("failed: ${e.message}")
+                onDone("failed: ${e.javaClass.simpleName}")
             }
         }.start()
     }

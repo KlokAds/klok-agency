@@ -26,6 +26,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -69,7 +70,7 @@ class PortalController extends Controller
             'name' => $data['name'],
             'company' => $data['company'] ?? null,
             'phone' => $data['phone'],
-            'email' => $data['email'],
+            'email' => Str::lower($data['email']),
             'password' => $data['password'],
             'is_active' => true,
             // Nothing is shown until the Owner links them, and that is the check of who they are.
@@ -117,8 +118,9 @@ class PortalController extends Controller
                 'days_left' => $figure['days_left'] ?? null,
                 // Asked back now: the dollars not spent yet at the agency's own dollar rate — the
                 // commission is not refunded (an estimate, whole taka; the agency confirms).
+                // Rounded to ৳100, so the agency's own rate cannot be read back from it.
                 'refund' => ($left = (int) ($figure['credit_left'] ?? 0)) > 0 && ($fx = Invoices::fxRate())
-                    ? (int) floor($left * $fx / 100) * 100 : null,
+                    ? (int) floor($left * $fx / 10000) * 10000 : null,
                 'round' => $this->creditRound($client, (int) ($figure['credit_left'] ?? 0)),
             ],
             'week' => collect(range(6, 0))->map(function (int $back) use ($today, $week) {
@@ -295,8 +297,8 @@ class PortalController extends Controller
         ], ['url' => '/clients/'.$client->id, 'important' => true]));
         activity('Client')->performedOn($client)->causedBy($request->user())->withProperties(['usd' => $left, 'to' => $data['to']])->log('refund asked');
 
-        rescue(fn () => $request->user()->notify(new AgencyAlert('client_refund_asked', ClientNotifier::REFUND_ASKED_TITLE, '{usd} (আনুমানিক {bdt}) → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।', [ // i18n
-            'usd' => '$'.number_format($left / 100, 2), 'bdt' => $estimate ? Money::bdt($estimate) : '—', 'to' => $data['to'],
+        rescue(fn () => $request->user()->notify(new AgencyAlert('client_refund_asked', ClientNotifier::REFUND_ASKED_TITLE, '{usd} → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।', [ // i18n
+            'usd' => '$'.number_format($left / 100, 2), 'to' => $data['to'],
         ], ['url' => '/portal'])));
 
         $this->toast(__('ফেরতের অনুরোধ পাঠানো হয়েছে — Klok Ads জানাবে।'));

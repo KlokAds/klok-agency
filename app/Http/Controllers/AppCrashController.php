@@ -17,13 +17,13 @@ class AppCrashController extends Controller
     {
         $data = $request->validate([
             'where' => ['required', 'string', 'max:20'],
-            'error' => ['required', 'string', 'max:20000'],
+            'error' => ['required', 'string', 'max:4000'],
             'version' => ['nullable', 'string', 'max:30'],
             'device' => ['nullable', 'string', 'max:120'],
         ]);
 
         Log::build(['driver' => 'daily', 'path' => storage_path('logs/app-crash.log'), 'days' => 30])
-            ->error("[{$data['where']}] v".($data['version'] ?? '?').' · '.($data['device'] ?? '?')."\n".$data['error']);
+            ->error("[{$data['where']}] v".($data['version'] ?? '?').' · '.($data['device'] ?? '?').' · '.preg_replace('/[\r\n]+/', ' ⏎ ', $data['error']));
 
         return response()->json(['ok' => true]);
     }

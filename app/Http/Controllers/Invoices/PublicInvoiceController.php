@@ -72,6 +72,14 @@ class PublicInvoiceController extends Controller
             throw ValidationException::withMessages(['payer' => __('এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।')]);
         }
 
+        // A number known as another client's: their money must not land on this invoice.
+        if (filled($data['payer'] ?? null)) {
+            $owner = PaymentMatcher::clientOfNumber(substr(preg_replace('/\D+/', '', (string) $data['payer']) ?? '', -10));
+            if ($owner !== null && $owner !== (int) $invoice->client_id) {
+                throw ValidationException::withMessages(['payer' => __('এই নম্বরটা অন্য একটা account-এর — আপনার নিজের নম্বর দিন।')]);
+            }
+        }
+
         $wanted = $invoice->allow_partial && isset($data['amount']) ? (int) round((float) $data['amount'] * 100) : null;
         $matcher->startSession($invoice, $method, $data['payer'] ?? null, $wanted);
 
@@ -169,16 +177,18 @@ class PublicInvoiceController extends Controller
         $reference = strtoupper(trim($data['reference']));
         $method = PaymentMethod::from($data['method']);
 
+        // No more than the due and its charge: a claim never carries a bigger sum than the invoice asks.
+        if (isset($data['amount']) && $data['amount'] !== '' && (int) round((float) $data['amount'] * 100) > $invoice->due() + PaySettings::charge($method, $invoice->due())) {
+            throw ValidationException::withMessages(['amount' => __('বাকির চেয়ে বেশি দেওয়া যায় না।')]);
+        }
+
         // Our own wallet number copied into "sent from": the money would never be found.
         $ours = substr(preg_replace('/\D+/', '', (string) (PaySettings::methods()[$method->value]['number'] ?? '')) ?? '', -10);
         if ($ours !== '' && substr(preg_replace('/\D+/', '', (string) $data['sender']) ?? '', -10) === $ours) {
             throw ValidationException::withMessages(['sender' => __('এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।')]);
         }
 
-        $used = InvoicePayment::where('method', $method->value)->whereIn('status', ['pending', 'verified'])
-            ->whereRaw('upper(trim(reference)) = ?', [$reference])->exists();
-
-        if ($used) {
+        if (PaymentMatcher::referenceUsed($reference)) {
             return response()->json(['message' => __('এই TrxID আগেই ব্যবহার হয়েছে।'), 'errors' => ['reference' => [__('এই TrxID আগেই ব্যবহার হয়েছে।')]]], 422);
         }
 

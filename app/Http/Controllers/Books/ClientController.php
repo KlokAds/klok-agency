@@ -294,7 +294,7 @@ class ClientController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'manager_id' => ['nullable', 'exists:users,id'],
+            'manager_id' => ['nullable', Rule::exists('users', 'id')->whereNull('client_id')],
             'renew_days' => ['nullable', 'integer', 'min:1', 'max:90'],
         ], [], ['name' => __('নাম')]);
     }

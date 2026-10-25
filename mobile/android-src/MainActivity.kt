@@ -37,7 +37,7 @@ class MainActivity : FlutterFragmentActivity() {
     /** A billing.klokads.com link opened while the app runs: shown in it. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val link = intent.dataString ?: return
+        val link = ourLink(intent) ?: return
         linkChannel?.invokeMethod("open", link) ?: run { pendingLink = link }
     }
 
@@ -53,7 +53,7 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        pendingLink = intent?.dataString
+        pendingLink = ourLink(intent)
         linkChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "klok/link").apply {
             setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -131,6 +131,12 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+    }
+
+    /** The link, only when it is a page of our own site (another app may send anything). */
+    private fun ourLink(intent: Intent?): String? {
+        val uri = intent?.data ?: return null
+        return if (uri.scheme == "https" && uri.host == "billing.klokads.com") uri.toString() else null
     }
 
     companion object {

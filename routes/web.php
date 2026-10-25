@@ -105,14 +105,14 @@ Route::get('.well-known/assetlinks.json', fn () => response()->json([[
 // The client portal: sign-up for anyone, the rest for a signed-in client's own person.
 Route::middleware('guest')->group(function () {
     Route::get('portal/register', [PortalController::class, 'register'])->name('portal.register');
-    Route::post('portal/register', [PortalController::class, 'signUp'])->middleware('throttle:5,1')->name('portal.signup');
+    Route::post('portal/register', [PortalController::class, 'signUp'])->middleware('throttle:3,60')->name('portal.signup');
 });
 Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [PortalController::class, 'home'])->name('home');
     Route::get('campaigns', [PortalController::class, 'campaigns'])->name('campaigns');
     Route::get('campaigns/{campaign}', [PortalController::class, 'campaign'])->name('campaign');
-    Route::post('campaigns/{campaign}/renew', [PortalController::class, 'renew'])->middleware('throttle:10,1')->name('campaign.renew');
-    Route::post('campaigns/{campaign}/stop', [PortalController::class, 'stop'])->middleware('throttle:10,1')->name('campaign.stop');
+    Route::post('campaigns/{campaign}/renew', [PortalController::class, 'renew'])->middleware('throttle:3,10')->name('campaign.renew');
+    Route::post('campaigns/{campaign}/stop', [PortalController::class, 'stop'])->middleware('throttle:3,10')->name('campaign.stop');
     Route::post('campaigns/{campaign}/pause', [PortalController::class, 'pause'])->middleware('throttle:10,1')->name('campaign.pause');
     Route::post('campaigns/{campaign}/resume', [PortalController::class, 'resume'])->middleware('throttle:10,1')->name('campaign.resume');
     Route::post('campaigns/{campaign}/budget', [PortalController::class, 'budget'])->middleware('throttle:10,1')->name('campaign.budget');

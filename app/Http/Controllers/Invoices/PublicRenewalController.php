@@ -63,14 +63,16 @@ class PublicRenewalController extends Controller
         $renewal = $this->find($token);
         $data = $request->validate(['days' => ['required', 'integer', 'min:1', 'max:90']]);
 
-        // The client chose the days: once paid, the campaign runs on by itself, as on the portal.
-        $renewal->forceFill(['self_serve' => true])->save();
-
         try {
-            $invoice = $renewals->choose($renewal, (int) $data['days']);
+            // An unpaid invoice already made: its days change; otherwise one is made.
+            $open = $renewal->invoice !== null && $renewal->invoice->status !== 'void' && $renewal->invoice->paid === 0;
+            $invoice = $open ? $renewals->changeDays($renewal, (int) $data['days']) : $renewals->choose($renewal, (int) $data['days']);
         } catch (RuntimeException $e) {
             throw ValidationException::withMessages(['days' => $e->getMessage()]);
         }
+
+        // The client chose the days: once paid, the campaign runs on by itself, as on the portal.
+        $renewal->forceFill(['self_serve' => true])->save();
 
         return Inertia::location($invoice->publicUrl());
     }

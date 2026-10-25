@@ -85,6 +85,12 @@ patch(manifest, r'(\n(\s*)<activity)', r'''
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/finance_teal" />\1''')
 patch(manifest, r'android:label="[^"]*"', 'android:label="KlokOne"')
+# Nothing of the app's own data (the SMS hook secret, the PIN, payment SMS) goes into phone backups.
+patch(manifest, r'(<application\s)', r'\1android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/data_extraction_rules" ')
+Path('android/app/src/main/res/xml').mkdir(parents=True, exist_ok=True)
+Path('android/app/src/main/res/xml/data_extraction_rules.xml').write_text(
+    '<?xml version="1.0" encoding="utf-8"?>\n<data-extraction-rules>\n    <cloud-backup><exclude domain="sharedpref" /><exclude domain="database" /><exclude domain="file" /></cloud-backup>\n    <device-transfer><exclude domain="sharedpref" /><exclude domain="database" /><exclude domain="file" /></device-transfer>\n</data-extraction-rules>\n',
+    encoding='utf8')
 # Links to billing.klokads.com (an email's button, a WhatsApp message) open in the app; the site's
 # /.well-known/assetlinks.json says this app may. The download page stays in the browser.
 patch(manifest, r'(<category android:name="android.intent.category.LAUNCHER"\s*/>\s*</intent-filter>)', r'''\1

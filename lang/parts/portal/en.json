@@ -235,7 +235,6 @@
     "এখন থেকে {client}-এর সব campaign, খরচ, invoice আর পেমেন্ট KlokOne-এ দেখতে পাবেন — phone-এ আর email-এও খবর পাবেন।": "From now on you see all of {client}’s campaigns, spend, invoices and payments in KlokOne — with news on your phone and by email.",
     "Client বাকি টাকা ফেরত চেয়েছেন": "A client asked for their credit back",
     "{client} · {who} · {usd} (≈ {bdt}) → {to}{note}": "{client} · {who} · {usd} (≈ {bdt}) → {to}{note}",
-    "{usd} (আনুমানিক {bdt}) → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।": "{usd} (about {bdt}) → {to}. Klok Ads confirms the amount within 2 business days and sends it within 7.",
     "ফেরতের অনুরোধ পাঠানো হয়েছে — Klok Ads জানাবে।": "Refund request sent — Klok Ads will let you know.",
     "কোথায় পাঠাব": "where to send it",
     "বাকি টাকা ফেরত চান": "Ask for the money left back",
@@ -254,5 +253,6 @@
     "এখনো নেই": "Not yet",
     "ঠিক করা নেই": "Not set",
     "বাড়ানো হয়েছে": "Extended",
-    "{stops} — আর বাড়ানো হবে না, বাকি invoice বাতিল হবে। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।": "{stops} — it will not be extended and its open invoice is cancelled. Tap below if you are sure; you will get an email too. Changed your mind later? Pick the days again here."
+    "{stops} — আর বাড়ানো হবে না, বাকি invoice বাতিল হবে। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।": "{stops} — it will not be extended and its open invoice is cancelled. Tap below if you are sure; you will get an email too. Changed your mind later? Pick the days again here.",
+    "{usd} → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।": "{usd} → {to}. Klok Ads confirms the amount within 2 business days and sends it within 7."
 }

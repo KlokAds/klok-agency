@@ -28,6 +28,17 @@ const smsChannel = MethodChannel('klok/sms');
 const updateChannel = MethodChannel('klok/update');
 const linkChannel = MethodChannel('klok/link');
 
+/// A page of our own site, or nothing: a link from a notification, an email or another app is
+/// opened only when it is https and on our host, so no other page can sit inside the app's frame.
+Uri? safeUrl(String url) {
+  final full = url.startsWith('http') ? url : '$site${url.startsWith('/') ? '' : '/'}$url';
+  final uri = Uri.tryParse(full);
+  if (uri == null || uri.scheme != 'https' || uri.host != Uri.parse(site).host) {
+    return null;
+  }
+  return uri;
+}
+
 /// Two builds of one app: the plain one for everyone, and (built with --dart-define=SMS=true)
 /// the one that also forwards payment SMS, for the Owner's phone only. Play Protect blocks any
 /// downloaded app that reads SMS, so only the phone that needs it carries it.
@@ -223,21 +234,72 @@ class Lock {
   /// The kept PIN's length; 0 for one set before the length was kept (that one ends with ✓).
   static Future<int> pinLength() async => (await _p).getInt('lock.pin_len') ?? 0;
 
+  /// The first PINs were one SHA-256; now PBKDF2-HMAC-SHA256, so a copied prefs file does not
+  /// give the PIN away in a second.
+  static const _rounds = 60000;
+
   static String _hash(String salt, String pin) => sha256.convert(utf8.encode('$salt:$pin')).toString();
+
+  static String _stretch(String salt, String pin) {
+    final mac = Hmac(sha256, utf8.encode(pin));
+    var block = mac.convert([...utf8.encode(salt), 0, 0, 0, 1]).bytes;
+    final out = List<int>.from(block);
+    for (var i = 1; i < _rounds; i++) {
+      block = mac.convert(block).bytes;
+      for (var j = 0; j < out.length; j++) {
+        out[j] ^= block[j];
+      }
+    }
+    return base64Url.encode(out);
+  }
 
   static Future<void> setPin(String pin) async {
     final p = await _p;
     final salt = base64Url.encode(List<int>.generate(16, (_) => Random.secure().nextInt(256)));
     await p.setString('lock.salt', salt);
-    await p.setString('lock.pin', _hash(salt, pin));
+    await p.setString('lock.pin', _stretch(salt, pin));
     await p.setInt('lock.pin_len', pin.length);
+    await p.setInt('lock.pin_v', 2);
+    await p.remove('lock.wrong');
+    await p.remove('lock.wait_until');
+  }
+
+  /// Wrong PINs are counted on disk: five in a row and the pad waits, twice as long each round.
+  static Future<DateTime?> waitUntil() async {
+    final at = (await _p).getInt('lock.wait_until');
+    return at == null || at < DateTime.now().millisecondsSinceEpoch ? null : DateTime.fromMillisecondsSinceEpoch(at);
   }
 
   static Future<bool> checkPin(String pin) async {
     final p = await _p;
+    if (await waitUntil() != null) {
+      return false;
+    }
     final salt = p.getString('lock.salt');
     final hash = p.getString('lock.pin');
-    return salt != null && hash != null && _hash(salt, pin) == hash;
+    if (salt == null || hash == null) {
+      return false;
+    }
+    final stretched = (p.getInt('lock.pin_v') ?? 1) >= 2;
+    final ok = stretched ? _stretch(salt, pin) == hash : _hash(salt, pin) == hash;
+    if (ok) {
+      await p.remove('lock.wrong');
+      await p.remove('lock.wait_until');
+      if (!stretched) {
+        await setPin(pin); // the old hash is replaced by the stretched one
+      }
+      return true;
+    }
+    final wrong = (p.getInt('lock.wrong') ?? 0) + 1;
+    final rounds = (p.getInt('lock.wait_rounds') ?? 0);
+    await p.setInt('lock.wrong', wrong);
+    if (wrong >= 5) {
+      final seconds = 30 * (1 << rounds.clamp(0, 6));
+      await p.setInt('lock.wait_until', DateTime.now().add(Duration(seconds: seconds)).millisecondsSinceEpoch);
+      await p.setInt('lock.wait_rounds', rounds + 1);
+      await p.setInt('lock.wrong', 0);
+    }
+    return false;
   }
 
   static Future<bool> hasPin() async => (await _p).getString('lock.pin') != null;
@@ -382,7 +444,8 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
     }
     asking = true;
     try {
-      if (await Lock.finger('KlokOne খুলতে আঙুলের ছাপ দিন') && mounted) {
+      // A real fingerprint only: a phone with none set up does not open the app this way.
+      if (await Lock.fingerOk('KlokOne খুলতে আঙুলের ছাপ দিন') == null && mounted) {
         setState(() => locked = false);
       }
     } finally {
@@ -509,13 +572,13 @@ class _PinPadState extends State<PinPad> {
     }
     wrong++;
     HapticFeedback.heavyImpact();
-    if (wrong >= 5) {
-      wrong = 0;
-      waitUntil = DateTime.now().add(const Duration(seconds: 30));
+    waitUntil = await Lock.waitUntil();
+    if (!mounted) {
+      return;
     }
     setState(() {
       pin = '';
-      error = 'PIN মেলেনি';
+      error = waitUntil != null ? '${waitUntil!.difference(DateTime.now()).inSeconds + 1} সেকেন্ড অপেক্ষা করুন' : 'PIN মেলেনি';
     });
   }
 
@@ -821,8 +884,10 @@ class _SitePageState extends State<SitePage> {
   }
 
   void open(String url) {
-    final target = url.startsWith('http') ? url : '$site${url.startsWith('/') ? '' : '/'}$url';
-    web?.loadUrl(urlRequest: URLRequest(url: WebUri(target)));
+    final target = safeUrl(url);
+    if (target != null) {
+      web?.loadUrl(urlRequest: URLRequest(url: WebUri.uri(target)));
+    }
   }
 
   Future<bool> signedIn() async {
@@ -1089,7 +1154,7 @@ class _SitePageState extends State<SitePage> {
               InAppWebView(
                 // A notification's link may be a path or a full address (a client's invoice page).
                 initialUrlRequest: URLRequest(
-                  url: WebUri((openFirst ?? '').startsWith('http') ? openFirst! : '$site${openFirst ?? '/dashboard'}'),
+                  url: WebUri.uri(safeUrl(openFirst ?? '/dashboard') ?? Uri.parse('$site/dashboard')),
                 ),
                 pullToRefreshController: refresh,
                 initialSettings: InAppWebViewSettings(
@@ -1100,6 +1165,9 @@ class _SitePageState extends State<SitePage> {
                   thirdPartyCookiesEnabled: false,
                   allowFileAccess: false,
                   useShouldOverrideUrlLoading: true,
+                  // The app's own handlers (settings, theme, sign-out) answer only our site.
+                  javaScriptHandlersOriginAllowList: [site],
+                  javaScriptBridgeOriginAllowList: [site],
                   useOnDownloadStart: true,
                   supportZoom: false,
                   cacheMode: CacheMode.LOAD_DEFAULT,

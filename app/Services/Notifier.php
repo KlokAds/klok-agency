@@ -33,7 +33,7 @@ class Notifier
     ];
 
     /** A campaign stopping, about to stop or its day's spend: every Owner hears of it, whatever they switched off. */
-    public const OWNERS_ALWAYS = ['portal_signup', 'portal_profile', 'sms_silent', 'invoice_refund', 'renewal_open', 'renewal_invoiced', 'renewal_extended', 'credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_ending', 'campaign_spend', 'account_problem', 'client_campaign', 'app_update', 'feedback', 'meta_receipt', 'sms_check', 'account_changed', 'refund_request'];
+    public const OWNERS_ALWAYS = ['portal_signup', 'portal_profile', 'sms_silent', 'invoice_refund', 'renewal_open', 'renewal_invoiced', 'renewal_extended', 'credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_ending', 'campaign_spend', 'account_problem', 'client_campaign', 'app_update', 'feedback', 'meta_receipt', 'sms_check', 'account_changed', 'refund_request', 'refund_check'];
 
     /**
      * How one person gets one group: on at all, on the phone, by email.
@@ -62,7 +62,8 @@ class Notifier
         $group = $alert?->group() ?? 'tasks';
         $permission = self::GROUPS[$group]['permission'] ?? null;
         $important = (bool) ($alert?->extra['important'] ?? false) || in_array($alert?->kind, self::OWNERS_ALWAYS, true);
-        $active = User::query()->where('is_active', true)->with('roles')->get();
+        // The agency's own people only: a client's portal account never hears agency alerts.
+        $active = User::query()->where('is_active', true)->with('roles')->get()->reject(fn (User $u) => $u->isClient());
         $isOwner = fn (User $u) => $u->hasRole(Access::OWNER);
 
         // The people who do this work (Owners have every permission, so they are not counted here).

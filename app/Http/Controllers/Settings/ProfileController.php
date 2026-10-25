@@ -12,6 +12,7 @@ use App\Support\MailSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -75,7 +76,7 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $user->fill($request->validated());
+        $user->fill(array_merge($request->validated(), isset($request->validated()['email']) ? ['email' => Str::lower($request->validated()['email'])] : []));
         $changed = array_keys($user->getDirty());
         $oldEmail = $user->getOriginal('email');
         $user->save();

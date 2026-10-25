@@ -103,6 +103,12 @@ class PaymentMatcher
             $sms = $sms->where('trx_id', strtoupper(trim((string) $payment->reference)))
                 ->where('received_at', '>=', now()->subDays(self::WINDOW_DAYS))
                 ->first();
+
+            // Someone else's TrxID, typed on this invoice: the money came from a number that is
+            // not this client's — it waits for the Owner instead.
+            if ($sms !== null && filled($sms->payer_number) && ! $this->payerOk($payment, $sms->payer_number)) {
+                $sms = null;
+            }
         } else {
             $candidates = $sms->whereBetween('amount', [$payment->amount - $this->shortBy($payment), $payment->amount])
                 ->where('received_at', '>=', $payment->created_at->subMinutes(self::SESSION_MINUTES))
@@ -279,11 +285,43 @@ class PaymentMatcher
      */
     protected function payerOk(InvoicePayment $payment, ?string $actual): bool
     {
+        // Money from a number another client is known by is never taken for this invoice, even
+        // when it matches the amount, or the number the payer typed.
+        if ($this->knownElsewhere($payment, $actual)) {
+            return false;
+        }
+
         if ($this->samePayer($payment->sender, $actual)) {
             return true;
         }
 
         return collect(self::knownNumbers($payment))->contains(fn (string $known) => $this->samePayer($known, $actual));
+    }
+
+    /** The SMS came from a number known as some OTHER client's (not this invoice's). */
+    protected function knownElsewhere(InvoicePayment $payment, ?string $actual): bool
+    {
+        $digits = substr(preg_replace('/\D+/', '', (string) $actual) ?? '', -10);
+
+        if (strlen($digits) < 10 || ! preg_match('/^\d{10}$/', $digits)) {
+            return false;
+        }
+
+        $owner = self::clientOfNumber($digits);
+
+        return $owner !== null && $owner !== (int) $payment->invoice?->client_id;
+    }
+
+    /** Which client a number is known as (their phone, a portal person's, or a verified payment's). */
+    public static function clientOfNumber(string $digits): ?int
+    {
+        $like = '%'.$digits;
+        $client = Client::where('phone', 'like', $like)->value('id')
+            ?? User::whereNotNull('client_id')->where('phone', 'like', $like)->value('client_id')
+            ?? InvoicePayment::where('invoice_payments.status', 'verified')->where('invoice_payments.sender', 'like', $like)
+                ->join('invoices', 'invoices.id', '=', 'invoice_payments.invoice_id')->value('invoices.client_id');
+
+        return $client !== null ? (int) $client : null;
     }
 
     /**

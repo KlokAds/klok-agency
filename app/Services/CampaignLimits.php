@@ -203,7 +203,7 @@ class CampaignLimits
      */
     public function clientResume(Campaign $campaign, User $by): void
     {
-        if ($campaign->paused_by_client_at === null || $campaign->isLive() || $campaign->hasEnded()) {
+        if ($campaign->paused_by_client_at === null || $campaign->paused_by_team_at !== null || $campaign->isLive() || $campaign->hasEnded()) {
             throw new RuntimeException(__('এই campaign এখান থেকে চালু করা যায় না।'));
         }
 
@@ -290,7 +290,7 @@ class CampaignLimits
         $this->remember($campaign, $read);
         $campaign->forceFill($on
             ? ['paused_by_team_at' => null, 'paused_by_client_at' => null, 'paused_for_credit_at' => null, 'limits_at' => null]
-            : ['paused_by_team_at' => now()])->saveQuietly();
+            : ['paused_by_team_at' => now(), 'paused_by_client_at' => null])->saveQuietly();
 
         activity('Campaign')->performedOn($campaign)->causedBy($by)->log($on ? 'switched on' : 'paused');
 

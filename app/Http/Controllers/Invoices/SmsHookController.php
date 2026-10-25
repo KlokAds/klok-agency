@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Invoices;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\InvoicePayment;
 use App\Models\PaymentSms;
 use App\Models\Setting;
@@ -16,6 +17,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Activitylog\Models\Activity;
 
 /**
  * Receives SMS forwarded by the Android phone holding the agency's wallet
@@ -32,6 +34,8 @@ class SmsHookController extends Controller
 
     /** How long a money SMS no invoice took stays on the server. */
     public const KEEP_UNMATCHED_HOURS = 24;
+
+    public const REFUND_CHECK_TITLE = 'Wallet থেকে client-এর নম্বরে টাকা গেছে — ফেরত কি?'; // i18n
 
     public function __invoke(Request $request, string $token, SmsParser $parser, PaymentMatcher $matcher, Invoices $invoices): JsonResponse
     {
@@ -109,7 +113,7 @@ class SmsHookController extends Controller
         }
 
         $to = substr(preg_replace('/\D+/', '', $sent['to']) ?? '', -10);
-        $payment = InvoicePayment::with('invoice:id,number')
+        $payment = InvoicePayment::with('invoice:id,number,uid,client_id')
             ->where('status', 'verified')
             ->where('method', $sent['provider'])
             ->where('verified_at', '>=', now()->subDays(30))
@@ -118,7 +122,25 @@ class SmsHookController extends Controller
             ->get()
             ->first(fn (InvoicePayment $p) => substr(preg_replace('/\D+/', '', (string) $p->sender) ?? '', -10) === $to);
 
-        if ($payment === null || ! $invoices->refund($payment, $sent['fee'], $at->toDateString(), $sent['trx_id'])) {
+        if ($payment === null) {
+            return null;
+        }
+
+        // Only a refund the client asked for (the portal's request, within 30 days) is booked by
+        // itself; any other Send Money to a payer's number is just told to the Owner.
+        $asked = Activity::where('description', 'refund asked')
+            ->where('subject_type', (new Client)->getMorphClass())->where('subject_id', $payment->invoice->client_id)
+            ->where('created_at', '>=', now()->subDays(30))->exists();
+
+        if (! $asked) {
+            app(Notifier::class)->send(null, new AgencyAlert('refund_check', self::REFUND_CHECK_TITLE, '{amount} → {to} · Invoice {number} — ফেরত হলে payment-এ "Refund" দিন', [ // i18n
+                'amount' => Money::bdt($sent['amount']), 'to' => $sent['to'], 'number' => $payment->invoice->number,
+            ], ['url' => '/invoices/'.$payment->invoice->uid]));
+
+            return null;
+        }
+
+        if (! $invoices->refund($payment, $sent['fee'], $at->toDateString(), $sent['trx_id'])) {
             return null;
         }
 
