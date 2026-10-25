@@ -5,7 +5,9 @@ use App\Models\Client;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Books;
 use App\Services\CampaignBilling;
+use App\Services\Invoices;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
@@ -142,8 +144,11 @@ it('sends a feature request to the Owners and gives clients the agency WhatsApp'
     $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('contact.whatsapp', 'https://wa.me/8801712345678'));
 });
 
-it('shows what would come back of the unspent money, less the cost of sending it', function () {
+it('shows what would come back of the unspent dollars at the agency rate, never the commission', function () {
     payAhead($this, '1500', '10');
+    $fx = Invoices::fxRate();
+    $left = collect(app(Books::class)->clients())->firstWhere('id', $this->gffs->id)['credit_left'];
 
-    $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->has('credit.refund.mfs')->has('credit.refund.bank'));
+    expect($fx)->toBeGreaterThan(0);
+    $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.refund', (int) floor($left * $fx / 100) * 100));
 });

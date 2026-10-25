@@ -131,7 +131,6 @@
     "আমার account": "My account",
     "Ad account বা Meta-র দিকের একটা সমস্যায় campaign এখন চলছে না। Klok Ads ঠিক করছে — এ সময় আপনার টাকা খরচ হচ্ছে না, আর ঠিক হলেই আপনাকে জানানো হবে।": "A problem with the ad account or on Meta's side has stopped the campaign. Klok Ads is fixing it — none of your money is spent meanwhile, and you'll hear as soon as it's running again.",
     "Ad account-এ সমস্যা — client-দের ad থেমে আছে": "Ad account problem — clients' ads are stopped",
-    "Bank-এ নিলে {bank}। যে দামে ডলার কিনেছিলেন সেই দামে, পাঠানোর খরচ বাদে — চূড়ান্ত হিসাব Klok Ads দেবে।": "{bank} to a bank. At the rate you bought the dollars, less the cost of sending — Klok Ads gives the final figure.",
     "Budget বদলান": "Change budget",
     "Business WhatsApp নম্বর": "Business WhatsApp number",
     "Campaign আবার চলছে": "Campaign running again",
@@ -165,7 +164,6 @@
     "এই budget-এ বাকি টাকায় আনুমানিক {n} দিন চলবে।": "At this budget your money left lasts about {n} days.",
     "এই campaign এখান থেকে চালু করা যায় না।": "This campaign can't be switched on from here.",
     "এখন কোনো চালু campaign নেই।": "No campaign is on right now.",
-    "এখন ফেরত চাইলে আনুমানিক": "Asked back now, about",
     "কী হলে আপনার কাজ সহজ হয়, বা কোথায় অসুবিধা — লিখুন, আমরা পড়ি।": "What would make your work easier, or where it's hard — write it, we read every one.",
     "কোন পাতায়, কী করতে গিয়ে, কী হলো…": "Which page, what you were doing, what happened…",
     "চলছে। থামালে আর টাকা খরচ হবে না।": "Running. Pause it and no more money is spent.",
@@ -191,5 +189,7 @@
     "লিখুন": "Write",
     "লেখা": "text",
     "সমস্যার খবর": "Problem report",
-    "সমস্যা": "Problem"
+    "সমস্যা": "Problem",
+    "ফেরত ≈ {amount}": "refund ≈ {amount}",
+    "আমাদের ডলার রেটে; commission ফেরতযোগ্য নয়": "At our dollar rate; the commission is not refundable"
 }

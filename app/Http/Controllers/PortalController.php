@@ -14,7 +14,6 @@ use App\Notifications\AgencyAlert;
 use App\Services\Books;
 use App\Services\CampaignLimits;
 use App\Services\Invoices;
-use App\Services\MoveFees;
 use App\Services\Notifier;
 use App\Services\Renewals;
 use App\Support\Access;
@@ -107,12 +106,10 @@ class PortalController extends Controller
                 'left' => (int) ($figure['credit_left'] ?? 0),
                 'daily' => (int) ($figure['daily_usd'] ?? 0),
                 'days_left' => $figure['days_left'] ?? null,
-                // Asked back now: the taka of the dollars not spent yet, at the rate they were
-                // paid, less what sending it costs (an estimate; the agency confirms).
-                'refund' => ($unearned = max(0, (int) ($figure['unearned'] ?? 0))) > 0 ? [
-                    'mfs' => max(0, $unearned - (int) ceil($unearned * MoveFees::mfsPercent() / 10000) * 100),
-                    'bank' => max(0, $unearned - MoveFees::bankFee()),
-                ] : null,
+                // Asked back now: the dollars not spent yet at the agency's own dollar rate — the
+                // commission is not refunded (an estimate, whole taka; the agency confirms).
+                'refund' => ($left = (int) ($figure['credit_left'] ?? 0)) > 0 && ($fx = Invoices::fxRate())
+                    ? (int) floor($left * $fx / 100) * 100 : null,
             ],
             'week' => collect(range(6, 0))->map(function (int $back) use ($today, $week) {
                 $rows = $week->get($today->subDays($back)->toDateString(), collect());

@@ -34,7 +34,7 @@ const props = defineProps<{
         left: number;
         daily: number;
         days_left: number | null;
-        refund?: { mfs: number; bank: number } | null;
+        refund?: number | null;
     };
     week: { day: string; spend: number; results: number }[];
     running: Campaign[];
@@ -105,11 +105,23 @@ const low = computed(
             <p class="text-[12px] text-ink-3">
                 {{ t('বিজ্ঞাপনের জন্য বাকি') }}
             </p>
-            <p
-                class="num mt-0.5 text-[18px] font-bold"
-                :class="credit.left <= 0 ? 'text-out' : 'text-in'"
-            >
-                {{ money(credit.left, 'usd') }}
+            <p class="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+                <span
+                    class="num text-[18px] font-bold"
+                    :class="credit.left <= 0 ? 'text-out' : 'text-in'"
+                    >{{ money(credit.left, 'usd') }}</span
+                >
+                <!-- Asked back now: at our dollar rate; the commission stays. -->
+                <span
+                    v-if="credit.refund"
+                    class="num text-[11.5px] text-ink-3"
+                    :title="t('আমাদের ডলার রেটে; commission ফেরতযোগ্য নয়')"
+                    >{{
+                        t('ফেরত ≈ {amount}', {
+                            amount: money(credit.refund, 'bdt'),
+                        })
+                    }}</span
+                >
             </p>
         </div>
         <component
@@ -207,27 +219,6 @@ const low = computed(
             <p v-if="credit.daily > 0" class="text-ink-3">
                 {{ t('দিনে খরচ') }}
                 <b class="num text-ink">{{ money(credit.daily, 'usd') }}</b>
-            </p>
-        </div>
-        <!-- What would come back if they asked now: their unspent money, less sending it. -->
-        <div
-            v-if="credit.refund"
-            class="mt-4 rounded-xl bg-sunken px-4 py-3 text-[13px]"
-        >
-            <p class="text-ink-3">
-                {{ t('এখন ফেরত চাইলে আনুমানিক') }}
-                <b class="num text-ink">{{
-                    money(credit.refund.mfs, 'bdt')
-                }}</b>
-                <span class="text-ink-3"> · bKash/Nagad</span>
-            </p>
-            <p class="mt-0.5 text-[12px] text-ink-3">
-                {{
-                    t(
-                        'Bank-এ নিলে {bank}। যে দামে ডলার কিনেছিলেন সেই দামে, পাঠানোর খরচ বাদে — চূড়ান্ত হিসাব Klok Ads দেবে।',
-                        { bank: money(credit.refund.bank, 'bdt') },
-                    )
-                }}
             </p>
         </div>
         <p v-if="low" class="mt-3 text-[13px] font-medium text-out">

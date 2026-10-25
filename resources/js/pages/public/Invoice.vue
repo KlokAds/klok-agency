@@ -633,9 +633,16 @@ const STATUS_WORD: Record<string, string> = {
                                 })
                             }}
                         </h2>
-                        <KButton size="sm" variant="quiet" @click="cancel">{{
-                            t('অন্য উপায়')
-                        }}</KButton>
+                        <!-- A clear way back to the other ways to pay. -->
+                        <button
+                            type="button"
+                            class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-brand/40 bg-brand-soft px-3.5 text-[13px] font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                            @click="cancel"
+                        >
+                            <KIcon name="swap" :size="15" />{{
+                                t('অন্য উপায়')
+                            }}
+                        </button>
                     </div>
 
                     <div
