@@ -26,6 +26,8 @@ const props = defineProps<{
         url: string;
         spend_synced: string | null;
         every_minutes: number;
+        live_minutes: number;
+        watching: boolean;
         failures: number;
         guard: boolean;
         guard_error: string | null;
@@ -153,6 +155,9 @@ const fresh = (iso: string | null, within: number) => {
                         t('খরচ মেলানো {ago}', { ago: ago(pilot.spend_synced) })
                     }}</KTag
                 >
+                <KTag v-if="pilot.watching" tone="brand">{{
+                    t('এখন কেউ দেখছে — প্রতি মিনিটে')
+                }}</KTag>
                 <KTag v-if="pilot.failures > 0" tone="out">{{
                     t('{n} বার ব্যর্থ', { n: pilot.failures })
                 }}</KTag>
@@ -160,9 +165,10 @@ const fresh = (iso: string | null, within: number) => {
             <p class="mt-2 text-[14px] text-ink-2">
                 {{
                     t(
-                        'প্রতি {n} মিনিটে Meta → Pilot → এখানে: আজকের খরচ, result, campaign-এর অবস্থা। Credit guard {state}।',
+                        'প্রতি {n} মিনিটে Meta → Pilot → এখানে: আজকের খরচ, result, campaign-এর অবস্থা; কেউ পাতা খুলে রাখলে প্রতি {m} মিনিটে, তখন Pilot আজকের হিসাব Meta থেকে আগে পড়ে নেয়। Credit guard {state}।',
                         {
                             n: pilot.every_minutes,
+                            m: pilot.live_minutes,
                             state: pilot.guard ? t('চালু') : t('বন্ধ'),
                         },
                     )

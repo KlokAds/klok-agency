@@ -8,7 +8,7 @@ const model = defineModel<string | number | null>();
 <template>
     <div
         role="radiogroup"
-        class="inline-flex flex-wrap gap-1 rounded-[11px] bg-sunken p-1"
+        class="inline-flex flex-wrap gap-1 rounded-[11px] border border-line-2 bg-sunken p-1"
     >
         <button
             v-for="o in options"
@@ -20,8 +20,8 @@ const model = defineModel<string | number | null>();
             :class="[
                 size === 'sm' ? 'h-7 text-[13px]' : 'h-8 text-[14px]',
                 model === o.value
-                    ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(0_0_0/0.08)]'
-                    : 'text-ink-3 hover:text-ink',
+                    ? 'bg-brand text-white shadow-[0_6px_14px_-8px_var(--brand)]'
+                    : 'text-ink-2 hover:bg-surface hover:text-ink',
             ]"
             @click="model = o.value"
         >

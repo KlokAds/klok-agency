@@ -10,6 +10,7 @@ import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
+import RangePicker from '@/components/portal/RangePicker.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KTag from '@/components/k/KTag.vue';
@@ -17,6 +18,13 @@ import KField from '@/components/k/KField.vue';
 import { useFilters } from '@/composables/useFilters';
 import { confirmAction, toast } from '@/lib/feedback';
 import { ago, endsAt, money, niceDate, today } from '@/lib/format';
+
+// The dates the chosen period covers, written small beside the status filter.
+const covers = computed(() =>
+    props.range.from === props.range.to
+        ? niceDate(props.range.from)
+        : `${niceDate(props.range.from, false)} – ${niceDate(props.range.to)}`,
+);
 import { t } from '@/lib/i18n';
 import type { Option, Paginated } from '@/types';
 
@@ -40,6 +48,7 @@ type Row = {
     ended: boolean;
     spend_total: number;
     spend_7d: number;
+    period: { spend: number; results: number };
     last_spend_day: string | null;
     client_id: number | null;
     client: string | null;
@@ -64,6 +73,7 @@ const props = defineProps<{
     campaigns: Paginated<Row>;
     counts: { total: number; linked: number };
     filters: { q: string | null; status: string };
+    range: { key: string; from: string; to: string };
     synced_at: string | null;
     options: { clients: Option[] };
 }>();
@@ -75,13 +85,16 @@ const { filters } = useFilters('/campaigns', {
     account: props.account?.id ?? null,
     q: props.filters.q,
     status: props.filters.status,
+    range: props.range.key,
+    from: props.range.key === 'custom' ? props.range.from : null,
+    to: props.range.key === 'custom' ? props.range.to : null,
 });
 
 const statuses = computed<Option[]>(() => [
     { value: 'all', label: t('সব') },
     { value: 'live', label: t('চালু') },
     { value: 'off', label: t('বন্ধ') },
-    { value: 'unlinked', label: t('Client বাছা হয়নি') },
+    { value: 'unlinked', label: t('Client নেই') },
     { value: 'linked', label: t('যুক্ত') },
 ]);
 
@@ -295,15 +308,31 @@ function sync(): void {
                     icon="search"
                 />
             </div>
-            <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="mt-3 border-t border-line pt-3">
+                <RangePicker
+                    url="/campaigns"
+                    :range="range"
+                    :params="{
+                        account: filters.account,
+                        q: filters.q,
+                        status: filters.status,
+                    }"
+                    dense
+                />
+            </div>
+            <div
+                class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+            >
                 <KSegment
                     v-model="filters.status"
                     :options="statuses"
                     size="sm"
                 />
-                <p class="text-[13.5px] text-ink-3">
+                <p class="num text-[13px] text-ink-3">
+                    {{ covers }}
+                    ·
                     {{
-                        t('{linked}/{total}টা campaign client-এর সাথে যুক্ত', {
+                        t('{linked}/{total} টা যুক্ত', {
                             linked: counts.linked,
                             total: counts.total,
                         })
@@ -326,15 +355,15 @@ function sync(): void {
             </p>
             <div
                 v-if="suggestedCount && can['clients.edit']"
-                class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-brand-soft px-3 py-2 text-[14px] text-brand-ink"
+                class="mt-3 flex items-center justify-between gap-3 rounded-lg bg-brand-soft px-3 py-2 text-[13.5px] text-brand-ink"
             >
-                <span>{{
+                <span class="min-w-0">{{
                     t('{n}টা campaign-এর নামে client-এর নাম আছে।', {
                         n: suggestedCount,
                     })
                 }}</span>
-                <KButton size="sm" @click="bulkOpen = true">{{
-                    t('নাম দেখে যুক্ত করুন')
+                <KButton size="sm" class="shrink-0" @click="bulkOpen = true">{{
+                    t('যুক্ত করুন')
                 }}</KButton>
             </div>
         </section>
@@ -359,7 +388,13 @@ function sync(): void {
                     <div class="flex items-start gap-2.5">
                         <span
                             class="mt-1.5 size-2.5 shrink-0 rounded-full"
-                            :class="c.live ? 'bg-in' : 'bg-line-2'"
+                            :class="
+                                c.live
+                                    ? 'bg-in'
+                                    : c.ended
+                                      ? 'bg-done'
+                                      : 'bg-wait'
+                            "
                         />
                         <div class="min-w-0 flex-1">
                             <Link
@@ -392,11 +427,14 @@ function sync(): void {
                     >
                         <p>
                             <span class="block text-[12px] text-ink-3">{{
-                                t('৭ দিনে')
+                                t('এই সময়ে')
                             }}</span>
                             <b class="num text-[14.5px]">{{
-                                spend(c.spend_7d)
+                                spend(c.period.spend)
                             }}</b>
+                            <span class="num block text-[12px] text-ink-3"
+                                >{{ c.period.results }} result</span
+                            >
                         </p>
                         <p>
                             <span class="block text-[12px] text-ink-3">{{
@@ -445,7 +483,7 @@ function sync(): void {
                         <button
                             v-if="can['clients.edit']"
                             type="button"
-                            class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold whitespace-nowrap text-ink-3 hover:bg-sunken hover:text-ink"
+                            class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-brand/30 bg-brand-soft px-2.5 text-[13px] font-semibold whitespace-nowrap text-brand-ink transition-colors hover:border-brand"
                             :aria-label="t('Client বদলান')"
                             @click="startLink(c)"
                         >
@@ -545,7 +583,7 @@ function sync(): void {
                         >
                             <th class="px-5 py-3">Campaign</th>
                             <th class="px-3 py-3 text-right">
-                                {{ t('৭ দিনে') }}
+                                {{ t('এই সময়ে') }}
                             </th>
                             <th class="px-3 py-3 text-right">
                                 {{ t('মোট খরচ') }}
@@ -564,7 +602,13 @@ function sync(): void {
                                 <p class="flex items-center gap-2">
                                     <span
                                         class="size-2 shrink-0 rounded-full"
-                                        :class="c.live ? 'bg-in' : 'bg-line-2'"
+                                        :class="
+                                            c.live
+                                                ? 'bg-in'
+                                                : c.ended
+                                                  ? 'bg-done'
+                                                  : 'bg-wait'
+                                        "
                                         :title="c.status ?? ''"
                                     />
                                     <Link
@@ -651,7 +695,10 @@ function sync(): void {
                                 </p>
                             </td>
                             <td class="num px-3 py-3 text-right">
-                                {{ spend(c.spend_7d) }}
+                                {{ spend(c.period.spend) }}
+                                <span class="block text-[12.5px] text-ink-3"
+                                    >{{ c.period.results }} result</span
+                                >
                             </td>
                             <td class="num px-3 py-3 text-right">
                                 {{ spend(c.spend_total) }}

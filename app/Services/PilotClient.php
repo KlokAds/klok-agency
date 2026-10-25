@@ -80,10 +80,10 @@ class PilotClient
      * @param  array<int, int>  $campaignIds
      * @return array{currency?: string, rows?: list<array{date: string, campaign_id: int, spend: float|int, results?: int, clicks?: int}>}
      */
-    public function dailySpend(int $adAccountId, string $from, string $to, array $campaignIds = []): array
+    public function dailySpend(int $adAccountId, string $from, string $to, array $campaignIds = [], bool $fresh = false): array
     {
         return $this->call('campaign_daily_spend', array_filter([
-            'ad_account_id' => $adAccountId, 'from' => $from, 'to' => $to, 'campaign_ids' => $campaignIds ?: null,
+            'ad_account_id' => $adAccountId, 'from' => $from, 'to' => $to, 'campaign_ids' => $campaignIds ?: null, 'fresh' => $fresh ?: null,
         ], fn ($v) => $v !== null));
     }
 

@@ -50,7 +50,7 @@ class CampaignController extends Controller
             ->orderByDesc('linked_count')->orderByRaw("case when currency = 'USD' then 0 else 1 end")->orderBy('name')->get();
         $account = $list->firstWhere('id', (int) ($filters['account'] ?? 0)) ?? $list->first();
 
-        if ($account && PilotClient::connected() && Cache::add("pilot:campaigns:{$account->id}", true, 600)) {
+        if ($account && PilotClient::connected() && Cache::add("pilot:campaigns:{$account->id}", true, 120)) {
             try {
                 $billing->refreshCampaigns($account);
             } catch (RuntimeException $e) {
@@ -61,6 +61,10 @@ class CampaignController extends Controller
 
         $status = $filters['status'] ?? 'all';
         $clients = Client::where('status', 'active')->orderBy('name')->get(['id', 'name']);
+
+        // The period the figures cover: today once something was spent today, else yesterday.
+        $ids = Campaign::where('pilot_account_id', $account->id ?? 0)->pluck('id')->all();
+        [$from, $to, $range] = CampaignStats::range($request, CampaignStats::firstDay($ids), CampaignStats::openingDay($ids));
 
         $campaigns = Campaign::with(['client:id,name', 'account', 'renewals' => fn ($q) => $q->whereNotIn('status', ['approved', 'expired'])->latest('id')])
             ->where('pilot_account_id', $account->id ?? 0)
@@ -74,36 +78,40 @@ class CampaignController extends Controller
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(Paging::size($request))
-            ->withQueryString()
-            ->through(fn (Campaign $c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-                'status' => $c->status,
-                'live' => $c->isLive(),
-                'objective' => $c->objective,
-                'daily_budget' => $c->dailyBudget(),
-                'spend_cap' => $c->spend_cap,
-                'paused_for_credit' => $c->paused_for_credit_at !== null,
-                // Who paused it, as the client sees it: their own, the team, for money, on our side.
-                'state' => $c->client_id !== null ? $c->clientState() : null,
-                // What the team may change from here: Meta campaigns in USD, not ended.
-                'controllable' => CampaignLimits::guarded($c) && ! $c->hasEnded(),
-                'limits_error' => $c->limits_error,
-                'guarded' => $c->client_id !== null && CampaignLimits::guarded($c),
-                'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
-                'start_at' => $c->start_at?->toDateString(),
-                'stop_at' => $c->lastDay()?->toDateString(),
-                'ends_at' => $c->stop_at?->toIso8601String(),
-                'ended' => $c->hasEnded(),
-                'spend_total' => $c->spend_total,
-                'spend_7d' => $c->spend_7d,
-                'last_spend_day' => $c->last_spend_day?->toDateString(),
-                'client_id' => $c->client_id,
-                'client' => $c->client?->name,
-                'bill_from' => $c->bill_from?->toDateString(),
-                'start' => $c->start_at?->toDateString(),
-                'suggested' => $c->client_id ? null : CampaignBilling::suggestClient($c->name, $clients)?->only(['id', 'name']),
-            ]);
+            ->withQueryString();
+        $period = CampaignDay::whereIn('campaign_id', $campaigns->getCollection()->pluck('id'))
+            ->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())
+            ->groupBy('campaign_id')->selectRaw('campaign_id, sum(spend) as spend, sum(results) as results')->get()->keyBy('campaign_id');
+        $campaigns->through(fn (Campaign $c) => [
+            'id' => $c->id,
+            'name' => $c->name,
+            'status' => $c->status,
+            'live' => $c->isLive(),
+            'objective' => $c->objective,
+            'daily_budget' => $c->dailyBudget(),
+            'spend_cap' => $c->spend_cap,
+            'paused_for_credit' => $c->paused_for_credit_at !== null,
+            // Who paused it, as the client sees it: their own, the team, for money, on our side.
+            'state' => $c->client_id !== null ? $c->clientState() : null,
+            // What the team may change from here: Meta campaigns in USD, not ended.
+            'controllable' => CampaignLimits::guarded($c) && ! $c->hasEnded(),
+            'limits_error' => $c->limits_error,
+            'guarded' => $c->client_id !== null && CampaignLimits::guarded($c),
+            'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
+            'start_at' => $c->start_at?->toDateString(),
+            'stop_at' => $c->lastDay()?->toDateString(),
+            'ends_at' => $c->stop_at?->toIso8601String(),
+            'ended' => $c->hasEnded(),
+            'spend_total' => $c->spend_total,
+            'spend_7d' => $c->spend_7d,
+            'period' => ['spend' => (int) ($period[$c->id]->spend ?? 0), 'results' => (int) ($period[$c->id]->results ?? 0)],
+            'last_spend_day' => $c->last_spend_day?->toDateString(),
+            'client_id' => $c->client_id,
+            'client' => $c->client?->name,
+            'bill_from' => $c->bill_from?->toDateString(),
+            'start' => $c->start_at?->toDateString(),
+            'suggested' => $c->client_id ? null : CampaignBilling::suggestClient($c->name, $clients)?->only(['id', 'name']),
+        ]);
 
         $counts = Campaign::where('pilot_account_id', $account->id ?? 0)
             ->selectRaw('count(*) as total, sum(case when client_id is null then 0 else 1 end) as linked')->first();
@@ -121,6 +129,7 @@ class CampaignController extends Controller
             'campaigns' => $campaigns,
             'counts' => ['total' => (int) ($counts->total ?? 0), 'linked' => (int) ($counts->linked ?? 0)],
             'filters' => ['q' => $filters['q'] ?? null, 'status' => $status],
+            'range' => ['key' => $range, 'from' => $from->toDateString(), 'to' => $to->toDateString()],
             'synced_at' => Setting::get('pilot_spend_synced_at'),
             'options' => ['clients' => Lookups::clients(true)],
         ]);
@@ -255,7 +264,7 @@ class CampaignController extends Controller
             if ($request->integer('account')) {
                 $account = PilotAccount::findOrFail($request->integer('account'));
                 $billing->refreshCampaigns($account);
-                Cache::put("pilot:campaigns:{$account->id}", true, 600);
+                Cache::put("pilot:campaigns:{$account->id}", true, 120);
             }
 
             $result = $billing->sync();

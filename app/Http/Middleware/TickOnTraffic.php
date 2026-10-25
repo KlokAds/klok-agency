@@ -24,6 +24,11 @@ class TickOnTraffic
 
     public function terminate(Request $request, Response $response): void
     {
+        // A person on a page: the spend sync steps up to every minute while they look.
+        if ($request->user() !== null && $request->isMethod('GET') && ! Cache::has('agency:watching')) {
+            Cache::put('agency:watching', true, 120);
+        }
+
         // The in-app timer: started again by any visit if the host ended it.
         rescue(fn () => app(KeepAlive::class)->ensure());
 

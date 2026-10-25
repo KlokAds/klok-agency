@@ -227,5 +227,8 @@
     "এই সময়ে কোনো খরচ হয়নি।": "Nothing was spent in this period.",
     "প্রতি result-এ": "Per result",
     "Client-এর পাতা": "Client page",
-    "এখনো নেই": "Not yet"
+    "এখনো নেই": "Not yet",
+    "এই সময়ে": "This period",
+    "Client নেই": "No client",
+    "{linked}/{total} টা যুক্ত": "{linked}/{total} linked"
 }

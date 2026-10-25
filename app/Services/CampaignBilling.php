@@ -228,13 +228,23 @@ class CampaignBilling
         return $start;
     }
 
-    /** How often spend is read from Pilot: as often as Pilot reads today's numbers from Meta. */
+    /** How often spend is read from Pilot when nobody is looking. */
     public const SYNC_MINUTES = 5;
 
-    /** Runs the sync at most every SYNC_MINUTES (the reminder tick calls this). */
+    /** …and while someone has a page open: Pilot then reads today from Meta first. */
+    public const LIVE_MINUTES = 1;
+
+    /** Someone opened or refreshed a page in the last two minutes. */
+    public static function watching(): bool
+    {
+        return Cache::has('agency:watching');
+    }
+
+    /** Runs the sync at most every SYNC_MINUTES, or every LIVE_MINUTES while someone is looking. */
     public function syncIfDue(): bool
     {
-        if (! PilotClient::connected() || ! Cache::add('pilot:spend-sync', true, self::SYNC_MINUTES * 60)) {
+        $minutes = self::watching() ? self::LIVE_MINUTES : self::SYNC_MINUTES;
+        if (! PilotClient::connected() || ! Cache::add('pilot:spend-sync', true, $minutes * 60)) {
             return false;
         }
 
@@ -330,7 +340,7 @@ class CampaignBilling
 
         for ($chunk = $from; $chunk->lte($to); $chunk = $chunk->addDays(90)) {
             $until = $chunk->addDays(89)->min($to);
-            $report = $this->pilot->dailySpend($account->pilot_id, $chunk->toDateString(), $until->toDateString(), $pilotIds);
+            $report = $this->pilot->dailySpend($account->pilot_id, $chunk->toDateString(), $until->toDateString(), $pilotIds, fresh: self::watching() && $until->isToday());
 
             foreach ($report['rows'] ?? [] as $row) {
                 $campaignId = $ids[(int) $row['campaign_id']] ?? null;

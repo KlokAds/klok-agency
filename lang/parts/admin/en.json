@@ -183,7 +183,6 @@
     "Klok Pilot — campaign-এর খরচ": "Klok Pilot: campaign spend",
     "খরচ মেলানো {ago}": "Spend synced {ago}",
     "{n} বার ব্যর্থ": "Failed {n} times",
-    "প্রতি {n} মিনিটে Meta → Pilot → এখানে: আজকের খরচ, result, campaign-এর অবস্থা। Credit guard {state}।": "Every {n} minutes Meta → Pilot → here: today's spend, results and each campaign's state. Credit guard {state}.",
     "এখনই খরচ আনো": "Fetch spend now",
     "Meta receipt ও card charge": "Meta receipts and card charges",
     "Mailbox যুক্ত": "Mailbox connected",
@@ -205,5 +204,7 @@
     "সব reminder আর হিসাব এখনই চালানো হলো।": "All reminders and sums were run just now.",
     "Pilot থেকে খরচ আনা হলো।": "Spend fetched from Pilot.",
     "Meta receipt আর card charge দেখা হলো।": "Meta receipts and card charges checked.",
-    "Timer আবার চালু করা হলো।": "Timer restarted."
+    "Timer আবার চালু করা হলো।": "Timer restarted.",
+    "এখন কেউ দেখছে — প্রতি মিনিটে": "Someone is looking: every minute",
+    "প্রতি {n} মিনিটে Meta → Pilot → এখানে: আজকের খরচ, result, campaign-এর অবস্থা; কেউ পাতা খুলে রাখলে প্রতি {m} মিনিটে, তখন Pilot আজকের হিসাব Meta থেকে আগে পড়ে নেয়। Credit guard {state}।": "Every {n} minutes Meta → Pilot → here: today's spend, results and each campaign's state; every {m} minute while someone has a page open, when Pilot first reads today from Meta. Credit guard {state}."
 }

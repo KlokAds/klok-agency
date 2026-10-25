@@ -53,6 +53,8 @@ class SystemController extends Controller
                 'url' => PilotClient::url(),
                 'spend_synced' => Setting::get('pilot_spend_synced_at'),
                 'every_minutes' => CampaignBilling::SYNC_MINUTES,
+                'live_minutes' => CampaignBilling::LIVE_MINUTES,
+                'watching' => CampaignBilling::watching(),
                 'failures' => (int) Cache::get('pilot:failures', 0),
                 'guard' => CampaignLimits::enabled(),
                 'guard_error' => Setting::get('credit_guard_error'),
@@ -96,12 +98,11 @@ class SystemController extends Controller
                     Cache::forget('meta-charges:pilot');
                     app(MetaReceipts::class)->fromPilotIfDue();
                 })(),
-                'timer' => (function () use ($keepAlive) {
+                default => (function () use ($keepAlive) {
                     Cache::forget('keep-alive:beat');
                     Cache::forget('keep-alive:starting');
                     $keepAlive->start(force: true);
                 })(),
-                default => abort(404),
             };
         } catch (RuntimeException $e) {
             $this->toast($e->getMessage(), 'error');
