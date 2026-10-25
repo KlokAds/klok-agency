@@ -68,6 +68,16 @@ const usedShare = computed(() =>
           )
         : 0,
 );
+// A platform's name short enough for the small card: FB Ads, GL Ads, TT Ads, else as it is.
+const shortPlatform = (name: string) =>
+    /facebook|meta/i.test(name)
+        ? 'FB Ads'
+        : /google/i.test(name)
+          ? 'GL Ads'
+          : /tiktok/i.test(name)
+            ? 'TT Ads'
+            : name;
+
 // Payment history, a few at a time, so the page stays short in the app.
 const PER_PAGE = 5;
 const payPage = ref(1);
@@ -130,17 +140,22 @@ const low = computed(
             <p class="num mt-0.5 text-[18px] font-bold">
                 {{ money(lifetime?.spent_usd ?? credit.spent, 'usd') }}
             </p>
-            <!-- Where it went, when more than one platform: Meta $195 · Google $5 -->
-            <p
+            <!-- Where it went, when more than one platform: FB Ads, GL Ads, others — a line each. -->
+            <ul
                 v-if="(lifetime?.by_platform?.length ?? 0) > 1"
-                class="num mt-0.5 truncate text-[11px] text-ink-3"
+                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[11px] text-ink-3"
             >
-                {{
-                    lifetime?.by_platform
-                        ?.map((p) => `${p.name} ${money(p.usd, 'usd')}`)
-                        .join(' · ')
-                }}
-            </p>
+                <li
+                    v-for="p in lifetime?.by_platform"
+                    :key="p.name"
+                    class="flex items-center justify-between gap-2"
+                >
+                    <span class="truncate">{{ shortPlatform(p.name) }}</span>
+                    <span class="num shrink-0 font-semibold text-ink-2">{{
+                        money(p.usd, 'usd')
+                    }}</span>
+                </li>
+            </ul>
         </div>
         <div class="panel p-3.5">
             <p class="text-[12px] text-ink-3">{{ t('আপনি দিয়েছেন') }}</p>
