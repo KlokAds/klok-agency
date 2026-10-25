@@ -35,6 +35,12 @@ const props = defineProps<{
         daily: number;
         days_left: number | null;
         refund?: number | null;
+        round?: {
+            paid: number;
+            carried: number;
+            spent: number;
+            since: string;
+        } | null;
     };
     week: { day: string; spend: number; results: number }[];
     running: Campaign[];
@@ -105,13 +111,20 @@ const weekResults = computed(() =>
     props.week.reduce((a, d) => a + d.results, 0),
 );
 // What share of the paid money is still left, and the ring's colour for it.
+// This round: what there was right after the latest payment (what is left plus what was spent
+// since); the ring starts full with each payment and empties from it.
+const roundBase = computed(() =>
+    props.credit.round
+        ? props.credit.left + props.credit.round.spent
+        : props.credit.paid,
+);
 const leftShare = computed(() =>
-    props.credit.paid > 0
+    roundBase.value > 0
         ? Math.max(
               0,
               Math.min(
                   100,
-                  Math.round((props.credit.left / props.credit.paid) * 100),
+                  Math.round((props.credit.left / roundBase.value) * 100),
               ),
           )
         : 0,
@@ -354,15 +367,30 @@ const low = computed(
         >
             <p>
                 <span class="block text-[11.5px] text-white/65">{{
-                    t('দেওয়া')
+                    credit.round
+                        ? t('{date}-এ দেওয়া', { date: credit.round.since })
+                        : t('দেওয়া')
                 }}</span>
-                <b class="num text-[15px]">{{ money(credit.paid, 'usd') }}</b>
+                <b class="num text-[15px]">{{
+                    money(credit.round?.paid ?? credit.paid, 'usd')
+                }}</b>
+                <span
+                    v-if="credit.round && credit.round.carried > 0"
+                    class="num block text-[10.5px] text-white/60"
+                    >{{
+                        t('+ আগের {amount}', {
+                            amount: money(credit.round.carried, 'usd'),
+                        })
+                    }}</span
+                >
             </p>
             <p>
                 <span class="block text-[11.5px] text-white/65">{{
-                    t('খরচ')
+                    credit.round ? t('তারপর খরচ') : t('খরচ')
                 }}</span>
-                <b class="num text-[15px]">{{ money(credit.spent, 'usd') }}</b>
+                <b class="num text-[15px]">{{
+                    money(credit.round?.spent ?? credit.spent, 'usd')
+                }}</b>
             </p>
             <p>
                 <span class="block text-[11.5px] text-white/65">{{

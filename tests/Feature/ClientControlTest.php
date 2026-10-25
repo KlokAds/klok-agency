@@ -150,6 +150,8 @@ it('shows what would come back of the unspent dollars at the agency rate, never 
     $left = collect(app(Books::class)->clients())->firstWhere('id', $this->gffs->id)['credit_left'];
 
     expect($fx)->toBeGreaterThan(0);
+    // The money card counts from this payment: $10 added, nothing spent since today.
+    $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.round.paid', 1000)->where('credit.round.spent', 0));
     $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.refund', (int) floor($left * $fx / 100) * 100));
 });
 

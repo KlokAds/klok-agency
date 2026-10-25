@@ -112,6 +112,7 @@ class PortalController extends Controller
                 // commission is not refunded (an estimate, whole taka; the agency confirms).
                 'refund' => ($left = (int) ($figure['credit_left'] ?? 0)) > 0 && ($fx = Invoices::fxRate())
                     ? (int) floor($left * $fx / 100) * 100 : null,
+                'round' => $this->creditRound($client, (int) ($figure['credit_left'] ?? 0)),
             ],
             'week' => collect(range(6, 0))->map(function (int $back) use ($today, $week) {
                 $rows = $week->get($today->subDays($back)->toDateString(), collect());
@@ -174,6 +175,35 @@ class PortalController extends Controller
             'campaigns' => $rows,
             ...$this->beyondMeta($client),
         ]);
+    }
+
+    /**
+     * The money running the ads now, counted from the latest payment that added ad credit: what it
+     * added, what was still left from before, and what the ads spent since — so the card starts
+     * full with each payment instead of adding every payment ever made.
+     *
+     * @return array{paid: int, carried: int, spent: int, since: string}|null
+     */
+    private function creditRound(Client $client, int $left): ?array
+    {
+        $last = BdtEntry::where('client_id', $client->id)->where('usd_credit', '>', 0)->latest('entry_date')->latest('id')->first();
+
+        if ($last === null) {
+            return null;
+        }
+
+        $campaigns = Campaign::where('client_id', $client->id)->whereNotNull('bill_from')->get(['id', 'bill_from']);
+        $spent = (int) CampaignDay::whereIn('campaign_id', $campaigns->pluck('id'))
+            ->whereDate('day', '>=', $last->entry_date->toDateString())->get()
+            ->filter(fn (CampaignDay $d) => $d->day->gte($campaigns->firstWhere('id', $d->campaign_id)?->bill_from))
+            ->sum('spend');
+
+        return [
+            'paid' => (int) $last->usd_credit,
+            'carried' => max(0, $left + $spent - (int) $last->usd_credit),
+            'spent' => $spent,
+            'since' => $last->entry_date->format('j M'),
+        ];
     }
 
     /**
