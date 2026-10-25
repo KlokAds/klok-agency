@@ -115,4 +115,15 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    | KlokOne's own look for every email (resources/views/vendor/mail).
+    */
+
+    'markdown' => [
+        'theme' => 'klokone',
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
 ];

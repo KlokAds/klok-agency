@@ -75,7 +75,8 @@ class AgencyAlert extends Notification
             ->subject($app['title'])
             ->greeting($app['title'])
             ->line((string) ($app['body'] ?? ''))
-            ->action(__('KlokOne-এ দেখুন', [], (string) ($notifiable->locale ?? 'bn')), url($app['url'] ?? '/notifications'));
+            ->action(__('KlokOne-এ দেখুন', [], (string) ($notifiable->locale ?? 'bn')), url($app['url'] ?? '/notifications'))
+            ->salutation(__('— Klok Ads', [], (string) ($notifiable->locale ?? 'bn')));
     }
 
     /** @return array<string, mixed> */
