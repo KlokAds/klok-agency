@@ -122,7 +122,7 @@ class Invoices
                 'number' => $invoice->number,
                 'amount' => Money::bdt($invoice->due()),
                 'date' => $invoice->due_date ? ' · '.__('শেষ তারিখ :date', ['date' => $invoice->due_date->format('j M')]) : '',
-            ], ['url' => $invoice->publicUrl()]));
+            ], ['url' => route('invoice.public', $invoice->public_token, false)]));
         }
     }
 
@@ -258,7 +258,7 @@ class Invoices
         $full = $invoice->status === 'paid';
         app(ClientNotifier::class)->send($invoice->client_id, new AgencyAlert($full ? 'client_paid' : 'client_part_paid', $full ? ClientNotifier::PAID_TITLE : ClientNotifier::PART_TITLE, $full ? 'Invoice {number} · {amount} — পুরো পরিশোধ হয়েছে' : 'Invoice {number} · {amount} পাওয়া গেছে · বাকি {due}', [ // i18n
             'number' => $invoice->number, 'amount' => Money::bdt($amount), 'due' => Money::bdt($invoice->due()),
-        ], ['url' => $invoice->publicUrl()]));
+        ], ['url' => route('invoice.public', $invoice->public_token, false)]));
 
         if ($invoice->status === 'paid') {
             // A renewal's invoice: its campaign waits for the admin's OK.
@@ -319,7 +319,7 @@ class Invoices
         ], ['url' => '/invoices/'.$invoice->uid]));
         app(ClientNotifier::class)->send($invoice->client_id, new AgencyAlert('client_refund', ClientNotifier::REFUND_TITLE, 'Invoice {number} · {amount} ফেরত গেছে', [ // i18n
             'number' => $invoice->number, 'amount' => Money::bdt($fresh->amount),
-        ], ['url' => $invoice->publicUrl()]));
+        ], ['url' => route('invoice.public', $invoice->public_token, false)]));
 
         return true;
     }
@@ -377,7 +377,7 @@ class Invoices
             ], ['url' => '/invoices/'.$invoice->uid]));
             app(ClientNotifier::class)->send($invoice->client_id, new AgencyAlert('client_overdue', ClientNotifier::OVERDUE_TITLE, '{amount} বাকি — বিজ্ঞাপন না থামাতে এখনই pay করুন', [ // i18n
                 'number' => $invoice->number, 'amount' => Money::bdt($invoice->due()),
-            ], ['url' => $invoice->publicUrl()]));
+            ], ['url' => route('invoice.public', $invoice->public_token, false)]));
             $count++;
         }
 

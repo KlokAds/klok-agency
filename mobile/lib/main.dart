@@ -1026,7 +1026,10 @@ class _SitePageState extends State<SitePage> {
           child: Stack(
             children: [
               InAppWebView(
-                initialUrlRequest: URLRequest(url: WebUri('$site${openFirst ?? '/dashboard'}')),
+                // A notification's link may be a path or a full address (a client's invoice page).
+                initialUrlRequest: URLRequest(
+                  url: WebUri((openFirst ?? '').startsWith('http') ? openFirst! : '$site${openFirst ?? '/dashboard'}'),
+                ),
                 pullToRefreshController: refresh,
                 initialSettings: InAppWebViewSettings(
                   applicationNameForUserAgent: 'KlokFinanceApp/$appBuild',

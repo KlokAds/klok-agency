@@ -110,7 +110,7 @@ it('tells the client of a new invoice, its payment, the day\'s result and a camp
     $invoice = app(Invoices::class)->save(['client_id' => $this->gffs->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null, 'items' => [$line]]);
     app(Invoices::class)->markSent($invoice);
     expect($kinds())->toContain('client_invoice')
-        ->and($user->fresh()->notifications()->where('data->kind', 'client_invoice')->sole()->data['url'])->toBe($invoice->publicUrl());
+        ->and($user->fresh()->notifications()->where('data->kind', 'client_invoice')->sole()->data['url'])->toBe('/i/'.$invoice->public_token);
 
     // Paid by bank, confirmed by hand: thanks.
     $payment = $invoice->payments()->create(['method' => 'bank', 'amount' => 100000, 'status' => 'pending']);

@@ -79,7 +79,8 @@ function saveNotify(): void {
             </div>
         </form>
 
-        <section class="panel p-6 lg:col-start-1">
+        <!-- A client gets their own news (invoices, payments, ads), always: no staff groups here. -->
+        <section v-if="user.role !== 'Client'" class="panel p-6 lg:col-start-1">
             <h2 class="text-[16px] font-bold">{{ t('Notification') }}</h2>
             <p class="mt-1 text-[13px] text-ink-3">
                 {{

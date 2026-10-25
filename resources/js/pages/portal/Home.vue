@@ -36,7 +36,13 @@ const props = defineProps<{
     running: Campaign[];
     due: { count: number; amount: number };
     next_invoice: InvoiceRow | null;
+    app?: string | null;
 }>();
+
+// Inside the KlokOne app there is nothing to download.
+const inApp =
+    typeof navigator !== 'undefined' &&
+    /KlokFinanceApp/.test(navigator.userAgent);
 
 const usedShare = computed(() =>
     props.credit.paid > 0
@@ -68,6 +74,30 @@ const low = computed(
     <h1 class="mt-1 text-[24px] font-bold">
         {{ t('আপনার বিজ্ঞাপন এক নজরে') }}
     </h1>
+
+    <a
+        v-if="app && !inApp"
+        href="/app/get"
+        class="panel mt-5 flex items-center gap-4 p-4 transition-colors hover:border-brand"
+    >
+        <span
+            class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand text-white"
+            ><KIcon name="bell" :size="22"
+        /></span>
+        <span class="min-w-0 flex-1">
+            <span class="block text-[14.5px] font-semibold">{{
+                t('KlokOne app নামান')
+            }}</span>
+            <span class="block text-[12.5px] text-ink-3">{{
+                t(
+                    'Invoice, পেমেন্ট আর বিজ্ঞাপনের খবর সাথে সাথে phone-এ — আঙুলের ছাপে খোলা',
+                )
+            }}</span>
+        </span>
+        <span class="shrink-0 text-[12px] font-semibold text-brand"
+            >Android · v{{ app }}</span
+        >
+    </a>
 
     <!-- Money for ads: paid, spent, left, and for how long -->
     <section class="panel mt-5 p-5 sm:p-6">

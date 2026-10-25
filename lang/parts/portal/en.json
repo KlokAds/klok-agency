@@ -9,6 +9,8 @@
     "Invoice {number} · {amount} বাকি": "Invoice {number} · {amount} due",
     "Invoice {number} · {amount} — পুরো পরিশোধ হয়েছে": "Invoice {number} · {amount} — paid in full",
     "Invoice {number}-এর শেষ তারিখ পার হয়েছে": "Invoice {number} is past its due date",
+    "Invoice, পেমেন্ট আর বিজ্ঞাপনের খবর সাথে সাথে phone-এ — আঙুলের ছাপে খোলা": "News of invoices, payments and ads on your phone at once — opens with your fingerprint",
+    "KlokOne app নামান": "Get the KlokOne app",
     "Pay করুন": "Pay now",
     "Phone নম্বর": "Phone number",
     "Register করে অপেক্ষায় আছেন": "Signed up and waiting",

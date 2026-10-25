@@ -1,7 +1,7 @@
 import { createInertiaApp } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
-import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import MainLayout from '@/layouts/MainLayout.vue';
 import PortalLayout from '@/layouts/PortalLayout.vue';
 import { initializeFeedback } from '@/lib/feedback';
 import { initializeLocale, t } from '@/lib/i18n';
@@ -18,7 +18,7 @@ void createInertiaApp({
               ? null
               : name.startsWith('portal/')
                 ? PortalLayout
-                : AppLayout,
+                : MainLayout,
     withApp: (app) => {
         app.directive('focus', {
             mounted: (el: HTMLElement, shouldFocus) => {
