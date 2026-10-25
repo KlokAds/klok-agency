@@ -274,7 +274,7 @@ async function remove(user: User): Promise<void> {
                 :optional="!!editing"
                 :error="form.errors.password"
                 class="sm:col-span-2"
-                :hint="t('কমপক্ষে ১০ অক্ষর। user নিজে পরে বদলাবে।')"
+                :hint="t('কমপক্ষে ৮ অক্ষর। user নিজে পরে বদলাবে।')"
             >
                 <KInput
                     v-model="form.password"

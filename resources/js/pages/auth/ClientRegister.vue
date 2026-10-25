@@ -67,7 +67,7 @@ function submit(): void {
         </KField>
         <KField
             label="Password"
-            :hint="t('কমপক্ষে ৮ অক্ষর')"
+            :hint="t('কমপক্ষে ৮ অক্ষর — অক্ষর আর সংখ্যা মিলিয়ে')"
             :error="form.errors.password"
         >
             <KInput

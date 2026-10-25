@@ -59,14 +59,11 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
+        // Eight characters, letters and numbers: short enough for a client to type on a phone.
+        // On the live site it must also not be one already leaked somewhere.
         Password::defaults(fn (): Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : Password::min(10)->letters()->numbers(),
+            ? Password::min(8)->letters()->numbers()->uncompromised()
+            : Password::min(8)->letters()->numbers(),
         );
 
         Model::preventLazyLoading(! app()->isProduction());

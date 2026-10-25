@@ -47,7 +47,7 @@ class PortalController extends Controller
             'company' => ['nullable', 'string', 'max:120'],
             'phone' => ['required', 'string', 'regex:/^(\+?88)?01[3-9]\d{8}$/'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ], ['phone.regex' => __('১১ সংখ্যার নম্বর দিন, যেমন 01712345678।')]);
 
         $user = User::create([

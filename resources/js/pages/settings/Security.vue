@@ -192,7 +192,7 @@ void props;
             <KField
                 :label="t('নতুন password')"
                 :error="password.errors.password"
-                :hint="t('কমপক্ষে ১০ অক্ষর — অক্ষর আর সংখ্যা মিলিয়ে')"
+                :hint="t('কমপক্ষে ৮ অক্ষর — অক্ষর আর সংখ্যা মিলিয়ে')"
             >
                 <KInput
                     v-model="password.password"
