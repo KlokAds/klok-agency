@@ -229,7 +229,7 @@ class CampaignBilling
     }
 
     /** How often spend is read from Pilot: as often as Pilot reads today's numbers from Meta. */
-    public const SYNC_MINUTES = 15;
+    public const SYNC_MINUTES = 5;
 
     /** Runs the sync at most every SYNC_MINUTES (the reminder tick calls this). */
     public function syncIfDue(): bool
