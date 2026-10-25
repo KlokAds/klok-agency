@@ -37,6 +37,7 @@ use App\Http\Controllers\Books\ReportController;
 use App\Http\Controllers\Books\UsdEntryController;
 use App\Http\Controllers\Books\WalletController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\Invoices\FxRateController;
 use App\Http\Controllers\Invoices\InvoiceController;
 use App\Http\Controllers\Invoices\PaymentSettingsController;
 use App\Http\Controllers\Invoices\PublicInvoiceController;
@@ -70,6 +71,8 @@ Route::get('app/download', [AppReleaseController::class, 'download'])->middlewar
 Route::post('hooks/app-crash', AppCrashController::class)->middleware('throttle:20,1')->name('hooks.app-crash');
 Route::post('hooks/app-forget', [AppDeviceController::class, 'forget'])->middleware('throttle:10,1')->name('app.device.forget');
 Route::post('hooks/app-release/{token}', [AppReleaseController::class, 'upload'])->middleware('throttle:10,1')->name('hooks.app-release');
+// The owner's console (MH-Bot) reads the dollar rate to bill his own clients' ads (shared key).
+Route::get('hooks/fx-rate', FxRateController::class)->middleware('throttle:60,1')->name('hooks.fx-rate');
 
 // The client's invoice page: no sign-in, the token is the key.
 Route::middleware('throttle:60,1')->group(function () {

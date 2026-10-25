@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // The owner's console (MH-Bot) reads the dollar rate through hooks/fx-rate with this key.
+    'console' => [
+        'key' => env('CONSOLE_KEY'),
+    ],
+
 ];
