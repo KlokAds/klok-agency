@@ -1165,18 +1165,28 @@ class _SitePageState extends State<SitePage> {
                   thirdPartyCookiesEnabled: false,
                   allowFileAccess: false,
                   useShouldOverrideUrlLoading: true,
-                  // The app's own handlers (settings, theme, sign-out) answer only our site.
-                  javaScriptHandlersOriginAllowList: [site],
-                  javaScriptBridgeOriginAllowList: [site],
                   useOnDownloadStart: true,
                   supportZoom: false,
                   cacheMode: CacheMode.LOAD_DEFAULT,
                 ),
                 onWebViewCreated: (controller) {
                   web = controller;
-                  controller.addJavaScriptHandler(handlerName: 'appSettings', callback: (_) => openSettings());
-                  controller.addJavaScriptHandler(handlerName: 'theme', callback: setBars);
+                  // The app's own handlers answer only a page of our site, never one another app sent in.
+                  Future<bool> ours() async => (await controller.getUrl())?.host == Uri.parse(site).host;
+                  controller.addJavaScriptHandler(handlerName: 'appSettings', callback: (_) async {
+                    if (await ours()) {
+                      openSettings();
+                    }
+                  });
+                  controller.addJavaScriptHandler(handlerName: 'theme', callback: (args) async {
+                    if (await ours()) {
+                      setBars(args);
+                    }
+                  });
                   controller.addJavaScriptHandler(handlerName: 'signingOut', callback: (_) async {
+                    if (!await ours()) {
+                      return false;
+                    }
                     await signingOut();
                     return true;
                   });
