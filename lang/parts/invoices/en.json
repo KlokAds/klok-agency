@@ -181,5 +181,11 @@
     "এই পেমেন্ট আর বাছা যায় না — অন্য invoice-এ জুড়ে গেছে বা মুছে গেছে।": "This payment can’t be picked any more — it is on another invoice or deleted.",
     "না, এটা নতুন পেমেন্ট": "No, this is a new payment",
     "পেমেন্ট এসেছে, কিন্তু নম্বর মেলেনি — মিলিয়ে দিন": "Money came in, but not from the number given — match it",
-    "{amount} · {from} · Invoice {number} — client অন্য নম্বর দিয়েছিলেন ({given})": "{amount} · {from} · Invoice {number} — the client gave another number ({given})"
+    "{amount} · {from} · Invoice {number} — client অন্য নম্বর দিয়েছিলেন ({given})": "{amount} · {from} · Invoice {number} — the client gave another number ({given})",
+    "২. আপনার {wallet} নম্বর দিন": "2. Your {wallet} number",
+    "যে নম্বর থেকে আপনি টাকা পাঠাবেন — আপনার নিজের নম্বর। এটা দিলে টাকা পাঠানোর সাথে সাথে নিজে থেকে মিলে যাবে।": "The number you will send the money from — your own. With it, the payment is matched the moment it arrives.",
+    "আপনার নম্বর": "Your number",
+    "আপনার নম্বর (যেটা থেকে পাঠাবেন)": "Your number (the one you send from)",
+    "এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।": "That is Klok Ads’ number — enter your own, the one you will send from.",
+    "যেমন 01712345678": "e.g. 01712345678"
 }

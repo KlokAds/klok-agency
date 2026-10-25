@@ -16,6 +16,7 @@ use App\Support\InvoiceView;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -64,6 +65,12 @@ class PublicInvoiceController extends Controller
 
         $method = PaymentMethod::from($data['method']);
         abort_unless($invoice->isPayable() && $method->isSession(), 422);
+
+        // Our own wallet number copied into "your number": the money would never match.
+        $ours = substr(preg_replace('/\D+/', '', (string) (PaySettings::methods()[$method->value]['number'] ?? '')) ?? '', -10);
+        if (filled($data['payer'] ?? null) && $ours !== '' && substr(preg_replace('/\D+/', '', (string) $data['payer']) ?? '', -10) === $ours) {
+            throw ValidationException::withMessages(['payer' => __('এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।')]);
+        }
 
         $wanted = $invoice->allow_partial && isset($data['amount']) ? (int) round((float) $data['amount'] * 100) : null;
         $matcher->startSession($invoice, $method, $data['payer'] ?? null, $wanted);

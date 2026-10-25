@@ -220,6 +220,14 @@ function howTo(key: string): string {
     return m?.number ? `Send Money · ${m.number}` : 'Send Money';
 }
 const payerError = ref<string | null>(null);
+// The client typed our wallet number (copied from the page) instead of their own.
+const digits = (n: string | null | undefined) =>
+    (n ?? '').replace(/\D+/g, '').slice(-10);
+const payerIsOurs = computed(
+    () =>
+        digits(payer.value).length === 10 &&
+        digits(payer.value) === digits(method.value?.number),
+);
 // An invoice that allows part payments: how much to pay now (taka; empty = all that is due).
 const payNow = ref('');
 // The taka sign, from its code (the file keeps Bangla text only inside t()).
@@ -1097,31 +1105,78 @@ const STATUS_WORD: Record<string, string> = {
                         </button>
                     </div>
 
-                    <!-- 2. bKash, Nagad, Rocket: the number the money comes from (only that SMS can match). -->
+                    <!-- 2. bKash, Nagad, Rocket: the client's own number, the one the money leaves from. -->
                     <div
                         v-if="needsPayer(chosen) && !state.session"
-                        class="mt-5 rounded-xl border border-brand/40 bg-brand-soft p-4"
+                        class="mt-5 rounded-2xl border border-brand/40 bg-brand-soft p-4"
                     >
-                        <p class="mb-2 text-[13px] font-semibold text-ink">
+                        <p class="text-[14px] font-bold text-ink">
                             {{
-                                t('২. কোন {wallet} নম্বর থেকে পাঠাবেন?', {
+                                t('২. আপনার {wallet} নম্বর দিন', {
                                     wallet: method?.label ?? '',
                                 })
                             }}
                         </p>
-                        <KField
-                            :hint="
+                        <p class="mt-0.5 text-[12.5px] text-ink-2">
+                            {{
                                 t(
-                                    'ঠিক যে নম্বর থেকে পাঠাবেন সেটাই দিন — তাহলেই টাকা নিজে থেকে মিলে যাবে।',
+                                    'যে নম্বর থেকে আপনি টাকা পাঠাবেন — আপনার নিজের নম্বর। এটা দিলে টাকা পাঠানোর সাথে সাথে নিজে থেকে মিলে যাবে।',
                                 )
+                            }}
+                        </p>
+
+                        <!-- Which way the money goes: from your number, to ours. -->
+                        <div
+                            class="mt-3 flex items-center gap-2 rounded-xl bg-surface p-2.5 text-[12px]"
+                        >
+                            <span
+                                class="min-w-0 flex-1 rounded-lg border-2 border-brand bg-brand-soft px-2.5 py-1.5"
+                            >
+                                <span class="block font-semibold text-brand">{{
+                                    t('আপনার নম্বর')
+                                }}</span>
+                                <span
+                                    class="num block truncate font-bold text-ink"
+                                    >{{ payer.trim() || '01XXXXXXXXX' }}</span
+                                >
+                            </span>
+                            <KIcon
+                                name="arrow"
+                                :size="18"
+                                class="shrink-0 text-ink-3"
+                            />
+                            <span
+                                class="min-w-0 flex-1 rounded-lg border border-line px-2.5 py-1.5 opacity-80"
+                            >
+                                <span class="block font-semibold text-ink-3"
+                                    >Klok Ads</span
+                                >
+                                <span class="num block truncate text-ink-2">{{
+                                    method?.number ?? '—'
+                                }}</span>
+                            </span>
+                        </div>
+
+                        <KField
+                            class="mt-3"
+                            :label="t('আপনার নম্বর (যেটা থেকে পাঠাবেন)')"
+                            :error="
+                                (payerIsOurs
+                                    ? t(
+                                          'এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।',
+                                      )
+                                    : null) ??
+                                payerError ??
+                                undefined
                             "
-                            :error="payerError ?? undefined"
                         >
                             <KInput
                                 v-model="payer"
                                 type="tel"
                                 inputmode="tel"
-                                placeholder="01XXXXXXXXX"
+                                prefix="📱"
+                                :invalid="payerIsOurs || !!payerError"
+                                :placeholder="t('যেমন 01712345678')"
                             />
                         </KField>
                         <KButton
@@ -1129,6 +1184,7 @@ const STATUS_WORD: Record<string, string> = {
                             block
                             class="mt-3"
                             :loading="busy"
+                            :disabled="payerIsOurs"
                             @click="chosen && start(chosen)"
                             >{{ t('এগিয়ে যান') }}</KButton
                         >

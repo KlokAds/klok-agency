@@ -672,3 +672,11 @@ it('matches a payment from a number already known as the client\'s, though the c
         ->assertJson(['status' => 'stored']);
     expect($next->fresh()->status)->toBe('sent');
 });
+
+it('refuses our own wallet number as the number the client pays from', function () {
+    $invoice = sentInvoice($this->client);
+
+    $this->postJson(route('invoice.public.start', $invoice->public_token), ['method' => 'bkash', 'payer' => '01700000001'])
+        ->assertStatus(422)->assertJsonValidationErrors('payer');
+    $this->postJson(route('invoice.public.start', $invoice->public_token), ['method' => 'bkash', 'payer' => '01712345678'])->assertOk();
+});
