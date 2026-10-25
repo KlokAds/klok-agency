@@ -253,7 +253,7 @@ onMounted(() => {
                     <button
                         v-if="can['tasks.edit'] && !task.auto"
                         type="button"
-                        class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
+                        class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-brand/30 bg-brand-soft px-1.5 text-brand-ink transition-colors hover:border-brand"
                         @click="startEdit(task)"
                     >
                         <KIcon name="pen" :size="15" />
@@ -264,7 +264,7 @@ onMounted(() => {
                     <button
                         v-if="can['tasks.delete']"
                         type="button"
-                        class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
+                        class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-out/30 bg-out-soft px-1.5 text-out transition-colors hover:border-out"
                         @click="remove(task)"
                     >
                         <KIcon name="bin" :size="15" />

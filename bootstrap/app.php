@@ -48,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Anything that breaks on the server reaches the Owners' phones: the same error once an
         // hour, never a wrong page address or a form someone filled in wrong.
-        $exceptions->report(function (\Throwable $e): void {
+        $exceptions->report(function (Throwable $e): void {
             if ($e instanceof HttpExceptionInterface || ! app()->isProduction()) {
                 return;
             }

@@ -209,7 +209,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('runs/{run}', [AdRunController::class, 'destroy'])->middleware('can:runs.delete')->name('runs.destroy');
 
     Route::get('campaigns', [CampaignController::class, 'index'])->middleware('can:runs.view')->name('campaigns.index');
-    Route::get('campaigns/{campaign}', [CampaignController::class, 'show'])->middleware('can:runs.view')->whereNumber('campaign')->name('campaigns.show');
+    Route::get('campaigns/{campaign}', [CampaignController::class, 'show'])->middleware('can:runs.view')->name('campaigns.show');
     Route::put('campaigns/{campaign}/client', [CampaignController::class, 'link'])->middleware('can:clients.edit')->name('campaigns.link');
     Route::post('campaigns/link-suggested', [CampaignController::class, 'linkSuggested'])->middleware('can:clients.edit')->name('campaigns.link-suggested');
     Route::post('campaigns/sync', [CampaignController::class, 'sync'])->middleware('can:runs.view')->name('campaigns.sync');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BdtEntry;
 use App\Models\ExpenseHead;
 use App\Models\Wallet;
+use App\Services\Books;
 use App\Support\Lookups;
 use App\Support\Paging;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,7 +23,7 @@ use Inertia\Response;
  */
 class MoneyInOutController extends Controller
 {
-    public function payments(Request $request): Response
+    public function payments(Request $request, Books $books): Response
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
@@ -37,9 +38,18 @@ class MoneyInOutController extends Controller
             ->when($filters['client_id'] ?? null, fn ($q, $id) => $q->where('client_id', $id))
             ->when($filters['pay_via'] ?? null, fn ($q, $via) => $q->where('pay_via', $via));
 
+        // Beside what each client paid: what they still owe, or the ad credit they have left.
+        $figures = collect($books->clients())->keyBy('id');
         $byClient = (clone $query)->toBase()->selectRaw('client_id, sum(amount) as total, count(*) as n')->groupBy('client_id')
             ->orderByDesc('total')->limit(8)->get()
-            ->map(fn ($r) => ['client' => $r->client_id ? Lookups::clientName((int) $r->client_id) : __('Client ছাড়া'), 'total' => (int) $r->total, 'count' => (int) $r->n]);
+            ->map(fn ($r) => [
+                'id' => $r->client_id ? (int) $r->client_id : null,
+                'client' => $r->client_id ? Lookups::clientName((int) $r->client_id) : __('Client ছাড়া'),
+                'total' => (int) $r->total,
+                'count' => (int) $r->n,
+                'due' => (int) ($figures[$r->client_id]['pending_bdt'] ?? 0),
+                'credit' => (int) ($figures[$r->client_id]['credit_usd'] ?? 0) > 0 ? (int) $figures[$r->client_id]['credit_left'] : null,
+            ]);
 
         return Inertia::render('books/MoneyBook', [
             'mode' => 'in',

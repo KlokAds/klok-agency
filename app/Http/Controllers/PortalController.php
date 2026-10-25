@@ -523,6 +523,7 @@ class PortalController extends Controller
     {
         return [
             'id' => $c->id,
+            'slug' => $c->slug,
             'name' => $c->name,
             'live' => $c->isLive(),
             // live, ended, paused_client, paused_credit, held (stopped on the agency's side)

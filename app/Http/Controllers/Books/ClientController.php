@@ -26,6 +26,7 @@ use App\Support\Money;
 use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -99,11 +100,14 @@ class ClientController extends Controller
                 'usd' => null, 'cost' => null, 'bdt' => $e->amount, 'status' => null,
             ]);
 
-        $statement = $spend->concat($payments)->sortBy('sort')->values()->map(function ($row) {
+        $rows = $spend->concat($payments)->sortBy('sort')->values()->map(function ($row) {
             unset($row['sort']);
 
             return $row;
         });
+        // Five a page, so a long history stays readable on a phone.
+        $page = max(1, $request->integer('page', 1));
+        $statement = new LengthAwarePaginator($rows->forPage($page, 5)->values(), $rows->count(), 5, $page, ['path' => $request->url(), 'query' => $request->query()]);
 
         $person = fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'phone' => $u->phone, 'company' => $u->company, 'since' => $u->created_at?->format('j M Y')];
 

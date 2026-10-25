@@ -396,7 +396,7 @@ function saveAccount(): void {
                     <button
                         v-if="can['usd.edit']"
                         type="button"
-                        class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
+                        class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-brand/30 bg-brand-soft px-1.5 text-brand-ink transition-colors hover:border-brand"
                         @click="startAccount(a)"
                     >
                         <KIcon name="pen" :size="15" />

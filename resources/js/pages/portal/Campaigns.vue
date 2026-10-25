@@ -16,6 +16,7 @@ type Totals = {
 };
 type Row = Totals & {
     id: number;
+    slug?: string | null;
     name: string;
     live: boolean;
     paused: boolean;
@@ -149,8 +150,8 @@ const totalName = computed(() => {
                     {{ totals.results }}
                 </p>
             </div>
-            <div class="panel p-4">
-                <p class="text-[13.5px] text-ink-3">
+            <div class="panel border-l-[3px] border-l-wait p-4">
+                <p class="text-[13.5px] font-medium text-wait">
                     {{ t('প্রতি result-এ') }}
                 </p>
                 <p class="num mt-1 text-[22px] font-bold">
@@ -161,8 +162,8 @@ const totalName = computed(() => {
                     }}
                 </p>
             </div>
-            <div class="panel p-4">
-                <p class="text-[13.5px] text-ink-3">Click</p>
+            <div class="panel border-l-[3px] border-l-done p-4">
+                <p class="text-[13.5px] font-medium text-done">Click</p>
                 <p class="num mt-1 text-[22px] font-bold">
                     {{ totals.clicks }}
                 </p>
@@ -194,7 +195,7 @@ const totalName = computed(() => {
                 <Link
                     v-for="c in g.list"
                     :key="c.id"
-                    :href="`/portal/campaigns/${c.id}?range=${range.key}${range.key === 'custom' ? `&from=${range.from}&to=${range.to}` : ''}`"
+                    :href="`/portal/campaigns/${c.slug ?? c.id}?range=${range.key}${range.key === 'custom' ? `&from=${range.from}&to=${range.to}` : ''}`"
                     class="panel block p-4 transition-colors hover:border-brand sm:p-5"
                 >
                     <span class="flex items-center justify-between gap-2">

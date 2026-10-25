@@ -155,7 +155,7 @@ function opened(item: Notice): void {
             />
             <button
                 type="button"
-                class="mt-2 mr-1 flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
+                class="mt-2 mr-1 flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-out/30 bg-out-soft px-1.5 text-out transition-colors hover:border-out"
                 @click="remove(n)"
             >
                 <KIcon name="close" :size="15" />

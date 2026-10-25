@@ -15,6 +15,7 @@ import { t } from '@/lib/i18n';
 
 type Campaign = {
     id: number;
+    slug?: string | null;
     name: string;
     live: boolean;
     state: CampaignStateKey;
@@ -537,7 +538,7 @@ const low = computed(
             <Link
                 v-for="c in running"
                 :key="c.id"
-                :href="`/portal/campaigns/${c.id}`"
+                :href="`/portal/campaigns/${c.slug ?? c.id}`"
                 class="panel block p-4 transition-colors hover:border-brand"
             >
                 <span class="flex items-center justify-between gap-2">

@@ -193,5 +193,8 @@
     "৬ সংখ্যার কোড": "6-digit code",
     "QR scan করুন": "Scan the QR",
     "App-এ যে ৬ সংখ্যার কোড দেখাচ্ছে": "The 6-digit code the app shows",
-    "কোড প্রতি ৩০ সেকেন্ডে বদলায়।": "The code changes every 30 seconds."
+    "কোড প্রতি ৩০ সেকেন্ডে বদলায়।": "The code changes every 30 seconds.",
+    "{n} প্রতি পাতায়": "{n} per page",
+    "আগের পাতা": "Previous page",
+    "পরের পাতা": "Next page"
 }

@@ -251,25 +251,37 @@ const shortMonth = (ym: string) =>
         >
     </PageHeader>
 
-    <div
-        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
-    >
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('মাসিক বেতন (active)') }}</p>
-            <p class="num mt-2 text-[24px]">
+    <div class="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
+        <div class="panel border-l-[3px] border-l-brand p-3 sm:p-5">
+            <p
+                class="text-[12.5px] font-medium text-brand-ink sm:text-[13.5px]"
+            >
+                {{ t('মাসিক বেতন') }}
+            </p>
+            <p class="num mt-1 text-[18px] font-bold sm:text-[24px]">
                 {{ money(totals.monthly, 'bdt') }}
             </p>
         </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('এই মাসে দেওয়া') }}</p>
-            <p class="num mt-2 text-[24px]">
+        <div class="panel border-l-[3px] border-l-in p-3 sm:p-5">
+            <p class="text-[12.5px] font-medium text-in sm:text-[13.5px]">
+                {{ t('এই মাসে দেওয়া') }}
+            </p>
+            <p class="num mt-1 text-[18px] font-bold sm:text-[24px]">
                 {{ money(totals.paid_this_month, 'bdt') }}
             </p>
         </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('মোট বাকি') }}</p>
+        <div
+            class="panel border-l-[3px] p-3 sm:p-5"
+            :class="totals.due > 0 ? 'border-l-out' : 'border-l-line-2'"
+        >
             <p
-                class="num mt-2 text-[24px]"
+                class="text-[12.5px] font-medium sm:text-[13.5px]"
+                :class="totals.due > 0 ? 'text-out' : 'text-ink-3'"
+            >
+                {{ t('মোট বাকি') }}
+            </p>
+            <p
+                class="num mt-1 text-[18px] font-bold sm:text-[24px]"
                 :class="totals.due > 0 && 'text-out'"
             >
                 {{ money(totals.due, 'bdt') }}
@@ -429,50 +441,64 @@ const shortMonth = (ym: string) =>
             <li
                 v-for="p in payments.data"
                 :key="p.id"
-                class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-3 text-[14.5px] last:border-0"
+                class="border-b border-line py-3 text-[14.5px] last:border-0"
             >
-                <span class="num w-24 shrink-0 text-[13.5px] text-ink-3">{{
-                    p.date ? niceDate(p.date) : t('তারিখ নেই')
-                }}</span>
-                <span class="min-w-0 flex-1">
-                    <span class="font-medium">{{
-                        p.employee ?? t('কর্মী ঠিক করা হয়নি')
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span
+                                class="font-semibold"
+                                :class="!p.employee && 'text-wait'"
+                                >{{
+                                    p.employee ?? t('কর্মী ঠিক করা হয়নি')
+                                }}</span
+                            >
+                            <KTag
+                                :tone="
+                                    p.kind === 'advance'
+                                        ? 'wait'
+                                        : p.kind === 'bonus'
+                                          ? 'brand'
+                                          : 'neutral'
+                                "
+                                >{{ p.kind_label }}</KTag
+                            >
+                        </p>
+                        <p class="num mt-0.5 text-[13.5px] text-ink-3">
+                            {{ p.date ? niceDate(p.date) : t('তারিখ নেই') }}
+                            <span class="font-bn">
+                                · {{ monthLabel(p.month) }}</span
+                            >
+                        </p>
+                    </div>
+                    <span class="num shrink-0 text-[16px] font-bold">{{
+                        money(p.amount, 'bdt')
                     }}</span>
-                    <span class="ml-2 font-bn text-[13.5px] text-ink-3">{{
-                        monthLabel(p.month)
-                    }}</span>
-                </span>
-                <KTag
-                    :tone="
-                        p.kind === 'advance'
-                            ? 'wait'
-                            : p.kind === 'bonus'
-                              ? 'brand'
-                              : 'neutral'
+                </div>
+                <div
+                    v-if="
+                        (!p.employee_id && can['payroll.edit']) ||
+                        can['payroll.delete']
                     "
-                    >{{ p.kind_label }}</KTag
+                    class="mt-2 flex items-center gap-2"
                 >
-                <span class="num w-24 text-right font-medium">{{
-                    money(p.amount, 'bdt')
-                }}</span>
-                <KButton
-                    v-if="!p.employee_id && can['payroll.edit']"
-                    size="sm"
-                    variant="primary"
-                    @click="startAssign(p)"
-                    >{{ t('কার বেতন?') }}</KButton
-                >
-                <button
-                    v-if="can['payroll.delete']"
-                    type="button"
-                    class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
-                    @click="removePayment(p)"
-                >
-                    <KIcon name="bin" :size="15" />
-                    <span class="text-[13px] leading-none">{{
-                        t('মুছুন')
-                    }}</span>
-                </button>
+                    <KButton
+                        v-if="!p.employee_id && can['payroll.edit']"
+                        size="sm"
+                        variant="primary"
+                        @click="startAssign(p)"
+                        >{{ t('কার বেতন?') }}</KButton
+                    >
+                    <KButton
+                        v-if="can['payroll.delete']"
+                        size="sm"
+                        variant="danger"
+                        icon="bin"
+                        class="ml-auto"
+                        @click="removePayment(p)"
+                        >{{ t('মুছুন') }}</KButton
+                    >
+                </div>
             </li>
         </ul>
         <KPager :page="payments" :sizes="[10, 25, 50, 100]" />

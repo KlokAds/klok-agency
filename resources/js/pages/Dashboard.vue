@@ -262,28 +262,35 @@ const greeting =
             <li
                 v-for="r in recent"
                 :key="r.book + r.id"
-                class="dash-entry flex items-center gap-3 border-b border-line py-3 text-[14.5px]"
+                class="dash-entry flex items-center gap-3 border-b border-line py-2.5 text-[14.5px]"
             >
                 <span
-                    class="grid size-8 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-[13px] font-semibold text-ink-2"
+                    class="num w-12 shrink-0 text-[13px] leading-tight text-ink-3"
+                    >{{ niceDate(r.date, false) }}</span
+                >
+                <span
+                    class="grid size-7 shrink-0 place-items-center rounded-md text-[12.5px] font-bold"
+                    :class="
+                        r.book === 'usd'
+                            ? 'bg-brand-soft text-brand-ink'
+                            : 'bg-wait-soft text-wait'
+                    "
                     >{{ r.book === 'usd' ? '$' : '\u09F3' }}</span
                 >
                 <span class="min-w-0 flex-1">
                     <span class="block truncate font-medium">{{
                         r.description
                     }}</span>
-                    <span class="block truncate text-[13px] text-ink-3"
-                        >{{ r.category
-                        }}<template v-if="r.client"> · {{ r.client }}</template>
-                        · {{ niceDate(r.date) }}</span
-                    >
+                    <span class="block truncate text-[13px] text-ink-3">{{
+                        r.category
+                    }}</span>
                 </span>
                 <KAmount
                     :value="r.amount"
                     :currency="r.book"
                     sign
                     :round="r.book === 'bdt'"
-                    class="font-medium"
+                    class="shrink-0 font-semibold"
                 />
             </li>
         </ul>

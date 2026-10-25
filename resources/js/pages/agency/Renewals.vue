@@ -5,7 +5,7 @@ import { computed } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KPager from '@/components/k/KPager.vue';
-import KSegment from '@/components/k/KSegment.vue';
+import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import { useFilters } from '@/composables/useFilters';
 import { money, niceDate } from '@/lib/format';
@@ -47,6 +47,15 @@ const props = defineProps<{
 
 const { filters } = useFilters('/renewals', { status: props.filters.status });
 
+// A colour a status: waiting on the client, invoiced, money in, done, declined.
+const TONES: Record<string, 'brand' | 'wait' | 'in' | 'done' | 'out'> = {
+    open: 'brand',
+    invoiced: 'wait',
+    paid: 'in',
+    approved: 'done',
+    declined: 'out',
+};
+
 const options = computed<Option[]>(() => [
     { value: 'all', label: t('সব') },
     ...['paid', 'open', 'invoiced', 'declined', 'approved'].map((s) => ({
@@ -71,7 +80,9 @@ const options = computed<Option[]>(() => [
     />
 
     <section class="panel mb-4 p-4 sm:p-5">
-        <KSegment v-model="filters.status" :options="options" size="sm" />
+        <div class="sm:max-w-xs">
+            <KSelect v-model="filters.status" :options="options" />
+        </div>
     </section>
 
     <section class="panel overflow-hidden">
@@ -136,18 +147,9 @@ const options = computed<Option[]>(() => [
                             >
                         </td>
                         <td class="px-5 py-3">
-                            <KTag
-                                :tone="
-                                    r.status === 'paid'
-                                        ? 'wait'
-                                        : r.status === 'approved'
-                                          ? 'in'
-                                          : r.status === 'declined'
-                                            ? 'out'
-                                            : 'neutral'
-                                "
-                                >{{ t(statuses[r.status] ?? r.status) }}</KTag
-                            >
+                            <KTag :tone="TONES[r.status] ?? 'neutral'">{{
+                                t(statuses[r.status] ?? r.status)
+                            }}</KTag>
                         </td>
                     </tr>
                 </tbody>

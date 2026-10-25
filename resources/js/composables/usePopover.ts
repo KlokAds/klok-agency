@@ -36,6 +36,10 @@ export function usePopover(
         const up = below < height + gap + 8 && rect.top > below;
 
         let left = opts.align === 'end' ? rect.right - width : rect.left;
+        // No room to the right: hang it from the anchor's right edge, so it lines up with the field.
+        if (left + width > window.innerWidth - 8) {
+            left = rect.right - width;
+        }
         left = Math.min(Math.max(8, left), window.innerWidth - width - 8);
 
         style.value = {
@@ -89,6 +93,8 @@ export function usePopover(
             };
             await nextTick();
             place();
+            // Once painted the panel has its real width: place it again so it never leaves the screen.
+            requestAnimationFrame(place);
         }
     });
 

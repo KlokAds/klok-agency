@@ -297,7 +297,7 @@ class CampaignLimits
         if ($campaign->client_id !== null) {
             app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert($on ? 'client_back' : 'client_team_paused', $on ? ClientNotifier::BACK_TITLE : ClientNotifier::TEAM_PAUSED_TITLE, $on ? '{campaign} — আবার চলছে' : '{campaign} — Klok Ads থামিয়ে রেখেছে; এ সময় টাকা খরচ হচ্ছে না', [ // i18n
                 'campaign' => $campaign->name,
-            ], ['url' => '/portal/campaigns/'.$campaign->id]));
+            ], ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]));
         }
     }
 

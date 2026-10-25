@@ -84,6 +84,7 @@ class CampaignController extends Controller
             ->groupBy('campaign_id')->selectRaw('campaign_id, sum(spend) as spend, sum(results) as results')->get()->keyBy('campaign_id');
         $campaigns->through(fn (Campaign $c) => [
             'id' => $c->id,
+            'slug' => $c->slug,
             'name' => $c->name,
             'status' => $c->status,
             'live' => $c->isLive(),
@@ -145,6 +146,7 @@ class CampaignController extends Controller
         return Inertia::render('agency/Campaign', [
             'campaign' => [
                 'id' => $campaign->id,
+                'slug' => $campaign->slug,
                 'name' => $campaign->name,
                 'account' => $campaign->account?->name,
                 'client' => $campaign->client ? ['id' => $campaign->client->id, 'name' => $campaign->client->name] : null,

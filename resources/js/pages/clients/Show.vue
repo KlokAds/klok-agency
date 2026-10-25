@@ -12,13 +12,14 @@ import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
+import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { confirmAction } from '@/lib/feedback';
 import { ago, money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import type { Option } from '@/types';
+import type { Option, Paginated } from '@/types';
 
 type Client = {
     id: number;
@@ -60,7 +61,7 @@ const props = defineProps<{
         usd_pending: number;
         cost_pending: number;
     } | null;
-    statement: {
+    statement: Paginated<{
         key: string;
         id: number;
         book: 'usd' | 'bdt';
@@ -71,7 +72,7 @@ const props = defineProps<{
         cost: number | null;
         bdt: number | null;
         status: string | null;
-    }[];
+    }>;
     campaigns: {
         id: number;
         name: string;
@@ -305,9 +306,9 @@ function print(): void {
     </PageHeader>
 
     <div
-        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
+        class="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4"
     >
-        <div class="bg-surface p-5">
+        <div class="bg-surface p-4 sm:p-5">
             <p class="eyebrow">{{ t('Ad খরচ (settled)') }}</p>
             <p class="num mt-2 text-[22px]">
                 {{ money(f.usd_settled, 'usd') }}
@@ -316,20 +317,20 @@ function print(): void {
                 FIFO cost {{ money(f.cost_settled, 'bdt') }}
             </p>
         </div>
-        <div class="bg-surface p-5">
+        <div class="bg-surface p-4 sm:p-5">
             <p class="eyebrow">{{ t('দিয়েছে') }}</p>
             <p class="num mt-2 text-[22px]">{{ money(f.received, 'bdt') }}</p>
             <p v-if="rate" class="num mt-1 text-[13px] text-ink-3">
                 {{ t('গড়') }} &#2547;{{ rate }} / USD
             </p>
         </div>
-        <div class="bg-surface p-5">
+        <div class="bg-surface p-4 sm:p-5">
             <p class="eyebrow">Margin</p>
             <p class="mt-2 text-[22px]">
                 <KAmount :value="f.margin" currency="bdt" />
             </p>
         </div>
-        <div class="bg-surface p-5">
+        <div class="bg-surface p-4 sm:p-5">
             <p class="eyebrow">{{ t('পাওনা') }}</p>
             <p class="num mt-2 text-[22px] text-wait">
                 {{ money(f.usd_pending, 'usd') }}
@@ -835,7 +836,10 @@ function print(): void {
                 {{ t('USD খরচ আর BDT পেমেন্ট — তারিখ অনুযায়ী') }}
             </p>
         </div>
-        <KEmpty v-if="!statement.length" :title="t('এখনো কোনো লেনদেন নেই')" />
+        <KEmpty
+            v-if="!statement.data.length"
+            :title="t('এখনো কোনো লেনদেন নেই')"
+        />
         <div v-else class="mt-3 overflow-x-auto">
             <table v-stack class="stack ledger">
                 <thead>
@@ -849,7 +853,7 @@ function print(): void {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="r in statement" :key="r.key">
+                    <tr v-for="r in statement.data" :key="r.key">
                         <td
                             class="num text-[13.5px] whitespace-nowrap text-ink-2"
                         >
@@ -881,6 +885,7 @@ function print(): void {
                     </tr>
                 </tbody>
             </table>
+            <KPager :page="statement" />
         </div>
     </section>
 
@@ -939,7 +944,7 @@ function print(): void {
         </form>
         <template #footer>
             <KButton
-                v-if="can['clients.delete'] && !statement.length"
+                v-if="can['clients.delete'] && !statement.data.length"
                 variant="danger"
                 icon="bin"
                 class="mr-auto"

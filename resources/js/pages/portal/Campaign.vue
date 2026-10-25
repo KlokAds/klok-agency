@@ -23,6 +23,7 @@ type Totals = {
 const props = defineProps<{
     campaign: {
         id: number;
+        slug?: string | null;
         name: string;
         live: boolean;
         ended: boolean;
@@ -287,30 +288,39 @@ async function stopIt(): Promise<void> {
     </section>
 
     <div class="mt-5">
-        <RangePicker :url="`/portal/campaigns/${campaign.id}`" :range="range" />
+        <RangePicker
+            :url="`/portal/campaigns/${campaign.slug ?? campaign.id}`"
+            :range="range"
+        />
     </div>
 
     <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="panel p-4">
-            <p class="text-[13.5px] text-ink-3">{{ t('খরচ') }}</p>
+        <div class="panel border-l-[3px] border-l-brand p-4">
+            <p class="text-[13.5px] font-medium text-brand-ink">
+                {{ t('খরচ') }}
+            </p>
             <p class="num mt-1 text-[22px] font-bold">
                 {{ money(totals.spend, cur) }}
             </p>
         </div>
-        <div class="panel p-4">
-            <p class="text-[13.5px] text-ink-3">{{ campaign.result_name }}</p>
+        <div class="panel border-l-[3px] border-l-in p-4">
+            <p class="text-[13.5px] font-medium text-in">
+                {{ campaign.result_name }}
+            </p>
             <p class="num mt-1 text-[22px] font-bold">{{ totals.results }}</p>
         </div>
-        <div class="panel p-4">
-            <p class="text-[13.5px] text-ink-3">{{ t('প্রতি result-এ') }}</p>
+        <div class="panel border-l-[3px] border-l-wait p-4">
+            <p class="text-[13.5px] font-medium text-wait">
+                {{ t('প্রতি result-এ') }}
+            </p>
             <p class="num mt-1 text-[22px] font-bold">
                 {{
                     totals.cpr !== null ? money(totals.cpr, cur) : t('এখনো নেই')
                 }}
             </p>
         </div>
-        <div class="panel p-4">
-            <p class="text-[13.5px] text-ink-3">Click</p>
+        <div class="panel border-l-[3px] border-l-done p-4">
+            <p class="text-[13.5px] font-medium text-done">Click</p>
             <p class="num mt-1 text-[22px] font-bold">{{ totals.clicks }}</p>
         </div>
     </section>

@@ -30,6 +30,7 @@ import type { Option, Paginated } from '@/types';
 
 type Row = {
     id: number;
+    slug?: string | null;
     name: string;
     status: string | null;
     live: boolean;
@@ -400,7 +401,7 @@ function sync(): void {
                         />
                         <div class="min-w-0 flex-1">
                             <Link
-                                :href="`/campaigns/${c.id}`"
+                                :href="`/campaigns/${c.slug ?? c.id}`"
                                 class="block text-[15.5px] leading-snug font-semibold hover:text-brand"
                                 >{{ c.name }}</Link
                             >
@@ -614,7 +615,7 @@ function sync(): void {
                                         :title="c.status ?? ''"
                                     />
                                     <Link
-                                        :href="`/campaigns/${c.id}`"
+                                        :href="`/campaigns/${c.slug ?? c.id}`"
                                         class="truncate font-medium hover:text-brand"
                                         >{{ c.name }}</Link
                                     >

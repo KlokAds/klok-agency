@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\Support\LogOptions;
 
 /**
@@ -41,10 +42,39 @@ class Campaign extends Model
     public const LIVE = ['ACTIVE', 'ENABLED', 'ENABLE'];
 
     protected $fillable = [
-        'pilot_campaign_id', 'pilot_account_id', 'external_id', 'name', 'status', 'objective', 'daily_budget',
+        'pilot_campaign_id', 'pilot_account_id', 'external_id', 'name', 'slug', 'status', 'objective', 'daily_budget',
         'start_at', 'stop_at', 'spend_total', 'spend_7d', 'last_spend_day', 'client_id', 'bill_from',
         'budget', 'spend_cap', 'spent_before', 'limits_at', 'limits_error', 'paused_for_credit_at', 'paused_by_client_at', 'paused_by_team_at',
     ];
+
+    protected static function booted(): void
+    {
+        // The address of its page follows the name; an old address keeps working through the id.
+        static::saving(function (Campaign $campaign) {
+            if ($campaign->slug === null || $campaign->isDirty('name')) {
+                $campaign->slug = static::slugFor($campaign);
+            }
+        });
+    }
+
+    /** "summer-sale", "summer-sale-2" when another campaign has the name; a Bangla name is spelt out in Latin letters, else its number. */
+    public static function slugFor(Campaign $campaign): string
+    {
+        $base = Str::limit(Str::slug((string) $campaign->name), 90, '') ?: 'campaign-'.($campaign->pilot_campaign_id ?? $campaign->id ?? Str::lower(Str::random(6)));
+        $slug = $base;
+
+        for ($n = 2; static::query()->where('slug', $slug)->when($campaign->id, fn ($q, $id) => $q->whereKeyNot($id))->exists(); $n++) {
+            $slug = $base.'-'.$n;
+        }
+
+        return $slug;
+    }
+
+    /** /campaigns/summer-sale, and /campaigns/12 as before. */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        return $this->newQuery()->where(is_numeric($value) ? $this->getKeyName() : 'slug', $value)->first();
+    }
 
     protected function casts(): array
     {

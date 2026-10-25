@@ -1,6 +1,8 @@
 <script setup lang="ts">
 withDefaults(
-    defineProps<{ tone?: 'neutral' | 'brand' | 'in' | 'out' | 'wait' }>(),
+    defineProps<{
+        tone?: 'neutral' | 'brand' | 'in' | 'out' | 'wait' | 'done';
+    }>(),
     { tone: 'neutral' },
 );
 </script>
@@ -15,6 +17,7 @@ withDefaults(
                 in: 'bg-in-soft text-in',
                 out: 'bg-out-soft text-out',
                 wait: 'bg-wait-soft text-wait',
+                done: 'bg-done-soft text-done',
             }[tone]
         "
     >

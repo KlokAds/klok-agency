@@ -86,7 +86,7 @@ class CampaignAlerts
             // The client hears too, in the same plain words.
             app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_ending', ClientNotifier::ENDING_TITLE, '{campaign} — {time}। চালু রাখতে চাইলে invoice pay করুন।', [ // i18n
                 'campaign' => $campaign->name, 'time' => $campaign->stopsText(),
-            ], ['url' => '/portal/campaigns/'.$campaign->id]));
+            ], ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]));
             $sent++;
         }
 

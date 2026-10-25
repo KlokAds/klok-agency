@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router, useForm, usePage } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
@@ -51,7 +51,14 @@ const props = defineProps<{
     mode: 'in' | 'out';
     rows: Paginated<Row>;
     totals: { amount: number; count: number; credit_usd?: number };
-    by_client?: { client: string; total: number; count: number }[];
+    by_client?: {
+        id: number | null;
+        client: string;
+        total: number;
+        count: number;
+        due: number;
+        credit: number | null;
+    }[];
     by_head?: { head: string; total: number; count: number }[];
     heads?: Head[];
     filters: Record<string, string | number | null>;
@@ -90,7 +97,14 @@ const { filters, clear } = useFilters(
 );
 const filtered = computed(() => Object.values(filters).some((v) => v));
 
-const breakdown = computed(() =>
+type Slice = {
+    name: string;
+    total: number;
+    id?: number | null;
+    due?: number;
+    credit?: number | null;
+};
+const breakdown = computed<Slice[]>(() =>
     isIn.value
         ? (props.by_client ?? []).map((r) => ({ name: r.client, ...r }))
         : (props.by_head ?? []).map((r) => ({ name: r.head, ...r })),
@@ -402,7 +416,7 @@ function saveRename(): void {
                         <button
                             v-if="can['bdt.edit']"
                             type="button"
-                            class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
+                            class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-brand/30 bg-brand-soft px-1.5 text-brand-ink transition-colors hover:border-brand"
                             @click="startEdit(r)"
                         >
                             <KIcon name="pen" :size="15" />
@@ -413,7 +427,7 @@ function saveRename(): void {
                         <button
                             v-if="can['bdt.delete']"
                             type="button"
-                            class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
+                            class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg border border-out/30 bg-out-soft px-1.5 text-out transition-colors hover:border-out"
                             @click="remove(r)"
                         >
                             <KIcon name="bin" :size="15" />
@@ -438,11 +452,34 @@ function saveRename(): void {
                 </p>
                 <ul v-else class="mt-3 flex flex-col gap-3">
                     <li v-for="b in breakdown" :key="b.name">
-                        <div class="flex justify-between gap-3 text-[14px]">
-                            <span class="truncate">{{ b.name }}</span>
-                            <span class="num shrink-0 font-semibold">{{
-                                money(Math.abs(b.total), 'bdt')
-                            }}</span>
+                        <div
+                            class="flex items-center justify-between gap-3 text-[14px]"
+                        >
+                            <Link
+                                v-if="b.id"
+                                :href="`/clients/${b.id}`"
+                                class="truncate font-medium hover:text-brand-ink hover:underline"
+                                >{{ b.name }}</Link
+                            >
+                            <span v-else class="truncate">{{ b.name }}</span>
+                            <span class="flex shrink-0 items-center gap-2">
+                                <KTag v-if="(b.due ?? 0) > 0" tone="out">{{
+                                    t('{amount} বাকি', {
+                                        amount: money(b.due, 'bdt'),
+                                    })
+                                }}</KTag>
+                                <KTag
+                                    v-else-if="
+                                        b.credit !== null &&
+                                        b.credit !== undefined
+                                    "
+                                    :tone="b.credit > 0 ? 'in' : 'wait'"
+                                    >Credit {{ money(b.credit, 'usd') }}</KTag
+                                >
+                                <span class="num font-semibold">{{
+                                    money(Math.abs(b.total), 'bdt')
+                                }}</span>
+                            </span>
                         </div>
                         <div class="mt-1 h-1.5 rounded-full bg-sunken">
                             <div

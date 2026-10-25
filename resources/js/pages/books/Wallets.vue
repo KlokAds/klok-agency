@@ -305,7 +305,7 @@ async function removeMove(move: Move): Promise<void> {
             )
         "
     >
-        <div class="flex flex-wrap gap-2">
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <KButton
                 v-if="can['bdt.edit']"
                 icon="pen"
@@ -325,6 +325,7 @@ async function removeMove(move: Move): Promise<void> {
                 v-if="can['bdt.create']"
                 variant="ink"
                 icon="swap"
+                class="col-span-2 sm:col-span-1"
                 @click="openMove"
                 >{{ t('টাকা সরানো') }}</KButton
             >
@@ -555,7 +556,7 @@ async function removeMove(move: Move): Promise<void> {
                     <button
                         v-if="can['bdt.delete']"
                         type="button"
-                        class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
+                        class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-out/30 bg-out-soft px-1.5 text-out transition-colors hover:border-out"
                         @click="removeMove(m)"
                     >
                         <KIcon name="bin" :size="15" />

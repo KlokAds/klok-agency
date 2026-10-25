@@ -44,6 +44,12 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 icon: 'desk',
                 perm: 'dashboard.view',
             },
+            {
+                label: 'Report / P&L',
+                href: '/reports',
+                icon: 'chart',
+                perm: 'reports.view',
+            },
         ],
     }, // i18n
     {
@@ -113,12 +119,6 @@ const groups: { title?: string; items: NavItem[] }[] = [
                 href: '/payroll',
                 icon: 'user',
                 perm: 'payroll.view',
-            },
-            {
-                label: 'Report / P&L',
-                href: '/reports',
-                icon: 'chart',
-                perm: 'reports.view',
             },
         ],
     },

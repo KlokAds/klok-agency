@@ -180,8 +180,8 @@ class CampaignBilling
         }
 
         app(ClientNotifier::class)->send($campaign->client_id, $what === 'held'
-            ? new AgencyAlert('client_held', ClientNotifier::HELD_TITLE, '{campaign} — Klok Ads ঠিক করছে; এ সময় আপনার টাকা খরচ হচ্ছে না', ['campaign' => $campaign->name], ['url' => '/portal/campaigns/'.$campaign->id]) // i18n
-            : new AgencyAlert('client_back', ClientNotifier::BACK_TITLE, '{campaign} — আবার চলছে', ['campaign' => $campaign->name], ['url' => '/portal/campaigns/'.$campaign->id])); // i18n
+            ? new AgencyAlert('client_held', ClientNotifier::HELD_TITLE, '{campaign} — Klok Ads ঠিক করছে; এ সময় আপনার টাকা খরচ হচ্ছে না', ['campaign' => $campaign->name], ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]) // i18n
+            : new AgencyAlert('client_back', ClientNotifier::BACK_TITLE, '{campaign} — আবার চলছে', ['campaign' => $campaign->name], ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)])); // i18n
     }
 
     /**
