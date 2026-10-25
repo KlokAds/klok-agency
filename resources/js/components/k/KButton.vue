@@ -5,7 +5,7 @@ import KIcon from './KIcon.vue';
 
 const props = withDefaults(
     defineProps<{
-        variant?: 'primary' | 'plain' | 'quiet' | 'danger' | 'ink';
+        variant?: 'primary' | 'plain' | 'quiet' | 'soft' | 'danger' | 'ink';
         size?: 'sm' | 'md' | 'lg';
         icon?: string;
         href?: string;
@@ -29,6 +29,8 @@ const classes = computed(() => [
         primary: 'bg-brand text-white hover:bg-brand-ink dark:text-rail',
         ink: 'bg-ink text-paper hover:bg-ink-2',
         plain: 'border border-line-2 bg-surface text-ink hover:border-ink-3 hover:bg-surface-2',
+        // An edit or change: tinted so it reads as an action, never a grey box.
+        soft: 'border border-brand/30 bg-brand-soft text-brand-ink hover:border-brand',
         // Soft but plainly a button: a light fill, never bare text.
         quiet: 'bg-sunken text-ink-2 hover:bg-line hover:text-ink',
         danger: 'border border-out/30 bg-out-soft text-out hover:border-out hover:bg-out hover:text-white',

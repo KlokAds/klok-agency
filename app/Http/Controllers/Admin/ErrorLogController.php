@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Support\Access;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,7 +17,9 @@ use Inertia\Response;
  */
 class ErrorLogController extends Controller
 {
-    private const SHOW = 60;
+    private const PER_PAGE = 20;
+
+    public const RANGES = ['day', 'week', 'month', 'all'];
 
     public function index(Request $request): Response
     {
@@ -38,7 +41,21 @@ class ErrorLogController extends Controller
 
         usort($entries, fn ($a, $b) => strcmp($b['at'], $a['at']));
 
-        return Inertia::render('admin/Errors', ['entries' => array_slice($entries, 0, self::SHOW)]);
+        // Today, this week, this month or everything the logs still hold; twenty a page.
+        $range = in_array($request->query('range'), self::RANGES, true) ? (string) $request->query('range') : 'week';
+        $since = match ($range) {
+            'day' => now()->startOfDay(),
+            'week' => now()->startOfWeek(),
+            'month' => now()->startOfMonth(),
+            default => null,
+        };
+        $entries = array_values(array_filter($entries, fn ($e) => $since === null || $e['at'] >= $since->format('Y-m-d H:i:s')));
+        $page = max(1, $request->integer('page', 1));
+
+        return Inertia::render('admin/Errors', [
+            'entries' => new LengthAwarePaginator(array_slice($entries, ($page - 1) * self::PER_PAGE, self::PER_PAGE), count($entries), self::PER_PAGE, $page, ['path' => $request->url(), 'query' => $request->query()]),
+            'range' => $range,
+        ]);
     }
 
     /**

@@ -50,11 +50,11 @@ it('shows the Owner what went wrong, and nobody else', function () {
     try {
         $this->actingAs($this->owner)->get('/admin/errors')->assertOk()
             ->assertInertia(fn ($page) => $page->component('admin/Errors')
-                ->where('entries', fn ($entries) => collect($entries)->contains(
+                ->where('entries.data', fn ($entries) => collect($entries)->contains(
                     fn ($e) => $e['message'] === 'Klok Pilot: An internal server error occurred.' && $e['level'] === 'ERROR' && $e['detail'] === '/var/app/app/Services/PilotClient.php:147',
                 ))
                 // INFO lines are not problems.
-                ->where('entries', fn ($entries) => ! collect($entries)->contains('message', 'fine')));
+                ->where('entries.data', fn ($entries) => ! collect($entries)->contains('message', 'fine')));
 
         $this->actingAs($this->anowar)->get('/admin/errors')->assertForbidden();
     } finally {

@@ -273,6 +273,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('errors', [ErrorLogController::class, 'index'])->name('errors.index');
         Route::get('system', [SystemController::class, 'index'])->name('system.index');
         Route::post('system/run/{job}', [SystemController::class, 'run'])->middleware('throttle:10,1')->name('system.run');
+        Route::post('system/pace', [SystemController::class, 'pace'])->name('system.pace');
         Route::get('sms', [PaymentSmsController::class, 'index'])->name('sms.index');
         Route::get('roles', [RoleController::class, 'index'])->middleware('can:roles.view')->name('roles.index');
         Route::post('roles', [RoleController::class, 'store'])->middleware('can:roles.create')->name('roles.store');

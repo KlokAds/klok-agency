@@ -164,7 +164,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
             >
                 <KButton
                     size="sm"
-                    variant="plain"
+                    variant="soft"
                     icon="pen"
                     @click="start(r)"
                     >{{ t('Permission বদলান') }}</KButton
@@ -191,9 +191,47 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                 />
             </KField>
 
-            <!-- The matrix stays a table; on a phone the first column is sticky so the page name
-                 is read while the checkboxes scroll sideways. -->
-            <div class="overflow-x-auto rounded-xl border border-line">
+            <!-- On a phone: one card a page, its permissions as chips that fit the width. -->
+            <ul class="space-y-2 sm:hidden">
+                <li
+                    v-for="m in modules"
+                    :key="m.key"
+                    class="rounded-xl border border-line bg-surface px-3 py-2.5"
+                >
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="font-semibold">{{ m.label }}</p>
+                        <KCheck
+                            :label="t('সব')"
+                            :model-value="moduleFull(m)"
+                            @update:model-value="
+                                (v: boolean) => toggleModule(m, v)
+                            "
+                        />
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <button
+                            v-for="a in m.actions"
+                            :key="a"
+                            type="button"
+                            class="h-8 rounded-lg border px-2.5 text-[13.5px] font-semibold transition-colors"
+                            :class="
+                                has(`${m.key}.${a}`)
+                                    ? 'border-brand bg-brand-soft text-brand-ink'
+                                    : 'border-line-2 text-ink-3'
+                            "
+                            @click="
+                                toggle(`${m.key}.${a}`, !has(`${m.key}.${a}`))
+                            "
+                        >
+                            {{ actions[a] }}
+                        </button>
+                    </div>
+                </li>
+            </ul>
+            <!-- Wider: the matrix as a table. -->
+            <div
+                class="hidden overflow-x-auto rounded-xl border border-line sm:block"
+            >
                 <table class="w-full text-[14.5px]">
                     <thead class="bg-surface-2">
                         <tr>

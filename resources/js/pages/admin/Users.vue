@@ -233,7 +233,7 @@ async function remove(user: User): Promise<void> {
                             >
                             <KButton
                                 size="sm"
-                                variant="plain"
+                                variant="soft"
                                 icon="pen"
                                 @click="start(u)"
                                 >{{ t('বদলান') }}</KButton

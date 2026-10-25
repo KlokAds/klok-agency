@@ -2,10 +2,11 @@
 import SettingsNav from '@/components/SettingsNav.vue';
 import SettingsSection from '@/components/SettingsSection.vue';
 import { Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KIcon from '@/components/k/KIcon.vue';
+import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import { useLiveRefresh } from '@/composables/useLiveRefresh';
 import { ago } from '@/lib/format';
@@ -56,6 +57,22 @@ const props = defineProps<{
 }>();
 
 useLiveRefresh(30);
+
+// The two paces, picked from a list and saved at once.
+const minuteOptions = [1, 2, 3, 5, 10, 15, 30, 60].map((n) => ({
+    value: n,
+    label: t('{n} মিনিট', { n }),
+}));
+const every = ref<number | string | null>(props.pilot.every_minutes);
+const live = ref<number | string | null>(props.pilot.live_minutes);
+function savePace(): void {
+    router.post(
+        '/admin/system/pace',
+        { every: Number(every.value), live: Number(live.value) },
+        { preserveScroll: true },
+    );
+}
+watch([every, live], () => savePace());
 
 const busy = ref<string | null>(null);
 function run(job: string): void {
@@ -177,6 +194,24 @@ const fresh = (iso: string | null, within: number) => {
             <p v-if="pilot.guard_error" class="mt-2 text-[13.5px] text-out">
                 {{ pilot.guard_error }}
             </p>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+                <label class="grid gap-1 text-[13px] text-ink-3"
+                    >{{ t('কেউ না দেখলে, প্রতি') }}
+                    <KSelect
+                        v-model="every"
+                        :options="minuteOptions"
+                        size="sm"
+                    />
+                </label>
+                <label class="grid gap-1 text-[13px] text-ink-3"
+                    >{{ t('কেউ দেখলে, প্রতি') }}
+                    <KSelect
+                        v-model="live"
+                        :options="minuteOptions"
+                        size="sm"
+                    />
+                </label>
+            </div>
             <div class="mt-3 flex flex-wrap gap-2">
                 <KButton
                     size="sm"

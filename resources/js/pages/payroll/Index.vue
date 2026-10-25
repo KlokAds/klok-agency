@@ -395,6 +395,7 @@ const shortMonth = (ym: string) =>
                                 <KButton
                                     v-if="can['payroll.edit']"
                                     size="sm"
+                                    variant="soft"
                                     icon="pen"
                                     @click="startEmployee(e)"
                                     >{{ t('বদলান') }}</KButton

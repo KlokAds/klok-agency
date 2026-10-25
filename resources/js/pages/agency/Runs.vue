@@ -473,6 +473,7 @@ onMounted(() => {
                     <KButton
                         v-if="can['runs.edit']"
                         size="sm"
+                        variant="soft"
                         icon="pen"
                         class="h-9 shrink-0"
                         @click="startEdit(run)"

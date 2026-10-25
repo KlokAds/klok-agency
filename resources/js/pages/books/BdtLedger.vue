@@ -398,7 +398,7 @@ const needsClient = computed(() =>
                                     <button
                                         v-if="can['bdt.edit']"
                                         type="button"
-                                        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[13px] font-semibold text-ink-3 hover:bg-sunken hover:text-ink"
+                                        class="inline-flex h-8 items-center gap-1 rounded-md border border-brand/30 bg-brand-soft px-2 text-[13px] font-semibold text-brand-ink transition-colors hover:border-brand"
                                         @click="startEdit(row)"
                                     >
                                         <KIcon name="pen" :size="15" />{{
@@ -408,7 +408,7 @@ const needsClient = computed(() =>
                                     <button
                                         v-if="can['bdt.delete']"
                                         type="button"
-                                        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[13px] font-semibold text-ink-3 hover:bg-out-soft hover:text-out"
+                                        class="inline-flex h-8 items-center gap-1 rounded-md border border-out/30 bg-out-soft px-2 text-[13px] font-semibold text-out transition-colors hover:border-out"
                                         @click="remove(row)"
                                     >
                                         <KIcon name="bin" :size="15" />{{

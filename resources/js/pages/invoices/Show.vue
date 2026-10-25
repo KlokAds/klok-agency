@@ -262,6 +262,7 @@ const PAY_STATUS: Record<
             }}</KButton>
             <KButton
                 v-if="invoice.editable && can['clients.edit']"
+                variant="soft"
                 icon="pen"
                 :href="`/invoices/${invoice.uid}/edit`"
                 >{{ t('বদলান') }}</KButton

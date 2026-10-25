@@ -38,7 +38,39 @@ function resize(size: number): void {
 
 const prev = computed(() => props.page.links[0]);
 const next = computed(() => props.page.links[props.page.links.length - 1]);
-const numbers = computed(() => props.page.links.slice(1, -1));
+
+// A short window of pages: the first, the last, the current one and its neighbours; a gap is
+// written as "…". The links come from the server, so the query stays as it is.
+const numbers = computed(() => {
+    const links = props.page.links.slice(1, -1);
+    const byLabel = new Map(links.map((l) => [l.label, l]));
+    const cur = props.page.current_page;
+    const last = props.page.last_page;
+    const wanted = [...new Set([1, cur - 1, cur, cur + 1, last])]
+        .filter((n) => n >= 1 && n <= last)
+        .sort((x, y) => x - y);
+    const out: {
+        key: string;
+        label: string;
+        url: string | null;
+        active: boolean;
+    }[] = [];
+    let before = 0;
+    for (const n of wanted) {
+        if (n - before > 1) {
+            out.push({ key: `gap${n}`, label: '…', url: null, active: false });
+        }
+        const link = byLabel.get(String(n));
+        out.push({
+            key: String(n),
+            label: String(n),
+            url: link?.url ?? null,
+            active: n === cur,
+        });
+        before = n;
+    }
+    return out;
+});
 </script>
 
 <template>
@@ -72,7 +104,7 @@ const numbers = computed(() => props.page.links.slice(1, -1));
             >
                 <KIcon name="back" :size="16" />
             </component>
-            <template v-for="(link, i) in numbers" :key="i">
+            <template v-for="link in numbers" :key="link.key">
                 <Link
                     v-if="link.url"
                     :href="link.url"

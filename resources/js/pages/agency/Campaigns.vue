@@ -753,7 +753,7 @@ function sync(): void {
                                         <KButton
                                             v-if="can['clients.edit']"
                                             size="sm"
-                                            variant="plain"
+                                            variant="soft"
                                             icon="pen"
                                             @click="startLink(c)"
                                             >{{ t('Client বদলান') }}</KButton

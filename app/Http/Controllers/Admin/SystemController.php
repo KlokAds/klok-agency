@@ -52,8 +52,8 @@ class SystemController extends Controller
                 'connected' => PilotClient::connected(),
                 'url' => PilotClient::url(),
                 'spend_synced' => Setting::get('pilot_spend_synced_at'),
-                'every_minutes' => CampaignBilling::SYNC_MINUTES,
-                'live_minutes' => CampaignBilling::LIVE_MINUTES,
+                'every_minutes' => CampaignBilling::syncMinutes(),
+                'live_minutes' => CampaignBilling::liveMinutes(),
                 'watching' => CampaignBilling::watching(),
                 'failures' => (int) Cache::get('pilot:failures', 0),
                 'guard' => CampaignLimits::enabled(),
@@ -77,6 +77,22 @@ class SystemController extends Controller
             'errors_today' => $errorsToday,
             'now' => CarbonImmutable::now()->toIso8601String(),
         ]);
+    }
+
+    /** How often spend is read from Pilot: when nobody is looking, and while someone is. */
+    public function pace(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole(Access::OWNER), 403);
+        $data = $request->validate([
+            'every' => ['required', 'integer', 'min:1', 'max:60'],
+            'live' => ['required', 'integer', 'min:1', 'max:60'],
+        ]);
+        Setting::put('pilot_sync_minutes', (int) $data['every']);
+        Setting::put('pilot_live_minutes', min((int) $data['live'], (int) $data['every']));
+        Cache::forget('pilot:spend-sync');
+        $this->toast(__('Sync-এর সময় রাখা হলো।'));
+
+        return back();
     }
 
     /** One job, now: the tick, the spend sync, the receipts, or the timer itself. */

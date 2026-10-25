@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import SettingsNav from '@/components/SettingsNav.vue';
-import { ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KIcon from '@/components/k/KIcon.vue';
+import KPager from '@/components/k/KPager.vue';
+import KSegment from '@/components/k/KSegment.vue';
 import KTag from '@/components/k/KTag.vue';
 import { ago, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import type { Paginated } from '@/types';
 
 type Entry = {
     at: string;
@@ -16,7 +20,23 @@ type Entry = {
     source: 'server' | 'app';
 };
 
-defineProps<{ entries: Entry[] }>();
+const props = defineProps<{ entries: Paginated<Entry>; range: string }>();
+
+// Today, this week, this month, or everything.
+const ranges = [
+    { value: 'day', label: t('আজ') },
+    { value: 'week', label: t('এই সপ্তাহ') },
+    { value: 'month', label: t('এই মাস') },
+    { value: 'all', label: t('সব') },
+];
+const range = ref<string | number | null>(props.range);
+watch(range, (r) =>
+    router.get(
+        '/admin/errors',
+        { range: r },
+        { preserveScroll: true, preserveState: true },
+    ),
+);
 
 const opened = ref<number | null>(null);
 
@@ -47,10 +67,13 @@ function plain(e: Entry): string | null {
         "
     />
 
-    <KEmpty v-if="!entries.length" :title="t('কোনো সমস্যা নেই')" />
+    <div class="mb-4">
+        <KSegment v-model="range" :options="ranges" size="sm" />
+    </div>
+    <KEmpty v-if="!entries.data.length" :title="t('কোনো সমস্যা নেই')" />
 
     <ul v-else class="panel divide-y divide-line">
-        <li v-for="(e, i) in entries" :key="i">
+        <li v-for="(e, i) in entries.data" :key="i">
             <button
                 type="button"
                 class="flex w-full items-start gap-3 px-4 py-3.5 text-left hover:bg-sunken sm:px-6"
@@ -98,4 +121,7 @@ function plain(e: Entry): string | null {
                 >{{ e.detail }}</pre>
         </li>
     </ul>
+    <div class="panel mt-4 overflow-hidden">
+        <KPager :page="entries" />
+    </div>
 </template>

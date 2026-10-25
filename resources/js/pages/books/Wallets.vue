@@ -308,6 +308,7 @@ async function removeMove(move: Move): Promise<void> {
         <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <KButton
                 v-if="can['bdt.edit']"
+                variant="soft"
                 icon="pen"
                 @click="
                     startPlace(null);
@@ -693,12 +694,16 @@ async function removeMove(move: Move): Promise<void> {
                         ></span
                     >
                 </span>
-                <KButton size="sm" icon="pen" @click="startPlace(w)">{{
-                    t('বদলান')
-                }}</KButton>
+                <KButton
+                    size="sm"
+                    variant="soft"
+                    icon="pen"
+                    @click="startPlace(w)"
+                    >{{ t('বদলান') }}</KButton
+                >
                 <button
                     type="button"
-                    class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-[13.5px] font-semibold whitespace-nowrap text-ink-3 hover:bg-out-soft hover:text-out"
+                    class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-out/30 bg-out-soft px-2.5 text-[13.5px] font-semibold whitespace-nowrap text-out transition-colors hover:border-out"
                     @click="removePlace(w)"
                 >
                     <KIcon name="bin" :size="15" />{{ t('মুছুন') }}

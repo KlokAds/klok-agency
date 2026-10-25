@@ -270,7 +270,7 @@ class CampaignController extends Controller
             }
 
             $result = $billing->sync();
-            Cache::put('pilot:spend-sync', true, CampaignBilling::SYNC_MINUTES * 60);
+            Cache::put('pilot:spend-sync', true, CampaignBilling::syncMinutes() * 60);
             $this->toast(__('Klok Pilot থেকে আনা হলো — :countটা campaign-এর খরচ মিলানো হয়েছে।', ['count' => $result['campaigns']]));
         } catch (RuntimeException $e) {
             $this->toast($e->getMessage(), 'error');

@@ -206,5 +206,10 @@
     "Meta receipt আর card charge দেখা হলো।": "Meta receipts and card charges checked.",
     "Timer আবার চালু করা হলো।": "Timer restarted.",
     "এখন কেউ দেখছে — প্রতি মিনিটে": "Someone is looking: every minute",
-    "প্রতি {n} মিনিটে Meta → Pilot → এখানে: আজকের খরচ, result, campaign-এর অবস্থা; কেউ পাতা খুলে রাখলে প্রতি {m} মিনিটে, তখন Pilot আজকের হিসাব Meta থেকে আগে পড়ে নেয়। Credit guard {state}।": "Every {n} minutes Meta → Pilot → here: today's spend, results and each campaign's state; every {m} minute while someone has a page open, when Pilot first reads today from Meta. Credit guard {state}."
+    "প্রতি {n} মিনিটে Meta → Pilot → এখানে: আজকের খরচ, result, campaign-এর অবস্থা; কেউ পাতা খুলে রাখলে প্রতি {m} মিনিটে, তখন Pilot আজকের হিসাব Meta থেকে আগে পড়ে নেয়। Credit guard {state}।": "Every {n} minutes Meta → Pilot → here: today's spend, results and each campaign's state; every {m} minute while someone has a page open, when Pilot first reads today from Meta. Credit guard {state}.",
+    "কেউ না দেখলে, প্রতি": "Nobody looking: every",
+    "কেউ দেখলে, প্রতি": "Someone looking: every",
+    "Sync-এর সময় রাখা হলো।": "Sync pace saved.",
+    "এই সপ্তাহ": "This week",
+    "এই মাস": "This month"
 }

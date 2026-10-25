@@ -240,10 +240,22 @@ class CampaignBilling
         return Cache::has('agency:watching');
     }
 
-    /** Runs the sync at most every SYNC_MINUTES, or every LIVE_MINUTES while someone is looking. */
+    /** Minutes between syncs when nobody is looking — as set on the System page. */
+    public static function syncMinutes(): int
+    {
+        return max(1, min(60, (int) (Setting::get('pilot_sync_minutes') ?? self::SYNC_MINUTES)));
+    }
+
+    /** Minutes between syncs while someone has a page open. */
+    public static function liveMinutes(): int
+    {
+        return max(1, min(self::syncMinutes(), (int) (Setting::get('pilot_live_minutes') ?? self::LIVE_MINUTES)));
+    }
+
+    /** Runs the sync at most every syncMinutes(), or every liveMinutes() while someone is looking. */
     public function syncIfDue(): bool
     {
-        $minutes = self::watching() ? self::LIVE_MINUTES : self::SYNC_MINUTES;
+        $minutes = self::watching() ? self::liveMinutes() : self::syncMinutes();
         if (! PilotClient::connected() || ! Cache::add('pilot:spend-sync', true, $minutes * 60)) {
             return false;
         }
