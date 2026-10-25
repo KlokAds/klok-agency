@@ -265,5 +265,15 @@
     "{date}-এ শেষ হয়েছে": "due {date}, overdue",
     "{date}-এর মধ্যে": "by {date}",
     "সব invoice পরিশোধ হয়েছে": "All invoices paid",
-    "আজকের হিসাব Meta থেকে এখনো আসেনি — Meta দিনের খরচ কিছুক্ষণ পর পর জানায়; গতকাল বা ৭ দিন দেখুন।": "Today's figures have not come from Meta yet; Meta reports the day's spend a little at a time. Look at yesterday or 7 days."
+    "আজকের হিসাব Meta থেকে এখনো আসেনি — Meta দিনের খরচ কিছুক্ষণ পর পর জানায়; গতকাল বা ৭ দিন দেখুন।": "Today's figures have not come from Meta yet; Meta reports the day's spend a little at a time. Look at yesterday or 7 days.",
+    "Campaign শেষ হয়েছে": "Campaign ended",
+    "Campaign-এর দিনের budget বদলেছে": "Campaign's daily budget changed",
+    "{campaign} — আর ১ ঘণ্টা: {time}। চালু রাখতে চাইলে এখনই pay করুন।": "{campaign}: 1 hour left, {time}. Pay now to keep it running.",
+    "{campaign} — আর ৩ ঘণ্টা: {time}। চালু রাখতে চাইলে invoice pay করুন।": "{campaign}: 3 hours left, {time}. Pay the invoice to keep it running.",
+    "{campaign} — আর ৪ ঘণ্টা: {time}। চালু রাখতে চাইলে invoice pay করুন।": "{campaign}: 4 hours left, {time}. Pay the invoice to keep it running.",
+    "{campaign} — আজ শেষ দিন: {time}। চালু রাখতে চাইলে invoice pay করুন।": "{campaign}: last day today, {time}. Pay the invoice to keep it running.",
+    "{campaign} — কাল শেষ: {time}। চালু রাখতে চাইলে invoice pay করুন।": "{campaign}: ends tomorrow, {time}. Pay the invoice to keep it running.",
+    "{campaign} — পরশু শেষ: {time}। চালু রাখতে চাইলে invoice pay করুন।": "{campaign}: ends the day after tomorrow, {time}. Pay the invoice to keep it running.",
+    "{campaign} — {days} দিনে খরচ {spend} · {results}টা result। আবার চালাতে চাইলে invoice pay করুন।": "{campaign}: {spend} over {days} days · {results} results. Pay an invoice to run it again.",
+    "{campaign} — দিনে {from} → {to}": "{campaign}: {from} → {to} a day"
 }

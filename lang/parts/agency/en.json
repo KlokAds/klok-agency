@@ -231,5 +231,13 @@
     "এই সময়ে": "This period",
     "Client নেই": "No client",
     "{linked}/{total} টা যুক্ত": "{linked}/{total} linked",
-    "আজকের হিসাব Meta থেকে এখনো আসেনি — Meta দিনের খরচ কিছুক্ষণ পর পর জানায়; গতকাল বা ৭ দিন দেখুন।": "Today's figures have not come from Meta yet; Meta reports the day's spend a little at a time. Look at yesterday or 7 days."
+    "আজকের হিসাব Meta থেকে এখনো আসেনি — Meta দিনের খরচ কিছুক্ষণ পর পর জানায়; গতকাল বা ৭ দিন দেখুন।": "Today's figures have not come from Meta yet; Meta reports the day's spend a little at a time. Look at yesterday or 7 days.",
+    "Campaign শেষ হয়েছে": "Campaign ended",
+    "{client} · {campaign} — আর ১ ঘণ্টা: {time}": "{client} · {campaign}: 1 hour left, {time}",
+    "{client} · {campaign} — আর ৩ ঘণ্টা: {time}": "{client} · {campaign}: 3 hours left, {time}",
+    "{client} · {campaign} — আর ৪ ঘণ্টা: {time}": "{client} · {campaign}: 4 hours left, {time}",
+    "{client} · {campaign} — আজ শেষ দিন: {time}": "{client} · {campaign}: last day today, {time}",
+    "{client} · {campaign} — {days} দিনে খরচ {spend} · {results}টা result": "{client} · {campaign}: {spend} over {days} days · {results} results",
+    "{lines}মোট খরচ {spend} · {results}টা result{cpr}": "{lines}Total {spend} · {results} results{cpr}",
+    "{lines}খরচ {spend} · {results}টা result{cpr}": "{lines}spend {spend} · {results} results{cpr}"
 }

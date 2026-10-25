@@ -322,6 +322,15 @@ class CampaignLimits
 
         activity('Campaign')->performedOn($campaign)->causedBy($by)
             ->withProperties(['from' => $was, 'to' => $cents])->log('budget');
+
+        if ($campaign->client_id !== null && $was !== $cents) {
+            $currency = $campaign->account?->currency;
+            app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_budget', ClientNotifier::BUDGET_TITLE, '{campaign} — দিনে {from} → {to}', [ // i18n
+                'campaign' => $campaign->name,
+                'from' => CampaignAlerts::money((int) $was, $currency),
+                'to' => CampaignAlerts::money($cents, $currency),
+            ], ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]));
+        }
     }
 
     /** What the client did, in the log and to the people who run the ads. */

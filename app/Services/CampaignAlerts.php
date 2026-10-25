@@ -26,7 +26,10 @@ class CampaignAlerts
     public const CREDIT_TITLE = 'Client-এর টাকা শেষের দিকে'; // i18n
 
     /** "About to stop": this many hours before its end. */
-    public const SOON_HOURS = 3;
+    /** The last-day reminder goes out from this hour. */
+    public const MORNING = '09:00';
+
+    public const ENDED_TITLE = 'Campaign শেষ হয়েছে'; // i18n
 
     /** A prepaid client hears of it when their money lasts less than this many days. */
     public const CREDIT_DAYS = 2;
@@ -41,6 +44,7 @@ class CampaignAlerts
     public function run(): void
     {
         $this->ending();
+        $this->ended();
 
         if (Cache::add('campaign-alerts:credit:'.now()->format('Y-m-d-H'), true, 3600)) {
             $this->creditLow();
@@ -65,8 +69,12 @@ class CampaignAlerts
             $stop = CarbonImmutable::parse($campaign->stop_at)->setTimezone(config('app.timezone'));
             $days = (int) $now->startOfDay()->diffInDays($campaign->lastDay(), false);
 
+            $morning = $now->format('H:i') >= self::MORNING;
             [$stage, $body] = match (true) {
-                $stop->lte($now->addHours(self::SOON_HOURS)) => ['soon', '{client} · {campaign} — কয়েক ঘণ্টার মধ্যে: {time}'], // i18n
+                $stop->lte($now->addHour()) => ['h1', '{client} · {campaign} — আর ১ ঘণ্টা: {time}'], // i18n
+                $stop->lte($now->addHours(3)) => ['h3', '{client} · {campaign} — আর ৩ ঘণ্টা: {time}'], // i18n
+                $stop->lte($now->addHours(4)) => ['h4', '{client} · {campaign} — আর ৪ ঘণ্টা: {time}'], // i18n
+                $morning && $days === 0 => ['d0', '{client} · {campaign} — আজ শেষ দিন: {time}'], // i18n
                 $evening && $days === 1 => ['d1', '{client} · {campaign} — কাল শেষ: {time}'], // i18n
                 $evening && $days === 2 => ['d2', '{client} · {campaign} — পরশু শেষ: {time}'], // i18n
                 default => [null, null],
@@ -84,9 +92,54 @@ class CampaignAlerts
                 'time' => $campaign->stopsText(),
             ], ['url' => '/campaigns?account='.$campaign->pilot_account_id]));
             // The client hears too, in the same plain words.
-            app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_ending', ClientNotifier::ENDING_TITLE, '{campaign} — {time}। চালু রাখতে চাইলে invoice pay করুন।', [ // i18n
+            $clientBody = match ($stage) {
+                'h1' => '{campaign} — আর ১ ঘণ্টা: {time}। চালু রাখতে চাইলে এখনই pay করুন।', // i18n
+                'h3' => '{campaign} — আর ৩ ঘণ্টা: {time}। চালু রাখতে চাইলে invoice pay করুন।', // i18n
+                'h4' => '{campaign} — আর ৪ ঘণ্টা: {time}। চালু রাখতে চাইলে invoice pay করুন।', // i18n
+                'd0' => '{campaign} — আজ শেষ দিন: {time}। চালু রাখতে চাইলে invoice pay করুন।', // i18n
+                'd1' => '{campaign} — কাল শেষ: {time}। চালু রাখতে চাইলে invoice pay করুন।', // i18n
+                default => '{campaign} — পরশু শেষ: {time}। চালু রাখতে চাইলে invoice pay করুন।', // i18n
+            };
+            app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_ending', ClientNotifier::ENDING_TITLE, $clientBody, [
                 'campaign' => $campaign->name, 'time' => $campaign->stopsText(),
             ], ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]));
+            $sent++;
+        }
+
+        return $sent;
+    }
+
+    /**
+     * A client's campaign whose end has passed: once, what it did in all — to the client and to
+     * whoever runs the ads.
+     *
+     * @return int how many went out
+     */
+    public function ended(): int
+    {
+        $now = CarbonImmutable::now();
+        $sent = 0;
+
+        $campaigns = Campaign::with(['client', 'account'])->whereNotNull('client_id')->whereNotNull('bill_from')
+            ->whereNotNull('stop_at')->where('stop_at', '<=', $now)->where('stop_at', '>=', $now->subDays(2))->get();
+
+        foreach ($campaigns as $campaign) {
+            $stop = CarbonImmutable::parse($campaign->stop_at);
+            if (! Cache::add("campaign-alerts:ended:{$campaign->id}:{$stop->timestamp}", true, now()->addDays(30))) {
+                continue;
+            }
+            $days = CampaignDay::where('campaign_id', $campaign->id)->whereDate('day', '>=', $campaign->bill_from->toDateString())->get();
+            $params = [
+                'client' => $campaign->client?->name,
+                'campaign' => $campaign->name,
+                'spend' => self::money((int) $days->sum('spend'), $campaign->account?->currency),
+                'results' => (int) $days->sum('results'),
+                'days' => $days->where('spend', '>', 0)->count(),
+            ];
+            $this->notifier->send($campaign->client?->manager_id, new AgencyAlert('campaign_ended', self::ENDED_TITLE, '{client} · {campaign} — {days} দিনে খরচ {spend} · {results}টা result', $params, // i18n
+                ['url' => '/campaigns/'.($campaign->slug ?? $campaign->id)]));
+            app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_ended', ClientNotifier::ENDED_TITLE, '{campaign} — {days} দিনে খরচ {spend} · {results}টা result। আবার চালাতে চাইলে invoice pay করুন।', $params, // i18n
+                ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]));
             $sent++;
         }
 
@@ -122,8 +175,16 @@ class CampaignAlerts
             $currency = $rows->first()->campaign->account?->currency;
             $spend = (int) $rows->sum('spend');
             $results = (int) $rows->sum('results');
+            // Each campaign on its own line when there is more than one, then the day's total.
+            $lines = $rows->count() > 1
+                ? $rows->map(fn (CampaignDay $d) => $d->campaign->name.' — '.self::money((int) $d->spend, $currency).' · '.(int) $d->results)->implode("\n")."\n"
+                : $rows->first()->campaign->name.' — ';
 
-            app(ClientNotifier::class)->send((int) $clientId, new AgencyAlert('client_summary', ClientNotifier::SUMMARY_TITLE, 'খরচ {spend} · {results}টা result{cpr}', [ // i18n
+            $body = $rows->count() > 1
+                ? '{lines}মোট খরচ {spend} · {results}টা result{cpr}' // i18n
+                : '{lines}খরচ {spend} · {results}টা result{cpr}'; // i18n
+            app(ClientNotifier::class)->send((int) $clientId, new AgencyAlert('client_summary', ClientNotifier::SUMMARY_TITLE, $body, [
+                'lines' => $lines,
                 'spend' => self::money($spend, $currency),
                 'results' => $results,
                 'cpr' => $results > 0 ? ' · '.__('প্রতি result :amount', ['amount' => self::money((int) round($spend / $results), $currency)]) : '',
