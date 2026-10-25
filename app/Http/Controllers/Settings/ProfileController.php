@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Notifications\AgencyAlert;
 use App\Services\Notifier;
 use App\Support\Access;
 use App\Support\MailSettings;
@@ -15,6 +16,8 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public const CLIENT_CHANGED_TITLE = 'Client নিজের তথ্য বদলেছেন'; // i18n
+
     public function edit(Request $request): Response
     {
         $user = $request->user();
@@ -22,6 +25,7 @@ class ProfileController extends Controller
 
         return Inertia::render('settings/Profile', [
             'status' => $request->session()->get('status'),
+            'details' => $user->only(['email', 'phone', 'company']),
             // Each group: whether it reaches this person at all (their role's permission, or an
             // Owner's choice), and how — phone, email — as they set it.
             'notify' => [
@@ -60,7 +64,17 @@ class ProfileController extends Controller
 
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->update(['name' => $request->validated('name')]);
+        $user = $request->user();
+        $user->fill($request->validated());
+        $changed = array_keys($user->getDirty());
+        $user->save();
+
+        // A client changed their own details: the agency hears, so it knows who it is talking to.
+        if ($user->isClient() && $changed !== []) {
+            app(Notifier::class)->send(null, new AgencyAlert('portal_profile', self::CLIENT_CHANGED_TITLE, '{name} · {client} · {what}', [
+                'name' => $user->name, 'client' => $user->client->name ?? '—', 'what' => implode(', ', $changed),
+            ], ['url' => $user->client_id ? '/clients/'.$user->client_id : '/clients']));
+        }
 
         $this->toast(__('Profile আপডেট হয়েছে।'));
 

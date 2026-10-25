@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
+use App\Notifications\AgencyAlert;
+use App\Providers\FortifyServiceProvider;
+use App\Services\Notifier;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -62,9 +64,17 @@ class SecurityController extends Controller
             'must_change_password' => false,
         ]);
 
-        // Any other device signed in with the old password is signed out.
-        DB::table('sessions')->where('user_id', $user->id)->where('id', '!=', $request->session()->getId())->delete();
+        // Any other device signed in with the old password is signed out; this one stays, and
+        // its "keep me signed in" cookie is made again with the new password — the old one would
+        // no longer sign it in, so an app update (which restarts the app) signed it out.
+        FortifyServiceProvider::signOutElsewhere($user, true);
         activity('Auth')->causedBy($user)->log('password changed');
+
+        if ($user->isClient()) {
+            app(Notifier::class)->send(null, new AgencyAlert('portal_profile', ProfileController::CLIENT_CHANGED_TITLE, '{name} · {client} · password', [
+                'name' => $user->name, 'client' => $user->client->name ?? '—',
+            ], ['url' => $user->client_id ? '/clients/'.$user->client_id : '/clients']));
+        }
 
         $this->toast(__('Password বদলানো হয়েছে। অন্য সব device থেকে sign out করা হলো।'));
 

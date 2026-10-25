@@ -87,10 +87,13 @@ it('shows a linked client only their own campaigns, spend over a period, and inv
     $this->actingAs($user->fresh())->get("/portal/campaigns/{$this->theirs->id}")->assertNotFound();
 
     $line = ['kind' => 'service', 'description' => 'Page', 'usd' => null, 'rate' => null, 'amount' => 100000, 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null];
+    $shared = app(Invoices::class)->save(['client_id' => $this->gffs->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null, 'items' => [$line]]);
+    app(Invoices::class)->markSent($shared);
+    // Made but never sent: the client does not see it.
     app(Invoices::class)->save(['client_id' => $this->gffs->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null, 'items' => [$line]]);
     app(Invoices::class)->save(['client_id' => $this->other->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null, 'items' => [$line]]);
     $this->actingAs($user->fresh())->get('/portal/invoices')
-        ->assertInertia(fn ($page) => $page->component('portal/Invoices')->has('invoices', 1)->where('invoices.0.number', Invoice::where('client_id', $this->gffs->id)->value('number')));
+        ->assertInertia(fn ($page) => $page->component('portal/Invoices')->has('invoices', 1)->where('invoices.0.number', $shared->number));
 
     // Unlinked: back to waiting.
     $this->actingAs($this->owner)->delete("/clients/{$this->gffs->id}/portal-users/{$user->id}")->assertRedirect();
@@ -131,6 +134,28 @@ it('tells the client of a new invoice, its payment, the day\'s result and a camp
     $this->actingAs($user->fresh())->get('/portal/notifications')
         ->assertInertia(fn ($page) => $page->component('portal/Notifications')->has('notifications', 4));
     expect($user->fresh()->unreadNotifications()->count())->toBe(0);
+});
+
+it('lets a client change their own name, email, phone and password, and tells the Owner', function () {
+    $user = signUp();
+    $user->forceFill(['client_id' => $this->gffs->id])->save();
+
+    $this->actingAs($user->fresh())->patch('/settings/profile', [
+        'name' => 'Akbor Hossain', 'email' => 'akbor@gffs.test', 'phone' => '01812345678', 'company' => 'GFFS',
+    ])->assertRedirect();
+
+    expect($user->fresh())->name->toBe('Akbor Hossain')->email->toBe('akbor@gffs.test')->phone->toBe('01812345678')
+        ->and($this->owner->notifications()->where('data->kind', 'portal_profile')->sole()->data['params']['what'])->toContain('email');
+
+    $this->actingAs($user->fresh())->withSession(['auth.password_confirmed_at' => time()])->put('/settings/password', [
+        'current_password' => 'secret-pass-1', 'password' => 'newpass-123', 'password_confirmation' => 'newpass-123',
+    ])->assertRedirect();
+    expect($this->owner->notifications()->where('data->kind', 'portal_profile')->count())->toBe(2);
+
+    // The team cannot change their own sign-in email here.
+    $this->owner->forceFill(['email' => 'owner@klok.test'])->save();
+    $this->actingAs($this->owner)->patch('/settings/profile', ['name' => 'Owner', 'email' => 'other@klok.test'])->assertRedirect();
+    expect($this->owner->fresh()->email)->toBe('owner@klok.test');
 });
 
 it('does not let anyone link a staff account to a client', function () {

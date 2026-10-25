@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Audited;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -134,6 +135,17 @@ class Invoice extends Model
     public function isEditable(): bool
     {
         return $this->status === 'sent' && (int) $this->paid === 0;
+    }
+
+    /**
+     * What the client has been given: shared with them (sent by link, WhatsApp or email) or paid.
+     * One made but never sent stays the agency's own until it is.
+     *
+     * @param  Builder<Invoice>  $query
+     */
+    public function scopeShared(Builder $query): void
+    {
+        $query->where('status', '!=', 'draft')->where(fn (Builder $q) => $q->whereNotNull('sent_at')->orWhere('paid', '>', 0));
     }
 
     /** Still to pay, and its due date has passed. */

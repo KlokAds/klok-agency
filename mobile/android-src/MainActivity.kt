@@ -18,6 +18,15 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
+    /**
+     * Android writes the web cookies to the phone only now and then; an update or a kill in
+     * between lost the newest "keep me signed in" cookie. Written whenever the app leaves the screen.
+     */
+    override fun onPause() {
+        super.onPause()
+        android.webkit.CookieManager.getInstance().flush()
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "klok/sms").setMethodCallHandler { call, result ->

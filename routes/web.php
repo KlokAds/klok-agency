@@ -83,6 +83,8 @@ Route::middleware('throttle:12,1')->group(function () {
     Route::post('r/{token}/choose', [PublicRenewalController::class, 'choose'])->name('renewal.public.choose');
     Route::post('r/{token}/decline', [PublicRenewalController::class, 'decline'])->name('renewal.public.decline');
     Route::post('i/{token}/cancel', [PublicInvoiceController::class, 'cancel'])->name('invoice.public.cancel');
+    Route::post('i/{token}/days', [PublicInvoiceController::class, 'days'])->name('invoice.public.days');
+    Route::post('i/{token}/stop', [PublicInvoiceController::class, 'stop'])->name('invoice.public.stop');
 });
 Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1')->name('invoice.public.claim');
 
@@ -95,6 +97,8 @@ Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->grou
     Route::get('/', [PortalController::class, 'home'])->name('home');
     Route::get('campaigns', [PortalController::class, 'campaigns'])->name('campaigns');
     Route::get('campaigns/{campaign}', [PortalController::class, 'campaign'])->name('campaign');
+    Route::post('campaigns/{campaign}/renew', [PortalController::class, 'renew'])->middleware('throttle:10,1')->name('campaign.renew');
+    Route::post('campaigns/{campaign}/stop', [PortalController::class, 'stop'])->middleware('throttle:10,1')->name('campaign.stop');
     Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
     Route::get('notifications', [PortalController::class, 'notifications'])->name('notifications');
 });

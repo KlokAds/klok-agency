@@ -39,6 +39,14 @@ function bridge() {
     ).flutter_inappwebview;
 }
 
+/** Inside the KlokOne app: its own settings (fingerprint / PIN lock). */
+const inApp =
+    typeof navigator !== 'undefined' &&
+    /KlokFinanceApp/.test(navigator.userAgent);
+function appSettings(): void {
+    void bridge()?.callHandler('appSettings');
+}
+
 async function logout(): Promise<void> {
     await bridge()
         ?.callHandler('signingOut')
@@ -91,14 +99,14 @@ async function logout(): Promise<void> {
                 </Link>
                 <button
                     type="button"
-                    class="h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken"
+                    class="hidden h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken sm:block"
                     @click="switchLocale(locale === 'en' ? 'bn' : 'en')"
                 >
                     {{ otherLanguage }}
                 </button>
                 <button
                     type="button"
-                    class="grid size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken"
+                    class="hidden size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken sm:grid"
                     :aria-label="
                         resolvedAppearance === 'dark'
                             ? 'Light mode'
@@ -113,6 +121,15 @@ async function logout(): Promise<void> {
                     <KIcon
                         :name="resolvedAppearance === 'dark' ? 'sun' : 'moon'"
                     />
+                </button>
+                <button
+                    v-if="inApp"
+                    type="button"
+                    class="grid size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken"
+                    :aria-label="t('App-এর setting')"
+                    @click="appSettings"
+                >
+                    <KIcon name="shield" />
                 </button>
                 <Link
                     href="/settings/profile"

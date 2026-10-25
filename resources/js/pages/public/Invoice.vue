@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     computed,
     onBeforeUnmount,
@@ -15,6 +15,7 @@ import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import { money, niceDate } from '@/lib/format';
+import { confirmAction } from '@/lib/feedback';
 import { HttpError, getJson, postJson } from '@/lib/http';
 import { locale, switchLocale, t } from '@/lib/i18n';
 
@@ -59,6 +60,14 @@ type State = {
         reference: string | null;
         at: string;
     }[];
+    renewal?: {
+        declined: boolean;
+        days?: number | null;
+        budget?: number | null;
+        rate?: number | null;
+        campaign?: string | null;
+        stops?: string | null;
+    } | null;
 };
 
 // The client's invoice: read it, print it, pay it. A wallet payment opens a
@@ -216,6 +225,64 @@ const payNow = ref('');
 const takaSign = String.fromCharCode(0x09f3);
 const payNowError = ref<string | null>(null);
 
+// A renewal's invoice: the client picks the days here; the total follows at this invoice's rate.
+const dayChoices = [7, 15, 30];
+const daysBusy = ref(false);
+const daysError = ref<string | null>(null);
+const pickDays = ref<number | null>(null);
+const daysPrice = (d: number) =>
+    state.value.renewal?.budget && state.value.renewal.rate
+        ? Math.round(state.value.renewal.budget * d * state.value.renewal.rate)
+        : null;
+
+const errorText = (e: unknown) =>
+    e instanceof HttpError
+        ? (Object.values(e.errors)[0]?.[0] ?? t('হলো না — আবার চেষ্টা করুন।'))
+        : t('হলো না — আবার চেষ্টা করুন।');
+
+// Signed in (a client in the app, or the team): a way back to their own home.
+const signedIn = computed(() => Boolean(usePage().props.auth?.user));
+
+async function setDays(d: number): Promise<void> {
+    const days = Math.min(90, Math.max(1, Math.round(d)));
+    if (days === state.value.renewal?.days) {
+        return;
+    }
+    acted++;
+    daysBusy.value = true;
+    daysError.value = null;
+    try {
+        state.value = await postJson<State>(`${base}/days`, { days });
+        chosen.value = null;
+        // The invoice's lines and total changed: the page shows the new ones.
+        router.reload({ only: ['invoice'] });
+    } catch (e) {
+        daysError.value = errorText(e);
+    } finally {
+        daysBusy.value = false;
+    }
+}
+
+async function stopRenewal(): Promise<void> {
+    if (
+        !(await confirmAction({
+            title: t('এই campaign আর চালাবেন না?'),
+            body: t('Invoice বাতিল হবে, campaign তার তারিখে থেমে যাবে।'),
+            confirm: t('হ্যাঁ, থামবে'),
+            danger: true,
+        }))
+    ) {
+        return;
+    }
+    acted++;
+    try {
+        state.value = await postJson<State>(`${base}/stop`, {});
+        router.reload({ only: ['invoice'] });
+    } catch (e) {
+        daysError.value = errorText(e);
+    }
+}
+
 async function start(key: string): Promise<void> {
     acted++;
     chosen.value = key;
@@ -338,7 +405,14 @@ const STATUS_WORD: Record<string, string> = {
         <div
             class="no-print mx-auto flex max-w-[1080px] items-center justify-between gap-3 px-4 pt-5 sm:px-6"
         >
-            <p class="truncate text-[13px] font-semibold text-ink-2">
+            <!-- In the app or signed in: back to their own home (the portal, or the books). -->
+            <Link
+                v-if="signedIn"
+                href="/"
+                class="flex min-w-0 items-center gap-1.5 rounded-lg py-1 pr-2 text-[13.5px] font-semibold text-brand hover:bg-sunken"
+                ><KIcon name="back" :size="18" />{{ t('হোম') }}</Link
+            >
+            <p v-else class="truncate text-[13px] font-semibold text-ink-2">
                 {{ business.name }}
             </p>
             <div class="flex items-center gap-1">
@@ -364,7 +438,11 @@ const STATUS_WORD: Record<string, string> = {
                     : 'max-w-[1080px] lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch'
             "
         >
-            <InvoiceDoc :invoice="doc" :business="business" />
+            <InvoiceDoc
+                :invoice="doc"
+                :business="business"
+                :home="signedIn ? '/' : null"
+            />
 
             <aside
                 class="no-print gap-4"
@@ -377,6 +455,92 @@ const STATUS_WORD: Record<string, string> = {
                         : 'flex flex-col lg:sticky lg:top-5'
                 "
             >
+                <!-- A renewal: how many more days (the amount follows), or stop. -->
+                <section
+                    v-if="
+                        state.renewal &&
+                        !state.renewal.declined &&
+                        state.payable &&
+                        !state.session
+                    "
+                    class="panel mb-4 p-5"
+                >
+                    <h2 class="text-[16px] font-bold">
+                        {{ t('কত দিন চালু রাখবেন?') }}
+                    </h2>
+                    <p class="mt-1 text-[13px] text-ink-3">
+                        {{ state.renewal.campaign }} ·
+                        {{ state.renewal.stops }}
+                    </p>
+                    <div class="mt-3 grid grid-cols-4 gap-2">
+                        <button
+                            v-for="d in dayChoices"
+                            :key="d"
+                            type="button"
+                            class="flex h-14 flex-col items-center justify-center rounded-xl border-2 text-[14.5px] font-semibold transition-colors"
+                            :class="
+                                state.renewal.days === d
+                                    ? 'border-brand bg-brand-soft text-brand'
+                                    : 'border-line-2'
+                            "
+                            :disabled="daysBusy"
+                            @click="setDays(d)"
+                        >
+                            {{ t('{n} দিন', { n: d }) }}
+                            <span
+                                v-if="daysPrice(d)"
+                                class="num text-[11px] font-medium text-ink-3"
+                                >{{ bdt(daysPrice(d) ?? 0) }}</span
+                            >
+                        </button>
+                        <input
+                            v-model.number="pickDays"
+                            type="number"
+                            min="1"
+                            max="90"
+                            inputmode="numeric"
+                            :placeholder="
+                                state.renewal.days &&
+                                !dayChoices.includes(state.renewal.days)
+                                    ? String(state.renewal.days)
+                                    : t('অন্য')
+                            "
+                            class="h-14 rounded-xl border-2 border-line-2 bg-transparent text-center text-[15px] font-semibold"
+                            @change="pickDays && setDays(pickDays)"
+                        />
+                    </div>
+                    <p class="mt-2 text-[12.5px] text-ink-3">
+                        {{
+                            t(
+                                'দিন বদলালে নিচের মোট টাকাও বদলাবে। Pay হলেই campaign নিজে বেড়ে যাবে।',
+                            )
+                        }}
+                    </p>
+                    <p v-if="daysError" class="mt-2 text-[13px] text-out">
+                        {{ daysError }}
+                    </p>
+                    <button
+                        type="button"
+                        class="mt-3 text-[13px] font-semibold text-ink-3 hover:text-out"
+                        @click="stopRenewal"
+                    >
+                        {{ t('আর চালাবো না') }}
+                    </button>
+                </section>
+                <section
+                    v-if="state.renewal?.declined"
+                    class="panel mb-4 p-5 text-[14px] text-ink-2"
+                >
+                    {{
+                        t(
+                            'আপনি জানিয়েছেন আর চালাবেন না — {stops}। মত বদলালে Klok Ads-কে জানান।',
+                            {
+                                stops: state.renewal.stops ?? '',
+                            },
+                        )
+                    }}
+                </section>
+
                 <!-- Paid -->
                 <section
                     v-if="state.status === 'paid'"

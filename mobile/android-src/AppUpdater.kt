@@ -40,6 +40,8 @@ object AppUpdater {
             try {
                 val apk = File(context.cacheDir, "update.apk")
                 download(url, apk)
+                // The new version replaces this one at once: the sign-in cookies go to disk first.
+                android.webkit.CookieManager.getInstance().flush()
                 commit(context, apk)
                 onDone("started")
             } catch (e: Throwable) {

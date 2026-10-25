@@ -20,10 +20,18 @@ type Group = {
 
 const props = defineProps<{
     notify: { owner: boolean; mail: boolean; groups: Group[] };
+    details?: { email: string; phone: string | null; company: string | null };
 }>();
 
 const user = usePage().props.auth.user;
-const form = useForm({ name: user.name });
+const isClient = user.role === 'Client';
+// A client keeps their own email, phone and company; the team's email is changed by an admin.
+const form = useForm({
+    name: user.name,
+    email: props.details?.email ?? user.email,
+    phone: props.details?.phone ?? '',
+    company: props.details?.company ?? '',
+});
 
 // Which notifications come, and how; saved as soon as a switch moves.
 const groups = reactive(props.notify.groups.map((g) => ({ ...g })));
@@ -61,7 +69,36 @@ function saveNotify(): void {
                     :invalid="!!form.errors.name"
                 />
             </KField>
+            <template v-if="isClient">
+                <KField
+                    label="Email"
+                    :hint="t('এটাই আপনার sign-in নাম, আর এখানেই email যায়।')"
+                    :error="form.errors.email"
+                >
+                    <KInput
+                        v-model="form.email"
+                        type="email"
+                        autocomplete="email"
+                    />
+                </KField>
+                <KField
+                    :label="t('Phone নম্বর')"
+                    optional
+                    :error="form.errors.phone"
+                >
+                    <KInput
+                        v-model="form.phone"
+                        type="tel"
+                        inputmode="tel"
+                        placeholder="01XXXXXXXXX"
+                    />
+                </KField>
+                <KField :label="t('প্রতিষ্ঠানের নাম')" optional>
+                    <KInput v-model="form.company" />
+                </KField>
+            </template>
             <KField
+                v-else
                 label="Email"
                 :hint="t('Email বদলাতে Owner-কে বলুন — এটাই sign-in নাম।')"
             >

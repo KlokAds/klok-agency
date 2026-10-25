@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import KButton from '@/components/k/KButton.vue';
+import { confirmAction } from '@/lib/feedback';
 import RangePicker from '@/components/portal/RangePicker.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
 import { money } from '@/lib/format';
@@ -24,6 +26,7 @@ const props = defineProps<{
         budget: number | null;
         currency: string;
         started: string | null;
+        result_name: string;
     };
     range: { key: string; from: string; to: string };
     totals: Totals;
@@ -40,9 +43,67 @@ const props = defineProps<{
         until: string | null;
         at: string | null;
     }[];
+    renew?: {
+        budget: number;
+        rate: number | null;
+        status: string | null;
+        days: number | null;
+        invoice_url: string | null;
+        invoice_due: number | null;
+    } | null;
 }>();
 
 const cur = computed(() => (props.campaign.currency === 'BDT' ? 'bdt' : 'usd'));
+
+// Keep it running: so many more days, priced at the client's rate, paid on the invoice.
+const renewDays = ref(7);
+const choices = [7, 15, 30];
+const price = computed(() =>
+    props.renew?.rate
+        ? Math.round(
+              (props.renew.budget * renewDays.value * props.renew.rate) / 100,
+          ) * 100
+        : null,
+);
+const busy = ref(false);
+const error = ref<string | null>(null);
+
+function renewNow(): void {
+    busy.value = true;
+    error.value = null;
+    router.post(
+        `/portal/campaigns/${props.campaign.id}/renew`,
+        { days: renewDays.value },
+        {
+            onError: (e) =>
+                (error.value = e.days ?? t('হলো না — আবার চেষ্টা করুন।')),
+            onFinish: () => (busy.value = false),
+        },
+    );
+}
+
+async function stopIt(): Promise<void> {
+    if (
+        !(await confirmAction({
+            title: t('এই campaign আর চালাবেন না?'),
+            body: t(
+                '{stops}। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।',
+                {
+                    stops: props.campaign.stops ?? '',
+                },
+            ),
+            confirm: t('হ্যাঁ, থামবে'),
+            danger: true,
+        }))
+    ) {
+        return;
+    }
+    router.post(
+        `/portal/campaigns/${props.campaign.id}/stop`,
+        {},
+        { preserveScroll: true },
+    );
+}
 </script>
 
 <template>
@@ -90,6 +151,131 @@ const cur = computed(() => (props.campaign.currency === 'BDT' ? 'bdt' : 'usd'));
         </p>
     </section>
 
+    <!-- Keep it going, or not: the client decides here. -->
+    <section v-if="renew" class="panel mt-4 p-5">
+        <h2 class="text-[16px] font-bold">{{ t('Campaign চালু রাখবেন?') }}</h2>
+
+        <template v-if="renew.status === 'invoiced' && renew.invoice_url">
+            <p class="mt-2 text-[14px] text-ink-2">
+                {{
+                    t(
+                        '{days} দিনের invoice তৈরি আছে — pay করলেই campaign নিজে বাড়বে।',
+                        {
+                            days: renew.days ?? '',
+                        },
+                    )
+                }}
+            </p>
+            <a
+                :href="renew.invoice_url"
+                class="mt-3 flex h-12 items-center justify-center rounded-xl bg-brand text-[15px] font-semibold text-white"
+                >{{
+                    t('{amount} pay করুন', {
+                        amount: money(renew.invoice_due ?? 0, 'bdt'),
+                    })
+                }}</a
+            >
+            <p class="mt-3 text-[12.5px] text-ink-3">
+                {{
+                    t(
+                        'অন্য কয়দিন চাইলে নিচে বেছে নিন — আগের invoice বাতিল হয়ে নতুন হবে।',
+                    )
+                }}
+            </p>
+        </template>
+
+        <p
+            v-else-if="renew.status === 'declined'"
+            class="mt-2 rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait"
+        >
+            {{
+                t(
+                    'আপনি জানিয়েছেন আর চালাবেন না — {stops}। মত বদলালে নিচে দিন বেছে নিন।',
+                    {
+                        stops: campaign.stops ?? '',
+                    },
+                )
+            }}
+        </p>
+        <p v-else class="mt-2 text-[14px] text-ink-2">
+            {{
+                t(
+                    '{stops}। চালু রাখতে কত দিন বাড়াবেন বেছে নিন, তারপর pay করুন।',
+                    { stops: campaign.stops ?? '' },
+                )
+            }}
+        </p>
+
+        <div class="mt-4 grid grid-cols-4 gap-2">
+            <button
+                v-for="d in choices"
+                :key="d"
+                type="button"
+                class="h-12 rounded-xl border-2 text-[15px] font-semibold transition-colors"
+                :class="
+                    renewDays === d
+                        ? 'border-brand bg-brand-soft text-brand'
+                        : 'border-line-2'
+                "
+                @click="renewDays = d"
+            >
+                {{ t('{n} দিন', { n: d }) }}
+            </button>
+            <input
+                :value="choices.includes(renewDays) ? '' : renewDays"
+                type="number"
+                min="1"
+                max="90"
+                inputmode="numeric"
+                :placeholder="t('অন্য')"
+                class="h-12 rounded-xl border-2 border-line-2 bg-transparent text-center text-[15px] font-semibold"
+                @input="
+                    renewDays = Math.min(
+                        90,
+                        Math.max(
+                            1,
+                            Number(($event.target as HTMLInputElement).value) ||
+                                7,
+                        ),
+                    )
+                "
+            />
+        </div>
+
+        <p class="mt-3 text-[13.5px] text-ink-2">
+            {{
+                t('দিনে {budget} × {days} দিন', {
+                    budget: money(renew.budget, cur),
+                    days: renewDays,
+                })
+            }}
+            <b v-if="price" class="num text-ink">
+                = {{ money(price, 'bdt') }}</b
+            >
+        </p>
+        <p v-if="error" class="mt-2 text-[13px] text-out">{{ error }}</p>
+
+        <KButton
+            variant="primary"
+            size="lg"
+            block
+            class="mt-4"
+            :loading="busy"
+            @click="renewNow"
+            >{{
+                t('{days} দিন বাড়ান ও pay করুন', { days: renewDays })
+            }}</KButton
+        >
+        <button
+            v-if="renew.status !== 'declined'"
+            type="button"
+            class="mt-3 w-full text-center text-[13px] font-semibold text-ink-3 hover:text-out"
+            @click="stopIt"
+        >
+            {{ t('আর চালাবো না') }}
+        </button>
+    </section>
+
     <div class="mt-5">
         <RangePicker :url="`/portal/campaigns/${campaign.id}`" :range="range" />
     </div>
@@ -102,7 +288,7 @@ const cur = computed(() => (props.campaign.currency === 'BDT' ? 'bdt' : 'usd'));
             </p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">Result</p>
+            <p class="text-[12.5px] text-ink-3">{{ campaign.result_name }}</p>
             <p class="num mt-1 text-[22px] font-bold">{{ totals.results }}</p>
         </div>
         <div class="panel p-4">
@@ -136,7 +322,9 @@ const cur = computed(() => (props.campaign.currency === 'BDT' ? 'bdt' : 'usd'));
                         <th class="px-3 py-2 text-right font-medium">
                             {{ t('খরচ') }}
                         </th>
-                        <th class="px-3 py-2 text-right font-medium">Result</th>
+                        <th class="px-3 py-2 text-right font-medium">
+                            {{ campaign.result_name }}
+                        </th>
                         <th class="px-3 py-2 text-right font-medium">
                             {{ t('প্রতি result') }}
                         </th>

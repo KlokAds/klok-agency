@@ -6,6 +6,7 @@ use App\Mail\InvoiceMail;
 use App\Mail\RenewalMail;
 use App\Models\Campaign;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Renewal;
 use App\Models\Setting;
 use App\Models\UsdEntry;
@@ -219,6 +220,73 @@ class Renewals
         $renewal->forceFill(['usd' => $usd, 'days' => intdiv($usd, (int) $renewal->budget)])->save();
     }
 
+    /**
+     * The renewal of a client's campaign for its current end, as the portal works with it:
+     * the one already there, or a new one. None for a campaign that cannot be renewed (not a
+     * prepaid Meta campaign, no daily budget, or ended).
+     */
+    public function forCampaign(Campaign $campaign): ?Renewal
+    {
+        $campaign->loadMissing('account');
+
+        if ($campaign->client_id === null || ! CampaignLimits::guarded($campaign) || $campaign->dailyBudget() === null || $campaign->lastDay() === null || $campaign->hasEnded()) {
+            return null;
+        }
+
+        $endsOn = $campaign->lastDay()->toDateString();
+
+        return Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->whereIn('status', ['open', 'invoiced', 'declined'])->latest('id')->first()
+            ?? (Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->exists() ? null : Renewal::create([
+                'campaign_id' => $campaign->id,
+                'client_id' => $campaign->client_id,
+                'token' => Str::random(40),
+                'ends_on' => $endsOn,
+                'budget' => $campaign->dailyBudget(),
+                'status' => 'open',
+            ]));
+    }
+
+    /**
+     * The client picks another number of days on the invoice itself (before paying): its days
+     * line is priced again at the rate the invoice already has — the one it was made with or the
+     * one the agency set by hand — and the total follows. Paid in full, it extends by itself.
+     *
+     * @throws RuntimeException when it can no longer change
+     */
+    public function changeDays(Renewal $renewal, int $days): Invoice
+    {
+        return DB::transaction(function () use ($renewal, $days) {
+            $renewal = Renewal::with(['campaign', 'invoice.items'])->lockForUpdate()->findOrFail($renewal->id);
+            $invoice = $renewal->invoice;
+
+            if (! in_array($renewal->status, ['invoiced', 'declined'], true) || $invoice === null || $invoice->status === 'void' || $invoice->paid > 0) {
+                throw new RuntimeException(__('এই renewal আর বদলানো যাবে না।'));
+            }
+
+            $line = $invoice->items->where('kind', 'ad_budget')->where('description', '!=', self::DUE_LINE)->last();
+            if ($line === null || ! $renewal->budget) {
+                throw new RuntimeException(__('এই renewal আর বদলানো যাবে না।'));
+            }
+
+            $usd = (int) $renewal->budget * $days;
+            $from = CarbonImmutable::parse($renewal->ends_on)->max(CarbonImmutable::now()->startOfDay())->addDay();
+            $line->forceFill([
+                'usd' => $usd,
+                'amount' => InvoiceItem::bdtFor($usd, (float) $line->rate),
+                'description' => "{$renewal->campaign->name} — {$days} days ({$from->format('j M')} – {$from->addDays($days - 1)->format('j M Y')})",
+            ])->save();
+
+            $items = $invoice->items()->get();
+            $invoice->forceFill(['total' => (int) $items->sum('amount'), 'usd' => (int) $items->sum('usd')])->save();
+            // A pay popup still open asks for the old amount: the client opens a new one.
+            $invoice->payments()->where('status', 'pending')->whereNull('reference')->update(['status' => 'expired', 'expires_at' => null]);
+
+            $renewal->forceFill(['days' => $days, 'usd' => $usd, 'status' => 'invoiced', 'self_serve' => true, 'decided_at' => now()])->save();
+
+            return $invoice->refresh();
+        });
+    }
+
     /** The client ends the contract: the admin hears, Meta is left as it is. */
     public function decline(Renewal $renewal): void
     {
@@ -231,7 +299,8 @@ class Renewals
                 $this->invoices->void($renewal->invoice);
             }
 
-            $renewal->forceFill(['status' => 'declined', 'decided_at' => now(), 'invoice_id' => null])->save();
+            // The withdrawn invoice stays linked, so its page still says why; choosing again makes a new one.
+            $renewal->forceFill(['status' => 'declined', 'decided_at' => now()])->save();
         });
 
         $this->tell($renewal, 'declined', self::DECLINED_TITLE);
@@ -289,7 +358,8 @@ class Renewals
     {
         $renewal->loadMissing(['client', 'campaign']);
 
-        if ($renewal->client?->renew_days && $renewal->campaign !== null) {
+        // Auto renewal days, or the client chose and paid on the portal: no OK needed.
+        if (($renewal->client?->renew_days || $renewal->self_serve) && $renewal->campaign !== null) {
             try {
                 $end = $this->approve($renewal);
                 $this->tell($renewal, 'extended', self::EXTENDED_TITLE, __(' · :date পর্যন্ত', ['date' => $end->format('j M')]));

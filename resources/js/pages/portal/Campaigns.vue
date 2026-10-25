@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import RangePicker from '@/components/portal/RangePicker.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
 import { money } from '@/lib/format';
@@ -20,9 +21,10 @@ type Row = Totals & {
     stops: string | null;
     days_left: number | null;
     currency: string;
+    result_name: string;
 };
 
-defineProps<{
+const props = defineProps<{
     range: { key: string; from: string; to: string };
     totals: Totals;
     series: { day: string; spend: number; results: number }[];
@@ -30,6 +32,12 @@ defineProps<{
 }>();
 
 const cur = (c: string) => (c === 'BDT' ? 'bdt' : 'usd');
+
+// All the same kind (all sales, all messages): say so; mixed is plain "Result".
+const totalName = computed(() => {
+    const names = [...new Set(props.campaigns.map((c) => c.result_name))];
+    return names.length === 1 ? names[0] : 'Result';
+});
 </script>
 
 <template>
@@ -54,7 +62,7 @@ const cur = (c: string) => (c === 'BDT' ? 'bdt' : 'usd');
             </p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">Result</p>
+            <p class="text-[12.5px] text-ink-3">{{ totalName }}</p>
             <p class="num mt-1 text-[22px] font-bold">{{ totals.results }}</p>
         </div>
         <div class="panel p-4">
@@ -117,7 +125,7 @@ const cur = (c: string) => (c === 'BDT' ? 'bdt' : 'usd');
                     }}</b></span
                 >
                 <span class="text-ink-3"
-                    >Result
+                    >{{ c.result_name }}
                     <b class="num block text-[15px] text-ink">{{
                         c.results
                     }}</b></span

@@ -46,14 +46,14 @@ class Renewal extends Model
     public const DAY_CHOICES = [3, 7, 15, 30];
 
     protected $fillable = [
-        'campaign_id', 'client_id', 'token', 'ends_on', 'budget', 'days', 'usd', 'invoice_id', 'status', 'new_end',
+        'campaign_id', 'client_id', 'token', 'ends_on', 'budget', 'days', 'usd', 'invoice_id', 'status', 'self_serve', 'new_end',
         'decided_at', 'paid_at', 'approved_at', 'approved_by', 'error',
     ];
 
     protected function casts(): array
     {
         return [
-            'ends_on' => 'date', 'new_end' => 'date', 'decided_at' => 'datetime', 'paid_at' => 'datetime', 'approved_at' => 'datetime',
+            'ends_on' => 'date', 'new_end' => 'date', 'self_serve' => 'boolean', 'decided_at' => 'datetime', 'paid_at' => 'datetime', 'approved_at' => 'datetime',
             'budget' => 'integer', 'days' => 'integer', 'usd' => 'integer',
         ];
     }

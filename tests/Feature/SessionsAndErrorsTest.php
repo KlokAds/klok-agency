@@ -43,7 +43,9 @@ it('shows who is signed in where, and the Owner can end a session', function () 
 
 it('shows the Owner what went wrong, and nobody else', function () {
     $log = storage_path('logs/test-errors.log');
-    File::put($log, "[2026-10-23 19:49:40] production.ERROR: Klok Pilot: An internal server error occurred. {\"exception\":\"[object] (RuntimeException(code: 0): Klok Pilot at /var/app/app/Services/PilotClient.php:147)\"}\n#0 trace\n[2026-10-23 19:50:00] production.INFO: fine\n");
+    // Now, so it is among the newest whatever else this machine's logs hold.
+    $at = now()->format('Y-m-d H:i:s');
+    File::put($log, "[{$at}] production.ERROR: Klok Pilot: An internal server error occurred. {\"exception\":\"[object] (RuntimeException(code: 0): Klok Pilot at /var/app/app/Services/PilotClient.php:147)\"}\n#0 trace\n[{$at}] production.INFO: fine\n");
 
     try {
         $this->actingAs($this->owner)->get('/admin/errors')->assertOk()

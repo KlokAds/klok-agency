@@ -130,6 +130,31 @@ class Campaign extends Model
             : __(':date, :time-এ বন্ধ', ['date' => $stop->format('j M'), 'time' => $stop->format('g:i A')]);
     }
 
+    /**
+     * What one "result" is for this campaign, as Meta counts it by its goal: a sale for a sales
+     * campaign, a message for one that opens chats (WhatsApp, Messenger), a lead for a form…
+     */
+    public function resultName(): string
+    {
+        $name = strtolower($this->name);
+
+        if (preg_match('/\b(wa|whatsapp|msg|message|messenger|inbox)\b/', $name)) {
+            return 'Message';
+        }
+
+        return match (strtoupper((string) $this->objective)) {
+            'OUTCOME_SALES', 'CONVERSIONS', 'PRODUCT_CATALOG_SALES' => 'Purchase',
+            'OUTCOME_LEADS', 'LEAD_GENERATION' => 'Lead',
+            'OUTCOME_ENGAGEMENT', 'POST_ENGAGEMENT', 'PAGE_LIKES' => 'Engagement',
+            'MESSAGES' => 'Message',
+            'OUTCOME_TRAFFIC', 'LINK_CLICKS' => 'Link click',
+            'OUTCOME_AWARENESS', 'REACH', 'BRAND_AWARENESS' => 'Reach',
+            'OUTCOME_APP_PROMOTION', 'APP_INSTALLS' => 'Install',
+            'VIDEO_VIEWS' => 'Video view',
+            default => 'Result',
+        };
+    }
+
     /** Switched on and not past its end (Meta keeps an ended campaign ACTIVE). */
     public function isLive(): bool
     {

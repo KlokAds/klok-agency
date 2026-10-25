@@ -5,17 +5,20 @@ namespace App\Http\Controllers\Invoices;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
+use App\Models\Renewal;
 use App\Payments\BanglaQr;
 use App\Payments\PaymentMatcher;
 use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
 use App\Services\Invoices;
+use App\Services\Renewals;
 use App\Support\InvoiceView;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 /**
  * The client's own invoice page, /i/{token}: no sign-in, the 40-character
@@ -83,6 +86,53 @@ class PublicInvoiceController extends Controller
             'Content-Type' => 'image/svg+xml',
             'Cache-Control' => 'no-store',
         ]);
+    }
+
+    /** The client picks how many days this renewal is for; the total follows at the invoice's rate. */
+    public function days(Request $request, string $token, Renewals $renewals): JsonResponse
+    {
+        $invoice = $this->find($token);
+        $data = $request->validate(['days' => ['required', 'integer', 'min:1', 'max:90']]);
+        $renewal = Renewal::where('invoice_id', $invoice->id)->firstOrFail();
+
+        try {
+            $renewals->changeDays($renewal, (int) $data['days']);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage(), 'errors' => ['days' => [$e->getMessage()]]], 422);
+        }
+
+        return response()->json($this->state($invoice->refresh()));
+    }
+
+    /** The client will not go on: the invoice is withdrawn, the campaign stops at its end. */
+    public function stop(string $token, Renewals $renewals): JsonResponse
+    {
+        $invoice = $this->find($token);
+        $renewal = Renewal::where('invoice_id', $invoice->id)->firstOrFail();
+        $renewals->decline($renewal);
+
+        return response()->json($this->state($invoice->refresh()));
+    }
+
+    /** @return array<string, mixed>|null */
+    private function renewal(Invoice $invoice): ?array
+    {
+        $renewal = Renewal::with('campaign')->where('invoice_id', $invoice->id)->first();
+
+        if ($renewal === null || $renewal->status !== 'invoiced' || $invoice->paid > 0 || $invoice->status === 'void') {
+            return $renewal?->status === 'declined' ? ['declined' => true, 'stops' => $renewal->campaign?->stopsText()] : null;
+        }
+
+        $line = $invoice->items->where('kind', 'ad_budget')->where('description', '!=', Renewals::DUE_LINE)->last();
+
+        return [
+            'declined' => false,
+            'days' => $renewal->days,
+            'budget' => $renewal->budget,
+            'rate' => $line ? (float) $line->rate : null,
+            'campaign' => $renewal->campaign?->name,
+            'stops' => $renewal->campaign?->stopsText(),
+        ];
     }
 
     public function cancel(string $token): JsonResponse
@@ -188,6 +238,8 @@ class PublicInvoiceController extends Controller
             ] : null,
             'checking' => $invoice->payments->contains(fn (InvoicePayment $p) => $p->isClaim()),
             'payments' => InvoiceView::publicPayments($invoice),
+            // A renewal's invoice not paid yet: the client can pick the days here (or stop).
+            'renewal' => $this->renewal($invoice),
         ];
     }
 }

@@ -10,7 +10,10 @@ use App\Models\Renewal;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Services\Books;
+use App\Services\CampaignLimits;
+use App\Services\Invoices;
 use App\Services\Notifier;
+use App\Services\Renewals;
 use App\Support\Access;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -87,7 +91,7 @@ class PortalController extends Controller
         $today = CarbonImmutable::now()->startOfDay();
         $week = CampaignDay::whereIn('campaign_id', $ids)->whereDate('day', '>=', $today->subDays(6)->toDateString())->get()
             ->groupBy(fn (CampaignDay $d) => $d->day->toDateString());
-        $due = Invoice::where('client_id', $client->id)->whereIn('status', Invoice::PAYABLE)->get();
+        $due = Invoice::where('client_id', $client->id)->shared()->whereIn('status', Invoice::PAYABLE)->get();
 
         return Inertia::render('portal/Home', [
             'client' => $client->name,
@@ -156,6 +160,7 @@ class PortalController extends Controller
                 'clicks' => (int) $d->clicks,
                 'cpr' => $d->results > 0 ? (int) round($d->spend / $d->results) : null,
             ])->all(),
+            'renew' => $this->renewState($campaign),
             // Each time it was extended, and to when.
             'extensions' => Renewal::where('campaign_id', $campaign->id)->where('status', 'approved')->latest('approved_at')->get()
                 ->map(fn (Renewal $r) => [
@@ -166,12 +171,45 @@ class PortalController extends Controller
         ]);
     }
 
+    /** The client keeps it running for so many more days: the invoice to pay, made now. */
+    public function renew(Request $request, Campaign $campaign, Renewals $renewals): \Symfony\Component\HttpFoundation\Response
+    {
+        $client = $this->client($request);
+        abort_unless($campaign->client_id === $client->id, 404);
+        $data = $request->validate(['days' => ['required', 'integer', 'min:1', 'max:90']]);
+
+        $renewal = $renewals->forCampaign($campaign);
+        abort_if($renewal === null, 422);
+        $renewal->forceFill(['self_serve' => true])->save();
+
+        try {
+            $invoice = $renewals->choose($renewal, (int) $data['days']);
+        } catch (\RuntimeException $e) {
+            throw ValidationException::withMessages(['days' => $e->getMessage()]);
+        }
+
+        return Inertia::location($invoice->publicUrl());
+    }
+
+    /** The client will not go on: the campaign stops at its end, and the agency hears. */
+    public function stop(Request $request, Campaign $campaign, Renewals $renewals): RedirectResponse
+    {
+        $client = $this->client($request);
+        abort_unless($campaign->client_id === $client->id, 404);
+
+        $renewal = $renewals->forCampaign($campaign);
+        abort_if($renewal === null, 422);
+        $renewals->decline($renewal);
+
+        return back();
+    }
+
     public function invoices(Request $request): Response
     {
         $client = $this->client($request);
 
         return Inertia::render('portal/Invoices', [
-            'invoices' => Invoice::where('client_id', $client->id)->where('status', '!=', 'draft')->latest('issue_date')->latest('id')->limit(100)->get()
+            'invoices' => Invoice::where('client_id', $client->id)->shared()->latest('issue_date')->latest('id')->limit(100)->get()
                 ->map(fn (Invoice $i) => $this->invoiceRow($i))->all(),
         ]);
     }
@@ -257,6 +295,32 @@ class PortalController extends Controller
         return $out;
     }
 
+    /**
+     * Whether the client can keep this campaign going from here, at what rate, and what they
+     * already chose for its current end.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function renewState(Campaign $campaign): ?array
+    {
+        $campaign->loadMissing('account');
+
+        if (! CampaignLimits::guarded($campaign) || $campaign->dailyBudget() === null || $campaign->lastDay() === null || $campaign->hasEnded()) {
+            return null;
+        }
+
+        $renewal = Renewal::with('invoice')->where('campaign_id', $campaign->id)->whereDate('ends_on', $campaign->lastDay()->toDateString())->latest('id')->first();
+
+        return [
+            'budget' => $campaign->dailyBudget(),
+            'rate' => Invoices::clientRate(),
+            'status' => $renewal?->status,
+            'days' => $renewal?->days,
+            'invoice_url' => $renewal?->invoice && $renewal->invoice->status !== 'void' ? $renewal->invoice->publicUrl() : null,
+            'invoice_due' => $renewal?->invoice?->due(),
+        ];
+    }
+
     /** @return array<string, mixed> */
     private function campaignCard(Campaign $c): array
     {
@@ -270,6 +334,8 @@ class PortalController extends Controller
             'days_left' => $c->daysLeft(),
             'budget' => $c->dailyBudget(),
             'currency' => strtoupper((string) ($c->account->currency ?? 'USD')),
+            // "Purchase", "Message", "Lead"…: what its results are, by its goal.
+            'result_name' => $c->resultName(),
         ];
     }
 

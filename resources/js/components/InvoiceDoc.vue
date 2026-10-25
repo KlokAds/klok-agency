@@ -42,7 +42,12 @@ export type Business = {
 
 // The invoice as the client sees it — the same on the agency's page and
 // the public link, and on paper. No cost or margin, only what is billed.
-const props = defineProps<{ invoice: InvoiceDocument; business: Business }>();
+const props = defineProps<{
+    invoice: InvoiceDocument;
+    business: Business;
+    /** Where the logo leads (signed in: their home); none on a plain shared page. */
+    home?: string | null;
+}>();
 
 const STATUS: Record<
     string,
@@ -112,34 +117,46 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
             class="flex flex-col gap-6 px-6 pt-7 pb-6 @xl:flex-row @xl:items-start @xl:justify-between @xl:px-10 @xl:pt-9"
         >
             <div class="min-w-0">
-                <img
-                    v-if="business.logo"
-                    :src="business.logo"
-                    :alt="business.name"
-                    class="mb-3 h-11 w-auto max-w-[190px] object-contain"
-                />
-                <div v-else class="mb-3 flex items-center gap-2.5">
-                    <svg
-                        width="36"
-                        height="36"
-                        viewBox="0 0 64 64"
-                        aria-hidden="true"
-                    >
-                        <rect width="64" height="64" rx="16" fill="#11211e" />
-                        <path
-                            d="M20 16v32M20 34l14-18M26 27l12 21"
-                            fill="none"
-                            stroke="#2dd4bf"
-                            stroke-width="6"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                    </svg>
-                    <span
-                        class="text-[18px] font-semibold tracking-[-0.02em]"
-                        >{{ business.name }}</span
-                    >
-                </div>
+                <!-- The logo leads home for someone signed in (a client in the app). -->
+                <component
+                    :is="home ? 'a' : 'div'"
+                    :href="home ?? undefined"
+                    class="block w-fit"
+                >
+                    <img
+                        v-if="business.logo"
+                        :src="business.logo"
+                        :alt="business.name"
+                        class="mb-3 h-11 w-auto max-w-[190px] object-contain"
+                    />
+                    <div v-else class="mb-3 flex items-center gap-2.5">
+                        <svg
+                            width="36"
+                            height="36"
+                            viewBox="0 0 64 64"
+                            aria-hidden="true"
+                        >
+                            <rect
+                                width="64"
+                                height="64"
+                                rx="16"
+                                fill="#11211e"
+                            />
+                            <path
+                                d="M20 16v32M20 34l14-18M26 27l12 21"
+                                fill="none"
+                                stroke="#2dd4bf"
+                                stroke-width="6"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                        </svg>
+                        <span
+                            class="text-[18px] font-semibold tracking-[-0.02em]"
+                            >{{ business.name }}</span
+                        >
+                    </div>
+                </component>
                 <p v-if="business.logo" class="text-[15px] font-semibold">
                     {{ business.name }}
                 </p>

@@ -163,6 +163,45 @@ it('makes the renewal link two days before the end, and the client pays for more
         ->and($renewal->fresh()->new_end->toDateString())->toBe($newEnd);
 });
 
+it('lets the client pick the days on the invoice at its own rate, extends once paid, or stop', function () {
+    payGffs($this, '1500', '10');
+    app(CampaignLimits::class)->refresh($this->campaign, true);
+    $this->gffs->update(['renew_days' => 7]);
+    app(Renewals::class)->openDue();
+    $invoice = Invoice::sole();
+    // The agency set the rate by hand: the days are priced at it, not at today's.
+    $invoice->items()->sole()->forceFill(['rate' => 150])->save();
+
+    $this->get("/i/{$invoice->public_token}")->assertInertia(fn ($page) => $page->where('state.renewal.days', 7)->where('state.renewal.rate', 150));
+    $this->postJson("/i/{$invoice->public_token}/days", ['days' => 15])->assertOk()
+        ->assertJsonPath('renewal.days', 15)
+        ->assertJsonPath('due', 450000); // 15 × $2 × ৳150
+
+    expect($invoice->fresh()->total)->toBe(450000)
+        ->and($invoice->items()->sole()->description)->toContain('15 days')
+        ->and(Renewal::sole()->days)->toBe(15);
+
+    // Paid in full: extended by the 15 days.
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/pay", [
+        'method' => 'bank', 'wallet' => 'bank', 'paid_on' => now()->toDateString(), 'amount' => '4500',
+    ])->assertRedirect();
+    expect(Renewal::sole()->status)->toBe('approved')
+        ->and(collect($this->limits)->last()['new_end'])->toBe(now()->addDay()->addDays(15)->toDateString());
+});
+
+it('lets the client say no on the invoice: it is withdrawn and the campaign stops at its end', function () {
+    payGffs($this, '1500', '10');
+    app(CampaignLimits::class)->refresh($this->campaign, true);
+    $this->gffs->update(['renew_days' => 7]);
+    app(Renewals::class)->openDue();
+    $invoice = Invoice::sole();
+
+    $this->postJson("/i/{$invoice->public_token}/stop")->assertOk()->assertJsonPath('renewal.declined', true);
+    expect(Renewal::sole()->status)->toBe('declined')
+        ->and($invoice->fresh()->status)->toBe('void')
+        ->and(collect($this->limits)->whereNotNull('new_end')->count())->toBe(0);
+});
+
 it('makes an auto-renewal client\'s invoice by itself, and extends the campaign once it is paid', function () {
     payGffs($this, '1500', '10');
     Mail::fake();
