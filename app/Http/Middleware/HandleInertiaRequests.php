@@ -47,6 +47,10 @@ class HandleInertiaRequests extends Middleware
                 'can' => $user ? $this->permissions($user) : [],
             ],
             'notice' => fn () => $request->session()->get('notice'),
+            // The agency's WhatsApp, for the portal's "contact" button.
+            'contact' => fn () => $user && ($wa = Setting::get('business_whatsapp')) ? [
+                'whatsapp' => 'https://wa.me/880'.substr(preg_replace('/\D/', '', (string) $wa), -10),
+            ] : null,
             'idleMinutes' => fn () => $user ? (int) Setting::get('idle_minutes', 30) : null,
             'unread' => fn () => $user ? $user->unreadNotifications()->count() : 0,
             // Loaded only when the quick-entry panel opens (partial reload).

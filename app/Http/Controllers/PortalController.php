@@ -14,6 +14,7 @@ use App\Notifications\AgencyAlert;
 use App\Services\Books;
 use App\Services\CampaignLimits;
 use App\Services\Invoices;
+use App\Services\MoveFees;
 use App\Services\Notifier;
 use App\Services\Renewals;
 use App\Support\Access;
@@ -91,7 +92,7 @@ class PortalController extends Controller
         }
 
         $figure = collect($books->clients())->firstWhere('id', $client->id) ?? [];
-        $campaigns = Campaign::with('account:id,currency')->where('client_id', $client->id)->get();
+        $campaigns = Campaign::with('account:id,platform,currency,problem')->where('client_id', $client->id)->get();
         $ids = $campaigns->pluck('id');
         $today = CarbonImmutable::now()->startOfDay();
         $week = CampaignDay::whereIn('campaign_id', $ids)->whereDate('day', '>=', $today->subDays(6)->toDateString())->get()
@@ -106,6 +107,12 @@ class PortalController extends Controller
                 'left' => (int) ($figure['credit_left'] ?? 0),
                 'daily' => (int) ($figure['daily_usd'] ?? 0),
                 'days_left' => $figure['days_left'] ?? null,
+                // Asked back now: the taka of the dollars not spent yet, at the rate they were
+                // paid, less what sending it costs (an estimate; the agency confirms).
+                'refund' => ($unearned = max(0, (int) ($figure['unearned'] ?? 0))) > 0 ? [
+                    'mfs' => max(0, $unearned - (int) ceil($unearned * MoveFees::mfsPercent() / 10000) * 100),
+                    'bank' => max(0, $unearned - MoveFees::bankFee()),
+                ] : null,
             ],
             'week' => collect(range(6, 0))->map(function (int $back) use ($today, $week) {
                 $rows = $week->get($today->subDays($back)->toDateString(), collect());
@@ -116,7 +123,8 @@ class PortalController extends Controller
                     'results' => (int) $rows->sum('results'),
                 ];
             })->all(),
-            'running' => $campaigns->filter(fn (Campaign $c) => $c->isLive())->values()->map(fn (Campaign $c) => $this->campaignCard($c))->all(),
+            // Every campaign not ended: running, paused, or held on our side.
+            'running' => $campaigns->reject(fn (Campaign $c) => $c->hasEnded())->sortByDesc(fn (Campaign $c) => $c->isLive())->values()->map(fn (Campaign $c) => $this->campaignCard($c))->all(),
             'due' => ['count' => $due->count(), 'amount' => (int) $due->sum(fn (Invoice $i) => $i->due())],
             'next_invoice' => ($next = $due->sortBy('due_date')->first()) ? $this->invoiceRow($next) : null,
             // Everything so far, as the client sees it: what the ads spent, and every taka they
@@ -143,7 +151,7 @@ class PortalController extends Controller
     {
         $client = $this->client($request);
         [$from, $to, $range] = $this->range($request);
-        $campaigns = Campaign::with('account:id,currency')->where('client_id', $client->id)->get();
+        $campaigns = Campaign::with('account:id,platform,currency,problem')->where('client_id', $client->id)->get();
         $days = CampaignDay::whereIn('campaign_id', $campaigns->pluck('id'))->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->get();
 
         $rows = $campaigns->map(function (Campaign $c) use ($days) {
@@ -171,7 +179,7 @@ class PortalController extends Controller
         $days = CampaignDay::where('campaign_id', $campaign->id)->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->orderBy('day')->get();
 
         return Inertia::render('portal/Campaign', [
-            'campaign' => [...$this->campaignCard($campaign->load('account:id,currency')), 'started' => $campaign->start_at?->setTimezone(config('app.timezone'))->format('j M Y')],
+            'campaign' => [...$this->campaignCard($campaign->load('account:id,platform,currency,problem')), 'started' => $campaign->start_at?->setTimezone(config('app.timezone'))->format('j M Y')],
             'range' => ['key' => $range, 'from' => $from->toDateString(), 'to' => $to->toDateString()],
             'totals' => $this->totals($days),
             'series' => $this->series($days, $from, $to),
@@ -183,6 +191,7 @@ class PortalController extends Controller
                 'cpr' => $d->results > 0 ? (int) round($d->spend / $d->results) : null,
             ])->all(),
             'renew' => $this->renewState($campaign),
+            'control' => $this->controlState($campaign, $client),
             // Each time it was extended, and to when.
             'extensions' => Renewal::where('campaign_id', $campaign->id)->where('status', 'approved')->latest('approved_at')->get()
                 ->map(fn (Renewal $r) => [
@@ -191,6 +200,76 @@ class PortalController extends Controller
                     'at' => $r->approved_at?->format('j M Y'),
                 ])->all(),
         ]);
+    }
+
+    /** The client pauses their campaign. */
+    public function pause(Request $request, Campaign $campaign, CampaignLimits $limits): RedirectResponse
+    {
+        return $this->control($request, $campaign, fn () => $limits->clientPause($campaign, $request->user()), __('Campaign থামানো হয়েছে।'));
+    }
+
+    /** The client switches the campaign they paused back on. */
+    public function resume(Request $request, Campaign $campaign, CampaignLimits $limits): RedirectResponse
+    {
+        return $this->control($request, $campaign, fn () => $limits->clientResume($campaign, $request->user()), __('Campaign আবার চালু হয়েছে।'));
+    }
+
+    /** The client sets the budget a day, in dollars. */
+    public function budget(Request $request, Campaign $campaign, CampaignLimits $limits): RedirectResponse
+    {
+        $data = $request->validate([
+            'budget' => ['required', 'numeric', 'min:'.(CampaignLimits::CLIENT_BUDGET_MIN / 100), 'max:'.(CampaignLimits::CLIENT_BUDGET_MAX / 100)],
+        ], [], ['budget' => __('দৈনিক budget')]);
+
+        return $this->control($request, $campaign, fn () => $limits->clientBudget($campaign, (int) round((float) $data['budget'] * 100), $request->user()), __('দৈনিক budget বদলানো হয়েছে।'));
+    }
+
+    /** One of the client's own changes on Meta: their campaign, a Meta one in USD, Pilot's answer shown as it is. */
+    private function control(Request $request, Campaign $campaign, \Closure $change, string $done): RedirectResponse
+    {
+        $client = $this->client($request);
+        abort_unless($campaign->client_id === $client->id, 404);
+        abort_unless(CampaignLimits::guarded($campaign->loadMissing('account')), 422);
+
+        try {
+            $change();
+        } catch (\RuntimeException $e) {
+            throw ValidationException::withMessages(['control' => $e->getMessage()]);
+        }
+
+        $this->toast($done);
+
+        return back();
+    }
+
+    /**
+     * What the client may do to it here: pause, switch on, set the budget a day; with the money
+     * left and what the other running campaigns take a day, to show how long the money lasts.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function controlState(Campaign $campaign, Client $client): ?array
+    {
+        if (! CampaignLimits::guarded($campaign) || $campaign->hasEnded()) {
+            return null;
+        }
+
+        $figure = collect(app(Books::class)->clients())->firstWhere('id', $client->id) ?? [];
+        $others = Campaign::where('client_id', $client->id)->whereKeyNot($campaign->id)->running()->get()
+            ->sum(fn (Campaign $c) => (int) $c->dailyBudget());
+
+        return [
+            'state' => $campaign->clientState(),
+            'budget' => $campaign->dailyBudget(),
+            'min' => CampaignLimits::CLIENT_BUDGET_MIN,
+            'max' => CampaignLimits::CLIENT_BUDGET_MAX,
+            'credit_left' => (int) ($figure['credit_left'] ?? 0),
+            'others_daily' => (int) $others,
+            'prepaid' => (int) ($figure['credit_usd'] ?? 0) > 0,
+            // The most a day the paid money carries to its last day (null: pays after the spend).
+            'room' => app(CampaignLimits::class)->budgetRoom($campaign),
+            'last_day' => $campaign->lastDay()?->format('j M'),
+        ];
     }
 
     /** The client keeps it running for so many more days: the invoice to pay, made now. */
@@ -350,6 +429,8 @@ class PortalController extends Controller
             'id' => $c->id,
             'name' => $c->name,
             'live' => $c->isLive(),
+            // live, ended, paused_client, paused_credit, held (stopped on the agency's side)
+            'state' => $c->clientState(),
             'paused' => ! $c->isLive() && ! $c->hasEnded(),
             'ended' => $c->hasEnded(),
             'stops' => $c->stopsText(),

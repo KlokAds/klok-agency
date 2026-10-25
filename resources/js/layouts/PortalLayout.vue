@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BrandMark from '@/components/BrandMark.vue';
+import FeedbackModal from '@/components/FeedbackModal.vue';
 import KFeedbackHost from '@/components/k/KFeedbackHost.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import { useAppearance } from '@/composables/useAppearance';
@@ -39,6 +40,10 @@ const menuAnchor = ref<HTMLElement | null>(null);
 const menuPanel = ref<HTMLElement | null>(null);
 const menu = usePopover(menuAnchor, menuPanel, { align: 'end' });
 const twoFactorOff = computed(() => !user.value?.two_factor_enabled);
+const feedback = ref(false);
+const whatsapp = computed(
+    () => (page.props.contact as { whatsapp?: string } | null)?.whatsapp,
+);
 
 function bridge() {
     return (
@@ -226,6 +231,34 @@ onMounted(() =>
                                 />{{ t('App lock — আঙুলের ছাপ / PIN') }}
                             </button>
                             <div class="my-1 h-px bg-line" />
+                            <a
+                                v-if="whatsapp"
+                                :href="whatsapp"
+                                target="_blank"
+                                rel="noopener"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                @click="menu.close()"
+                                ><KIcon
+                                    name="chat"
+                                    :size="16"
+                                    class="text-[#25D366]"
+                                />{{ t('যোগাযোগ — WhatsApp') }}</a
+                            >
+                            <button
+                                type="button"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                @click="
+                                    menu.close();
+                                    feedback = true;
+                                "
+                            >
+                                <KIcon
+                                    name="rocket"
+                                    :size="16"
+                                    class="text-ink-3"
+                                />{{ t('Feature request ও পরামর্শ') }}
+                            </button>
+                            <div class="my-1 h-px bg-line" />
                             <button
                                 type="button"
                                 class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
@@ -303,6 +336,7 @@ onMounted(() =>
             >
         </nav>
 
+        <FeedbackModal v-model="feedback" />
         <KFeedbackHost />
     </div>
 </template>

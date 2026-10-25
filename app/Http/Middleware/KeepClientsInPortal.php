@@ -15,7 +15,7 @@ class KeepClientsInPortal
 {
     /** Paths a client may use outside the portal. */
     private const OPEN = [
-        'portal', 'portal/*', 'settings', 'settings/*', 'user/*', 'two-factor*', 'confirm-password', 'email/*',
+        'portal', 'portal/*', 'feedback', 'settings', 'settings/*', 'user/*', 'two-factor*', 'confirm-password', 'email/*',
         'logout', 'locale', 'i/*', 'r/*', 'app/device', 'app/latest', 'app/get', 'app/download', 'hooks/*', 'up',
         '.well-known/*', 'passkeys*', 'webauthn*',
     ];

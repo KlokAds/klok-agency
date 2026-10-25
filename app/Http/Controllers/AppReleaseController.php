@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\AppDevice;
 use App\Models\Setting;
+use App\Models\User;
+use App\Notifications\AgencyAlert;
 use App\Payments\PaySettings;
 use App\Services\AppPush;
 use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -29,6 +32,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AppReleaseController extends Controller
 {
+    public const UPDATE_TITLE = 'KlokOne app-এর নতুন version এসেছে'; // i18n
+
     public const FLAVORS = ['plain', 'sms'];
 
     public static function file(string $flavor): string
@@ -83,6 +88,14 @@ class AppReleaseController extends Controller
             'tag' => 'app_update_'.$data['version'],
             'url' => '/dashboard',
         ]));
+
+        // The team also has it in the bell (and by email, as each chose): once a version.
+        if (Cache::add('app_update_told_'.$data['version'], true, now()->addDays(30))) {
+            $alert = new AgencyAlert('app_update', self::UPDATE_TITLE, 'Version {name} — app খুললে নিজে থেকে বসে যাবে', ['name' => $data['name']], ['url' => '/notifications', 'no_push' => true]); // i18n
+            User::where('is_active', true)->whereNull('client_id')->get()
+                ->reject(fn (User $u) => $u->isClient())
+                ->each(fn (User $u) => rescue(fn () => $u->notify($alert)));
+        }
 
         return response()->json(['ok' => true]);
     }

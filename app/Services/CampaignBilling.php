@@ -33,6 +33,8 @@ class CampaignBilling
 
     public const CHANGED_TITLE = 'Campaign বদলেছে — budget, শেষের তারিখ বা চালু/বন্ধ'; // i18n
 
+    public const PROBLEM_TITLE = 'Ad account-এ সমস্যা — client-দের ad থেমে আছে'; // i18n
+
     public function __construct(private PilotClient $pilot) {}
 
     /**
@@ -79,6 +81,12 @@ class CampaignBilling
         $report = $this->pilot->campaigns($account->pilot_id);
         $count = 0;
 
+        if (array_key_exists('account_problem', $report) && $report['account_problem'] !== $account->problem) {
+            $was = $account->problem;
+            $account->forceFill(['problem' => $report['account_problem'], 'problem_since' => $report['account_problem'] ? now() : null])->saveQuietly();
+            $this->accountProblem($account, $was);
+        }
+
         foreach ($report['campaigns'] ?? [] as $c) {
             $campaign = Campaign::firstOrNew(['pilot_campaign_id' => (int) $c['campaign_id']]);
             $campaign->fill([
@@ -96,6 +104,7 @@ class CampaignBilling
             ]);
 
             $changes = $campaign->exists ? self::changes($campaign) : [];
+            $held = $campaign->exists && $campaign->client_id !== null ? $this->heldChange($campaign) : null;
 
             if ($campaign->isDirty()) {
                 $campaign->saveQuietly();
@@ -112,10 +121,66 @@ class CampaignBilling
                 ], ['url' => '/campaigns']));
             }
 
+            if ($held !== null) {
+                $this->tellClient($campaign, $held);
+            }
+
             $count++;
         }
 
         return $count;
+    }
+
+    /**
+     * Switched off on Meta by someone other than the client or the money guard (and not at its
+     * end): 'held'. Back on: 'back' — and a client's own pause is over, since the team or Meta
+     * switched it on.
+     */
+    private function heldChange(Campaign $campaign): ?string
+    {
+        if (! $campaign->isDirty('status')) {
+            return null;
+        }
+
+        $was = in_array(strtoupper((string) $campaign->getOriginal('status')), Campaign::LIVE, true);
+        $now = in_array(strtoupper((string) $campaign->status), Campaign::LIVE, true);
+
+        if ($now && ! $was) {
+            $mine = $campaign->paused_by_client_at !== null || $campaign->paused_for_credit_at !== null;
+            $campaign->paused_by_client_at = null;
+            $campaign->saveQuietly();
+
+            return $mine ? null : 'back';
+        }
+
+        return $was && ! $now && ! $campaign->hasEnded() && $campaign->paused_by_client_at === null && $campaign->paused_for_credit_at === null ? 'held' : null;
+    }
+
+    /** The account itself stopped (or started) on Meta: the team, and every client running ads on it. */
+    private function accountProblem(PilotAccount $account, ?string $was): void
+    {
+        if ($account->problem !== null) {
+            app(Notifier::class)->send(null, new AgencyAlert('account_problem', self::PROBLEM_TITLE, $account->problem === 'payment' ? '{account} — Meta টাকা কাটতে পারেনি, card/billing দেখুন' : '{account} — Meta account বন্ধ বা review-তে', [ // i18n
+                'account' => $account->name,
+            ], ['url' => '/campaigns?account='.$account->id]));
+        }
+
+        $campaigns = Campaign::where('pilot_account_id', $account->id)->whereNotNull('client_id')->running()->get();
+
+        foreach ($campaigns as $campaign) {
+            $this->tellClient($campaign, $account->problem !== null ? 'held' : ($was !== null ? 'back' : null));
+        }
+    }
+
+    private function tellClient(Campaign $campaign, ?string $what): void
+    {
+        if ($what === null) {
+            return;
+        }
+
+        app(ClientNotifier::class)->send($campaign->client_id, $what === 'held'
+            ? new AgencyAlert('client_held', ClientNotifier::HELD_TITLE, '{campaign} — Klok Ads ঠিক করছে; এ সময় আপনার টাকা খরচ হচ্ছে না', ['campaign' => $campaign->name], ['url' => '/portal/campaigns/'.$campaign->id]) // i18n
+            : new AgencyAlert('client_back', ClientNotifier::BACK_TITLE, '{campaign} — আবার চলছে', ['campaign' => $campaign->name], ['url' => '/portal/campaigns/'.$campaign->id])); // i18n
     }
 
     /**

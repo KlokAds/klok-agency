@@ -25,6 +25,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property CarbonImmutable|null $limits_at
  * @property string|null $limits_error
  * @property CarbonImmutable|null $paused_for_credit_at
+ * @property CarbonImmutable|null $paused_by_client_at the client paused it on the portal
  * @property int $spend_total cents
  * @property int $spend_7d cents
  * @property CarbonImmutable|null $start_at
@@ -41,7 +42,7 @@ class Campaign extends Model
     protected $fillable = [
         'pilot_campaign_id', 'pilot_account_id', 'external_id', 'name', 'status', 'objective', 'daily_budget',
         'start_at', 'stop_at', 'spend_total', 'spend_7d', 'last_spend_day', 'client_id', 'bill_from',
-        'budget', 'spend_cap', 'spent_before', 'limits_at', 'limits_error', 'paused_for_credit_at',
+        'budget', 'spend_cap', 'spent_before', 'limits_at', 'limits_error', 'paused_for_credit_at', 'paused_by_client_at',
     ];
 
     protected function casts(): array
@@ -62,6 +63,7 @@ class Campaign extends Model
             'spent_before' => 'integer',
             'limits_at' => 'datetime',
             'paused_for_credit_at' => 'datetime',
+            'paused_by_client_at' => 'datetime',
         ];
     }
 
@@ -178,6 +180,22 @@ class Campaign extends Model
     }
 
     /** Ended on Meta's clock, whatever its status says. */
+    /**
+     * Where it stands, as its client sees it: running; ended; paused by the client; paused because
+     * their money ran out; or held on the agency's side (the ad account could not be charged or is
+     * disabled, Meta flagged it, or it was paused there).
+     */
+    public function clientState(): string
+    {
+        return match (true) {
+            $this->hasEnded() => 'ended',
+            $this->paused_by_client_at !== null && ! $this->isLive() => 'paused_client',
+            $this->paused_for_credit_at !== null && ! $this->isLive() => 'paused_credit',
+            $this->isLive() && $this->account?->problem === null => 'live',
+            default => 'held',
+        };
+    }
+
     public function hasEnded(): bool
     {
         return $this->stop_at !== null && CarbonImmutable::parse($this->stop_at)->isPast();

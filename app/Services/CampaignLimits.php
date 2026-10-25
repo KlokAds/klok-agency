@@ -31,6 +31,8 @@ class CampaignLimits
 
     public const PAUSED_TITLE = 'Client-এর টাকা শেষ — campaign বন্ধ করা হয়েছে'; // i18n
 
+    public const CLIENT_TITLE = 'Client নিজে campaign বদলেছেন'; // i18n
+
     public function __construct(private PilotClient $pilot, private Books $books, private Notifier $notifier) {}
 
     public static function enabled(): bool
@@ -168,6 +170,118 @@ class CampaignLimits
             ->log('extended');
 
         return $newEnd;
+    }
+
+    /** The fewest and most dollars a day a client may set on the portal. */
+    public const CLIENT_BUDGET_MIN = 100;
+
+    public const CLIENT_BUDGET_MAX = 100000;
+
+    /**
+     * The client pauses their own campaign; it stays off until they (or the team) switch it on.
+     *
+     * @throws RuntimeException when Pilot or Meta refuses, or it is not running
+     */
+    public function clientPause(Campaign $campaign, User $by): void
+    {
+        if (! $campaign->isLive()) {
+            throw new RuntimeException(__('Campaign এখন চলছে না।'));
+        }
+
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => false, 'reason' => 'Paused by the client on the portal (KlokOne)']);
+        $this->remember($campaign, $read);
+        $campaign->paused_by_client_at = now();
+        $campaign->saveQuietly();
+        $this->clientDid($campaign, $by, 'paused', __('থামিয়েছেন'));
+    }
+
+    /**
+     * The client switches their paused campaign on again — only one they paused themselves, with
+     * money left for it; one stopped for want of money runs again once paid.
+     *
+     * @throws RuntimeException when there is no money left, or Pilot or Meta refuses
+     */
+    public function clientResume(Campaign $campaign, User $by): void
+    {
+        if ($campaign->paused_by_client_at === null || $campaign->isLive() || $campaign->hasEnded()) {
+            throw new RuntimeException(__('এই campaign এখান থেকে চালু করা যায় না।'));
+        }
+
+        $figure = collect($this->books->clients())->firstWhere('id', $campaign->client_id) ?? [];
+
+        // A client who pays after the spend is billed for it; one who pays ahead needs money left.
+        if ((int) ($figure['credit_usd'] ?? 0) > 0 && (int) ($figure['credit_left'] ?? 0) <= 0) {
+            throw new RuntimeException(__('বিজ্ঞাপনের টাকা শেষ — আগে pay করুন, তারপর চালু হবে।'));
+        }
+
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => true, 'reason' => 'Switched on by the client on the portal (KlokOne)']);
+        $this->remember($campaign, $read);
+        $campaign->paused_by_client_at = null;
+        $campaign->limits_at = null; // the next guard caps it at the money left
+        $campaign->saveQuietly();
+        $this->clientDid($campaign, $by, 'resumed', __('আবার চালু করেছেন'));
+    }
+
+    /**
+     * The most a day a prepaid client's campaign may take: the money left must carry it, and the
+     * client's other running campaigns, to its last day. Null when the client pays after the spend.
+     */
+    public function budgetRoom(Campaign $campaign): ?int
+    {
+        $figure = collect($this->books->clients())->firstWhere('id', $campaign->client_id) ?? [];
+
+        if ((int) ($figure['credit_usd'] ?? 0) <= 0) {
+            return null;
+        }
+
+        $last = $campaign->lastDay();
+        $days = $last === null ? 1 : max(1, (int) CarbonImmutable::now()->startOfDay()->diffInDays($last, false) + 1);
+        $others = Campaign::where('client_id', $campaign->client_id)->whereKeyNot($campaign->id)->running()->get()
+            ->sum(fn (Campaign $c) => (int) $c->dailyBudget());
+
+        return max(0, intdiv((int) ($figure['credit_left'] ?? 0) - $others * $days, $days));
+    }
+
+    /**
+     * The client sets the budget a day (cents, USD). Lowering it is always allowed; raising it
+     * only as far as the money left carries the campaign to its last day — more needs paying first,
+     * so a campaign never runs on money not paid.
+     *
+     * @throws RuntimeException when the money does not carry it, or Pilot or Meta refuses
+     */
+    public function clientBudget(Campaign $campaign, int $cents, User $by): void
+    {
+        if ($campaign->hasEnded()) {
+            throw new RuntimeException(__('Campaign শেষ হয়ে গেছে।'));
+        }
+
+        $was = $campaign->dailyBudget();
+        $room = $this->budgetRoom($campaign);
+
+        if ($room !== null && $cents > (int) $was && $cents > $room) {
+            throw new RuntimeException($room >= self::CLIENT_BUDGET_MIN
+                ? __('আপনার বাকি টাকায় শেষ দিন পর্যন্ত দিনে সর্বোচ্চ :max চলবে। বেশি চাইলে আগে pay করুন।', ['max' => '$'.number_format($room / 100, 2)])
+                : __('বাকি টাকায় budget বাড়ানো যাবে না — আগে pay করুন।'));
+        }
+
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['daily_budget' => round($cents / 100, 2), 'reason' => 'Budget set by the client on the portal (KlokOne)']);
+        $this->remember($campaign, $read);
+        $campaign->daily_budget = $cents;
+        $campaign->saveQuietly();
+        $this->stampBudget($campaign);
+        $this->clientDid($campaign, $by, 'budget', __('দৈনিক budget :from → :to করেছেন', [
+            'from' => $was !== null ? '$'.number_format($was / 100, 2) : '—', 'to' => '$'.number_format($cents / 100, 2),
+        ]));
+    }
+
+    /** What the client did, in the log and to the people who run the ads. */
+    private function clientDid(Campaign $campaign, User $by, string $what, string $said): void
+    {
+        $campaign->loadMissing('client');
+        activity('Campaign')->performedOn($campaign)->causedBy($by)->withProperties(['by_client' => true])->log('client '.$what);
+        $this->notifier->send($campaign->client?->manager_id, new AgencyAlert('client_campaign', self::CLIENT_TITLE, '{client} · {campaign}: {who} {did}', [
+            'client' => $campaign->client?->name, 'campaign' => $campaign->name, 'who' => $by->name, 'did' => $said,
+        ], ['url' => '/campaigns?account='.$campaign->pilot_account_id]));
     }
 
     /**

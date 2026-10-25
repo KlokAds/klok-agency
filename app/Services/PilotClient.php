@@ -67,7 +67,7 @@ class PilotClient
     /**
      * Every campaign in one ad account, with its status and spend so far.
      *
-     * @return array{currency?: string, last_synced_at?: string|null, campaigns?: list<array<string, mixed>>}
+     * @return array{currency?: string, last_synced_at?: string|null, account_problem?: string|null, campaigns?: list<array<string, mixed>>}
      */
     public function campaigns(int $adAccountId): array
     {

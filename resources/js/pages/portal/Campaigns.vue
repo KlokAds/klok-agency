@@ -2,6 +2,8 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import RangePicker from '@/components/portal/RangePicker.vue';
+import CampaignState from '@/components/portal/CampaignState.vue';
+import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
 import { money } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -18,6 +20,7 @@ type Row = Totals & {
     live: boolean;
     paused: boolean;
     ended: boolean;
+    state: CampaignStateKey;
     stops: string | null;
     days_left: number | null;
     currency: string;
@@ -109,23 +112,7 @@ const totalName = computed(() => {
                 class="panel block p-4 transition-colors hover:border-brand sm:p-5"
             >
                 <span class="flex flex-wrap items-center gap-2">
-                    <span
-                        class="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
-                        :class="
-                            c.live
-                                ? 'bg-in-soft text-in'
-                                : c.ended
-                                  ? 'bg-sunken text-ink-3'
-                                  : 'bg-wait-soft text-wait'
-                        "
-                        >{{
-                            c.live
-                                ? t('চলছে')
-                                : c.ended
-                                  ? t('শেষ')
-                                  : t('থামানো')
-                        }}</span
-                    >
+                    <CampaignState :state="c.state" />
                     <span
                         class="min-w-0 flex-1 truncate text-[15px] font-semibold"
                         >{{ c.name }}</span

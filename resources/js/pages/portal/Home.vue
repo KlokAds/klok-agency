@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import CampaignState from '@/components/portal/CampaignState.vue';
+import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import { money } from '@/lib/format';
@@ -10,6 +12,7 @@ type Campaign = {
     id: number;
     name: string;
     live: boolean;
+    state: CampaignStateKey;
     stops: string | null;
     days_left: number | null;
     budget: number | null;
@@ -31,6 +34,7 @@ const props = defineProps<{
         left: number;
         daily: number;
         days_left: number | null;
+        refund?: { mfs: number; bank: number } | null;
     };
     week: { day: string; spend: number; results: number }[];
     running: Campaign[];
@@ -205,6 +209,27 @@ const low = computed(
                 <b class="num text-ink">{{ money(credit.daily, 'usd') }}</b>
             </p>
         </div>
+        <!-- What would come back if they asked now: their unspent money, less sending it. -->
+        <div
+            v-if="credit.refund"
+            class="mt-4 rounded-xl bg-sunken px-4 py-3 text-[13px]"
+        >
+            <p class="text-ink-3">
+                {{ t('এখন ফেরত চাইলে আনুমানিক') }}
+                <b class="num text-ink">{{
+                    money(credit.refund.mfs, 'bdt')
+                }}</b>
+                <span class="text-ink-3"> · bKash/Nagad</span>
+            </p>
+            <p class="mt-0.5 text-[12px] text-ink-3">
+                {{
+                    t(
+                        'Bank-এ নিলে {bank}। যে দামে ডলার কিনেছিলেন সেই দামে, পাঠানোর খরচ বাদে — চূড়ান্ত হিসাব Klok Ads দেবে।',
+                        { bank: money(credit.refund.bank, 'bdt') },
+                    )
+                }}
+            </p>
+        </div>
         <p v-if="low" class="mt-3 text-[13px] font-medium text-out">
             {{ t('টাকা শেষের দিকে — বিজ্ঞাপন না থামাতে চাইলে আগেই pay করুন।') }}
         </p>
@@ -295,9 +320,9 @@ const low = computed(
 
     <!-- What runs now -->
     <section class="mt-6">
-        <h2 class="mb-3 text-[16px] font-bold">{{ t('এখন চলছে') }}</h2>
+        <h2 class="mb-3 text-[16px] font-bold">{{ t('আপনার campaign') }}</h2>
         <p v-if="!running.length" class="panel p-5 text-[14px] text-ink-3">
-            {{ t('এখন কোনো campaign চলছে না।') }}
+            {{ t('এখন কোনো চালু campaign নেই।') }}
         </p>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Link
@@ -306,11 +331,11 @@ const low = computed(
                 :href="`/portal/campaigns/${c.id}`"
                 class="panel block p-4 transition-colors hover:border-brand"
             >
-                <span class="flex items-center gap-2">
-                    <span class="size-2 shrink-0 rounded-full bg-in" />
+                <span class="flex items-center justify-between gap-2">
                     <span class="truncate text-[14.5px] font-semibold">{{
                         c.name
                     }}</span>
+                    <CampaignState :state="c.state" />
                 </span>
                 <span class="mt-2 block text-[13px] text-ink-2">
                     {{ c.stops ?? t('শেষের তারিখ নেই') }}

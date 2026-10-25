@@ -6,6 +6,7 @@ import GlobalSearch from '@/components/GlobalSearch.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
 import QuickEntry from '@/components/QuickEntry.vue';
 import KButton from '@/components/k/KButton.vue';
+import FeedbackModal from '@/components/FeedbackModal.vue';
 import KFeedbackHost from '@/components/k/KFeedbackHost.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KModal from '@/components/k/KModal.vue';
@@ -164,6 +165,7 @@ const quick = quickOpen;
 const userAnchor = ref<HTMLElement | null>(null);
 const userPanel = ref<HTMLElement | null>(null);
 const userMenu = usePopover(userAnchor, userPanel, { align: 'end' });
+const feedbackOpen = ref(false);
 
 const { resolvedAppearance, updateAppearance } = useAppearance();
 const { warning, secondsLeft, stay } = useIdleLogout();
@@ -475,6 +477,20 @@ function appSettings(): void {
                             </button>
                             <button
                                 type="button"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                @click="
+                                    userMenu.close();
+                                    feedbackOpen = true;
+                                "
+                            >
+                                <KIcon
+                                    name="rocket"
+                                    :size="16"
+                                    class="text-ink-3"
+                                />{{ t('Feature request ও পরামর্শ') }}
+                            </button>
+                            <button
+                                type="button"
                                 class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
                                 @click="
                                     userMenu.close();
@@ -599,6 +615,7 @@ function appSettings(): void {
                 </li>
             </ul>
         </KModal>
+        <FeedbackModal v-model="feedbackOpen" />
         <KFeedbackHost />
 
         <KModal

@@ -24,6 +24,7 @@ class SettingController extends Controller
                 'idle_minutes' => (int) Setting::get('idle_minutes', 30),
                 'mfs_out_percent' => (string) MoveFees::mfsPercent(),
                 'bank_transfer_fee' => (string) (MoveFees::bankFee() / 100),
+                'business_whatsapp' => (string) Setting::get('business_whatsapp', ''),
             ],
             'mail' => MailSettings::form(),
         ]);
@@ -37,7 +38,8 @@ class SettingController extends Controller
             'idle_minutes' => ['required', 'integer', 'min:5', 'max:240'],
             'mfs_out_percent' => ['required', 'numeric', 'min:0', 'max:10'],
             'bank_transfer_fee' => ['required', 'numeric', 'min:0', 'max:1000'],
-        ]);
+            'business_whatsapp' => ['nullable', 'string', 'regex:/^(\+?880|0)1[3-9]\d{8}$/'],
+        ], ['business_whatsapp.regex' => __('১১ সংখ্যার নম্বর দিন, যেমন 01712345678।')]);
 
         if ($data['require_2fa'] && ! $request->user()->two_factor_confirmed_at) {
             return back()->withErrors(['require_2fa' => __('আগে নিজের account-এ 2FA চালু করুন, তারপর সবার জন্য বাধ্যতামূলক করুন।')]);
@@ -49,6 +51,8 @@ class SettingController extends Controller
         // What moving money costs: cashing out of MFS, and a bank transfer.
         Setting::put('mfs_out_percent', (string) round((float) $data['mfs_out_percent'], 3));
         Setting::put('bank_transfer_fee', (string) round((float) $data['bank_transfer_fee'], 2));
+        // Where clients reach the agency on WhatsApp, from the portal.
+        Setting::put('business_whatsapp', $data['business_whatsapp'] ?? null);
 
         $this->toast(__('Settings সংরক্ষণ হয়েছে।'));
 

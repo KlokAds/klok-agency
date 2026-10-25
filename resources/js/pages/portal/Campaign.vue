@@ -3,6 +3,10 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import KButton from '@/components/k/KButton.vue';
 import { confirmAction } from '@/lib/feedback';
+import CampaignControl from '@/components/portal/CampaignControl.vue';
+import type { Control } from '@/components/portal/CampaignControl.vue';
+import CampaignState from '@/components/portal/CampaignState.vue';
+import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
 import RangePicker from '@/components/portal/RangePicker.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
 import { money } from '@/lib/format';
@@ -21,6 +25,7 @@ const props = defineProps<{
         name: string;
         live: boolean;
         ended: boolean;
+        state: CampaignStateKey;
         stops: string | null;
         days_left: number | null;
         budget: number | null;
@@ -43,6 +48,7 @@ const props = defineProps<{
         until: string | null;
         at: string | null;
     }[];
+    control?: Control | null;
     renew?: {
         budget: number;
         rate: number | null;
@@ -121,13 +127,7 @@ async function stopIt(): Promise<void> {
     >
         <p>
             <span class="block text-ink-3">{{ t('অবস্থা') }}</span>
-            <b :class="campaign.live ? 'text-in' : 'text-ink-2'">{{
-                campaign.live
-                    ? t('চলছে')
-                    : campaign.ended
-                      ? t('শেষ হয়েছে')
-                      : t('থামানো')
-            }}</b>
+            <CampaignState :state="campaign.state" size="md" class="mt-1" />
         </p>
         <p>
             <span class="block text-ink-3">{{ t('কবে বন্ধ হবে') }}</span>
@@ -150,6 +150,12 @@ async function stopIt(): Promise<void> {
             >
         </p>
     </section>
+
+    <CampaignControl
+        v-if="control"
+        :campaign-id="campaign.id"
+        :control="control"
+    />
 
     <!-- Keep it going, or not: the client decides here. -->
     <section v-if="renew" class="panel mt-4 p-5">

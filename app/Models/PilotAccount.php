@@ -17,12 +17,14 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property int $pilot_id
  * @property int|null $client_id
  * @property CarbonImmutable|null $seen_at
+ * @property string|null $problem "payment" (Meta could not charge it) or "disabled", as Pilot last said
+ * @property CarbonImmutable|null $problem_since
  */
 class PilotAccount extends Model
 {
     use Audited;
 
-    protected $fillable = ['pilot_id', 'name', 'external_id', 'platform', 'currency', 'shop', 'client_id', 'seen_at'];
+    protected $fillable = ['pilot_id', 'name', 'external_id', 'platform', 'currency', 'shop', 'client_id', 'seen_at', 'problem', 'problem_since'];
 
     protected function casts(): array
     {
@@ -30,6 +32,7 @@ class PilotAccount extends Model
             'pilot_id' => 'integer',
             'client_id' => 'integer',
             'seen_at' => 'datetime',
+            'problem_since' => 'datetime',
         ];
     }
 

@@ -25,6 +25,7 @@ const props = defineProps<{
         idle_minutes: number;
         mfs_out_percent: string;
         bank_transfer_fee: string;
+        business_whatsapp: string;
     };
     mail: {
         host: string;
@@ -195,6 +196,22 @@ onMounted(() => {
                     </KInput>
                 </KField>
             </div>
+            <KField
+                :label="t('Business WhatsApp নম্বর')"
+                :error="form.errors.business_whatsapp"
+                :hint="
+                    t(
+                        'Client portal-এর ‘যোগাযোগ’ button এই নম্বরে WhatsApp খোলে।',
+                    )
+                "
+            >
+                <KInput
+                    v-model="form.business_whatsapp"
+                    inputmode="tel"
+                    placeholder="01XXXXXXXXX"
+                    :disabled="!editable"
+                />
+            </KField>
             <KField
                 :label="t('খাতা বন্ধ (lock) — এই তারিখ পর্যন্ত')"
                 :error="form.errors.lock_date"

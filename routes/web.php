@@ -36,6 +36,7 @@ use App\Http\Controllers\Books\ReconcileController;
 use App\Http\Controllers\Books\ReportController;
 use App\Http\Controllers\Books\UsdEntryController;
 use App\Http\Controllers\Books\WalletController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\Invoices\InvoiceController;
 use App\Http\Controllers\Invoices\PaymentSettingsController;
 use App\Http\Controllers\Invoices\PublicInvoiceController;
@@ -99,12 +100,16 @@ Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->grou
     Route::get('campaigns/{campaign}', [PortalController::class, 'campaign'])->name('campaign');
     Route::post('campaigns/{campaign}/renew', [PortalController::class, 'renew'])->middleware('throttle:10,1')->name('campaign.renew');
     Route::post('campaigns/{campaign}/stop', [PortalController::class, 'stop'])->middleware('throttle:10,1')->name('campaign.stop');
+    Route::post('campaigns/{campaign}/pause', [PortalController::class, 'pause'])->middleware('throttle:10,1')->name('campaign.pause');
+    Route::post('campaigns/{campaign}/resume', [PortalController::class, 'resume'])->middleware('throttle:10,1')->name('campaign.resume');
+    Route::post('campaigns/{campaign}/budget', [PortalController::class, 'budget'])->middleware('throttle:10,1')->name('campaign.budget');
     Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
     Route::get('notifications', [PortalController::class, 'notifications'])->name('notifications');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // The Android app: this phone's notifications, and the phone that forwards the wallet SMS.
+    Route::post('feedback', [FeedbackController::class, 'store'])->middleware('throttle:5,10')->name('feedback');
     Route::post('app/device', [AppDeviceController::class, 'store'])->middleware('throttle:30,1')->name('app.device');
     Route::get('app/latest', [AppReleaseController::class, 'latest'])->middleware('throttle:30,1')->name('app.latest');
     Route::post('app/sms-forwarder', [AppDeviceController::class, 'smsForwarder'])->middleware('throttle:10,1')->name('app.sms-forwarder');

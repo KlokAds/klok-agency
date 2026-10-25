@@ -32,6 +32,10 @@ class ClientNotifier
 
     public const EXTENDED_TITLE = 'Campaign বাড়ানো হয়েছে'; // i18n
 
+    public const HELD_TITLE = 'Campaign সাময়িক বন্ধ — আমাদের দিকের সমস্যা'; // i18n
+
+    public const BACK_TITLE = 'Campaign আবার চলছে'; // i18n
+
     /** @return int how many people heard */
     public function send(?int $clientId, AgencyAlert $alert): int
     {

@@ -20,7 +20,7 @@ use Illuminate\Notifications\Notification;
 class AgencyAlert extends Notification
 {
     /** Kinds that need someone now. */
-    public const URGENT = ['invoice_paid', 'invoice_claim', 'credit_out', 'credit_low', 'renewal_paid', 'card_low', 'pilot_down'];
+    public const URGENT = ['invoice_paid', 'invoice_claim', 'credit_out', 'credit_low', 'renewal_paid', 'card_low', 'pilot_down', 'account_problem'];
 
     /**
      * @param  array<string, string|int|float|null>  $params
@@ -55,7 +55,8 @@ class AgencyAlert extends Notification
         }
 
         $prefs = Notifier::prefs($notifiable, $this->group());
-        if ($prefs['push'] || ! empty($this->extra['important'])) {
+        // no_push: the phone was already told another way (an app release).
+        if (($prefs['push'] || ! empty($this->extra['important'])) && empty($this->extra['no_push'])) {
             $channels[] = AppChannel::class;
         }
         if ($prefs['email'] && filled($notifiable->email) && MailSettings::ready()) {
@@ -114,7 +115,7 @@ class AgencyAlert extends Notification
     {
         return match (true) {
             in_array($this->kind, ['invoice_paid', 'invoice_claim', 'invoice_overdue', 'invoice_refund', 'sms_silent'], true) => 'money',
-            in_array($this->kind, ['credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_changed', 'campaign_ending', 'campaign_spend'], true), str_starts_with($this->kind, 'renewal') => 'ads',
+            in_array($this->kind, ['credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_changed', 'campaign_ending', 'campaign_spend', 'account_problem', 'client_campaign'], true), str_starts_with($this->kind, 'renewal') => 'ads',
             str_starts_with($this->kind, 'did_') => 'activity',
             in_array($this->kind, ['card_low', 'meta_receipt'], true) => 'dollars',
             $this->kind === 'summary' => 'summary',
