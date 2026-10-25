@@ -127,7 +127,6 @@
     "নিরাপত্তা": "Security",
     "2FA বন্ধ": "2FA off",
     "2FA চালু": "2FA on",
-    "App lock — আঙুলের ছাপ / PIN": "App lock — fingerprint / PIN",
     "আমার account": "My account",
     "Ad account বা Meta-র দিকের একটা সমস্যায় campaign এখন চলছে না। Klok Ads ঠিক করছে — এ সময় আপনার টাকা খরচ হচ্ছে না, আর ঠিক হলেই আপনাকে জানানো হবে।": "A problem with the ad account or on Meta's side has stopped the campaign. Klok Ads is fixing it — none of your money is spent meanwhile, and you'll hear as soon as it's running again.",
     "Ad account-এ সমস্যা — client-দের ad থেমে আছে": "Ad account problem — clients' ads are stopped",
@@ -259,5 +258,8 @@
     "সপ্তাহ ধরে": "By week",
     "খরচ হয়নি": "No spend",
     "সময় বাছুন": "Pick a period",
-    "সব": "All"
+    "সব": "All",
+    "Meta কেটেছে": "Meta charged",
+    "এখনো কাটেনি": "not yet charged",
+    "App lock (PIN / আঙুল)": "App lock (PIN / fingerprint)"
 }

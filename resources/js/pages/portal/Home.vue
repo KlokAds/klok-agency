@@ -38,6 +38,7 @@ const props = defineProps<{
         paid: number;
         spent: number;
         left: number;
+        meta?: { charged: number; uncharged: number };
         daily: number;
         days_left: number | null;
         refund?: number | null;
@@ -263,6 +264,21 @@ const low = computed(
                         })
                     }}</span
                 >
+            </p>
+            <!-- Of what was spent: Meta has charged this much (final); the rest settles on the charge. -->
+            <p
+                v-if="
+                    credit.meta &&
+                    credit.meta.charged + credit.meta.uncharged > 0
+                "
+                class="num mt-1 text-[12.5px] text-ink-3"
+            >
+                {{ t('Meta কেটেছে') }}
+                <b class="text-ink">{{ money(credit.meta.charged, 'usd') }}</b>
+                · {{ t('এখনো কাটেনি') }}
+                <b class="text-ink">{{
+                    money(credit.meta.uncharged, 'usd')
+                }}</b>
             </p>
             <KButton
                 v-if="credit.refund"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SectionTabs from '@/components/SectionTabs.vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import MetaCampaigns from '@/components/dollars/MetaCampaigns.vue';
@@ -45,6 +45,31 @@ const props = defineProps<{
         };
         usd_at_cost: number;
     };
+    ad_accounts: {
+        id: number;
+        name: string;
+        currency: string | null;
+        since: string;
+        spent: number;
+        charged: number;
+        pending: number;
+        campaigns: {
+            id: number;
+            slug: string | null;
+            name: string;
+            client: string | null;
+            spent: number;
+            charged: number;
+            pending: number;
+        }[];
+        charges: {
+            id: number;
+            date: string | null;
+            amount: number;
+            card: string | null;
+            by_campaign: { name: string; amount: number }[];
+        }[];
+    }[];
     platforms: {
         id: number;
         name: string;
@@ -350,6 +375,153 @@ function saveAccount(): void {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <section class="panel min-w-0 p-5 sm:p-6 xl:col-span-2">
+            <h2 class="text-[16px] font-bold">{{ t('Ad account ধরে') }}</h2>
+            <p class="mt-1 text-[13.5px] text-ink-3">
+                {{
+                    t(
+                        'Meta যা খরচ গুনেছে, card থেকে যা কেটেছে, আর যা এখনো কাটবে — account আর campaign ধরে। প্রতিটা charge কোন campaign-এর টাকা, তা-ও।',
+                    )
+                }}
+            </p>
+            <KEmpty
+                v-if="!ad_accounts.length"
+                :title="t('এখনো কোনো ad account-এর খরচ নেই')"
+                class="mt-3"
+            />
+            <div v-else class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <article
+                    v-for="a in ad_accounts"
+                    :key="a.id"
+                    class="rounded-xl border border-line"
+                >
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-2 px-4 pt-4"
+                    >
+                        <h3 class="font-bold">
+                            {{ a.name }}
+                            <span
+                                class="ml-1 text-[12.5px] font-medium text-ink-3"
+                                >{{ a.currency }}</span
+                            >
+                        </h3>
+                        <span class="num text-[12.5px] text-ink-3">{{
+                            t('{date} থেকে', { date: niceDate(a.since) })
+                        }}</span>
+                    </div>
+                    <div
+                        class="mt-3 grid grid-cols-3 divide-x divide-line border-y border-line bg-sunken/60 py-2.5 text-center"
+                    >
+                        <p>
+                            <span class="block text-[12.5px] text-ink-3">{{
+                                t('Meta গুনেছে')
+                            }}</span>
+                            <b class="num text-[15px]">{{
+                                money(a.spent, 'usd')
+                            }}</b>
+                        </p>
+                        <p>
+                            <span class="block text-[12.5px] text-in">{{
+                                t('Card থেকে কেটেছে')
+                            }}</span>
+                            <b class="num text-[15px] text-in">{{
+                                money(a.charged, 'usd')
+                            }}</b>
+                        </p>
+                        <p>
+                            <span class="block text-[12.5px] text-wait">{{
+                                t('এখনো কাটবে')
+                            }}</span>
+                            <b class="num text-[15px] text-wait">{{
+                                money(a.pending, 'usd')
+                            }}</b>
+                        </p>
+                    </div>
+                    <ul class="divide-y divide-line">
+                        <li
+                            v-for="c in a.campaigns"
+                            :key="c.id"
+                            class="flex items-center gap-3 px-4 py-2 text-[13.5px]"
+                        >
+                            <span class="min-w-0 flex-1">
+                                <Link
+                                    :href="`/campaigns/${c.slug ?? c.id}`"
+                                    class="block truncate font-medium hover:text-brand"
+                                    >{{ c.name }}</Link
+                                >
+                                <span
+                                    v-if="c.client"
+                                    class="block truncate text-[12.5px] text-ink-3"
+                                    >{{ c.client }}</span
+                                >
+                            </span>
+                            <span class="num w-16 shrink-0 text-right">{{
+                                money(c.spent, 'usd')
+                            }}</span>
+                            <span
+                                class="num w-16 shrink-0 text-right text-in"
+                                >{{ money(c.charged, 'usd') }}</span
+                            >
+                            <span
+                                class="num w-16 shrink-0 text-right text-wait"
+                                >{{ money(c.pending, 'usd') }}</span
+                            >
+                        </li>
+                    </ul>
+                    <details
+                        v-if="a.charges.length"
+                        class="border-t border-line px-4 py-2.5 text-[13.5px]"
+                    >
+                        <summary
+                            class="cursor-pointer font-semibold text-ink-2"
+                        >
+                            {{
+                                t('{n}টা charge — কোন campaign-এর', {
+                                    n: a.charges.length,
+                                })
+                            }}
+                        </summary>
+                        <ul class="mt-2 space-y-2">
+                            <li v-for="ch in a.charges" :key="ch.id">
+                                <p
+                                    class="flex items-center justify-between gap-2"
+                                >
+                                    <span class="num text-ink-3"
+                                        >{{ niceDate(ch.date)
+                                        }}<template v-if="ch.card">
+                                            · card {{ ch.card }}</template
+                                        ></span
+                                    >
+                                    <b class="num">{{
+                                        money(ch.amount, 'usd')
+                                    }}</b>
+                                </p>
+                                <p
+                                    v-if="ch.by_campaign.length"
+                                    class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12.5px] text-ink-3"
+                                >
+                                    <span
+                                        v-for="(b, i) in ch.by_campaign"
+                                        :key="i"
+                                        >{{ b.name }}
+                                        <b class="num text-ink">{{
+                                            money(b.amount, 'usd')
+                                        }}</b></span
+                                    >
+                                </p>
+                                <p
+                                    v-else
+                                    class="mt-0.5 text-[12.5px] text-ink-3"
+                                >
+                                    {{ t('ভাগ এখনো হয়নি') }}
+                                </p>
+                            </li>
+                        </ul>
+                    </details>
+                </article>
             </div>
         </section>
 

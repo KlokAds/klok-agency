@@ -315,5 +315,16 @@
     "USD কিনলে এখানে batch হিসেবে উঠবে।": "Each USD purchase shows up here as a batch.",
     "কোনো platform নেই": "No platforms",
     "Dollar পাতা থেকে ad platform যোগ করুন।": "Add ad platforms from the Dollars page.",
-    "মাসিক বেতন": "Monthly pay"
+    "মাসিক বেতন": "Monthly pay",
+    "Meta কেটেছে": "Meta charged",
+    "Ad account ধরে": "By ad account",
+    "Meta যা খরচ গুনেছে, card থেকে যা কেটেছে, আর যা এখনো কাটবে — account আর campaign ধরে। প্রতিটা charge কোন campaign-এর টাকা, তা-ও।": "What Meta counted, what it charged the card, and what it still will, by account and campaign; and which campaign each charge paid for.",
+    "এখনো কোনো ad account-এর খরচ নেই": "No ad account spend yet",
+    "{date} থেকে": "since {date}",
+    "Meta গুনেছে": "Meta counted",
+    "Card থেকে কেটেছে": "Charged to card",
+    "এখনো কাটবে": "Still to charge",
+    "{n}টা charge — কোন campaign-এর": "{n} charges, by campaign",
+    "ভাগ এখনো হয়নি": "Not split yet",
+    "অন্য": "Other"
 }

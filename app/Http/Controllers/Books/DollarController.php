@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Books;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\FxBatch;
+use App\Services\AdAccountBalances;
 use App\Services\Books;
 use App\Services\CampaignForecast;
 use App\Services\PlatformDue;
@@ -23,7 +24,7 @@ use Inertia\Response;
  */
 class DollarController extends Controller
 {
-    public function index(Books $books, CampaignForecast $forecast): Response
+    public function index(Books $books, CampaignForecast $forecast, AdAccountBalances $balances): Response
     {
         $summary = $books->summary();
         $fifo = $books->fifo();
@@ -63,6 +64,7 @@ class DollarController extends Controller
                 'usd_at_cost' => $summary['usd_at_cost'],
             ],
             'platforms' => $summary['platforms'],
+            'ad_accounts' => $balances->accounts(),
             'forecast' => $forecast->meta(),
             'accounts' => $accounts,
             'batches' => $batches,

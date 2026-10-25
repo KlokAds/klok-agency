@@ -13,6 +13,7 @@ use App\Models\Renewal;
 use App\Models\UsdEntry;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
+use App\Services\AdAccountBalances;
 use App\Services\Books;
 use App\Services\CampaignLimits;
 use App\Services\CampaignStats;
@@ -115,6 +116,8 @@ class PortalController extends Controller
                 'paid' => (int) ($figure['credit_usd'] ?? 0),
                 'spent' => (int) ($figure['campaign_usd'] ?? 0),
                 'left' => (int) ($figure['credit_left'] ?? 0),
+                // Final once Meta charged it; the rest is counted day by day and settles on the charge.
+                'meta' => app(AdAccountBalances::class)->client($client->id),
                 'daily' => (int) ($figure['daily_usd'] ?? 0),
                 'days_left' => $figure['days_left'] ?? null,
                 // Asked back now: the dollars not spent yet at the agency's own dollar rate — the

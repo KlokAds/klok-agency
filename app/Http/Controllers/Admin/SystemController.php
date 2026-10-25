@@ -6,6 +6,7 @@ use App\Http\Controllers\AppReleaseController;
 use App\Http\Controllers\Controller;
 use App\Models\AppDevice;
 use App\Models\Setting;
+use App\Services\AdAccountBalances;
 use App\Services\CampaignBilling;
 use App\Services\CampaignLimits;
 use App\Services\KeepAlive;
@@ -113,6 +114,7 @@ class SystemController extends Controller
                     app(MetaReceipts::class)->check();
                     Cache::forget('meta-charges:pilot');
                     app(MetaReceipts::class)->fromPilotIfDue();
+                    app(AdAccountBalances::class)->allocate();
                 })(),
                 default => (function () use ($keepAlive) {
                     Cache::forget('keep-alive:beat');

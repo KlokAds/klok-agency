@@ -60,6 +60,7 @@ const props = defineProps<{
         margin: number;
         usd_pending: number;
         cost_pending: number;
+        meta?: { charged: number; uncharged: number };
     } | null;
     statement: Paginated<{
         key: string;
@@ -315,6 +316,12 @@ function print(): void {
             </p>
             <p class="num mt-1 text-[13px] text-ink-3">
                 FIFO cost {{ money(f.cost_settled, 'bdt') }}
+            </p>
+            <p v-if="f.meta" class="num mt-1 text-[13px] text-ink-3">
+                {{ t('Meta কেটেছে') }}
+                <b class="text-in">{{ money(f.meta.charged, 'usd') }}</b>
+                · {{ t('এখনো কাটেনি') }}
+                <b class="text-wait">{{ money(f.meta.uncharged, 'usd') }}</b>
             </p>
         </div>
         <div class="bg-surface p-4 sm:p-5">

@@ -242,7 +242,7 @@ onMounted(() =>
                                     name="shield"
                                     :size="16"
                                     class="text-ink-3"
-                                />{{ t('App lock — আঙুলের ছাপ / PIN') }}
+                                />{{ t('App lock (PIN / আঙুল)') }}
                             </button>
                             <div class="my-1 h-px bg-line" />
                             <a

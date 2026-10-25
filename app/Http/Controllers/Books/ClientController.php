@@ -14,6 +14,7 @@ use App\Models\UsdEntry;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Notifications\AgencyAlert;
+use App\Services\AdAccountBalances;
 use App\Services\Books;
 use App\Services\CampaignBilling;
 use App\Services\ClientNotifier;
@@ -79,9 +80,11 @@ class ClientController extends Controller
         ]);
     }
 
-    public function show(Request $request, Client $client, Books $books): Response
+    public function show(Request $request, Client $client, Books $books, AdAccountBalances $balances): Response
     {
         $figures = collect($books->clients())->firstWhere('id', $client->id);
+        // Of the ad spend: what Meta has charged our card (final) and what it has not yet.
+        $figures = $figures ? [...$figures, 'meta' => $balances->client($client->id)] : null;
 
         // One statement: spend in USD and payments in BDT, in date order.
         $spend = $books->usdEntries()->where('client_id', $client->id)->where('category', 'client_spend')
