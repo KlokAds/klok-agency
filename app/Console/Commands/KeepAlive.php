@@ -12,7 +12,7 @@ use Throwable;
 
 /**
  * The app's own timer, for a host with no cron: every minute it runs the tick (reminders, spend,
- * card charges, alerts…) and every few minutes it wakes Klok Pilot, so both stay current with
+ * card charges, alerts…) and wakes Klok Pilot, so both stay current with
  * nobody visiting. Before the hour is up it starts its own successor and stops, so no process
  * lives long; a visit, the bell or the SMS phone's heartbeat start it again if the host ended it.
  */

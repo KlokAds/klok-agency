@@ -17,8 +17,11 @@ class KeepAlive
     /** How often the timer ticks. */
     public const EVERY_SECONDS = 60;
 
-    /** How often it wakes Klok Pilot (whose own timer runs on requests). */
-    public const PILOT_EVERY_SECONDS = 300;
+    /**
+     * How often it wakes Klok Pilot (whose own timer runs on requests): every minute, since its
+     * "every five minutes" jobs only run when its scheduler runs on such a minute.
+     */
+    public const PILOT_EVERY_SECONDS = 60;
 
     /** One process lives this long, then hands over to a fresh one. */
     public const LIFETIME_SECONDS = 3300;
