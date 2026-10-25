@@ -23,7 +23,7 @@ defineProps<{
 <template>
     <SectionTabs section="dollars" />
     <PageHeader title="Meta receipt" :lead="receipt.subject ?? ''">
-        <KButton href="/dollars/receipts" variant="quiet" icon="back">{{
+        <KButton href="/dollars/receipts" icon="back">{{
             t('ফিরে যান')
         }}</KButton>
         <KButton

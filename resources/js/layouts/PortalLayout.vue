@@ -82,7 +82,8 @@ onMounted(() =>
 </script>
 
 <template>
-    <div class="min-h-dvh bg-paper pb-20 text-ink sm:pb-0">
+    <!-- pb-24: the bottom tab bar never covers the last card on a phone. -->
+    <div class="min-h-dvh bg-paper pb-24 text-ink sm:pb-0">
         <header
             class="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur"
         >

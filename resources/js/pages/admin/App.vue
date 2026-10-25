@@ -6,6 +6,7 @@ import { computed } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
@@ -169,30 +170,36 @@ function phone(agent: string | null): string {
                     class="flex flex-wrap items-center gap-x-3 gap-y-1 py-3"
                 >
                     <div class="min-w-0 flex-1">
-                        <p class="text-[14px] font-medium">
-                            {{ d.user ?? '—' }}
-                            <KTag v-if="d.sms" tone="in" class="ml-1">{{
+                        <p
+                            class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] font-medium"
+                        >
+                            <span :class="!d.user && 'text-ink-3'">{{
+                                d.user ?? t('Login করা নেই')
+                            }}</span>
+                            <KTag v-if="d.sms" tone="in">{{
                                 t('SMS forward করে')
                             }}</KTag>
-                            <KTag
-                                v-if="d.failures > 2"
-                                tone="out"
-                                class="ml-1"
-                                >{{ t('পৌঁছাচ্ছে না') }}</KTag
-                            >
+                            <KTag v-if="d.failures > 2" tone="out">{{
+                                t('পৌঁছাচ্ছে না')
+                            }}</KTag>
                         </p>
                         <p class="text-[12.5px] text-ink-3">
-                            {{ phone(d.device) }} · v{{ d.version }}
+                            {{ phone(d.device) }} ·
+                            <span class="num">v{{ d.version }}</span>
                             <template v-if="d.last_seen_at">
-                                · {{ t('শেষ খোলা') }}
-                                {{ ago(d.last_seen_at) }}</template
+                                ·
+                                <span class="whitespace-nowrap"
+                                    >{{ t('শেষ খোলা') }}
+                                    {{ ago(d.last_seen_at) }}</span
+                                ></template
                             >
                         </p>
                     </div>
                     <KButton
                         v-if="editable"
-                        variant="quiet"
+                        variant="plain"
                         size="sm"
+                        icon="close"
                         @click="remove(d)"
                         >{{ t('সরান') }}</KButton
                     >
@@ -201,7 +208,11 @@ function phone(agent: string | null): string {
             <p v-else class="text-[13.5px] text-ink-3">
                 {{ t('এখনো কোনো phone-এ app নেই।') }}
             </p>
-            <p v-if="smsLastSeen" class="text-[12.5px] text-ink-3">
+            <p
+                v-if="smsLastSeen"
+                class="flex items-center gap-1.5 text-[12.5px] text-ink-3"
+            >
+                <KIcon name="mail" :size="14" />
                 {{ t('শেষ SMS এসেছে') }} {{ ago(smsLastSeen) }}
             </p>
         </SettingsSection>
@@ -268,20 +279,25 @@ function phone(agent: string | null): string {
                                 : t('সাধারণ app (সবার জন্য)')
                         }}
                     </p>
-                    <p class="num text-[12.5px] text-ink-3">
+                    <p class="text-[12.5px] text-ink-3">
                         <template v-if="r.version">
-                            v{{ r.version }}
+                            <span class="num">v{{ r.version }}</span>
                             <template v-if="r.at"> · {{ ago(r.at) }}</template>
                         </template>
-                        <template v-else>—</template>
+                        <template v-else>{{
+                            t('এখনো কোনো build নেই')
+                        }}</template>
                     </p>
                 </div>
                 <!-- Downloads only in a web browser, never inside the app itself. -->
-                <a
+                <KButton
                     v-if="r.url && !inApp"
                     :href="r.url"
-                    class="text-[13.5px] font-medium text-brand underline underline-offset-2"
-                    >{{ t('APK নামান') }}</a
+                    external
+                    size="sm"
+                    variant="plain"
+                    icon="down"
+                    >{{ t('APK নামান') }}</KButton
                 >
             </div>
             <p

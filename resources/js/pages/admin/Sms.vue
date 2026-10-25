@@ -89,7 +89,7 @@ const label = (s: Sms['status']) =>
         <li v-for="s in sms" :key="s.id">
             <button
                 type="button"
-                class="flex w-full items-start gap-3 px-5 py-3.5 text-left hover:bg-sunken sm:px-6"
+                class="flex w-full items-start gap-3 px-4 py-3.5 text-left hover:bg-sunken sm:px-6"
                 :aria-expanded="opened === s.id"
                 @click="opened = opened === s.id ? null : s.id"
             >
@@ -98,17 +98,25 @@ const label = (s: Sms['status']) =>
                 }}</KTag>
                 <span class="min-w-0 flex-1">
                     <span class="block text-[13.5px] font-medium">
-                        {{ s.sender ?? s.provider }} ·
-                        <span class="num">{{
-                            s.amount !== null ? money(s.amount, 'bdt') : '—'
-                        }}</span>
+                        {{ s.sender ?? s.provider }}
+                        <template v-if="s.amount !== null">
+                            ·
+                            <span class="num">{{
+                                money(s.amount, 'bdt')
+                            }}</span></template
+                        >
                         <span v-if="s.payer" class="text-ink-3">
                             · {{ s.payer }}</span
                         >
                     </span>
-                    <span class="num block text-[12px] text-ink-3"
-                        >{{ s.trx_id }}
-                        <template v-if="s.at"> · {{ ago(s.at) }}</template>
+                    <span class="block text-[12px] text-ink-3"
+                        ><span v-if="s.trx_id" class="num">{{ s.trx_id }}</span
+                        ><template v-if="s.at"
+                            ><template v-if="s.trx_id"> · </template
+                            ><span class="whitespace-nowrap">{{
+                                ago(s.at)
+                            }}</span></template
+                        >
                     </span>
                 </span>
                 <Link
@@ -127,7 +135,7 @@ const label = (s: Sms['status']) =>
             </button>
             <p
                 v-if="opened === s.id && s.body"
-                class="mx-5 mb-4 rounded-lg bg-sunken p-3 text-[12.5px] wrap-anywhere whitespace-pre-wrap text-ink-2 sm:mx-6"
+                class="mx-4 mb-4 rounded-lg bg-sunken p-3 text-[12.5px] wrap-anywhere whitespace-pre-wrap text-ink-2 sm:mx-6"
             >
                 {{ s.body }}
             </p>

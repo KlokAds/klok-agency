@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import KButton from '@/components/k/KButton.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import type { Fx, Summary } from '@/components/dashboard/types';
 import { money } from '@/lib/format';
@@ -64,10 +64,12 @@ const meter = computed(() => {
                         <KIcon name="wallet" :size="15" class="text-brand" />
                         {{ t('Card-এ এখন') }}
                     </p>
-                    <Link
+                    <KButton
                         href="/reconcile"
-                        class="no-print shrink-0 text-[13px] font-medium text-brand-ink hover:underline"
-                        >{{ t('Card মেলান') }} →</Link
+                        size="sm"
+                        icon="scale"
+                        class="no-print shrink-0"
+                        >{{ t('Card মেলান') }}</KButton
                     >
                 </div>
 
@@ -198,11 +200,9 @@ const meter = computed(() => {
                     <p class="text-[13.5px] font-medium text-ink-2">
                         {{ t('কেনা dollar বাকি') }}
                     </p>
-                    <Link
-                        href="/fx"
-                        class="no-print shrink-0 text-[13px] font-medium text-brand-ink hover:underline"
-                        >{{ t('FX Batch') }} →</Link
-                    >
+                    <KButton href="/fx" size="sm" class="no-print shrink-0">{{
+                        t('FX Batch')
+                    }}</KButton>
                 </div>
                 <p
                     class="num mt-3 text-[30px] leading-none font-semibold tracking-[-0.02em]"

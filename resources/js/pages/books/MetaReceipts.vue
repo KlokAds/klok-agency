@@ -129,7 +129,11 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                         class="align-top"
                     >
                         <td class="num px-5 py-3 whitespace-nowrap">
-                            {{ r.charged_at ? niceDate(r.charged_at) : '—' }}
+                            {{
+                                r.charged_at
+                                    ? niceDate(r.charged_at)
+                                    : t('তারিখ নেই')
+                            }}
                         </td>
                         <td class="max-w-[240px] px-3 py-3">
                             <Link
@@ -137,10 +141,15 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                                 class="block truncate font-medium hover:text-brand"
                                 >{{ r.account ?? r.subject ?? 'Meta' }}</Link
                             >
-                            <span class="num text-[11.5px] text-ink-3"
-                                >{{ r.transaction_id ?? '—' }}
-                                <template v-if="r.card">
-                                    · card {{ r.card }}</template
+                            <span
+                                v-if="r.transaction_id || r.card"
+                                class="num text-[12px] text-ink-3"
+                                >{{ r.transaction_id
+                                }}<template v-if="r.card">
+                                    <template v-if="r.transaction_id"
+                                        >·</template
+                                    >
+                                    card {{ r.card }}</template
                                 ></span
                             >
                         </td>
@@ -168,7 +177,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                         </td>
                         <td class="num px-3 py-3 text-right font-semibold">
                             {{
-                                r.amount !== null ? money(r.amount, 'usd') : '—'
+                                r.amount !== null ? money(r.amount, 'usd') : ''
                             }}
                         </td>
                         <td class="px-5 py-3">
@@ -177,7 +186,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                             }}</KTag>
                             <p
                                 v-if="r.problem"
-                                class="mt-1 max-w-[260px] text-[11.5px] text-ink-3"
+                                class="mt-1 max-w-[260px] text-[12px] text-ink-3"
                             >
                                 {{ r.problem }}
                             </p>

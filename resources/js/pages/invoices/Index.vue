@@ -307,8 +307,8 @@ function ignore(sms: Sms): void {
                         {{ s.body }}
                     </p>
                 </div>
-                <div class="flex shrink-0 gap-2">
-                    <KButton size="sm" variant="quiet" @click="ignore(s)">{{
+                <div class="grid shrink-0 grid-cols-2 gap-2 sm:flex">
+                    <KButton size="sm" @click="ignore(s)">{{
                         t('বাদ দিন')
                     }}</KButton>
                     <KButton

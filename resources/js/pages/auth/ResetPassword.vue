@@ -62,7 +62,7 @@ const form = useForm({
         </KField>
         <KButton
             type="submit"
-            variant="ink"
+            variant="primary"
             size="lg"
             block
             :loading="form.processing"

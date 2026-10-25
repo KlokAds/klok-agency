@@ -243,10 +243,18 @@ function appSettings(): void {
             class="fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-rail text-rail-ink transition-transform lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0"
             :class="drawer ? 'translate-x-0' : '-translate-x-full'"
         >
-            <div class="flex h-[68px] items-center px-5">
+            <div class="flex h-[68px] items-center justify-between px-5">
                 <Link href="/dashboard"
                     ><BrandMark light :badge="roleBadge"
                 /></Link>
+                <button
+                    type="button"
+                    class="-mr-2 grid size-10 place-items-center rounded-lg text-rail-dim hover:bg-rail-2 hover:text-white lg:hidden"
+                    :aria-label="t('মেনু বন্ধ করুন')"
+                    @click="drawer = false"
+                >
+                    <KIcon name="close" :size="18" />
+                </button>
             </div>
 
             <nav
@@ -268,7 +276,7 @@ function appSettings(): void {
                         v-for="item in group.items"
                         :key="item.href"
                         :href="item.href"
-                        class="group relative flex items-center gap-3 rounded-lg px-3 py-[7px] text-[14px] font-medium transition-colors"
+                        class="group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-1.5 text-[14px] font-medium transition-colors lg:min-h-9"
                         :class="
                             isActive(item.href)
                                 ? 'bg-rail-2 text-white'
@@ -296,7 +304,7 @@ function appSettings(): void {
             <div v-if="settingsHref" class="px-3 pb-3">
                 <Link
                     :href="settingsHref"
-                    class="group relative flex items-center gap-3 rounded-lg px-3 py-[7px] text-[14px] font-medium transition-colors"
+                    class="group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-1.5 text-[14px] font-medium transition-colors lg:min-h-9"
                     :class="
                         isActive(settingsHref)
                             ? 'bg-rail-2 text-white'
@@ -402,20 +410,27 @@ function appSettings(): void {
                 <div ref="userAnchor">
                     <button
                         type="button"
-                        class="flex items-center gap-2.5 rounded-[10px] py-1 pr-2 pl-1 hover:bg-sunken"
+                        class="flex h-10 items-center gap-2.5 rounded-[10px] pr-2 pl-1 hover:bg-sunken"
+                        :aria-label="t('আমার account')"
+                        :aria-expanded="userMenu.open.value"
                         @click="userMenu.toggle()"
                     >
                         <span
                             class="grid size-8 place-items-center rounded-lg bg-ink text-[13px] font-bold text-paper"
                             >{{ user.name.slice(0, 1).toUpperCase() }}</span
                         >
-                        <span class="hidden text-left leading-tight md:block">
-                            <span class="block text-[13px] font-semibold">{{
-                                user.name
-                            }}</span>
-                            <span class="block text-[11px] text-ink-3">{{
-                                user.role ?? '—'
-                            }}</span>
+                        <span
+                            class="hidden max-w-[160px] text-left leading-tight md:block"
+                        >
+                            <span
+                                class="block truncate text-[13px] font-semibold"
+                                >{{ user.name }}</span
+                            >
+                            <span
+                                v-if="user.role"
+                                class="block truncate text-[11px] text-ink-3"
+                                >{{ user.role }}</span
+                            >
                         </span>
                     </button>
                     <Teleport to="body">
@@ -426,7 +441,7 @@ function appSettings(): void {
                             class="popover k-rise w-60 p-1.5"
                         >
                             <div class="px-3 py-2.5">
-                                <p class="text-[13.5px] font-semibold">
+                                <p class="truncate text-[13.5px] font-semibold">
                                     {{ user.name }}
                                 </p>
                                 <p class="truncate text-[12px] text-ink-3">
@@ -436,7 +451,7 @@ function appSettings(): void {
                             <div class="my-1 h-px bg-line" />
                             <Link
                                 href="/settings/profile"
-                                class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
                                 @click="userMenu.close()"
                                 ><KIcon
                                     name="user"
@@ -446,7 +461,7 @@ function appSettings(): void {
                             >
                             <Link
                                 href="/settings/security"
-                                class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
                                 @click="userMenu.close()"
                             >
                                 <KIcon
@@ -463,7 +478,7 @@ function appSettings(): void {
                             <button
                                 v-if="inApp"
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
                                 @click="
                                     userMenu.close();
                                     appSettings();
@@ -477,7 +492,7 @@ function appSettings(): void {
                             </button>
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
                                 @click="
                                     userMenu.close();
                                     feedbackOpen = true;
@@ -491,7 +506,7 @@ function appSettings(): void {
                             </button>
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
                                 @click="
                                     userMenu.close();
                                     switchLocale(locale === 'en' ? 'bn' : 'en');
@@ -504,7 +519,7 @@ function appSettings(): void {
                             </button>
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
                                 @click="
                                     updateAppearance(
                                         resolvedAppearance === 'dark'
@@ -530,7 +545,7 @@ function appSettings(): void {
                             <div class="my-1 h-px bg-line" />
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] text-out hover:bg-out-soft"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] text-out hover:bg-out-soft"
                                 @click="logout"
                             >
                                 <KIcon name="out" :size="16" />Sign out
@@ -545,24 +560,28 @@ function appSettings(): void {
             >
                 <div
                     v-if="!offline.online || mine.length"
-                    class="no-print mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-wait/40 bg-wait/10 px-4 py-2.5 text-[13.5px]"
+                    class="no-print mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-wait/40 bg-wait/10 px-4 py-2.5 text-[13.5px]"
                     role="status"
                 >
-                    <span v-if="!offline.online" class="font-semibold">{{
-                        t('নেট নেই — আগে খোলা পাতা দেখা যাচ্ছে')
-                    }}</span>
-                    <button
-                        v-if="mine.length"
-                        type="button"
-                        class="font-medium underline underline-offset-2"
-                        @click="showWaiting = true"
+                    <span
+                        v-if="!offline.online"
+                        class="flex min-w-0 items-center gap-2 font-semibold"
+                        ><KIcon name="warn" :size="16" class="text-wait" />{{
+                            t('নেট নেই — আগে খোলা পাতা দেখা যাচ্ছে')
+                        }}</span
                     >
-                        {{
+                    <KButton
+                        v-if="mine.length"
+                        size="sm"
+                        variant="plain"
+                        icon="clock"
+                        @click="showWaiting = true"
+                        >{{
                             t('{count} টা entry জমা হওয়ার অপেক্ষায়', {
                                 count: mine.length,
                             })
-                        }}
-                    </button>
+                        }}</KButton
+                    >
                 </div>
                 <slot />
             </main>
@@ -602,7 +621,7 @@ function appSettings(): void {
                             }}</span>
                         </p>
                         <p class="text-[12.5px] text-ink-3">
-                            {{ item.data.entry_date }}
+                            <span class="num">{{ item.data.entry_date }}</span>
                             {{ item.data.description ?? '' }}
                         </p>
                         <p v-if="item.error" class="text-[12.5px] text-out">

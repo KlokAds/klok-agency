@@ -255,29 +255,32 @@ const PAY_STATUS: Record<
         :title="invoice.number"
         :lead="invoice.client ?? undefined"
     >
-        <KButton href="/invoices" variant="quiet" icon="back">{{
-            t('সব invoice')
-        }}</KButton>
-        <KButton
-            v-if="invoice.editable && can['clients.edit']"
-            icon="pen"
-            :href="`/invoices/${invoice.uid}/edit`"
-            >{{ t('বদলান') }}</KButton
-        >
-        <KButton
-            v-if="!isVoid && can['clients.edit']"
-            icon="chat"
-            variant="ink"
-            @click="shareOpen = true"
-            >{{ t('পাঠান') }}</KButton
-        >
-        <KButton
-            v-if="!isVoid && invoice.due > 0 && can['bdt.create']"
-            icon="check"
-            variant="primary"
-            @click="openPay()"
-            >{{ t('পেমেন্ট লিখুন') }}</KButton
-        >
+        <!-- Up to four: a 2×2 grid on a phone, one row when there is room. -->
+        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+            <KButton href="/invoices" icon="back">{{
+                t('সব invoice')
+            }}</KButton>
+            <KButton
+                v-if="invoice.editable && can['clients.edit']"
+                icon="pen"
+                :href="`/invoices/${invoice.uid}/edit`"
+                >{{ t('বদলান') }}</KButton
+            >
+            <KButton
+                v-if="!isVoid && can['clients.edit']"
+                icon="chat"
+                :variant="invoice.sent_at ? 'plain' : 'primary'"
+                @click="shareOpen = true"
+                >{{ t('পাঠান') }}</KButton
+            >
+            <KButton
+                v-if="!isVoid && invoice.due > 0 && can['bdt.create']"
+                icon="check"
+                :variant="invoice.sent_at ? 'primary' : 'plain'"
+                @click="openPay()"
+                >{{ t('পেমেন্ট লিখুন') }}</KButton
+            >
+        </div>
     </PageHeader>
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -315,12 +318,9 @@ const PAY_STATUS: Record<
                             v-if="can['bdt.create']"
                             class="mt-2 flex justify-end gap-2"
                         >
-                            <KButton
-                                size="sm"
-                                variant="quiet"
-                                @click="reject(c)"
-                                >{{ t('বাতিল') }}</KButton
-                            >
+                            <KButton size="sm" @click="reject(c)">{{
+                                t('বাতিল')
+                            }}</KButton>
                             <KButton
                                 size="sm"
                                 variant="primary"
@@ -542,16 +542,28 @@ const PAY_STATUS: Record<
                     )
                 }}
             </p>
-            <div class="mt-2 flex flex-col gap-1.5">
+            <!-- Our own radio dot: the browser's is reset away by the base styles. -->
+            <div class="mt-2 flex flex-col gap-1">
                 <label
-                    class="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
+                    class="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
                 >
                     <input
                         v-model="pay.existing_entry_id"
                         type="radio"
                         :value="null"
-                        class="accent-brand"
+                        class="sr-only"
                     />
+                    <span
+                        class="grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px]"
+                        :class="
+                            pay.existing_entry_id === null
+                                ? 'border-brand'
+                                : 'border-line-2'
+                        "
+                        ><span
+                            v-if="pay.existing_entry_id === null"
+                            class="size-2.5 rounded-full bg-brand"
+                    /></span>
                     <span class="font-medium">{{
                         t('না, এটা নতুন পেমেন্ট')
                     }}</span>
@@ -559,14 +571,25 @@ const PAY_STATUS: Record<
                 <label
                     v-for="e in earlier_payments"
                     :key="e.id"
-                    class="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
+                    class="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
                 >
                     <input
                         v-model="pay.existing_entry_id"
                         type="radio"
                         :value="e.id"
-                        class="accent-brand"
+                        class="sr-only"
                     />
+                    <span
+                        class="grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px]"
+                        :class="
+                            pay.existing_entry_id === e.id
+                                ? 'border-brand'
+                                : 'border-line-2'
+                        "
+                        ><span
+                            v-if="pay.existing_entry_id === e.id"
+                            class="size-2.5 rounded-full bg-brand"
+                    /></span>
                     <span class="min-w-0 flex-1 truncate"
                         >{{ niceDate(e.date) }} ·
                         <b class="num">{{ money(e.amount, 'bdt') }}</b>

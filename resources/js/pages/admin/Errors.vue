@@ -3,8 +3,9 @@ import SettingsNav from '@/components/SettingsNav.vue';
 import { ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KTag from '@/components/k/KTag.vue';
-import { ago } from '@/lib/format';
+import { ago, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
 type Entry = {
@@ -52,7 +53,7 @@ function plain(e: Entry): string | null {
         <li v-for="(e, i) in entries" :key="i">
             <button
                 type="button"
-                class="flex w-full items-start gap-3 px-5 py-3.5 text-left hover:bg-sunken sm:px-6"
+                class="flex w-full items-start gap-3 px-4 py-3.5 text-left hover:bg-sunken sm:px-6"
                 :aria-expanded="opened === i"
                 @click="opened = opened === i ? null : i"
             >
@@ -76,14 +77,24 @@ function plain(e: Entry): string | null {
                         class="block truncate text-[12.5px] text-ink-3"
                         >{{ e.message }}</span
                     >
-                    <span class="num block text-[12px] text-ink-3"
-                        >{{ e.at }} · {{ ago(e.at.replace(' ', 'T')) }}</span
+                    <span class="block text-[12px] text-ink-3"
+                        ><span class="num">{{
+                            niceDate(e.at.slice(0, 10))
+                        }}</span>
+                        <span class="num">{{ e.at.slice(11, 16) }}</span> ·
+                        {{ ago(e.at.replace(' ', 'T')) }}</span
                     >
                 </span>
+                <KIcon
+                    name="down"
+                    :size="16"
+                    class="mt-1 shrink-0 text-ink-3 transition-transform"
+                    :class="opened === i && 'rotate-180'"
+                />
             </button>
             <pre
                 v-if="opened === i && e.detail"
-                class="mx-5 mb-4 overflow-x-auto rounded-lg bg-sunken p-3 text-[12px] whitespace-pre-wrap text-ink-2 sm:mx-6"
+                class="mx-4 mb-4 overflow-x-auto rounded-lg bg-sunken p-3 font-mono text-[11.5px] leading-relaxed break-all whitespace-pre-wrap text-ink-2 sm:mx-6"
                 >{{ e.detail }}</pre>
         </li>
     </ul>

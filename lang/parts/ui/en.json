@@ -186,5 +186,12 @@
     "নাম": "Name",
     "Phone নম্বর": "Phone number",
     "প্রতিষ্ঠানের নাম": "Company name",
-    "নিরাপত্তা": "Security"
+    "নিরাপত্তা": "Security",
+    "পড়া হয়নি": "Unread",
+    "মেনু বন্ধ করুন": "Close menu",
+    "Role নেই": "No role",
+    "৬ সংখ্যার কোড": "6-digit code",
+    "QR scan করুন": "Scan the QR",
+    "App-এ যে ৬ সংখ্যার কোড দেখাচ্ছে": "The 6-digit code the app shows",
+    "কোড প্রতি ৩০ সেকেন্ডে বদলায়।": "The code changes every 30 seconds."
 }

@@ -257,8 +257,11 @@ function saveRename(): void {
         </div>
         <div v-else class="bg-surface p-5">
             <p class="eyebrow">{{ t('সবচেয়ে বেশি') }}</p>
-            <p class="mt-2 truncate text-[18px] font-semibold">
-                {{ breakdown[0]?.name ?? '—' }}
+            <p
+                class="mt-2 truncate text-[18px] font-semibold"
+                :class="!breakdown.length && 'text-ink-3'"
+            >
+                {{ breakdown[0]?.name ?? t('কোনো row নেই') }}
             </p>
         </div>
     </section>
@@ -330,15 +333,13 @@ function saveRename(): void {
                 class="min-w-0 flex-1"
             />
         </div>
-        <div class="flex items-center sm:col-span-2 lg:justify-end">
-            <button
-                v-if="filtered"
-                type="button"
-                class="text-[13px] font-semibold text-ink-2 hover:text-out"
-                @click="clear"
-            >
-                {{ t('Filter মুছুন') }}
-            </button>
+        <div
+            v-if="filtered"
+            class="flex items-center sm:col-span-2 lg:justify-end"
+        >
+            <KButton size="sm" icon="close" @click="clear">{{
+                t('Filter মুছুন')
+            }}</KButton>
         </div>
     </section>
 
@@ -401,20 +402,22 @@ function saveRename(): void {
                         <button
                             v-if="can['bdt.edit']"
                             type="button"
-                            class="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
+                            class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
                             :aria-label="t('বদলান')"
+                            :title="t('বদলান')"
                             @click="startEdit(r)"
                         >
-                            <KIcon name="pen" :size="15" />
+                            <KIcon name="pen" :size="16" />
                         </button>
                         <button
                             v-if="can['bdt.delete']"
                             type="button"
-                            class="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
+                            class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
                             :aria-label="t('মুছুন')"
+                            :title="t('মুছুন')"
                             @click="remove(r)"
                         >
-                            <KIcon name="bin" :size="15" />
+                            <KIcon name="bin" :size="16" />
                         </button>
                     </span>
                 </li>
@@ -429,7 +432,7 @@ function saveRename(): void {
                     {{ isIn ? t('Client ধরে') : t('খাত ধরে') }}
                 </h2>
                 <p v-if="!breakdown.length" class="mt-3 text-[13px] text-ink-3">
-                    —
+                    {{ t('কোনো row নেই') }}
                 </p>
                 <ul v-else class="mt-3 flex flex-col gap-3">
                     <li v-for="b in breakdown" :key="b.name">
@@ -477,9 +480,18 @@ function saveRename(): void {
                                 size="sm"
                                 class="flex-1"
                             />
-                            <KButton size="sm" @click="saveRename">{{
-                                t('সংরক্ষণ')
-                            }}</KButton>
+                            <KButton
+                                size="sm"
+                                variant="primary"
+                                @click="saveRename"
+                                >{{ t('সংরক্ষণ') }}</KButton
+                            >
+                            <KButton
+                                size="sm"
+                                variant="quiet"
+                                @click="renaming = null"
+                                >{{ t('বাতিল') }}</KButton
+                            >
                         </template>
                         <template v-else>
                             <span class="min-w-0 flex-1">

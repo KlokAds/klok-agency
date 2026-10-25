@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import KButton from '@/components/k/KButton.vue';
+import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
@@ -153,7 +154,7 @@ const extendCost = computed(() => {
                     }}
                 </p>
             </div>
-            <p class="text-right text-[12.5px] text-ink-3">
+            <p class="text-[12.5px] whitespace-nowrap text-ink-3 sm:text-right">
                 {{ t('Meta এখনো কাটবে') }}
                 <span class="num block text-[17px] font-semibold text-wait">{{
                     money(forecast.pending, 'usd')
@@ -161,16 +162,15 @@ const extendCost = computed(() => {
             </p>
         </div>
 
-        <p
+        <KEmpty
             v-if="!forecast.clients.length"
-            class="px-5 py-6 text-[13px] text-ink-3 sm:px-6"
-        >
-            {{
+            :title="t('কোনো campaign পাওয়া যায়নি')"
+            :body="
                 t(
                     'Client-এর সাথে যুক্ত কোনো Meta campaign নেই — Campaign পাতায় যুক্ত করুন।',
                 )
-            }}
-        </p>
+            "
+        />
 
         <div v-else class="mt-4 overflow-x-auto">
             <table class="ledger w-full min-w-[1120px] text-[13px]">

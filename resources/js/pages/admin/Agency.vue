@@ -6,6 +6,7 @@ import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KSwitch from '@/components/k/KSwitch.vue';
@@ -286,11 +287,25 @@ function copy(text: string): void {
                     class="num min-w-0 flex-1 truncate rounded-lg bg-sunken px-3 py-2 text-[12.5px]"
                     >{{ tick.url }}</code
                 >
-                <KButton size="sm" @click="copy(tick.url)">Copy</KButton>
+                <KButton
+                    size="sm"
+                    variant="plain"
+                    icon="doc"
+                    @click="copy(tick.url)"
+                    >Copy</KButton
+                >
             </div>
-            <p class="text-[13px] text-ink-3">
-                {{ t('শেষ চলেছে') }}:
-                {{ tick.last ? ago(tick.last) : '—' }}
+            <p class="flex items-center gap-1.5 text-[13px] text-ink-3">
+                <KIcon
+                    :name="tick.last ? 'check' : 'clock'"
+                    :size="14"
+                    :class="tick.last ? 'text-in' : ''"
+                />
+                {{
+                    tick.last
+                        ? t('শেষ চলেছে') + ' ' + ago(tick.last)
+                        : t('এখনো একবারও চলেনি')
+                }}
             </p>
             <template v-if="editable" #footer>
                 <KButton

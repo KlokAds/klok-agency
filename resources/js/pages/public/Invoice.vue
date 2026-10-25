@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import {
     computed,
     onBeforeUnmount,
@@ -132,6 +132,15 @@ const lastPayment = computed(
             .filter((p) => p.status === 'verified')
             .sort((a, b) => b.at.localeCompare(a.at))[0] ?? null,
 );
+/** "25 Oct 2026 · 3:04 PM" rather than the browser's own long form. */
+function paidAt(iso: string): string {
+    const time = new Date(iso).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+
+    return `${niceDate(iso.slice(0, 10))} · ${time}`;
+}
 function viewReceipt(): void {
     celebrate.value = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -434,19 +443,19 @@ const STATUS_WORD: Record<string, string> = {
             :class="isClient ? '' : 'px-4 pt-5 sm:px-6'"
         >
             <!-- In the app or signed in: back to their own home (the portal, or the books). -->
-            <Link
+            <KButton
                 v-if="signedIn"
+                size="sm"
+                variant="plain"
+                icon="back"
                 :href="isClient ? '/portal/invoices' : '/'"
-                class="flex min-w-0 items-center gap-1.5 rounded-lg py-1 pr-2 text-[13.5px] font-semibold text-brand hover:bg-sunken"
-                ><KIcon name="back" :size="18" />{{
-                    isClient ? t('সব invoice') : t('হোম')
-                }}</Link
+                >{{ isClient ? t('সব invoice') : t('হোম') }}</KButton
             >
             <p v-else class="truncate text-[13px] font-semibold text-ink-2">
                 {{ business.name }}
             </p>
             <div class="flex items-center gap-1">
-                <KButton size="sm" variant="quiet" icon="print" @click="print">
+                <KButton size="sm" variant="plain" icon="print" @click="print">
                     {{ t('Print / PDF') }}
                 </KButton>
                 <button
@@ -654,15 +663,14 @@ const STATUS_WORD: Record<string, string> = {
                             }}
                         </h2>
                         <!-- A clear way back to the other ways to pay. -->
-                        <button
-                            type="button"
-                            class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-brand/40 bg-brand-soft px-3.5 text-[13px] font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                        <KButton
+                            size="sm"
+                            variant="plain"
+                            icon="swap"
+                            class="shrink-0"
                             @click="cancel"
+                            >{{ t('অন্য উপায়') }}</KButton
                         >
-                            <KIcon name="swap" :size="15" />{{
-                                t('অন্য উপায়')
-                            }}
-                        </button>
                     </div>
 
                     <div
@@ -1171,9 +1179,11 @@ const STATUS_WORD: Record<string, string> = {
                                 <span class="block font-semibold text-ink-3"
                                     >Klok Ads</span
                                 >
-                                <span class="num block truncate text-ink-2">{{
-                                    method?.number ?? '—'
-                                }}</span>
+                                <span
+                                    v-if="method?.number"
+                                    class="num block truncate text-ink-2"
+                                    >{{ method.number }}</span
+                                >
                             </span>
                         </div>
 
@@ -1337,7 +1347,7 @@ const STATUS_WORD: Record<string, string> = {
 
                 <!-- History -->
                 <section v-if="state.payments.length" class="panel p-5">
-                    <h3 class="text-[14px] font-bold">{{ t('পেমেন্ট') }}</h3>
+                    <h2 class="text-[16px] font-bold">{{ t('পেমেন্ট') }}</h2>
                     <ul
                         class="mt-2 divide-y divide-dashed divide-line text-[13px]"
                     >
@@ -1471,7 +1481,7 @@ const STATUS_WORD: Record<string, string> = {
                         >
                             <dt class="text-ink-3">{{ t('তারিখ') }}</dt>
                             <dd class="num font-semibold">
-                                {{ new Date(lastPayment.at).toLocaleString() }}
+                                {{ paidAt(lastPayment.at) }}
                             </dd>
                         </div>
                         <div class="flex justify-between gap-3">

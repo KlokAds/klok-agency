@@ -271,7 +271,7 @@ onMounted(() => {
             />
             <p
                 v-if="form.errors.require_2fa"
-                class="-mt-3 text-[12.5px] font-medium text-out"
+                class="-mt-3 rounded-lg border border-out/30 bg-out-soft px-3 py-2 text-[12.5px] font-medium text-out"
             >
                 {{ form.errors.require_2fa }}
             </p>
@@ -486,8 +486,13 @@ onMounted(() => {
                 </div>
                 <div class="rounded-lg border border-line px-4 py-3">
                     <p class="eyebrow">GitHub · {{ update.branch }}</p>
-                    <p class="num mt-1 text-[13.5px] font-semibold">
-                        {{ update.latest ? update.latest.slice(0, 7) : '—' }}
+                    <p class="mt-1 text-[13.5px] font-semibold">
+                        <span v-if="update.latest" class="num">{{
+                            update.latest.slice(0, 7)
+                        }}</span>
+                        <span v-else class="font-normal text-ink-3">{{
+                            t('জানা যায়নি')
+                        }}</span>
                     </p>
                     <p
                         class="mt-0.5 flex items-center gap-1.5 text-[12.5px] font-medium"

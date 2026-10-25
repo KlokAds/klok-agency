@@ -86,7 +86,7 @@ function submit(): void {
         </KField>
         <KButton
             type="submit"
-            variant="ink"
+            variant="primary"
             size="lg"
             block
             :loading="form.processing"

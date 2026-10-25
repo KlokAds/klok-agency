@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import { reactive, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KPager from '@/components/k/KPager.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
@@ -130,9 +131,15 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
                 :key="a.id"
                 class="grid grid-cols-1 gap-2 px-5 py-4 sm:grid-cols-[180px_1fr] sm:px-6"
             >
-                <div>
+                <!-- Phone: who and when on one line; wider: their own column. -->
+                <div
+                    class="flex flex-wrap items-baseline gap-x-2 sm:flex-col sm:gap-0"
+                >
                     <p class="text-[13.5px] font-semibold">{{ a.by }}</p>
-                    <p class="text-[12px] text-ink-3" :title="a.at">
+                    <p
+                        class="text-[12px] whitespace-nowrap text-ink-3"
+                        :title="a.at"
+                    >
                         {{ ago(a.at) }}
                     </p>
                 </div>
@@ -158,15 +165,24 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
                         class="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[12.5px] sm:grid-cols-[140px_1fr]"
                     >
                         <template v-for="d in diff(a)" :key="d.key">
-                            <dt class="num text-ink-3">{{ d.key }}</dt>
+                            <dt class="num truncate text-ink-3">{{ d.key }}</dt>
                             <dd class="min-w-0 break-words">
                                 <template v-if="d.from !== null"
                                     ><span class="text-out line-through">{{
                                         d.from
                                     }}</span>
-                                    →
+                                    <KIcon
+                                        name="arrow"
+                                        :size="12"
+                                        class="inline text-ink-3"
+                                    />
                                 </template>
-                                <span>{{ d.to }}</span>
+                                <span
+                                    :class="
+                                        d.from !== null && 'font-medium text-in'
+                                    "
+                                    >{{ d.to }}</span
+                                >
                             </dd>
                         </template>
                     </dl>

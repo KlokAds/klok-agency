@@ -167,7 +167,7 @@ void props;
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <!-- Password -->
         <form
-            class="panel flex flex-col gap-5 p-6"
+            class="panel flex flex-col gap-5 p-4 sm:p-6"
             @submit.prevent="savePassword"
         >
             <div>
@@ -222,7 +222,7 @@ void props;
         </form>
 
         <!-- 2FA -->
-        <section class="panel flex flex-col gap-5 p-6">
+        <section class="panel flex flex-col gap-5 p-4 sm:p-6">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 class="text-[17px] font-bold">
@@ -241,48 +241,71 @@ void props;
                 }}</KTag>
             </div>
 
+            <!-- Setup: two numbered steps — scan, then the code the app shows. -->
             <template v-if="step === 'scan'">
-                <ol class="flex flex-col gap-4 text-[13.5px]">
-                    <li>
-                        <span class="num mr-2 font-semibold text-brand-ink"
+                <ol class="flex flex-col gap-5">
+                    <li class="flex gap-3">
+                        <span
+                            class="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[13px] font-bold text-brand-ink"
                             >1</span
-                        >{{
-                            t(
-                                'Google Authenticator / Microsoft Authenticator খুলে এই QR scan করুন।',
-                            )
-                        }}
+                        >
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[14px] font-semibold">
+                                {{ t('QR scan করুন') }}
+                            </p>
+                            <p class="mt-0.5 text-[12.5px] text-ink-3">
+                                {{
+                                    t(
+                                        'Google Authenticator / Microsoft Authenticator খুলে এই QR scan করুন।',
+                                    )
+                                }}
+                            </p>
+                            <div class="mt-3 flex flex-wrap items-center gap-4">
+                                <!-- Fortify returns a trusted SVG for this user's secret -->
+                                <div
+                                    class="rounded-xl border border-line bg-white p-3 [&_svg]:size-40"
+                                    v-html="qr"
+                                />
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[12px] text-ink-3">
+                                        {{ t('Scan না হলে এই key হাতে লিখুন') }}
+                                    </p>
+                                    <p
+                                        class="num mt-1 rounded-lg bg-sunken px-3 py-2 text-[13px] break-all select-all"
+                                    >
+                                        {{ secret }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span
+                            class="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[13px] font-bold text-brand-ink"
+                            >2</span
+                        >
+                        <div class="min-w-0 flex-1">
+                            <KField
+                                :label="t('App-এ যে ৬ সংখ্যার কোড দেখাচ্ছে')"
+                                :error="codeError"
+                                :hint="t('কোড প্রতি ৩০ সেকেন্ডে বদলায়।')"
+                            >
+                                <KCode
+                                    v-model="confirm.code"
+                                    :invalid="!!codeError"
+                                />
+                            </KField>
+                        </div>
                     </li>
                 </ol>
-                <div class="flex flex-wrap items-center gap-5">
-                    <!-- Fortify returns a trusted SVG for this user's secret -->
-                    <div
-                        class="rounded-xl border border-line bg-white p-3 [&_svg]:size-40"
-                        v-html="qr"
-                    />
-                    <div class="min-w-0 flex-1">
-                        <p class="text-[12px] text-ink-3">
-                            {{ t('Scan না হলে এই key হাতে লিখুন') }}
-                        </p>
-                        <p
-                            class="num mt-1 rounded-lg bg-sunken px-3 py-2 text-[13px] break-all select-all"
-                        >
-                            {{ secret }}
-                        </p>
-                    </div>
-                </div>
-                <KField
-                    :label="t('2. App-এ যে কোড দেখাচ্ছে')"
-                    :error="codeError"
-                >
-                    <KCode v-model="confirm.code" :invalid="!!codeError" />
-                </KField>
                 <div class="flex justify-end gap-2">
                     <KButton
                         variant="primary"
+                        icon="shield"
                         :loading="confirm.processing"
                         :disabled="confirm.code.length < 6"
                         @click="confirmCode"
-                        >{{ t('চালু করুন') }}</KButton
+                        >{{ t('2FA চালু করুন') }}</KButton
                     >
                 </div>
             </template>
@@ -313,15 +336,15 @@ void props;
                     </div>
                 </div>
                 <div class="flex flex-wrap justify-end gap-2">
-                    <KButton variant="plain" size="sm" @click="copyCodes"
+                    <KButton variant="plain" icon="doc" @click="copyCodes"
                         >Copy</KButton
                     >
-                    <KButton variant="plain" size="sm" @click="regenerate">{{
+                    <KButton variant="plain" icon="undo" @click="regenerate">{{
                         t('নতুন code বানান')
                     }}</KButton>
                     <KButton
                         variant="primary"
-                        size="sm"
+                        icon="check"
                         @click="step = 'idle'"
                         >{{ t('রেখে দিয়েছি') }}</KButton
                     >
@@ -341,10 +364,13 @@ void props;
                 </ul>
                 <div class="mt-auto flex flex-wrap justify-end gap-2">
                     <template v-if="twoFactorEnabled">
-                        <KButton variant="plain" size="sm" @click="showCodes">{{
-                            t('Recovery code দেখুন')
-                        }}</KButton>
-                        <KButton variant="danger" size="sm" @click="disable">{{
+                        <KButton
+                            variant="plain"
+                            icon="key"
+                            @click="showCodes"
+                            >{{ t('Recovery code দেখুন') }}</KButton
+                        >
+                        <KButton variant="danger" @click="disable">{{
                             t('বন্ধ করুন')
                         }}</KButton>
                     </template>

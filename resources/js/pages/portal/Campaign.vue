@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import KButton from '@/components/k/KButton.vue';
 import { confirmAction } from '@/lib/feedback';
@@ -115,12 +115,10 @@ async function stopIt(): Promise<void> {
 <template>
     <Head :title="campaign.name" />
 
-    <Link
-        href="/portal/campaigns"
-        class="text-[13px] font-semibold text-brand hover:underline"
-        >← {{ t('সব campaign') }}</Link
-    >
-    <h1 class="mt-2 text-[22px] leading-snug font-bold">{{ campaign.name }}</h1>
+    <KButton size="sm" variant="plain" icon="back" href="/portal/campaigns">{{
+        t('সব campaign')
+    }}</KButton>
+    <h1 class="mt-3 text-[22px] leading-snug font-bold">{{ campaign.name }}</h1>
 
     <section
         class="panel mt-4 grid grid-cols-1 gap-3 p-5 text-[13.5px] sm:grid-cols-3"
@@ -141,7 +139,7 @@ async function stopIt(): Promise<void> {
         <p>
             <span class="block text-ink-3">{{ t('দিনের budget') }}</span>
             <b class="num">{{
-                campaign.budget ? money(campaign.budget, cur) : '—'
+                campaign.budget ? money(campaign.budget, cur) : t('ঠিক করা নেই')
             }}</b>
             <span
                 v-if="campaign.started"
@@ -172,14 +170,18 @@ async function stopIt(): Promise<void> {
                     )
                 }}
             </p>
-            <a
+            <KButton
+                variant="primary"
+                size="lg"
+                block
+                external
                 :href="renew.invoice_url"
-                class="mt-3 flex h-12 items-center justify-center rounded-xl bg-brand text-[15px] font-semibold text-white"
+                class="mt-3"
                 >{{
                     t('{amount} pay করুন', {
                         amount: money(renew.invoice_due ?? 0, 'bdt'),
                     })
-                }}</a
+                }}</KButton
             >
             <p class="mt-3 text-[12.5px] text-ink-3">
                 {{
@@ -234,7 +236,7 @@ async function stopIt(): Promise<void> {
                 max="90"
                 inputmode="numeric"
                 :placeholder="t('অন্য')"
-                class="h-12 rounded-xl border-2 border-line-2 bg-transparent text-center text-[15px] font-semibold"
+                class="h-12 min-w-0 rounded-xl border-2 border-line-2 bg-transparent text-center text-[15px] font-semibold transition-colors focus:border-brand"
                 @input="
                     renewDays = Math.min(
                         90,
@@ -301,7 +303,9 @@ async function stopIt(): Promise<void> {
         <div class="panel p-4">
             <p class="text-[12.5px] text-ink-3">{{ t('প্রতি result-এ') }}</p>
             <p class="num mt-1 text-[22px] font-bold">
-                {{ totals.cpr !== null ? money(totals.cpr, cur) : '—' }}
+                {{
+                    totals.cpr !== null ? money(totals.cpr, cur) : t('এখনো নেই')
+                }}
             </p>
         </div>
         <div class="panel p-4">
@@ -315,27 +319,40 @@ async function stopIt(): Promise<void> {
     </section>
 
     <section class="panel mt-4 overflow-hidden">
-        <h2 class="border-b border-line px-5 py-3 text-[15px] font-bold">
+        <h2 class="border-b border-line px-5 py-3.5 text-[16px] font-bold">
             {{ t('দিনে দিনে') }}
         </h2>
         <p v-if="!days.length" class="px-5 py-4 text-[13.5px] text-ink-3">
             {{ t('এই সময়ে কোনো খরচ হয়নি।') }}
         </p>
+        <!-- Five narrow columns: tight on a phone, so the card scrolls sideways only if it must. -->
         <div v-else class="overflow-x-auto">
             <table class="w-full text-[13px]">
-                <thead class="text-left text-[12px] text-ink-3">
+                <thead class="bg-surface-2 text-left text-[12px] text-ink-3">
                     <tr>
-                        <th class="px-5 py-2 font-medium">{{ t('তারিখ') }}</th>
-                        <th class="px-3 py-2 text-right font-medium">
+                        <th class="px-4 py-2 font-medium whitespace-nowrap">
+                            {{ t('তারিখ') }}
+                        </th>
+                        <th
+                            class="px-2.5 py-2 text-right font-medium whitespace-nowrap"
+                        >
                             {{ t('খরচ') }}
                         </th>
-                        <th class="px-3 py-2 text-right font-medium">
+                        <th
+                            class="px-2.5 py-2 text-right font-medium whitespace-nowrap"
+                        >
                             {{ campaign.result_name }}
                         </th>
-                        <th class="px-3 py-2 text-right font-medium">
+                        <th
+                            class="px-2.5 py-2 text-right font-medium whitespace-nowrap"
+                        >
                             {{ t('প্রতি result') }}
                         </th>
-                        <th class="px-5 py-2 text-right font-medium">Click</th>
+                        <th
+                            class="px-4 py-2 text-right font-medium whitespace-nowrap"
+                        >
+                            Click
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -344,17 +361,19 @@ async function stopIt(): Promise<void> {
                         :key="d.day"
                         class="border-t border-line"
                     >
-                        <td class="num px-5 py-2">{{ d.day }}</td>
-                        <td class="num px-3 py-2 text-right">
+                        <td class="num px-4 py-2.5">{{ d.day }}</td>
+                        <td class="num px-2.5 py-2.5 text-right">
                             {{ money(d.spend, cur) }}
                         </td>
-                        <td class="num px-3 py-2 text-right">
+                        <td class="num px-2.5 py-2.5 text-right">
                             {{ d.results }}
                         </td>
-                        <td class="num px-3 py-2 text-right">
+                        <td class="num px-2.5 py-2.5 text-right">
                             {{ d.cpr !== null ? money(d.cpr, cur) : '—' }}
                         </td>
-                        <td class="num px-5 py-2 text-right">{{ d.clicks }}</td>
+                        <td class="num px-4 py-2.5 text-right">
+                            {{ d.clicks }}
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -362,21 +381,25 @@ async function stopIt(): Promise<void> {
     </section>
 
     <section v-if="extensions.length" class="panel mt-4 p-5">
-        <h2 class="text-[15px] font-bold">
+        <h2 class="text-[16px] font-bold">
             {{ t('কবে কত দিন বাড়ানো হয়েছে') }}
         </h2>
-        <ul class="mt-3 grid grid-cols-1 gap-2 text-[13.5px]">
+        <ul class="mt-3 divide-y divide-line text-[13.5px]">
             <li
                 v-for="(e, i) in extensions"
                 :key="i"
-                class="flex justify-between gap-3"
+                class="flex flex-col gap-0.5 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
             >
-                <span>{{
-                    t('{n} দিন বাড়ানো হয়েছে', { n: e.days ?? '—' })
+                <span class="font-medium">{{
+                    e.days
+                        ? t('{n} দিন বাড়ানো হয়েছে', { n: e.days })
+                        : t('বাড়ানো হয়েছে')
                 }}</span>
-                <span class="text-ink-3"
-                    >{{ e.at }} →
-                    {{ t('{date} পর্যন্ত', { date: e.until ?? '—' }) }}</span
+                <span class="num text-[12.5px] text-ink-3"
+                    >{{ e.at
+                    }}<template v-if="e.until">
+                        · {{ t('{date} পর্যন্ত', { date: e.until }) }}</template
+                    ></span
                 >
             </li>
         </ul>

@@ -23,12 +23,12 @@ defineProps<{ title: string; description?: string; icon?: string }>();
             </p>
         </div>
         <div class="panel min-w-0 overflow-hidden">
-            <div class="flex flex-col gap-5 p-5 sm:p-6">
+            <div class="flex flex-col gap-5 p-4 sm:p-6">
                 <slot />
             </div>
             <div
                 v-if="$slots.footer"
-                class="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2 px-5 py-3 sm:px-6"
+                class="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2 px-4 py-3 sm:px-6"
             >
                 <slot name="footer" />
             </div>

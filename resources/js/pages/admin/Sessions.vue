@@ -87,15 +87,21 @@ async function end(s: Session): Promise<void> {
                     <KTag v-if="s.mine" tone="brand">{{ t('এটা আপনি') }}</KTag>
                     <KTag v-if="s.active" tone="in">{{ t('এখন চালু') }}</KTag>
                 </p>
-                <p class="truncate text-[12.5px] text-ink-3">
+                <p class="text-[12.5px] text-ink-3">
                     {{ s.device
-                    }}<template v-if="s.ip"> · {{ s.ip }}</template> ·
-                    {{ t('শেষ কাজ') }} {{ ago(s.last) }}
+                    }}<template v-if="s.ip">
+                        · <span class="num">{{ s.ip }}</span></template
+                    >
+                    ·
+                    <span class="whitespace-nowrap"
+                        >{{ t('শেষ কাজ') }} {{ ago(s.last) }}</span
+                    >
                 </p>
             </div>
             <KButton
                 v-if="!s.mine && can['users.edit']"
                 size="sm"
+                variant="plain"
                 icon="out"
                 @click="end(s)"
                 >{{ t('Session শেষ করুন') }}</KButton

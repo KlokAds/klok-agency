@@ -116,7 +116,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
     >
         <KButton
             v-if="can['roles.create']"
-            variant="ink"
+            variant="primary"
             icon="plus"
             @click="start()"
             >{{ t('নতুন role') }}</KButton
@@ -162,9 +162,13 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                 v-if="!r.is_owner && can['roles.edit']"
                 class="mt-auto flex justify-end pt-4"
             >
-                <KButton size="sm" icon="pen" @click="start(r)">{{
-                    t('Permission বদলান')
-                }}</KButton>
+                <KButton
+                    size="sm"
+                    variant="plain"
+                    icon="pen"
+                    @click="start(r)"
+                    >{{ t('Permission বদলান') }}</KButton
+                >
             </div>
         </article>
     </div>
@@ -187,24 +191,26 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                 />
             </KField>
 
+            <!-- The matrix stays a table; on a phone the first column is sticky so the page name
+                 is read while the checkboxes scroll sideways. -->
             <div class="overflow-x-auto rounded-xl border border-line">
                 <table class="w-full text-[13.5px]">
                     <thead class="bg-surface-2">
                         <tr>
                             <th
-                                class="px-4 py-3 text-left text-[12.5px] font-medium text-ink-3"
+                                class="sticky left-0 z-10 bg-surface-2 px-3 py-3 text-left text-[12.5px] font-medium whitespace-nowrap text-ink-3 sm:px-4"
                             >
                                 {{ t('পাতা') }}
                             </th>
                             <th
                                 v-for="a in allActions"
                                 :key="a"
-                                class="px-3 py-3 text-center text-[12.5px] font-medium text-ink-3"
+                                class="px-2 py-3 text-center text-[12.5px] font-medium whitespace-nowrap text-ink-3 sm:px-3"
                             >
                                 {{ actions[a] }}
                             </th>
                             <th
-                                class="px-3 py-3 text-center text-[12.5px] font-medium text-ink-3"
+                                class="px-2 py-3 text-center text-[12.5px] font-medium whitespace-nowrap text-ink-3 sm:px-3"
                             >
                                 {{ t('সব') }}
                             </th>
@@ -216,13 +222,15 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                             :key="m.key"
                             class="border-t border-line"
                         >
-                            <td class="px-4 py-2.5 font-medium">
+                            <td
+                                class="sticky left-0 z-10 bg-surface px-3 py-2.5 font-medium whitespace-nowrap sm:px-4"
+                            >
                                 {{ m.label }}
                             </td>
                             <td
                                 v-for="a in allActions"
                                 :key="a"
-                                class="px-3 py-2.5 text-center"
+                                class="px-2 py-2.5 text-center sm:px-3"
                             >
                                 <KCheck
                                     v-if="m.actions.includes(a)"
@@ -234,7 +242,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                                 />
                                 <span v-else class="text-ink-3/40">·</span>
                             </td>
-                            <td class="px-3 py-2.5 text-center">
+                            <td class="px-2 py-2.5 text-center sm:px-3">
                                 <KCheck
                                     :model-value="moduleFull(m)"
                                     @update:model-value="

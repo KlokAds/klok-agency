@@ -187,10 +187,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     />
                     <button
                         type="button"
-                        class="rounded-md border border-line px-1.5 py-0.5 font-mono text-[11px] text-ink-3"
+                        class="hidden rounded-md border border-line px-1.5 py-0.5 font-mono text-[11px] text-ink-3 hover:bg-sunken hover:text-ink sm:block"
+                        :aria-label="t('বন্ধ করুন')"
                         @click="close"
                     >
                         Esc
+                    </button>
+                    <button
+                        type="button"
+                        class="-mr-2 grid size-10 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink sm:hidden"
+                        :aria-label="t('বন্ধ করুন')"
+                        @click="close"
+                    >
+                        <KIcon name="close" :size="18" />
                     </button>
                 </div>
 

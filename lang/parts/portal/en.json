@@ -251,5 +251,8 @@
     "নিশ্চিতভাবে campaign বন্ধ করবেন?": "Stop the campaign for sure?",
     "এই invoice বাতিল হবে, আর campaign তার শেষ দিনে বন্ধ হয়ে যাবে — আর বাড়ানো হবে না। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে।": "This invoice is cancelled and the campaign stops on its last day — it will not be extended. Tap below if you are sure; you will get an email too.",
     "হ্যাঁ, বন্ধ করুন": "Yes, stop it",
+    "এখনো নেই": "Not yet",
+    "ঠিক করা নেই": "Not set",
+    "বাড়ানো হয়েছে": "Extended",
     "{stops} — আর বাড়ানো হবে না, বাকি invoice বাতিল হবে। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।": "{stops} — it will not be extended and its open invoice is cancelled. Tap below if you are sure; you will get an email too. Changed your mind later? Pick the days again here."
 }

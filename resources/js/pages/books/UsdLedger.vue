@@ -262,14 +262,9 @@ const needsDirection = computed(() =>
                 :options="orderOptions"
                 size="sm"
             />
-            <button
-                v-if="filtered"
-                type="button"
-                class="text-[13px] font-semibold text-ink-2 hover:text-out"
-                @click="clear"
-            >
-                {{ t('Filter মুছুন') }}
-            </button>
+            <KButton v-if="filtered" size="sm" icon="close" @click="clear">{{
+                t('Filter মুছুন')
+            }}</KButton>
         </div>
     </section>
 
@@ -328,7 +323,11 @@ const needsDirection = computed(() =>
                             <td
                                 class="num text-[12.5px] whitespace-nowrap text-ink-2"
                             >
-                                {{ row.date ? niceDate(row.date) : '—' }}
+                                {{
+                                    row.date
+                                        ? niceDate(row.date)
+                                        : t('তারিখ নেই')
+                                }}
                             </td>
                             <td class="min-w-[260px]">
                                 <p class="font-medium">{{ row.description }}</p>
@@ -375,7 +374,6 @@ const needsDirection = computed(() =>
                                     tone="in"
                                     >Settled</KTag
                                 >
-                                <span v-else class="text-ink-3">—</span>
                             </td>
                             <td class="r num text-ink-2">
                                 {{
@@ -408,6 +406,7 @@ const needsDirection = computed(() =>
                                         type="button"
                                         class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-sunken hover:text-ink focus:opacity-100"
                                         :aria-label="t('বদলান')"
+                                        :title="t('বদলান')"
                                         @click="startEdit(row)"
                                     >
                                         <KIcon name="pen" :size="16" />
@@ -417,6 +416,7 @@ const needsDirection = computed(() =>
                                         type="button"
                                         class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100"
                                         :aria-label="t('মুছুন')"
+                                        :title="t('মুছুন')"
                                         @click="remove(row)"
                                     >
                                         <KIcon name="bin" :size="16" />
@@ -444,7 +444,12 @@ const needsDirection = computed(() =>
                             <span
                                 class="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3"
                             >
-                                {{ niceDate(row.date) }} · {{ row.account }}
+                                <span class="num">{{
+                                    row.date
+                                        ? niceDate(row.date)
+                                        : t('তারিখ নেই')
+                                }}</span>
+                                · {{ row.account }}
                                 <KTag v-if="row.client" tone="brand">{{
                                     row.client
                                 }}</KTag>
@@ -453,9 +458,15 @@ const needsDirection = computed(() =>
                                     tone="wait"
                                     >Pending</KTag
                                 >
+                                <KIcon
+                                    v-if="row.locked"
+                                    name="lock"
+                                    :size="13"
+                                    :title="t('FX Batch পাতা থেকে বদলান')"
+                                />
                             </span>
                         </span>
-                        <span class="text-right">
+                        <span class="shrink-0 text-right">
                             <KAmount
                                 :value="row.amount"
                                 currency="usd"
@@ -464,7 +475,7 @@ const needsDirection = computed(() =>
                             />
                             <span
                                 v-if="row.fifo_cost !== null"
-                                class="num text-[11.5px] text-ink-3"
+                                class="num text-[12px] text-ink-3"
                                 >{{ money(row.fifo_cost, 'bdt') }}</span
                             >
                         </span>

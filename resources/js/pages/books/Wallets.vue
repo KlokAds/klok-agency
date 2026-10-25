@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KDate from '@/components/k/KDate.vue';
+import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
@@ -360,11 +361,13 @@ async function removeMove(move: Move): Promise<void> {
             </p>
             <p class="mt-3 text-[12.5px] text-rail-dim">
                 {{ t('Platform আরো কাটবে') }}
-                {{ money(platform_due, 'usd') }} ·
-                <Link href="/reconcile" class="underline underline-offset-2">{{
-                    t('Card মেলান')
-                }}</Link>
+                <b class="num font-semibold text-rail-ink">{{
+                    money(platform_due, 'usd')
+                }}</b>
             </p>
+            <KButton href="/reconcile" size="sm" icon="scale" class="mt-3">{{
+                t('Card মেলান')
+            }}</KButton>
         </div>
     </section>
 
@@ -395,14 +398,9 @@ async function removeMove(move: Move): Promise<void> {
                     }),
                 })
             }}
-            <button
-                v-if="can['bdt.edit']"
-                type="button"
-                class="font-semibold underline underline-offset-2"
-                @click="adjust"
-            >
-                {{ t('খাতায় তুলুন') }}
-            </button>
+            <KButton v-if="can['bdt.edit']" size="sm" @click="adjust">{{
+                t('খাতায় তুলুন')
+            }}</KButton>
         </span>
         <span
             v-if="wallets.untagged_count"
@@ -441,7 +439,7 @@ async function removeMove(move: Move): Promise<void> {
                                 v-for="w in options.wallets"
                                 :key="String(w.value)"
                                 type="button"
-                                class="h-7 rounded-lg border border-line px-2.5 text-[12px] font-semibold hover:bg-sunken disabled:cursor-default"
+                                class="h-9 rounded-lg border border-line-2 bg-surface px-3 text-[12.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
                                 :class="
                                     busy === `rest:${w.value}` && 'opacity-60'
                                 "
@@ -461,12 +459,10 @@ async function removeMove(move: Move): Promise<void> {
                     }}
                 </p>
             </div>
-            <p
+            <KEmpty
                 v-if="!untagged.data.length"
-                class="px-5 py-8 text-center text-[13px] text-ink-3 sm:px-6"
-            >
-                {{ t('সব entry-র জায়গা বাছা আছে।') }}
-            </p>
+                :title="t('সব entry-র জায়গা বাছা আছে')"
+            />
             <ul v-else class="mt-3">
                 <li
                     v-for="e in untagged.data"
@@ -502,7 +498,7 @@ async function removeMove(move: Move): Promise<void> {
                             v-for="w in options.wallets"
                             :key="String(w.value)"
                             type="button"
-                            class="h-7 rounded-lg border border-line px-2.5 text-[12px] font-semibold hover:bg-sunken disabled:cursor-default"
+                            class="h-9 rounded-lg border border-line-2 bg-surface px-2.5 text-[12.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
                             :class="
                                 busy === `${e.id}:${w.value}` && 'opacity-60'
                             "
@@ -528,12 +524,10 @@ async function removeMove(move: Move): Promise<void> {
                     }}
                 </p>
             </div>
-            <p
+            <KEmpty
                 v-if="!moves.data.length"
-                class="px-5 py-8 text-center text-[13px] text-ink-3 sm:px-6"
-            >
-                {{ t('এখনো কিছু সরানো হয়নি।') }}
-            </p>
+                :title="t('এখনো কিছু সরানো হয়নি।')"
+            />
             <ul v-else class="mt-3">
                 <li
                     v-for="m in moves.data"
@@ -561,11 +555,12 @@ async function removeMove(move: Move): Promise<void> {
                     <button
                         v-if="can['bdt.delete']"
                         type="button"
-                        class="grid size-7 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
+                        class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
                         :aria-label="t('মুছুন')"
+                        :title="t('মুছুন')"
                         @click="removeMove(m)"
                     >
-                        <KIcon name="bin" :size="14" />
+                        <KIcon name="bin" :size="16" />
                     </button>
                 </li>
             </ul>
@@ -696,16 +691,17 @@ async function removeMove(move: Move): Promise<void> {
                         ></span
                     >
                 </span>
-                <KButton size="sm" variant="quiet" @click="startPlace(w)">{{
+                <KButton size="sm" icon="pen" @click="startPlace(w)">{{
                     t('বদলান')
                 }}</KButton>
                 <button
                     type="button"
-                    class="grid size-7 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
+                    class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
                     :aria-label="t('মুছুন')"
+                    :title="t('মুছুন')"
                     @click="removePlace(w)"
                 >
-                    <KIcon name="bin" :size="14" />
+                    <KIcon name="bin" :size="16" />
                 </button>
             </li>
         </ul>

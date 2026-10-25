@@ -6,6 +6,7 @@ import SettingsNav from '@/components/SettingsNav.vue';
 import SettingsSection from '@/components/SettingsSection.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
@@ -50,12 +51,15 @@ for (const [key, value] of Object.entries(props.settings)) {
 }
 
 const files: { logo: File | null; qr: File | null } = { logo: null, qr: null };
+// The chosen file's name, shown beside the picker until it is saved.
+const picked = reactive<{ logo: string; qr: string }>({ logo: '', qr: '' });
 const errors = ref<Record<string, string>>({});
 const saving = ref(false);
 const err = (key: string) => errors.value[key];
 
 function pick(field: 'logo' | 'qr', event: Event): void {
     files[field] = (event.target as HTMLInputElement).files?.[0] ?? null;
+    picked[field] = files[field]?.name ?? '';
 }
 
 function save(): void {
@@ -81,6 +85,8 @@ function save(): void {
             errors.value = {};
             files.logo = null;
             files.qr = null;
+            picked.logo = '';
+            picked.qr = '';
         },
     });
 }
@@ -218,16 +224,29 @@ const wallets = [
                         alt="Logo"
                         class="h-12 w-auto rounded border border-line bg-white p-1"
                     />
-                    <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        class="max-w-full min-w-0 text-[12.5px]"
-                        @change="pick('logo', $event)"
-                    />
+                    <!-- The file picker looks like a button; the browser's own control stays hidden. -->
+                    <label
+                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
+                    >
+                        <KIcon name="doc" :size="15" class="text-ink-3" />
+                        {{ images.logo ? t('বদলান') : t('ছবি বাছুন') }}
+                        <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            class="sr-only"
+                            @change="pick('logo', $event)"
+                        />
+                    </label>
+                    <span
+                        v-if="picked.logo"
+                        class="max-w-full min-w-0 truncate text-[12.5px] text-ink-2"
+                        >{{ picked.logo }}</span
+                    >
                     <KButton
                         v-if="images.logo && editable"
                         size="sm"
-                        variant="quiet"
+                        variant="plain"
+                        icon="close"
                         @click="removeImage('logo')"
                         >{{ t('সরান') }}</KButton
                     >
@@ -301,21 +320,36 @@ const wallets = [
                         alt="Bangla QR"
                         class="size-24 rounded-lg border border-line bg-white p-1"
                     />
-                    <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        class="max-w-full min-w-0 text-[12.5px]"
-                        @change="pick('qr', $event)"
-                    />
+                    <label
+                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
+                    >
+                        <KIcon name="doc" :size="15" class="text-ink-3" />
+                        {{ images.qr ? t('বদলান') : t('QR-এর ছবি বাছুন') }}
+                        <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            class="sr-only"
+                            @change="pick('qr', $event)"
+                        />
+                    </label>
+                    <span
+                        v-if="picked.qr"
+                        class="max-w-full min-w-0 truncate text-[12.5px] text-ink-2"
+                        >{{ picked.qr }}</span
+                    >
                     <KButton
                         v-if="images.qr && editable"
                         size="sm"
-                        variant="quiet"
+                        variant="plain"
+                        icon="close"
                         @click="removeImage('qr')"
                         >{{ t('সরান') }}</KButton
                     >
                 </div>
-                <p v-if="err('qr')" class="-mt-3 text-[12px] text-out">
+                <p
+                    v-if="err('qr')"
+                    class="-mt-3 text-[12px] font-medium text-out"
+                >
                     {{ err('qr') }}
                 </p>
                 <KField
@@ -650,7 +684,11 @@ const wallets = [
                         class="num min-w-0 flex-1 rounded-lg bg-surface px-3 py-2 text-[12px] break-all"
                         >{{ forwarder.url }}</code
                     >
-                    <KButton size="sm" @click="copy(forwarder.url)"
+                    <KButton
+                        size="sm"
+                        variant="plain"
+                        icon="doc"
+                        @click="copy(forwarder.url)"
                         >Copy</KButton
                     >
                 </div>
@@ -658,12 +696,11 @@ const wallets = [
             <div
                 class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line pt-4 text-[12.5px] text-ink-3"
             >
-                <span
-                    >{{ t('শেষ সাড়া') }}:
-                    {{
-                        forwarder.last_seen ? ago(forwarder.last_seen) : '—'
-                    }}</span
-                >
+                <span class="whitespace-nowrap">{{
+                    forwarder.last_seen
+                        ? t('শেষ সাড়া') + ' ' + ago(forwarder.last_seen)
+                        : t('Phone থেকে এখনো কোনো খবর নেই')
+                }}</span>
                 <span v-if="forwarder.unmatched"
                     >·
                     {{
@@ -674,7 +711,7 @@ const wallets = [
             <template v-if="editable" #footer>
                 <KButton
                     v-if="forwarder.connected"
-                    variant="quiet"
+                    variant="danger"
                     @click="disconnect"
                     >{{ t('বন্ধ করুন') }}</KButton
                 >

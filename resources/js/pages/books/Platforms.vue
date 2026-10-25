@@ -34,7 +34,13 @@ defineProps<{
         "
     />
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <section v-if="!platforms.length" class="panel">
+        <KEmpty
+            :title="t('কোনো platform নেই')"
+            :body="t('Dollar পাতা থেকে ad platform যোগ করুন।')"
+        />
+    </section>
+    <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <section v-for="p in platforms" :key="p.id" class="panel flex flex-col">
             <div class="p-5 sm:p-6">
                 <h2 class="text-[17px] font-bold">{{ p.name }}</h2>
@@ -84,7 +90,7 @@ defineProps<{
                         class="flex items-baseline gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
                     >
                         <span
-                            class="num w-14 shrink-0 text-[12px] text-ink-3"
+                            class="num w-16 shrink-0 text-[12px] text-ink-3"
                             >{{ niceDate(c.date, false) }}</span
                         >
                         <span

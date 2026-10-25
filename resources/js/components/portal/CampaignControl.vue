@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import KButton from '@/components/k/KButton.vue';
 import KIcon from '@/components/k/KIcon.vue';
@@ -117,7 +117,7 @@ function post(what: 'pause' | 'resume'): void {
             :href="contact"
             target="_blank"
             rel="noopener"
-            class="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-[13.5px] font-semibold text-white"
+            class="mt-3 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#25D366] px-4 text-[13.5px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] active:translate-y-px"
             ><KIcon name="chat" :size="16" />{{ t('WhatsApp-এ কথা বলুন') }}</a
         >
     </section>
@@ -142,7 +142,7 @@ function post(what: 'pause' | 'resume'): void {
             :href="contact"
             target="_blank"
             rel="noopener"
-            class="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-[13.5px] font-semibold text-white"
+            class="mt-3 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#25D366] px-4 text-[13.5px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] active:translate-y-px"
             ><KIcon name="chat" :size="16" />{{ t('WhatsApp-এ কথা বলুন') }}</a
         >
     </section>
@@ -157,11 +157,9 @@ function post(what: 'pause' | 'resume'): void {
         <p class="mt-1 text-[13.5px] text-ink-2">
             {{ t('বাকি invoice pay করলেই নিজে থেকে আবার চালু হবে।') }}
         </p>
-        <Link
-            href="/portal/invoices"
-            class="mt-3 inline-flex rounded-lg bg-brand px-4 py-2 text-[13.5px] font-semibold text-white"
-            >{{ t('Invoice দেখুন') }}</Link
-        >
+        <KButton variant="primary" href="/portal/invoices" class="mt-3">{{
+            t('Invoice দেখুন')
+        }}</KButton>
     </section>
 
     <section v-else class="panel mt-4 p-5">
@@ -187,6 +185,7 @@ function post(what: 'pause' | 'resume'): void {
             >
             <KButton
                 v-else
+                variant="primary"
                 :loading="busy"
                 :disabled="control.prepaid && control.credit_left <= 0"
                 @click="post('resume')"
@@ -222,6 +221,7 @@ function post(what: 'pause' | 'resume'): void {
                     </KInput>
                 </div>
                 <KButton
+                    variant="primary"
                     :loading="form.processing"
                     :disabled="tooMuch || outOfRange || !changed"
                     @click="saveBudget"

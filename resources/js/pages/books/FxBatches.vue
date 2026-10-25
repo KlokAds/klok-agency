@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KDate from '@/components/k/KDate.vue';
+import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
@@ -111,7 +112,7 @@ async function remove(batch: Batch): Promise<void> {
     />
 
     <div
-        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4"
+        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
     >
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('মোট কেনা') }}</p>
@@ -199,7 +200,12 @@ async function remove(batch: Batch): Promise<void> {
     </section>
 
     <section class="panel overflow-x-auto">
-        <table class="ledger">
+        <KEmpty
+            v-if="!batches.data.length"
+            :title="t('এখনো কোনো batch নেই')"
+            :body="t('USD কিনলে এখানে batch হিসেবে উঠবে।')"
+        />
+        <table v-else v-stack class="stack ledger">
             <thead>
                 <tr>
                     <th>#</th>
@@ -234,29 +240,37 @@ async function remove(batch: Batch): Promise<void> {
                         }}</span>
                     </td>
                     <td class="r whitespace-nowrap">
-                        <button
-                            v-if="can['fx.edit']"
-                            type="button"
-                            class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-sunken hover:text-ink focus:opacity-100"
-                            :aria-label="t('বদলান')"
-                            @click="edit(b)"
-                        >
-                            <KIcon name="pen" :size="16" />
-                        </button>
-                        <button
-                            v-if="can['fx.delete'] && b.used === 0"
-                            type="button"
-                            class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100"
-                            :aria-label="t('মুছুন')"
-                            @click="remove(b)"
-                        >
-                            <KIcon name="bin" :size="16" />
-                        </button>
+                        <div class="ml-auto flex justify-end gap-1">
+                            <button
+                                v-if="can['fx.edit']"
+                                type="button"
+                                class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
+                                :aria-label="t('বদলান')"
+                                :title="t('বদলান')"
+                                @click="edit(b)"
+                            >
+                                <KIcon name="pen" :size="16" />
+                            </button>
+                            <button
+                                v-if="can['fx.delete'] && b.used === 0"
+                                type="button"
+                                class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
+                                :aria-label="t('মুছুন')"
+                                :title="t('মুছুন')"
+                                @click="remove(b)"
+                            >
+                                <KIcon name="bin" :size="16" />
+                            </button>
+                        </div>
                     </td>
                 </tr>
             </tbody>
         </table>
-        <KPager :page="batches" :sizes="[10, 25, 50, 100]" />
+        <KPager
+            v-if="batches.data.length"
+            :page="batches"
+            :sizes="[10, 25, 50, 100]"
+        />
     </section>
 
     <KModal

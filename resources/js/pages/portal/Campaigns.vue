@@ -154,7 +154,11 @@ const totalName = computed(() => {
                     {{ t('প্রতি result-এ') }}
                 </p>
                 <p class="num mt-1 text-[22px] font-bold">
-                    {{ totals.cpr !== null ? money(totals.cpr, 'usd') : '—' }}
+                    {{
+                        totals.cpr !== null
+                            ? money(totals.cpr, 'usd')
+                            : t('এখনো নেই')
+                    }}
                 </p>
             </div>
             <div class="panel p-4">
@@ -179,9 +183,13 @@ const totalName = computed(() => {
             <template v-for="g in groups" :key="g.key">
                 <h2
                     v-if="g.list.length"
-                    class="mt-2 text-[14px] font-bold text-ink-2"
+                    class="mt-2 flex items-center gap-2 text-[16px] font-bold"
                 >
-                    {{ t(g.title) }} · {{ g.list.length }}
+                    {{ t(g.title) }}
+                    <span
+                        class="num rounded-full bg-sunken px-2 py-0.5 text-[11.5px] font-semibold text-ink-2"
+                        >{{ g.list.length }}</span
+                    >
                 </h2>
                 <Link
                     v-for="c in g.list"
@@ -189,12 +197,12 @@ const totalName = computed(() => {
                     :href="`/portal/campaigns/${c.id}?range=${range.key}${range.key === 'custom' ? `&from=${range.from}&to=${range.to}` : ''}`"
                     class="panel block p-4 transition-colors hover:border-brand sm:p-5"
                 >
-                    <span class="flex flex-wrap items-center gap-2">
-                        <CampaignState :state="c.state" />
+                    <span class="flex items-center justify-between gap-2">
                         <span
                             class="min-w-0 flex-1 truncate text-[15px] font-semibold"
                             >{{ c.name }}</span
                         >
+                        <CampaignState :state="c.state" />
                     </span>
                     <span
                         v-if="c.stops"
@@ -221,7 +229,7 @@ const totalName = computed(() => {
                             <b class="num block text-[15px] text-ink">{{
                                 c.cpr !== null
                                     ? money(c.cpr, cur(c.currency))
-                                    : '—'
+                                    : t('এখনো নেই')
                             }}</b></span
                         >
                         <span class="text-ink-3"

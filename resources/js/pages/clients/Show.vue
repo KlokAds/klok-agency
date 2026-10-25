@@ -286,16 +286,20 @@ function print(): void {
         :title="client.name"
         :lead="client.notes ?? undefined"
     >
-        <KButton icon="print" @click="print">Statement print</KButton>
+        <KButton icon="print" @click="print">Statement</KButton>
         <KButton
             v-if="can['tasks.create']"
             icon="bell"
             @click="taskOpen = true"
             >{{ t('Reminder যোগ') }}</KButton
         >
-        <KButton v-if="can['clients.edit']" icon="pen" @click="open = true">{{
-            t('বদলান')
-        }}</KButton>
+        <KButton
+            v-if="can['clients.edit']"
+            variant="primary"
+            icon="pen"
+            @click="open = true"
+            >{{ t('বদলান') }}</KButton
+        >
     </PageHeader>
 
     <div
@@ -332,6 +336,225 @@ function print(): void {
                 cost {{ money(f.cost_pending, 'bdt') }}
             </p>
         </div>
+    </div>
+
+    <section class="no-print panel mb-6 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-[16px] font-bold">Invoice</h2>
+            <div class="flex items-center gap-2">
+                <KButton size="sm" :href="`/invoices?client=${client.id}`">{{
+                    t('সব দেখুন')
+                }}</KButton>
+                <KButton
+                    v-if="can['clients.edit']"
+                    size="sm"
+                    variant="primary"
+                    icon="plus"
+                    :href="`/invoices/create?client=${client.id}`"
+                    >{{ t('নতুন invoice') }}</KButton
+                >
+            </div>
+        </div>
+        <p
+            v-if="!invoices.length"
+            class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+        >
+            {{ t('এখনো কোনো invoice নেই।') }}
+        </p>
+        <ul v-else class="mt-2">
+            <li
+                v-for="i in invoices"
+                :key="i.id"
+                class="border-b border-line last:border-0"
+            >
+                <Link
+                    :href="`/invoices/${i.uid}`"
+                    class="flex items-center gap-3 py-2.5 text-[13px]"
+                >
+                    <span class="num font-semibold">{{ i.number }}</span>
+                    <span class="num text-ink-3">{{
+                        niceDate(i.issue_date)
+                    }}</span>
+                    <span class="flex-1" />
+                    <span class="num text-right"
+                        >{{ money(i.total, 'bdt') }}
+                        <span
+                            class="block text-[12px]"
+                            :class="
+                                i.overdue
+                                    ? 'text-out'
+                                    : i.due
+                                      ? 'text-wait'
+                                      : 'text-in'
+                            "
+                            >{{
+                                i.status === 'void'
+                                    ? t('বাতিল')
+                                    : i.due
+                                      ? t('বাকি {amount}', {
+                                            amount: money(i.due, 'bdt'),
+                                        })
+                                      : 'Paid'
+                            }}</span
+                        ></span
+                    >
+                </Link>
+            </li>
+        </ul>
+    </section>
+
+    <div class="no-print mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section class="panel p-5 sm:p-6">
+            <div class="flex items-baseline justify-between">
+                <h2 class="text-[16px] font-bold">Campaign</h2>
+                <KButton v-if="can['runs.view']" size="sm" href="/campaigns">{{
+                    t('সব দেখুন')
+                }}</KButton>
+            </div>
+            <div
+                v-if="credit && (credit.credit_usd || credit.campaign_usd)"
+                class="mt-3 grid grid-cols-3 gap-2 text-[12.5px]"
+            >
+                <div class="rounded-lg bg-sunken px-3 py-2">
+                    <p class="text-ink-3">{{ t('আগাম credit') }}</p>
+                    <p class="num mt-0.5 font-semibold">
+                        {{ money(credit.credit_usd, 'usd') }}
+                    </p>
+                </div>
+                <div class="rounded-lg bg-sunken px-3 py-2">
+                    <p class="text-ink-3">{{ t('খরচ হয়েছে') }}</p>
+                    <p class="num mt-0.5 font-semibold">
+                        {{ money(credit.campaign_usd, 'usd') }}
+                    </p>
+                </div>
+                <div class="rounded-lg bg-sunken px-3 py-2">
+                    <p class="text-ink-3">{{ t('বাকি credit') }}</p>
+                    <p
+                        class="num mt-0.5 font-semibold"
+                        :class="credit.credit_left < 0 ? 'text-out' : ''"
+                    >
+                        {{ money(credit.credit_left, 'usd') }}
+                    </p>
+                </div>
+            </div>
+            <div
+                v-if="
+                    credit &&
+                    credit.credit_left > 0 &&
+                    credit.unearned > 0 &&
+                    can['bdt.create']
+                "
+                class="mt-2 flex justify-end"
+            >
+                <KButton
+                    size="sm"
+                    variant="plain"
+                    icon="undo"
+                    @click="refundOpen = true"
+                    >{{ t('বাকি credit ফেরত দিন') }}</KButton
+                >
+            </div>
+            <p
+                v-if="credit && credit.credit_usd && credit.daily_usd"
+                class="mt-2 text-[12.5px] text-ink-3"
+            >
+                {{
+                    t(
+                        'রোজ গড়ে {amount} খরচ — বাকি টাকায় আরও প্রায় {n} দিন চলবে।',
+                        {
+                            amount: money(credit.daily_usd, 'usd'),
+                            n: credit.days_left ?? 0,
+                        },
+                    )
+                }}
+            </p>
+            <p
+                v-if="!campaigns.length"
+                class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+            >
+                {{ t('এখনো কোনো campaign এই client-এর সাথে যুক্ত নয়।') }}
+            </p>
+            <ul v-else class="mt-2">
+                <li
+                    v-for="c in campaigns"
+                    :key="c.id"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                >
+                    <span
+                        class="size-2 shrink-0 rounded-full"
+                        :class="c.live ? 'bg-in' : 'bg-line-2'"
+                    />
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate font-medium">{{
+                            c.name
+                        }}</span>
+                        <span class="text-[12px] text-ink-3"
+                            >{{ c.account }}
+                            <template v-if="c.bill_from">
+                                ·
+                                {{
+                                    t('{date} থেকে', {
+                                        date: niceDate(c.bill_from, false),
+                                    })
+                                }}</template
+                            ></span
+                        >
+                    </span>
+                    <span class="num shrink-0 text-right"
+                        >{{ money(c.spend_7d, 'usd') }}
+                        <span class="block text-[12px] text-ink-3">{{
+                            t('৭ দিনে')
+                        }}</span></span
+                    >
+                </li>
+            </ul>
+        </section>
+
+        <section class="panel p-5 sm:p-6">
+            <div class="flex items-baseline justify-between">
+                <h2 class="text-[16px] font-bold">
+                    {{ t('বাকি কাজ ও reminder') }}
+                </h2>
+                <KButton
+                    v-if="can['tasks.view']"
+                    size="sm"
+                    :href="`/tasks?client_id=${client.id}`"
+                    >{{ t('সব দেখুন') }}</KButton
+                >
+            </div>
+            <p
+                v-if="!tasks.length"
+                class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+            >
+                {{ t('কোনো কাজ বাকি নেই।') }}
+            </p>
+            <ul v-else class="mt-2">
+                <li
+                    v-for="task in tasks"
+                    :key="task.id"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                >
+                    <span class="min-w-0 flex-1 truncate font-medium">{{
+                        t(task.title)
+                    }}</span>
+                    <span
+                        class="num shrink-0 text-[12px]"
+                        :class="
+                            task.overdue
+                                ? 'font-semibold text-out'
+                                : 'text-ink-3'
+                        "
+                        >{{
+                            task.due_at
+                                ? niceDate(task.due_at.slice(0, 10), false) +
+                                  ' ' +
+                                  task.due_at.slice(11, 16)
+                                : t('তারিখ নেই')
+                        }}</span
+                    >
+                </li>
+            </ul>
+        </section>
     </div>
 
     <section v-if="pilot" class="no-print panel mb-6 p-5 sm:p-6">
@@ -413,7 +636,7 @@ function print(): void {
                     </div>
                     <p
                         v-if="!a.campaigns.length"
-                        class="mt-3 text-[13px] text-ink-3"
+                        class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
                     >
                         {{ t('এই সময়ে কোনো campaign-এ খরচ হয়নি।') }}
                     </p>
@@ -447,285 +670,6 @@ function print(): void {
             </div>
         </div>
     </section>
-
-    <section class="no-print panel mb-6 p-5 sm:p-6">
-        <h2 class="text-[16px] font-bold">{{ t('Client portal') }}</h2>
-        <p class="mt-1 text-[13px] text-ink-3">
-            {{
-                t(
-                    'যাঁরা এখানে যুক্ত, তাঁরা login করে এই client-এর campaign, খরচ, result আর invoice দেখেন — অন্য কিছু না।',
-                )
-            }}
-        </p>
-        <ul v-if="portal.users.length" class="mt-3 divide-y divide-line">
-            <li
-                v-for="u in portal.users"
-                :key="u.id"
-                class="flex items-center gap-3 py-2.5 text-[13.5px]"
-            >
-                <span class="min-w-0 flex-1">
-                    <span class="block font-semibold">{{ u.name }}</span>
-                    <span class="block truncate text-[12.5px] text-ink-3"
-                        >{{ u.email
-                        }}<template v-if="u.phone">
-                            · {{ u.phone }}</template
-                        ></span
-                    >
-                </span>
-                <KButton
-                    v-if="can['clients.edit']"
-                    size="sm"
-                    variant="danger"
-                    icon="close"
-                    @click="unlink(u)"
-                    >{{ t('সরান') }}</KButton
-                >
-            </li>
-        </ul>
-        <div
-            v-if="can['clients.edit'] && portal.waiting.length"
-            class="mt-4 flex flex-wrap items-end gap-2"
-        >
-            <KField
-                :label="t('Register করে অপেক্ষায় আছেন')"
-                class="min-w-0 flex-1"
-            >
-                <KSelect
-                    v-model="linkUser"
-                    :options="
-                        portal.waiting.map((w) => ({
-                            value: w.id,
-                            label: `${w.name}${w.company ? ' · ' + w.company : ''} · ${w.phone ?? w.email}`,
-                        }))
-                    "
-                    :placeholder="t('কাকে যুক্ত করবেন?')"
-                />
-            </KField>
-            <KButton variant="primary" :disabled="!linkUser" @click="link">{{
-                t('যুক্ত করুন')
-            }}</KButton>
-        </div>
-        <p v-else-if="!portal.users.length" class="mt-3 text-[13px] text-ink-3">
-            {{
-                t(
-                    'এখনো কেউ নেই। Client-কে login পাতার "account খুলুন" থেকে register করতে বলুন, তারপর এখানে যুক্ত করুন।',
-                )
-            }}
-        </p>
-    </section>
-
-    <section class="no-print panel mb-6 p-5 sm:p-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-[16px] font-bold">Invoice</h2>
-            <div class="flex items-center gap-3">
-                <Link
-                    :href="`/invoices?client=${client.id}`"
-                    class="text-[13px] font-semibold text-brand-ink hover:underline"
-                    >{{ t('সব দেখুন') }} →</Link
-                >
-                <KButton
-                    v-if="can['clients.edit']"
-                    size="sm"
-                    icon="plus"
-                    :href="`/invoices/create?client=${client.id}`"
-                    >{{ t('নতুন invoice') }}</KButton
-                >
-            </div>
-        </div>
-        <p v-if="!invoices.length" class="mt-3 text-[13px] text-ink-3">
-            {{ t('এখনো কোনো invoice নেই।') }}
-        </p>
-        <ul v-else class="mt-2">
-            <li
-                v-for="i in invoices"
-                :key="i.id"
-                class="border-b border-line last:border-0"
-            >
-                <Link
-                    :href="`/invoices/${i.uid}`"
-                    class="flex items-center gap-3 py-2.5 text-[13px]"
-                >
-                    <span class="num font-semibold">{{ i.number }}</span>
-                    <span class="num text-ink-3">{{
-                        niceDate(i.issue_date)
-                    }}</span>
-                    <span class="flex-1" />
-                    <span class="num text-right"
-                        >{{ money(i.total, 'bdt') }}
-                        <span
-                            class="block text-[11px]"
-                            :class="
-                                i.overdue
-                                    ? 'text-out'
-                                    : i.due
-                                      ? 'text-wait'
-                                      : 'text-in'
-                            "
-                            >{{
-                                i.status === 'void'
-                                    ? t('বাতিল')
-                                    : i.due
-                                      ? t('বাকি {amount}', {
-                                            amount: money(i.due, 'bdt'),
-                                        })
-                                      : 'Paid'
-                            }}</span
-                        ></span
-                    >
-                </Link>
-            </li>
-        </ul>
-    </section>
-    <div class="no-print mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section class="panel p-5 sm:p-6">
-            <div class="flex items-baseline justify-between">
-                <h2 class="text-[16px] font-bold">Campaign</h2>
-                <Link
-                    v-if="can['runs.view']"
-                    href="/campaigns"
-                    class="text-[13px] font-semibold text-brand-ink hover:underline"
-                    >{{ t('সব দেখুন') }} →</Link
-                >
-            </div>
-            <div
-                v-if="credit && (credit.credit_usd || credit.campaign_usd)"
-                class="mt-3 grid grid-cols-3 gap-2 text-[12.5px]"
-            >
-                <div class="rounded-lg bg-sunken px-3 py-2">
-                    <p class="text-ink-3">{{ t('আগাম credit') }}</p>
-                    <p class="num mt-0.5 font-semibold">
-                        {{ money(credit.credit_usd, 'usd') }}
-                    </p>
-                </div>
-                <div class="rounded-lg bg-sunken px-3 py-2">
-                    <p class="text-ink-3">{{ t('খরচ হয়েছে') }}</p>
-                    <p class="num mt-0.5 font-semibold">
-                        {{ money(credit.campaign_usd, 'usd') }}
-                    </p>
-                </div>
-                <div class="rounded-lg bg-sunken px-3 py-2">
-                    <p class="text-ink-3">{{ t('বাকি credit') }}</p>
-                    <p
-                        class="num mt-0.5 font-semibold"
-                        :class="credit.credit_left < 0 ? 'text-out' : ''"
-                    >
-                        {{ money(credit.credit_left, 'usd') }}
-                    </p>
-                </div>
-            </div>
-            <div
-                v-if="
-                    credit &&
-                    credit.credit_left > 0 &&
-                    credit.unearned > 0 &&
-                    can['bdt.create']
-                "
-                class="mt-2 flex justify-end"
-            >
-                <KButton
-                    size="sm"
-                    variant="plain"
-                    icon="undo"
-                    @click="refundOpen = true"
-                    >{{ t('বাকি credit ফেরত দিন') }}</KButton
-                >
-            </div>
-            <p
-                v-if="credit && credit.credit_usd && credit.daily_usd"
-                class="mt-2 text-[12.5px] text-ink-3"
-            >
-                {{
-                    t(
-                        'রোজ গড়ে {amount} খরচ — বাকি টাকায় আরও প্রায় {n} দিন চলবে।',
-                        {
-                            amount: money(credit.daily_usd, 'usd'),
-                            n: credit.days_left ?? 0,
-                        },
-                    )
-                }}
-            </p>
-            <p v-if="!campaigns.length" class="mt-3 text-[13px] text-ink-3">
-                {{ t('এখনো কোনো campaign এই client-এর সাথে যুক্ত নয়।') }}
-            </p>
-            <ul v-else class="mt-2">
-                <li
-                    v-for="c in campaigns"
-                    :key="c.id"
-                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
-                >
-                    <span
-                        class="size-2 shrink-0 rounded-full"
-                        :class="c.live ? 'bg-in' : 'bg-line-2'"
-                    />
-                    <span class="min-w-0 flex-1">
-                        <span class="block truncate font-medium">{{
-                            c.name
-                        }}</span>
-                        <span class="text-[12px] text-ink-3"
-                            >{{ c.account }}
-                            <template v-if="c.bill_from">
-                                ·
-                                {{
-                                    t('{date} থেকে', {
-                                        date: niceDate(c.bill_from, false),
-                                    })
-                                }}</template
-                            ></span
-                        >
-                    </span>
-                    <span class="num text-right"
-                        >{{ money(c.spend_7d, 'usd') }}
-                        <span class="block text-[11px] text-ink-3">{{
-                            t('৭ দিনে')
-                        }}</span></span
-                    >
-                </li>
-            </ul>
-        </section>
-
-        <section class="panel p-5 sm:p-6">
-            <div class="flex items-baseline justify-between">
-                <h2 class="text-[16px] font-bold">
-                    {{ t('বাকি কাজ ও reminder') }}
-                </h2>
-                <Link
-                    v-if="can['tasks.view']"
-                    :href="`/tasks?client_id=${client.id}`"
-                    class="text-[13px] font-semibold text-brand-ink hover:underline"
-                    >{{ t('সব দেখুন') }} →</Link
-                >
-            </div>
-            <p v-if="!tasks.length" class="mt-3 text-[13px] text-ink-3">
-                {{ t('কোনো কাজ বাকি নেই।') }}
-            </p>
-            <ul v-else class="mt-2">
-                <li
-                    v-for="task in tasks"
-                    :key="task.id"
-                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
-                >
-                    <span class="min-w-0 flex-1 truncate font-medium">{{
-                        t(task.title)
-                    }}</span>
-                    <span
-                        class="num shrink-0 text-[12px]"
-                        :class="
-                            task.overdue
-                                ? 'font-semibold text-out'
-                                : 'text-ink-3'
-                        "
-                        >{{
-                            task.due_at
-                                ? niceDate(task.due_at.slice(0, 10), false) +
-                                  ' ' +
-                                  task.due_at.slice(11, 16)
-                                : '—'
-                        }}</span
-                    >
-                </li>
-            </ul>
-        </section>
-    </div>
 
     <section
         v-if="budget_days.days.length"
@@ -816,12 +760,78 @@ function print(): void {
         </div>
     </section>
 
+    <section class="no-print panel mb-6 p-5 sm:p-6">
+        <h2 class="text-[16px] font-bold">{{ t('Client portal') }}</h2>
+        <p class="mt-1 text-[13px] text-ink-3">
+            {{
+                t(
+                    'যাঁরা এখানে যুক্ত, তাঁরা login করে এই client-এর campaign, খরচ, result আর invoice দেখেন — অন্য কিছু না।',
+                )
+            }}
+        </p>
+        <ul v-if="portal.users.length" class="mt-3 divide-y divide-line">
+            <li
+                v-for="u in portal.users"
+                :key="u.id"
+                class="flex items-center gap-3 py-2.5 text-[13.5px]"
+            >
+                <span class="min-w-0 flex-1">
+                    <span class="block font-semibold">{{ u.name }}</span>
+                    <span class="block truncate text-[12.5px] text-ink-3"
+                        >{{ u.email
+                        }}<template v-if="u.phone">
+                            · {{ u.phone }}</template
+                        ></span
+                    >
+                </span>
+                <KButton
+                    v-if="can['clients.edit']"
+                    size="sm"
+                    variant="danger"
+                    icon="close"
+                    @click="unlink(u)"
+                    >{{ t('সরান') }}</KButton
+                >
+            </li>
+        </ul>
+        <div
+            v-if="can['clients.edit'] && portal.waiting.length"
+            class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
+        >
+            <KField :label="t('Register করে অপেক্ষায় আছেন')" class="min-w-0">
+                <KSelect
+                    v-model="linkUser"
+                    :options="
+                        portal.waiting.map((w) => ({
+                            value: w.id,
+                            label: `${w.name}${w.company ? ' · ' + w.company : ''} · ${w.phone ?? w.email}`,
+                        }))
+                    "
+                    :placeholder="t('কাকে যুক্ত করবেন?')"
+                />
+            </KField>
+            <KButton variant="primary" :disabled="!linkUser" @click="link">{{
+                t('যুক্ত করুন')
+            }}</KButton>
+        </div>
+        <p
+            v-else-if="!portal.users.length"
+            class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+        >
+            {{
+                t(
+                    'এখনো কেউ নেই। Client-কে login পাতার "account খুলুন" থেকে register করতে বলুন, তারপর এখানে যুক্ত করুন।',
+                )
+            }}
+        </p>
+    </section>
+
     <section class="panel overflow-hidden">
-        <div class="flex items-baseline justify-between px-5 pt-5 sm:px-6">
+        <div class="px-5 pt-5 sm:px-6">
             <h2 class="text-[16px] font-bold">Statement</h2>
-            <span class="text-[12.5px] text-ink-3">{{
-                t('USD খরচ আর BDT পেমেন্ট — তারিখ অনুযায়ী')
-            }}</span>
+            <p class="mt-1 text-[12.5px] text-ink-3">
+                {{ t('USD খরচ আর BDT পেমেন্ট — তারিখ অনুযায়ী') }}
+            </p>
         </div>
         <KEmpty v-if="!statement.length" :title="t('এখনো কোনো লেনদেন নেই')" />
         <div v-else class="mt-3 overflow-x-auto">

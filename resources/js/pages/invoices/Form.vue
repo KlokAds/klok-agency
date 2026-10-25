@@ -5,6 +5,7 @@ import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KCheck from '@/components/k/KCheck.vue';
 import KDate from '@/components/k/KDate.vue';
+import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KTag from '@/components/k/KTag.vue';
@@ -399,7 +400,7 @@ const errorAt = (index: number, field: string) =>
                 <template v-if="spend">
                     <p
                         v-if="!spend.length"
-                        class="mt-4 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-2"
+                        class="mt-4 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
                     >
                         {{
                             t(
@@ -510,13 +511,9 @@ const errorAt = (index: number, field: string) =>
                         <KButton size="sm" icon="plus" @click="add('service')"
                             >Service</KButton
                         >
-                        <KButton
-                            size="sm"
-                            icon="plus"
-                            variant="quiet"
-                            @click="add('other')"
-                            >{{ t('অন্যান্য') }}</KButton
-                        >
+                        <KButton size="sm" icon="plus" @click="add('other')">{{
+                            t('অন্যান্য')
+                        }}</KButton>
                     </div>
                 </div>
                 <p
@@ -525,16 +522,11 @@ const errorAt = (index: number, field: string) =>
                 >
                     {{ form.errors.items }}
                 </p>
-                <p
+                <KEmpty
                     v-if="!form.items.length"
-                    class="px-5 py-8 text-center text-[13px] text-ink-3"
-                >
-                    {{
-                        t(
-                            'এখনো কোনো line নেই — উপর থেকে campaign আনুন বা line যোগ করুন।',
-                        )
-                    }}
-                </p>
+                    :title="t('এখনো কোনো line নেই')"
+                    :body="t('উপর থেকে campaign আনুন বা line যোগ করুন।')"
+                />
                 <ul class="divide-y divide-line">
                     <li
                         v-for="(line, index) in form.items"
@@ -547,7 +539,7 @@ const errorAt = (index: number, field: string) =>
                             }}</span>
                             <button
                                 type="button"
-                                class="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
+                                class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
                                 :aria-label="t('সরান')"
                                 @click="remove(index)"
                             >

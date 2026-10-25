@@ -310,5 +310,9 @@
     "Batch {n} চলছে": "Batch {n} in use",
     "পরে আরো {n}টা batch": "{n} more batches queued",
     "রোজ গড়ে {amount} খরচ": "Spending {amount} a day",
-    "প্রায় {n} দিন": "About {n} days"
+    "প্রায় {n} দিন": "About {n} days",
+    "এখনো কোনো batch নেই": "No batches yet",
+    "USD কিনলে এখানে batch হিসেবে উঠবে।": "Each USD purchase shows up here as a batch.",
+    "কোনো platform নেই": "No platforms",
+    "Dollar পাতা থেকে ad platform যোগ করুন।": "Add ad platforms from the Dollars page."
 }

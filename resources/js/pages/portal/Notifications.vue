@@ -74,15 +74,16 @@ function look(kind: string): { icon: string; tone: string } {
                     ><KIcon :name="look(n.kind).icon" :size="18"
                 /></span>
                 <span class="min-w-0 flex-1">
-                    <span class="block text-[14.5px] font-semibold">{{
-                        fill(n.title, n.params)
-                    }}</span>
+                    <span
+                        class="block text-[14.5px] leading-snug font-semibold break-words"
+                        >{{ fill(n.title, n.params) }}</span
+                    >
                     <span
                         v-if="n.body"
-                        class="mt-0.5 block text-[13px] text-ink-2"
+                        class="mt-1 block text-[13px] leading-relaxed break-words text-ink-2"
                         >{{ fill(n.body, n.params) }}</span
                     >
-                    <span class="mt-1 block text-[12px] text-ink-3">{{
+                    <span class="num mt-1.5 block text-[12px] text-ink-3">{{
                         ago(n.at)
                     }}</span>
                 </span>

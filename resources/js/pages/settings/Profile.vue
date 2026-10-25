@@ -57,7 +57,7 @@ function saveNotify(): void {
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <form
-            class="panel flex flex-col gap-5 p-6"
+            class="panel flex flex-col gap-5 p-4 sm:p-6"
             @submit.prevent="
                 form.patch('/settings/profile', { preserveScroll: true })
             "
@@ -117,7 +117,10 @@ function saveNotify(): void {
         </form>
 
         <!-- A client gets their own news (invoices, payments, ads), always: no staff groups here. -->
-        <section v-if="user.role !== 'Client'" class="panel p-6 lg:col-start-1">
+        <section
+            v-if="user.role !== 'Client'"
+            class="panel p-4 sm:p-6 lg:col-start-1"
+        >
             <h2 class="text-[16px] font-bold">{{ t('Notification') }}</h2>
             <p class="mt-1 text-[13px] text-ink-3">
                 {{
@@ -215,9 +218,11 @@ function saveNotify(): void {
             </p>
         </section>
 
-        <aside class="panel p-6 lg:col-start-2 lg:row-start-1">
+        <aside class="panel p-4 sm:p-6 lg:col-start-2 lg:row-start-1">
             <p class="eyebrow">Role</p>
-            <p class="mt-1 text-[18px] font-bold">{{ user.role ?? '—' }}</p>
+            <p class="mt-1 text-[18px] font-bold">
+                {{ user.role ?? t('Role নেই') }}
+            </p>
             <p class="mt-3 text-[13px] text-ink-3">
                 {{
                     t(

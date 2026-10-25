@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import KButton from '@/components/k/KButton.vue';
 import { t } from '@/lib/i18n';
 
 /** The period a client looks at: all of it, today to a year, or any two dates. */
@@ -53,7 +54,7 @@ function apply(): void {
                 v-for="r in ranges"
                 :key="r.key"
                 type="button"
-                class="shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
+                class="inline-flex h-9 shrink-0 items-center rounded-full border px-3.5 text-[13px] font-semibold whitespace-nowrap transition-colors"
                 :class="
                     (custom ? 'custom' : range.key) === r.key
                         ? 'border-brand bg-brand text-white'
@@ -64,31 +65,31 @@ function apply(): void {
                 {{ t(r.label) }}
             </button>
         </div>
+        <!-- Two dates side by side, the button under them on a phone; one row on a computer. -->
         <div
             v-if="custom"
-            class="mt-3 flex flex-wrap items-end gap-2 rounded-xl border border-line p-3"
+            class="panel mt-3 grid grid-cols-2 gap-2 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-            <label class="grid gap-1 text-[12px] text-ink-3"
+            <label class="grid min-w-0 gap-1 text-[12px] text-ink-3"
                 >{{ t('থেকে') }}
                 <input
                     v-model="from"
                     type="date"
-                    class="h-10 rounded-lg border border-line-2 bg-transparent px-2 text-[14px] text-ink"
+                    class="num h-10 w-full min-w-0 rounded-[10px] border border-line-2 bg-surface px-3 text-[14px] text-ink transition-colors focus:border-brand"
             /></label>
-            <label class="grid gap-1 text-[12px] text-ink-3"
+            <label class="grid min-w-0 gap-1 text-[12px] text-ink-3"
                 >{{ t('পর্যন্ত') }}
                 <input
                     v-model="to"
                     type="date"
-                    class="h-10 rounded-lg border border-line-2 bg-transparent px-2 text-[14px] text-ink"
+                    class="num h-10 w-full min-w-0 rounded-[10px] border border-line-2 bg-surface px-3 text-[14px] text-ink transition-colors focus:border-brand"
             /></label>
-            <button
-                type="button"
-                class="h-10 rounded-lg bg-brand px-4 text-[13.5px] font-semibold text-white"
+            <KButton
+                variant="primary"
+                class="col-span-2 sm:col-span-1"
                 @click="apply"
+                >{{ t('দেখুন') }}</KButton
             >
-                {{ t('দেখুন') }}
-            </button>
         </div>
     </div>
 </template>

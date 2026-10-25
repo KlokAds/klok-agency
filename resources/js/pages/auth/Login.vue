@@ -70,19 +70,21 @@ function submit(): void {
             />
         </KField>
 
-        <div class="flex items-center justify-between gap-4">
+        <div
+            class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+        >
             <KCheck v-model="form.remember" :label="t('এই device মনে রাখো')" />
             <Link
                 v-if="canResetPassword"
                 href="/forgot-password"
-                class="text-[13px] font-semibold text-brand-ink hover:underline"
+                class="-my-2 py-2 text-[13px] font-semibold whitespace-nowrap text-brand-ink hover:underline"
                 >{{ t('Password ভুলে গেছেন?') }}</Link
             >
         </div>
 
         <KButton
             type="submit"
-            variant="ink"
+            variant="primary"
             size="lg"
             block
             :loading="form.processing"

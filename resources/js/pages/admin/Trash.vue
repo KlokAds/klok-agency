@@ -55,7 +55,7 @@ function restore(type: string, id: number): void {
             :placeholder="t('সব ধরন')"
             clearable
             size="sm"
-            class="w-48"
+            class="w-full sm:w-56"
         />
     </div>
 
@@ -65,24 +65,39 @@ function restore(type: string, id: number): void {
             :title="t('Trash খালি')"
             :body="t('কিছু মুছলে এখানে দেখা যাবে।')"
         />
+        <!-- A row: what it was (type, title, amount) and when it went; the button at the end. -->
         <ul v-else class="divide-y divide-dashed divide-line">
             <li
                 v-for="i in items.data"
                 :key="i.type + i.id"
-                class="flex flex-wrap items-center gap-3 px-5 py-3.5 sm:px-6"
+                class="flex items-center gap-3 px-4 py-3.5 sm:px-6"
             >
-                <KTag>{{ i.type_label }}</KTag>
-                <span class="min-w-0 flex-1 font-medium">{{ i.title }}</span>
-                <span v-if="i.amount !== null" class="num text-[13.5px]">{{
-                    money(i.amount, i.currency)
-                }}</span>
-                <span class="w-28 text-right text-[12.5px] text-ink-3">{{
-                    ago(i.deleted_at)
-                }}</span>
+                <div class="min-w-0 flex-1">
+                    <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <KTag>{{ i.type_label }}</KTag>
+                        <span class="min-w-0 font-medium break-words">{{
+                            i.title
+                        }}</span>
+                    </p>
+                    <p
+                        class="mt-0.5 flex flex-wrap gap-x-2 text-[12.5px] text-ink-3"
+                    >
+                        <span v-if="i.amount !== null" class="num text-ink-2">{{
+                            money(i.amount, i.currency)
+                        }}</span>
+                        <span v-if="i.amount !== null">·</span>
+                        <span class="whitespace-nowrap"
+                            >{{ t('মোছা হয়েছে') }}
+                            {{ ago(i.deleted_at) }}</span
+                        >
+                    </p>
+                </div>
                 <KButton
                     v-if="can['trash.restore']"
                     size="sm"
+                    variant="plain"
                     icon="undo"
+                    class="shrink-0"
                     @click="restore(i.type, i.id)"
                     >{{ t('ফেরত আনুন') }}</KButton
                 >

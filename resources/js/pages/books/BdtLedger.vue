@@ -269,14 +269,9 @@ const needsClient = computed(() =>
                 :options="orderOptions"
                 size="sm"
             />
-            <button
-                v-if="filtered"
-                type="button"
-                class="text-[13px] font-semibold text-ink-2 hover:text-out"
-                @click="clear"
-            >
-                {{ t('Filter মুছুন') }}
-            </button>
+            <KButton v-if="filtered" size="sm" icon="close" @click="clear">{{
+                t('Filter মুছুন')
+            }}</KButton>
         </div>
     </section>
 
@@ -333,7 +328,11 @@ const needsClient = computed(() =>
                             <td
                                 class="num text-[12.5px] whitespace-nowrap text-ink-2"
                             >
-                                {{ row.date ? niceDate(row.date) : '—' }}
+                                {{
+                                    row.date
+                                        ? niceDate(row.date)
+                                        : t('তারিখ নেই')
+                                }}
                             </td>
                             <td class="min-w-[280px]">
                                 <p class="font-medium">{{ row.description }}</p>
@@ -361,14 +360,11 @@ const needsClient = computed(() =>
                                 class="text-[13px] whitespace-nowrap text-ink-2"
                             >
                                 {{
-                                    row.client ??
-                                    row.employee ??
-                                    row.head ??
-                                    '—'
+                                    row.client ?? row.employee ?? row.head ?? ''
                                 }}
                                 <span
                                     v-if="row.wallet"
-                                    class="ml-1.5 rounded-md bg-sunken px-1.5 py-0.5 text-[11px] text-ink-3"
+                                    class="ml-1.5 rounded-md bg-sunken px-1.5 py-0.5 text-[11.5px] text-ink-3"
                                     >{{
                                         options.wallets.find(
                                             (w) => w.value === row.wallet,
@@ -404,6 +400,7 @@ const needsClient = computed(() =>
                                         type="button"
                                         class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-sunken hover:text-ink focus:opacity-100"
                                         :aria-label="t('বদলান')"
+                                        :title="t('বদলান')"
                                         @click="startEdit(row)"
                                     >
                                         <KIcon name="pen" :size="16" />
@@ -413,6 +410,7 @@ const needsClient = computed(() =>
                                         type="button"
                                         class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100"
                                         :aria-label="t('মুছুন')"
+                                        :title="t('মুছুন')"
                                         @click="remove(row)"
                                     >
                                         <KIcon name="bin" :size="16" />
@@ -439,20 +437,34 @@ const needsClient = computed(() =>
                             <span
                                 class="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3"
                             >
-                                {{ niceDate(row.date) }}
+                                <span class="num">{{
+                                    row.date
+                                        ? niceDate(row.date)
+                                        : t('তারিখ নেই')
+                                }}</span>
                                 <KTag :tone="tone(row.category)">{{
                                     row.category_label
                                 }}</KTag>
+                                <KIcon
+                                    v-if="row.locked"
+                                    name="lock"
+                                    :size="13"
+                                    :title="
+                                        row.category === 'salary'
+                                            ? t('Payroll থেকে বদলান')
+                                            : t('FX Batch থেকে বদলান')
+                                    "
+                                />
                             </span>
                         </span>
-                        <span class="text-right">
+                        <span class="shrink-0 text-right">
                             <KAmount
                                 :value="row.amount"
                                 currency="bdt"
                                 sign
                                 class="block font-semibold"
                             />
-                            <span class="num text-[11.5px] text-ink-3">{{
+                            <span class="num text-[12px] text-ink-3">{{
                                 money(row.balance, 'bdt')
                             }}</span>
                         </span>

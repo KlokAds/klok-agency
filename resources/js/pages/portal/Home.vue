@@ -263,14 +263,14 @@ const low = computed(
                     }}</span
                 >
             </p>
-            <button
+            <KButton
                 v-if="credit.refund"
-                type="button"
-                class="mt-1.5 text-[11.5px] font-semibold text-brand hover:underline"
+                size="sm"
+                variant="plain"
+                class="mt-2"
                 @click="refundOpen = true"
+                >{{ t('বাকি টাকা ফেরত চান') }}</KButton
             >
-                {{ t('বাকি টাকা ফেরত চান') }} →
-            </button>
         </div>
         <component
             :is="next_invoice ? 'a' : 'div'"
@@ -428,7 +428,9 @@ const low = computed(
                     >{{ t('দিনে') }}</span
                 >
                 <b class="num mt-0.5 block text-[16px]">{{
-                    credit.daily > 0 ? money(credit.daily, 'usd') : '—'
+                    credit.daily > 0
+                        ? money(credit.daily, 'usd')
+                        : t('এখনো নেই')
                 }}</b>
                 <span
                     class="mt-0.5 block text-[10.5px] whitespace-nowrap text-white/55"
@@ -468,10 +470,12 @@ const low = computed(
                         ? t('Invoice {number} · শেষ তারিখ পার হয়ে গেছে', {
                               number: next_invoice.number,
                           })
-                        : t('Invoice {number} · শেষ তারিখ {date}', {
-                              number: next_invoice.number,
-                              date: next_invoice.due_date ?? '—',
-                          })
+                        : next_invoice.due_date
+                          ? t('Invoice {number} · শেষ তারিখ {date}', {
+                                number: next_invoice.number,
+                                date: next_invoice.due_date,
+                            })
+                          : `Invoice ${next_invoice.number}`
                 }}</span>
             </span>
             <span
@@ -516,11 +520,9 @@ const low = computed(
     <section class="panel mt-4 p-5">
         <div class="mb-3 flex items-center justify-between">
             <h2 class="text-[15px] font-bold">{{ t('গত ৭ দিন') }}</h2>
-            <Link
-                href="/portal/campaigns"
-                class="text-[13px] font-semibold text-brand hover:underline"
-                >{{ t('সব দেখুন') }} →</Link
-            >
+            <KButton size="sm" variant="plain" href="/portal/campaigns">{{
+                t('সব দেখুন')
+            }}</KButton>
         </div>
         <SpendChart :series="week" />
     </section>
@@ -598,25 +600,24 @@ const low = computed(
             v-if="payPages > 1"
             class="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3"
         >
-            <button
-                type="button"
-                class="inline-flex h-9 items-center gap-1 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:border-brand hover:text-brand disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-2"
+            <KButton
+                size="sm"
+                variant="plain"
+                icon="back"
                 :disabled="payPage <= 1"
                 @click="payPage--"
+                >{{ t('আগের') }}</KButton
             >
-                ← {{ t('আগের') }}
-            </button>
             <span class="num text-[12.5px] text-ink-3"
                 >{{ payPage }} / {{ payPages }}</span
             >
-            <button
-                type="button"
-                class="inline-flex h-9 items-center gap-1 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:border-brand hover:text-brand disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-2"
+            <KButton
+                size="sm"
+                variant="plain"
                 :disabled="payPage >= payPages"
                 @click="payPage++"
-            >
-                {{ t('পরের') }} →
-            </button>
+                >{{ t('পরের') }}<KIcon name="arrow" :size="16"
+            /></KButton>
         </div>
     </section>
 

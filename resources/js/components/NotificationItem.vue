@@ -73,7 +73,7 @@ const tone = computed(() =>
 
 <template>
     <div
-        class="flex gap-3 rounded-xl px-3 py-3"
+        class="relative flex gap-3 rounded-xl px-3 py-3"
         :class="item.read ? '' : 'bg-surface-2'"
     >
         <span
@@ -86,12 +86,19 @@ const tone = computed(() =>
             <component
                 :is="item.url ? Link : 'p'"
                 :href="item.url ?? undefined"
-                class="block text-[13.5px] leading-snug font-semibold hover:text-brand-ink"
+                class="block text-[13.5px] leading-snug font-semibold break-words"
+                :class="[
+                    item.url ? 'hover:text-brand-ink' : '',
+                    item.read ? 'text-ink-2' : 'text-ink',
+                ]"
                 @click="emit('open', item)"
             >
                 {{ t(item.title, item.params) }}
             </component>
-            <p v-if="item.body" class="mt-0.5 text-[12.5px] text-ink-2">
+            <p
+                v-if="item.body"
+                class="mt-0.5 text-[12.5px] break-words text-ink-2"
+            >
                 {{ t(item.body, item.params) }}
             </p>
 
@@ -137,14 +144,17 @@ const tone = computed(() =>
                     <p class="eyebrow mb-1">
                         {{ t('আজকের ads (Klok Pilot)') }}
                     </p>
-                    <table class="w-full">
-                        <tr
+                    <!-- One line a client, the figures wrapping under the name on a phone. -->
+                    <ul class="divide-y divide-line">
+                        <li
                             v-for="a in item.summary.ads"
                             :key="a.account ?? a.client"
-                            class="border-t border-line"
+                            class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-1.5"
                         >
-                            <td class="py-1.5 font-medium">{{ a.client }}</td>
-                            <td class="num py-1.5 text-right">
+                            <span class="min-w-0 flex-1 truncate font-medium">{{
+                                a.client
+                            }}</span>
+                            <span class="num text-ink">
                                 {{
                                     a.currency === 'USD'
                                         ? '$'
@@ -152,22 +162,18 @@ const tone = computed(() =>
                                           ? String.fromCharCode(0x09f3)
                                           : ''
                                 }}{{ a.spend.toFixed(2) }}
-                            </td>
-                            <td class="num py-1.5 text-right">
+                            </span>
+                            <span class="num">
                                 {{ a.results }} {{ t('result') }}
-                            </td>
-                            <td class="num py-1.5 text-right text-ink-3">
-                                {{
-                                    a.cpr !== null
-                                        ? `CPR ${a.cpr.toFixed(2)}`
-                                        : '—'
-                                }}
-                            </td>
-                            <td class="num py-1.5 text-right text-ink-3">
-                                {{ a.clicks ? `${a.clicks} click` : '' }}
-                            </td>
-                        </tr>
-                    </table>
+                            </span>
+                            <span v-if="a.cpr !== null" class="num text-ink-3">
+                                CPR {{ a.cpr.toFixed(2) }}
+                            </span>
+                            <span v-if="a.clicks" class="num text-ink-3">
+                                {{ a.clicks }} click
+                            </span>
+                        </li>
+                    </ul>
                 </div>
                 <p v-if="item.summary.pilot_error" class="text-out">
                     Klok Pilot: {{ item.summary.pilot_error }}
@@ -175,20 +181,31 @@ const tone = computed(() =>
             </div>
 
             <div class="mt-1.5 flex flex-wrap items-center gap-2">
-                <span class="text-[11.5px] text-ink-3">{{ ago(item.at) }}</span>
+                <span
+                    class="flex items-center gap-1.5 text-[11.5px] whitespace-nowrap text-ink-3"
+                >
+                    <span
+                        v-if="!item.read"
+                        class="size-1.5 rounded-full bg-brand"
+                        :title="t('পড়া হয়নি')"
+                    />
+                    {{ ago(item.at) }}
+                </span>
+                <!-- Plain anchors (WhatsApp keeps its new tab), dressed as small buttons. -->
                 <a
                     v-if="item.whatsapp"
                     :href="item.whatsapp"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="rounded-md bg-in-soft px-2 py-0.5 text-[11.5px] font-semibold text-in hover:bg-in hover:text-white"
-                    >WhatsApp</a
+                    class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-in/30 bg-in-soft px-3 text-[12.5px] font-semibold whitespace-nowrap text-in hover:border-in hover:bg-in hover:text-white"
+                    ><KIcon name="chat" :size="14" />WhatsApp</a
                 >
                 <a
                     v-if="item.sms"
                     :href="item.sms"
-                    class="rounded-md bg-sunken px-2 py-0.5 text-[11.5px] font-semibold text-ink-2 hover:bg-ink hover:text-paper"
-                    >SMS</a
+                    class="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                    :class="item.whatsapp ? '' : 'ml-auto'"
+                    ><KIcon name="mail" :size="14" />SMS</a
                 >
             </div>
         </div>

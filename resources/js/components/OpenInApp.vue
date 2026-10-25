@@ -54,7 +54,7 @@ function hide(): void {
         }}</span>
         <a
             :href="link"
-            class="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-[12.5px] font-bold text-white"
+            class="inline-flex h-8 shrink-0 items-center rounded-lg bg-brand px-3 text-[12.5px] font-bold whitespace-nowrap text-white dark:text-rail"
             >{{ t('App-এ খুলুন') }}</a
         >
         <button

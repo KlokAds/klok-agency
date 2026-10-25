@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
@@ -192,11 +192,12 @@ function live(status: string | null): boolean {
                         clearable
                         @update:model-value="(v) => link(a, v ?? null)"
                     />
-                    <Link
+                    <KButton
                         v-else-if="a.client_id"
+                        size="sm"
+                        icon="user"
                         :href="`/clients/${a.client_id}`"
-                        class="text-[13px] font-semibold text-brand-ink hover:underline"
-                        >{{ a.client }}</Link
+                        >{{ a.client }}</KButton
                     >
                 </div>
             </div>
@@ -236,7 +237,7 @@ function live(status: string | null): boolean {
 
                 <p
                     v-if="!a.campaigns.length"
-                    class="mt-4 text-[13px] text-ink-3"
+                    class="mt-4 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
                 >
                     {{ t('এই সময়ে কোনো campaign-এ খরচ হয়নি।') }}
                 </p>

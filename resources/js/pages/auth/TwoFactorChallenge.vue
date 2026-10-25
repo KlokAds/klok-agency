@@ -57,7 +57,11 @@ function toggle(): void {
     <Head title="2FA" />
 
     <form class="flex flex-col gap-5" @submit.prevent="submit">
-        <KField v-if="!recovery" :error="form.errors.code">
+        <KField
+            v-if="!recovery"
+            :label="t('৬ সংখ্যার কোড')"
+            :error="form.errors.code"
+        >
             <KCode v-model="form.code" :invalid="!!form.errors.code" />
         </KField>
         <KField v-else label="Recovery code" :error="form.errors.recovery_code">
@@ -71,22 +75,22 @@ function toggle(): void {
 
         <KButton
             type="submit"
-            variant="ink"
+            variant="primary"
             size="lg"
             block
             :loading="form.processing"
             >{{ t('যাচাই করুন') }}</KButton
         >
-        <button
-            type="button"
-            class="text-[13px] font-semibold text-ink-2 hover:text-ink"
+        <KButton
+            variant="plain"
+            block
+            :icon="recovery ? 'lock' : 'key'"
             @click="toggle"
-        >
-            {{
+            >{{
                 recovery
                     ? t('Authenticator কোড দিয়ে ঢুকব')
                     : t('Phone কাছে নেই? Recovery code দিন')
-            }}
-        </button>
+            }}</KButton
+        >
     </form>
 </template>

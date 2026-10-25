@@ -138,7 +138,7 @@ async function remove(user: User): Promise<void> {
     >
         <KButton
             v-if="can['users.create']"
-            variant="ink"
+            variant="primary"
             icon="plus"
             @click="start()"
             >{{ t('নতুন user') }}</KButton
@@ -146,7 +146,8 @@ async function remove(user: User): Promise<void> {
     </PageHeader>
 
     <section class="panel overflow-x-auto">
-        <table class="ledger">
+        <!-- Phone: one card a user (v-stack); wider: the ledger. -->
+        <table v-stack class="stack ledger">
             <thead>
                 <tr>
                     <th>{{ t('নাম') }}</th>
@@ -171,13 +172,21 @@ async function remove(user: User): Promise<void> {
                                 >{{ t('(আপনি)') }}</span
                             >
                         </p>
-                        <p class="text-[12.5px] text-ink-3">{{ u.email }}</p>
+                        <p
+                            class="text-[12.5px] font-normal break-all text-ink-3"
+                        >
+                            {{ u.email }}
+                        </p>
                     </td>
                     <td>
                         <KTag
+                            v-if="u.role"
                             :tone="u.role === 'Owner' ? 'brand' : 'neutral'"
-                            >{{ u.role ?? '—' }}</KTag
+                            >{{ u.role }}</KTag
                         >
+                        <span v-else class="text-[12.5px] text-ink-3">{{
+                            t('Role নেই')
+                        }}</span>
                     </td>
                     <td>
                         <div class="flex flex-wrap gap-1.5">
@@ -198,32 +207,38 @@ async function remove(user: User): Promise<void> {
                         </div>
                     </td>
                     <td class="text-[13px] text-ink-2">
-                        {{ ago(u.last_login_at) }}
+                        <span class="whitespace-nowrap">{{
+                            u.last_login_at
+                                ? ago(u.last_login_at)
+                                : t('কখনো login করেননি')
+                        }}</span>
                         <span
                             v-if="u.last_login_ip"
                             class="num block text-[11.5px] text-ink-3"
                             >{{ u.last_login_ip }}</span
                         >
                     </td>
-                    <td class="r whitespace-nowrap">
-                        <KButton
-                            v-if="
-                                can['users.edit'] &&
-                                u.two_factor &&
-                                u.id !== me.id
-                            "
-                            size="sm"
-                            variant="quiet"
-                            @click="reset2fa(u)"
-                            >2FA reset</KButton
-                        >
-                        <KButton
+                    <td class="r">
+                        <div
                             v-if="can['users.edit']"
-                            size="sm"
-                            icon="pen"
-                            @click="start(u)"
-                            >{{ t('বদলান') }}</KButton
+                            class="flex justify-end gap-1.5"
                         >
+                            <KButton
+                                v-if="u.two_factor && u.id !== me.id"
+                                size="sm"
+                                variant="plain"
+                                icon="key"
+                                @click="reset2fa(u)"
+                                >2FA reset</KButton
+                            >
+                            <KButton
+                                size="sm"
+                                variant="plain"
+                                icon="pen"
+                                @click="start(u)"
+                                >{{ t('বদলান') }}</KButton
+                            >
+                        </div>
                     </td>
                 </tr>
             </tbody>

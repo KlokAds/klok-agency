@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import NotificationItem from '@/components/NotificationItem.vue';
 import type { Notice } from '@/components/NotificationItem.vue';
+import KButton from '@/components/k/KButton.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import { usePopover } from '@/composables/usePopover';
 import { toast } from '@/lib/feedback';
@@ -126,17 +127,24 @@ const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
                 class="popover k-rise flex max-h-[70vh] w-[min(380px,calc(100vw-16px))] flex-col"
             >
                 <div
-                    class="flex items-center justify-between border-b border-line px-4 py-3"
+                    class="flex min-h-[52px] items-center justify-between gap-3 border-b border-line py-2 pr-2 pl-4"
                 >
-                    <p class="text-[14px] font-bold">{{ t('Notification') }}</p>
-                    <button
+                    <p class="text-[14px] font-bold">
+                        {{ t('Notification') }}
+                        <span
+                            v-if="unread > 0"
+                            class="num ml-1 rounded-md bg-out-soft px-1.5 py-0.5 text-[11.5px] font-semibold text-out"
+                            >{{ unread }}</span
+                        >
+                    </p>
+                    <KButton
                         v-if="unread > 0"
-                        type="button"
-                        class="text-[12.5px] font-semibold text-brand-ink hover:underline"
+                        size="sm"
+                        variant="plain"
+                        icon="check"
                         @click="readAll"
+                        >{{ t('সব পড়া হয়েছে') }}</KButton
                     >
-                        {{ t('সব পড়া হয়েছে') }}
-                    </button>
                 </div>
                 <div class="min-h-0 flex-1 overflow-y-auto p-1.5">
                     <p
@@ -158,10 +166,11 @@ const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
                 </div>
                 <Link
                     href="/notifications"
-                    class="border-t border-line px-4 py-2.5 text-center text-[13px] font-semibold text-ink-2 hover:text-ink"
+                    class="flex min-h-11 items-center justify-center gap-1.5 border-t border-line px-4 text-[13px] font-semibold text-ink-2 hover:bg-sunken hover:text-ink"
                     @click="menu.close()"
-                    >{{ t('সব দেখুন') }}</Link
-                >
+                    >{{ t('সব দেখুন')
+                    }}<KIcon name="arrow" :size="14" class="text-ink-3"
+                /></Link>
             </div>
         </Teleport>
     </div>

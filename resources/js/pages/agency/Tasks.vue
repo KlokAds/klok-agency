@@ -165,7 +165,7 @@ onMounted(() => {
             :placeholder="t('সব client')"
             clearable
             size="sm"
-            class="w-56"
+            class="w-full sm:w-56"
             @update:model-value="reload"
         />
     </section>
@@ -184,7 +184,7 @@ onMounted(() => {
                 v-for="task in tasks.data"
                 :id="`task-${task.id}`"
                 :key="task.id"
-                class="group flex items-start gap-3 px-4 py-3.5 sm:px-5"
+                class="flex items-start gap-3 px-4 py-3.5 sm:px-5"
                 :class="filters.focus === task.id && 'bg-brand-soft'"
             >
                 <button
@@ -248,13 +248,12 @@ onMounted(() => {
                 <KTag v-if="task.priority === 'high'" tone="out">{{
                     t('জরুরি')
                 }}</KTag>
-                <div
-                    class="flex shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100"
-                >
+                <!-- Always there: a phone has no hover to reveal them. -->
+                <div class="-mt-1 -mr-2 flex shrink-0">
                     <button
                         v-if="can['tasks.edit'] && !task.auto"
                         type="button"
-                        class="rounded-md p-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
+                        class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
                         :aria-label="t('বদলান')"
                         @click="startEdit(task)"
                     >
@@ -263,7 +262,7 @@ onMounted(() => {
                     <button
                         v-if="can['tasks.delete']"
                         type="button"
-                        class="rounded-md p-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
+                        class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
                         :aria-label="t('মুছুন')"
                         @click="remove(task)"
                     >

@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KAmount from '@/components/k/KAmount.vue';
 import KButton from '@/components/k/KButton.vue';
+import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
@@ -122,19 +123,23 @@ const showOptions = computed<Option[]>(() => [
             icon="search"
             :placeholder="t('Client খুঁজুন')"
             size="sm"
-            class="w-full max-w-xs"
+            class="w-full sm:max-w-xs"
         />
         <KSegment v-model="filters.status" :options="showOptions" size="sm" />
     </div>
 
-    <p
+    <KEmpty
         v-if="!clients.data.length"
-        class="panel px-5 py-10 text-center text-[13px] text-ink-3"
-    >
-        {{ t('কোনো client পাওয়া যায়নি।') }}
-    </p>
+        class="panel"
+        :title="t('কোনো client পাওয়া যায়নি।')"
+        :body="
+            filters.q || filters.status !== 'active'
+                ? t('অন্য filter দেখুন।')
+                : t('নতুন client যোগ করলে এখানে দেখা যাবে।')
+        "
+    />
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Link
             v-for="c in clients.data"
             :key="c.id"
@@ -148,8 +153,11 @@ const showOptions = computed<Option[]>(() => [
                     >
                         {{ c.name }}
                     </p>
-                    <p class="truncate text-[12.5px] text-ink-3">
-                        {{ c.notes ?? c.company ?? '—' }}
+                    <p
+                        v-if="c.notes || c.company"
+                        class="truncate text-[12.5px] text-ink-3"
+                    >
+                        {{ c.notes ?? c.company }}
                     </p>
                 </div>
                 <div class="flex shrink-0 gap-1">
@@ -174,7 +182,7 @@ const showOptions = computed<Option[]>(() => [
                     </dd>
                 </div>
                 <div>
-                    <dt class="text-ink-3">margin</dt>
+                    <dt class="text-ink-3">Margin</dt>
                     <dd class="mt-0.5 text-[14px] font-semibold">
                         <KAmount
                             :value="c.figures?.margin ?? 0"

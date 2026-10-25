@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import SectionTabs from '@/components/SectionTabs.vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import MetaCampaigns from '@/components/dollars/MetaCampaigns.vue';
 import type { ForecastClient } from '@/components/dollars/MetaCampaigns.vue';
 import KButton from '@/components/k/KButton.vue';
+import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
@@ -151,11 +152,9 @@ function saveAccount(): void {
             <p class="num mt-3 text-[30px] leading-none font-medium text-white">
                 {{ money(summary.card, 'usd') }}
             </p>
-            <Link
-                href="/reconcile"
-                class="mt-3 inline-block text-[12.5px] text-[#2dd4bf] hover:underline"
-                >{{ t('Card মেলান') }} →</Link
-            >
+            <KButton href="/reconcile" size="sm" icon="scale" class="mt-3">{{
+                t('Card মেলান')
+            }}</KButton>
         </div>
         <div class="bg-surface p-5 sm:p-6">
             <p class="eyebrow">{{ t('Meta এখনো কাটবে') }}</p>
@@ -233,14 +232,12 @@ function saveAccount(): void {
     <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <!-- FX batches -->
         <section class="panel min-w-0 p-5 sm:p-6">
-            <div class="flex items-baseline justify-between gap-3">
+            <div class="flex items-center justify-between gap-3">
                 <h2 class="text-[16px] font-bold">
                     {{ t('কেনা dollar — batch ধরে') }}
                 </h2>
-                <Link
-                    href="/fx"
-                    class="text-[13px] font-semibold text-brand-ink hover:underline"
-                    >FX Batch →</Link
+                <KButton href="/fx" size="sm" class="shrink-0"
+                    >FX Batch</KButton
                 >
             </div>
             <p class="mt-1 text-[12.5px] text-ink-3">
@@ -310,7 +307,8 @@ function saveAccount(): void {
                     }}
                 </p>
             </div>
-            <div class="mt-3 overflow-x-auto">
+            <KEmpty v-if="!platforms.length" :title="t('কোনো platform নেই')" />
+            <div v-else class="mt-3 overflow-x-auto">
                 <table v-stack class="stack w-full min-w-[440px] text-[13px]">
                     <thead>
                         <tr
@@ -398,11 +396,12 @@ function saveAccount(): void {
                     <button
                         v-if="can['usd.edit']"
                         type="button"
-                        class="rounded-md p-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
+                        class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
                         :aria-label="t('বদলান')"
+                        :title="t('বদলান')"
                         @click="startAccount(a)"
                     >
-                        <KIcon name="pen" :size="15" />
+                        <KIcon name="pen" :size="16" />
                     </button>
                 </li>
             </ul>

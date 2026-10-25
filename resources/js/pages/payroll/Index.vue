@@ -327,18 +327,15 @@ const shortMonth = (ym: string) =>
                         :class="e.status === 'left' && 'opacity-60'"
                     >
                         <td class="min-w-[180px]">
-                            <button
-                                type="button"
-                                class="text-left font-semibold hover:text-brand-ink"
-                                :disabled="!can['payroll.edit']"
-                                @click="startEmployee(e)"
+                            <span class="font-semibold">{{ e.name }}</span>
+                            <p
+                                v-if="e.designation || e.status === 'left'"
+                                class="text-[12px] text-ink-3"
                             >
-                                {{ e.name }}
-                            </button>
-                            <p class="text-[12px] text-ink-3">
-                                {{ e.designation ?? '—'
+                                {{ e.designation ?? ''
                                 }}<template v-if="e.status === 'left'">
-                                    · {{ t('ছেড়ে গেছেন') }}</template
+                                    <template v-if="e.designation">·</template>
+                                    {{ t('ছেড়ে গেছেন') }}</template
                                 >
                             </p>
                         </td>
@@ -366,20 +363,34 @@ const shortMonth = (ym: string) =>
                             {{ e.due === 0 ? '✓' : money(e.due, 'bdt') }}
                             <span
                                 v-if="e.due < 0"
-                                class="block font-sans text-[11px] font-normal"
+                                class="block font-sans text-[12px] font-normal"
                                 >advance</span
                             >
                         </td>
-                        <td class="r">
-                            <KButton
-                                v-if="
-                                    can['payroll.create'] &&
-                                    e.status === 'active'
-                                "
-                                size="sm"
-                                @click="startPay(e)"
-                                >{{ t('দিন') }}</KButton
-                            >
+                        <td class="r whitespace-nowrap">
+                            <div class="ml-auto flex justify-end gap-1">
+                                <KButton
+                                    v-if="
+                                        can['payroll.create'] &&
+                                        e.status === 'active'
+                                    "
+                                    size="sm"
+                                    variant="primary"
+                                    icon="wallet"
+                                    @click="startPay(e)"
+                                    >{{ t('দিন') }}</KButton
+                                >
+                                <button
+                                    v-if="can['payroll.edit']"
+                                    type="button"
+                                    class="grid size-8 place-items-center rounded-lg border border-line-2 text-ink-2 hover:border-ink-3 hover:text-ink"
+                                    :aria-label="t('বদলান')"
+                                    :title="t('বদলান')"
+                                    @click="startEmployee(e)"
+                                >
+                                    <KIcon name="pen" :size="15" />
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -421,10 +432,10 @@ const shortMonth = (ym: string) =>
             <li
                 v-for="p in payments.data"
                 :key="p.id"
-                class="group flex flex-wrap items-center gap-3 border-b border-line py-3 text-[13.5px] last:border-0"
+                class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-3 text-[13.5px] last:border-0"
             >
                 <span class="num w-24 shrink-0 text-[12.5px] text-ink-3">{{
-                    niceDate(p.date)
+                    p.date ? niceDate(p.date) : t('তারিখ নেই')
                 }}</span>
                 <span class="min-w-0 flex-1">
                     <span class="font-medium">{{
@@ -457,8 +468,9 @@ const shortMonth = (ym: string) =>
                 <button
                     v-if="can['payroll.delete']"
                     type="button"
-                    class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100"
+                    class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
                     :aria-label="t('মুছুন')"
+                    :title="t('মুছুন')"
                     @click="removePayment(p)"
                 >
                     <KIcon name="bin" :size="16" />

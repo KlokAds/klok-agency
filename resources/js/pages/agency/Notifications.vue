@@ -99,9 +99,13 @@ function opened(item: Notice): void {
             )
         "
     >
-        <KButton icon="check" :disabled="!counts.unread" @click="readAll">{{
-            t('সব পড়া হয়েছে')
-        }}</KButton>
+        <KButton
+            variant="primary"
+            icon="check"
+            :disabled="!counts.unread"
+            @click="readAll"
+            >{{ t('সব পড়া হয়েছে') }}</KButton
+        >
         <KButton icon="bin" @click="clearRead">{{
             t('পড়াগুলো মুছুন')
         }}</KButton>
@@ -151,7 +155,7 @@ function opened(item: Notice): void {
             />
             <button
                 type="button"
-                class="mt-2 mr-1 grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-out"
+                class="mt-2 mr-1 grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-out"
                 :aria-label="t('মুছুন')"
                 :title="t('মুছুন')"
                 @click="remove(n)"

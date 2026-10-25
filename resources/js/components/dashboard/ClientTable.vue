@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KTag from '@/components/k/KTag.vue';
 import type { ClientRow } from '@/components/dashboard/types';
@@ -75,11 +76,9 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                     }}
                 </p>
             </div>
-            <Link
-                href="/clients"
-                class="no-print shrink-0 text-[13px] font-medium text-brand-ink hover:underline"
-                >{{ t('সব client →') }}</Link
-            >
+            <KButton href="/clients" size="sm" class="no-print shrink-0">{{
+                t('সব client')
+            }}</KButton>
         </div>
 
         <KEmpty

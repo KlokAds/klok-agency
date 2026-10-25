@@ -318,13 +318,14 @@ onMounted(() => {
             :placeholder="t('সব client')"
             clearable
             size="sm"
-            class="w-56"
+            class="w-full sm:w-56"
             @update:model-value="reload"
         />
     </section>
 
     <KEmpty
         v-if="!runs.data.length"
+        class="panel"
         :title="t('কোনো ad run নেই')"
         :body="
             t(
@@ -343,7 +344,12 @@ onMounted(() => {
         >
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <p class="eyebrow">{{ run.client }} · {{ run.platform }}</p>
+                    <p class="eyebrow truncate">
+                        {{ run.client
+                        }}<template v-if="run.platform">
+                            · {{ run.platform }}</template
+                        >
+                    </p>
                     <p class="mt-1 truncate text-[16px] font-bold">
                         {{ run.title }}
                     </p>
@@ -412,54 +418,68 @@ onMounted(() => {
                 {{ run.result_note }}
             </p>
 
+            <!-- Two tidy rows on a phone: reach the client, then what to do with the run. -->
             <div
-                class="mt-auto flex flex-wrap items-center gap-2 border-t border-line pt-3"
+                class="mt-auto border-t border-line pt-3"
                 :class="run.result_note ? 'mt-3' : 'mt-4'"
             >
-                <a
-                    v-if="run.whatsapp && run.status === 'running'"
-                    :href="run.whatsapp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex h-8 items-center gap-1.5 rounded-[10px] bg-in-soft px-3 text-[12.5px] font-semibold text-in hover:bg-in hover:text-white"
-                    ><KIcon name="chat" :size="15" />WhatsApp</a
+                <div
+                    v-if="run.status === 'running'"
+                    class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
                 >
-                <a
-                    v-if="run.sms && run.status === 'running'"
-                    :href="run.sms"
-                    class="inline-flex h-8 items-center rounded-[10px] bg-sunken px-3 text-[12.5px] font-semibold text-ink-2 hover:bg-ink hover:text-paper"
-                    >SMS</a
+                    <a
+                        v-if="run.whatsapp"
+                        :href="run.whatsapp"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] bg-in-soft px-3 text-[12.5px] font-semibold whitespace-nowrap text-in hover:bg-in hover:text-white"
+                        ><KIcon name="chat" :size="15" />WhatsApp</a
+                    >
+                    <a
+                        v-if="run.sms"
+                        :href="run.sms"
+                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                        ><KIcon name="mail" :size="15" />SMS</a
+                    >
+                    <KButton
+                        v-if="!run.whatsapp"
+                        size="sm"
+                        icon="list"
+                        class="h-9"
+                        @click="copyMessage(run)"
+                        >{{ t('লেখা copy') }}</KButton
+                    >
+                </div>
+                <div
+                    v-if="can['runs.edit'] || can['runs.create']"
+                    class="flex items-center gap-2 sm:justify-end"
+                    :class="run.status === 'running' ? 'mt-2' : ''"
                 >
-                <KButton
-                    v-if="!run.whatsapp && run.status === 'running'"
-                    size="sm"
-                    variant="quiet"
-                    @click="copyMessage(run)"
-                    >{{ t('লেখা copy') }}</KButton
-                >
-                <span class="flex-1" />
-                <KButton
-                    v-if="can['runs.edit']"
-                    size="sm"
-                    @click="startResult(run)"
-                    >{{ t('ফলাফল') }}</KButton
-                >
-                <KButton
-                    v-if="can['runs.create'] && run.status !== 'renewed'"
-                    size="sm"
-                    variant="primary"
-                    @click="startRenew(run)"
-                    >Renew</KButton
-                >
-                <button
-                    v-if="can['runs.edit']"
-                    type="button"
-                    class="rounded-md p-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
-                    :aria-label="t('বদলান')"
-                    @click="startEdit(run)"
-                >
-                    <KIcon name="pen" :size="16" />
-                </button>
+                    <KButton
+                        v-if="can['runs.edit']"
+                        size="sm"
+                        class="h-9 flex-1 sm:flex-none"
+                        @click="startResult(run)"
+                        >{{ t('ফলাফল') }}</KButton
+                    >
+                    <KButton
+                        v-if="can['runs.create'] && run.status !== 'renewed'"
+                        size="sm"
+                        variant="primary"
+                        class="h-9 flex-1 sm:flex-none"
+                        @click="startRenew(run)"
+                        >Renew</KButton
+                    >
+                    <button
+                        v-if="can['runs.edit']"
+                        type="button"
+                        class="grid size-9 shrink-0 place-items-center rounded-[10px] border border-line-2 text-ink-3 hover:bg-sunken hover:text-ink"
+                        :aria-label="t('বদলান')"
+                        @click="startEdit(run)"
+                    >
+                        <KIcon name="pen" :size="16" />
+                    </button>
+                </div>
             </div>
         </article>
     </div>
@@ -570,7 +590,7 @@ onMounted(() => {
                 >
                 <KButton
                     v-if="editing.status === 'running'"
-                    variant="quiet"
+                    variant="plain"
                     class="mr-auto"
                     @click="stop(editing)"
                     >{{ t('বন্ধ করুন') }}</KButton

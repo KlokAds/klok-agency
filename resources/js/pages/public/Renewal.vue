@@ -111,7 +111,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                 {{ business.name }}
             </p>
             <div class="flex items-center gap-1">
-                <KButton size="sm" variant="quiet" icon="print" @click="print">
+                <KButton size="sm" variant="plain" icon="print" @click="print">
                     {{ t('Print / PDF') }}
                 </KButton>
                 <button
@@ -254,28 +254,34 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             })
                         }}
                     </p>
-                    <a :href="r.invoice_url" class="no-print">
-                        <KButton variant="primary" icon="arrow">{{
-                            t('Invoice দেখে pay করুন')
-                        }}</KButton>
-                    </a>
+                    <KButton
+                        variant="primary"
+                        icon="arrow"
+                        external
+                        :href="r.invoice_url"
+                        class="no-print w-full sm:w-auto"
+                        >{{ t('Invoice দেখে pay করুন') }}</KButton
+                    >
                 </section>
 
                 <!-- The choice -->
                 <section v-if="canChoose" class="panel no-print p-6 sm:p-8">
-                    <h2 class="text-[16px] font-semibold">
+                    <h2 class="text-[16px] font-bold">
                         {{ t('আরও কত দিন চালাবেন?') }}
                     </h2>
-                    <div class="mt-4 flex flex-wrap gap-2">
+                    <!-- Even cells on a phone (two a row), one row on a computer. -->
+                    <div
+                        class="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+                    >
                         <button
                             v-for="n in r.choices"
                             :key="n"
                             type="button"
-                            class="h-11 min-w-[76px] rounded-xl border px-4 text-[14px] font-semibold transition-colors"
+                            class="h-11 rounded-xl border-2 px-4 text-[14px] font-semibold whitespace-nowrap transition-colors sm:min-w-[88px]"
                             :class="
                                 custom === '' && days === n
-                                    ? 'border-brand bg-brand-soft text-ink'
-                                    : 'border-line hover:border-ink-3'
+                                    ? 'border-brand bg-brand-soft text-brand'
+                                    : 'border-line-2 hover:border-ink-3'
                             "
                             @click="
                                 days = n;
@@ -288,7 +294,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             v-model="custom"
                             inputmode="numeric"
                             :placeholder="t('অন্য')"
-                            class="w-[110px]"
+                            class="w-full sm:w-[120px]"
                         >
                             <template #trail
                                 ><span class="text-[12.5px] text-ink-3">{{
@@ -347,18 +353,20 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                     <div
                         class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <button
+                        <KButton
                             v-if="r.status !== 'declined'"
-                            type="button"
-                            class="text-[13.5px] font-medium text-ink-3 underline-offset-4 hover:text-out hover:underline"
+                            variant="danger"
+                            icon="close"
+                            class="w-full sm:w-auto"
                             @click="confirmEnd = true"
+                            >{{ t('না, contract এখানেই শেষ') }}</KButton
                         >
-                            {{ t('না, contract এখানেই শেষ') }}
-                        </button>
                         <span v-else />
                         <KButton
                             variant="primary"
+                            size="lg"
                             icon="arrow"
+                            class="w-full sm:w-auto"
                             :loading="busy"
                             @click="choose"
                         >
@@ -406,7 +414,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                 }}
             </p>
             <template #footer>
-                <KButton @click="confirmEnd = false">{{
+                <KButton variant="quiet" @click="confirmEnd = false">{{
                     t('ফিরে যান')
                 }}</KButton>
                 <KButton variant="danger" @click="decline">{{
