@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -81,6 +82,10 @@ class CampaignController extends Controller
                 'daily_budget' => $c->dailyBudget(),
                 'spend_cap' => $c->spend_cap,
                 'paused_for_credit' => $c->paused_for_credit_at !== null,
+                // Who paused it, as the client sees it: their own, the team, for money, on our side.
+                'state' => $c->client_id !== null ? $c->clientState() : null,
+                // What the team may change from here: Meta campaigns in USD, not ended.
+                'controllable' => CampaignLimits::guarded($c) && ! $c->hasEnded(),
                 'limits_error' => $c->limits_error,
                 'guarded' => $c->client_id !== null && CampaignLimits::guarded($c),
                 'renewal' => ($r = $c->renewals->first()) ? ['id' => $r->id, 'status' => $r->status] : null,
@@ -117,6 +122,42 @@ class CampaignController extends Controller
             'synced_at' => Setting::get('pilot_spend_synced_at'),
             'options' => ['clients' => Lookups::clients(true)],
         ]);
+    }
+
+    /** The team switches a campaign off on Meta; its client sees it as paused by Klok Ads. */
+    public function pause(Request $request, Campaign $campaign, CampaignLimits $limits): RedirectResponse
+    {
+        return $this->change($campaign, fn () => $limits->teamSetActive($campaign, false, $request->user()), __(':campaign থামানো হয়েছে।', ['campaign' => $campaign->name]));
+    }
+
+    /** The team switches it on again (whoever paused it); the money guard still caps it. */
+    public function resume(Request $request, Campaign $campaign, CampaignLimits $limits): RedirectResponse
+    {
+        return $this->change($campaign, fn () => $limits->teamSetActive($campaign, true, $request->user()), __(':campaign আবার চালু হয়েছে।', ['campaign' => $campaign->name]));
+    }
+
+    /** The team sets the budget a day, in dollars. */
+    public function budget(Request $request, Campaign $campaign, CampaignLimits $limits): RedirectResponse
+    {
+        $data = $request->validate(['budget' => ['required', 'numeric', 'min:1', 'max:100000']], [], ['budget' => __('দৈনিক budget')]);
+
+        return $this->change($campaign, fn () => $limits->teamBudget($campaign, (int) round((float) $data['budget'] * 100), $request->user()), __(':campaign-এর দৈনিক budget বদলানো হয়েছে।', ['campaign' => $campaign->name]));
+    }
+
+    /** One change on Meta through Pilot; its refusal is shown as it is. */
+    private function change(Campaign $campaign, \Closure $change, string $done): RedirectResponse
+    {
+        abort_unless(CampaignLimits::guarded($campaign->loadMissing('account')), 422);
+
+        try {
+            $change();
+        } catch (RuntimeException $e) {
+            throw ValidationException::withMessages(['control' => $e->getMessage()]);
+        }
+
+        $this->toast($done);
+
+        return back();
     }
 
     /** Which client a campaign is billed to, and from which day. */

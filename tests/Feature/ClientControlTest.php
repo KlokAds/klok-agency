@@ -152,3 +152,30 @@ it('shows what would come back of the unspent dollars at the agency rate, never 
     expect($fx)->toBeGreaterThan(0);
     $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.refund', (int) floor($left * $fx / 100) * 100));
 });
+
+it('lets the team pause, switch on and budget a campaign from KlokOne, and the client sees who did it', function () {
+    payAhead($this, '1500', '10');
+
+    $this->actingAs($this->owner)->post("/campaigns/{$this->campaign->id}/pause")->assertRedirect();
+    expect(collect($this->limits)->last())->toMatchArray(['active' => false])
+        ->and($this->campaign->fresh()->clientState())->toBe('paused_team')
+        ->and($this->client->notifications()->where('data->kind', 'client_team_paused')->count())->toBe(1);
+
+    // Meta says paused: not a problem on our side. The client cannot switch the team's pause off.
+    $this->status = 'PAUSED';
+    app(CampaignBilling::class)->refreshCampaigns($this->account);
+    expect($this->client->notifications()->where('data->kind', 'client_held')->count())->toBe(0);
+    $this->actingAs($this->client)->post("/portal/campaigns/{$this->campaign->id}/resume")->assertSessionHasErrors('control');
+
+    // The team is not held to the money left (the spend cap is); the client is.
+    $this->actingAs($this->owner)->post("/campaigns/{$this->campaign->id}/budget", ['budget' => '5'])->assertSessionHasNoErrors();
+    expect($this->campaign->fresh()->daily_budget)->toBe(500);
+
+    $this->actingAs($this->owner)->post("/campaigns/{$this->campaign->id}/resume")->assertRedirect();
+    expect(collect($this->limits)->last())->toMatchArray(['active' => true])
+        ->and($this->campaign->fresh()->paused_by_team_at)->toBeNull()
+        ->and($this->client->notifications()->where('data->kind', 'client_back')->count())->toBe(1);
+
+    // A client cannot reach the team's controls.
+    $this->actingAs($this->client)->post("/campaigns/{$this->campaign->id}/pause")->assertForbidden();
+});

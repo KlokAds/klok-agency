@@ -191,5 +191,19 @@
     "সমস্যার খবর": "Problem report",
     "সমস্যা": "Problem",
     "ফেরত ≈ {amount}": "refund ≈ {amount}",
-    "আমাদের ডলার রেটে; commission ফেরতযোগ্য নয়": "At our dollar rate; the commission is not refundable"
+    "আমাদের ডলার রেটে; commission ফেরতযোগ্য নয়": "At our dollar rate; the commission is not refundable",
+    ":campaign আবার চালু হয়েছে।": ":campaign is on again.",
+    ":campaign থামানো হয়েছে।": ":campaign paused.",
+    ":campaign-এর দৈনিক budget বদলানো হয়েছে।": ":campaign — daily budget changed.",
+    "Account-এ সমস্যা": "Account problem",
+    "Client থামিয়েছেন": "Paused by client",
+    "Klok Ads campaign থামিয়েছে": "Klok Ads paused the campaign",
+    "Klok Ads campaign-টা থামিয়ে রেখেছে": "Klok Ads has paused this campaign",
+    "Klok Ads থামিয়েছে": "Paused by Klok Ads",
+    "Team থামিয়েছে": "Paused by team",
+    "{campaign} — Klok Ads থামিয়ে রেখেছে; এ সময় টাকা খরচ হচ্ছে না": "{campaign} — paused by Klok Ads; no money is spent meanwhile",
+    "{client} portal-এ দেখবেন “Klok Ads থামিয়েছে”, আর খবর পাবেন।": "{client} will see “Paused by Klok Ads” on the portal and be told.",
+    "এ সময় আপনার টাকা খরচ হচ্ছে না। কেন থামানো বা কবে চালু হবে জানতে আমাদের লিখুন।": "No money of yours is spent meanwhile. Write to us to know why, or when it runs again.",
+    "এখন {amount}": "Now {amount}",
+    "দিনে কত খরচ হবে, Meta-তে বসবে। Client-এর টাকার বাইরে গেলে spend cap আগেই থামিয়ে দেবে।": "What it may spend a day, set on Meta. Beyond the client’s money, the spend cap stops it first."
 }

@@ -11,6 +11,7 @@ export type CampaignStateKey =
     | 'live'
     | 'ended'
     | 'paused_client'
+    | 'paused_team'
     | 'paused_credit'
     | 'held';
 
@@ -23,6 +24,10 @@ const look = computed(
             ended: { label: 'শেষ হয়েছে', tone: 'bg-sunken text-ink-2' }, // i18n
             paused_client: {
                 label: 'আপনি থামিয়েছেন',
+                tone: 'bg-wait-soft text-wait',
+            }, // i18n
+            paused_team: {
+                label: 'Klok Ads থামিয়েছে',
                 tone: 'bg-wait-soft text-wait',
             }, // i18n
             paused_credit: {

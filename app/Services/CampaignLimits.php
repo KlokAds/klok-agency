@@ -274,6 +274,56 @@ class CampaignLimits
         ]));
     }
 
+    /**
+     * The team switches a campaign off or on from KlokOne. Off by the team is its own state, so the
+     * client sees "paused by Klok Ads" (not a problem, not their own pause) and is told either way.
+     *
+     * @throws RuntimeException when Pilot or Meta refuses
+     */
+    public function teamSetActive(Campaign $campaign, bool $on, User $by): void
+    {
+        if ($campaign->hasEnded()) {
+            throw new RuntimeException(__('Campaign শেষ হয়ে গেছে।'));
+        }
+
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => $on, 'reason' => ($on ? 'Switched on' : 'Paused').' by '.$by->name.' in KlokOne']);
+        $this->remember($campaign, $read);
+        $campaign->forceFill($on
+            ? ['paused_by_team_at' => null, 'paused_by_client_at' => null, 'paused_for_credit_at' => null, 'limits_at' => null]
+            : ['paused_by_team_at' => now()])->saveQuietly();
+
+        activity('Campaign')->performedOn($campaign)->causedBy($by)->log($on ? 'switched on' : 'paused');
+
+        if ($campaign->client_id !== null) {
+            app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert($on ? 'client_back' : 'client_team_paused', $on ? ClientNotifier::BACK_TITLE : ClientNotifier::TEAM_PAUSED_TITLE, $on ? '{campaign} — আবার চলছে' : '{campaign} — Klok Ads থামিয়ে রেখেছে; এ সময় টাকা খরচ হচ্ছে না', [ // i18n
+                'campaign' => $campaign->name,
+            ], ['url' => '/portal/campaigns/'.$campaign->id]));
+        }
+    }
+
+    /**
+     * The team sets the budget a day (cents). Not held to the money left as a client is: the spend
+     * cap still stops the campaign where the client's money ends.
+     *
+     * @throws RuntimeException when Pilot or Meta refuses
+     */
+    public function teamBudget(Campaign $campaign, int $cents, User $by): void
+    {
+        if ($campaign->hasEnded()) {
+            throw new RuntimeException(__('Campaign শেষ হয়ে গেছে।'));
+        }
+
+        $was = $campaign->dailyBudget();
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['daily_budget' => round($cents / 100, 2), 'reason' => 'Budget set by '.$by->name.' in KlokOne']);
+        $this->remember($campaign, $read);
+        $campaign->daily_budget = $cents;
+        $campaign->saveQuietly();
+        $this->stampBudget($campaign);
+
+        activity('Campaign')->performedOn($campaign)->causedBy($by)
+            ->withProperties(['from' => $was, 'to' => $cents])->log('budget');
+    }
+
     /** What the client did, in the log and to the people who run the ads. */
     private function clientDid(Campaign $campaign, User $by, string $what, string $said): void
     {

@@ -26,6 +26,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $limits_error
  * @property CarbonImmutable|null $paused_for_credit_at
  * @property CarbonImmutable|null $paused_by_client_at the client paused it on the portal
+ * @property CarbonImmutable|null $paused_by_team_at the team paused it in KlokOne
  * @property int $spend_total cents
  * @property int $spend_7d cents
  * @property CarbonImmutable|null $start_at
@@ -42,7 +43,7 @@ class Campaign extends Model
     protected $fillable = [
         'pilot_campaign_id', 'pilot_account_id', 'external_id', 'name', 'status', 'objective', 'daily_budget',
         'start_at', 'stop_at', 'spend_total', 'spend_7d', 'last_spend_day', 'client_id', 'bill_from',
-        'budget', 'spend_cap', 'spent_before', 'limits_at', 'limits_error', 'paused_for_credit_at', 'paused_by_client_at',
+        'budget', 'spend_cap', 'spent_before', 'limits_at', 'limits_error', 'paused_for_credit_at', 'paused_by_client_at', 'paused_by_team_at',
     ];
 
     protected function casts(): array
@@ -64,6 +65,7 @@ class Campaign extends Model
             'limits_at' => 'datetime',
             'paused_for_credit_at' => 'datetime',
             'paused_by_client_at' => 'datetime',
+            'paused_by_team_at' => 'datetime',
         ];
     }
 
@@ -181,7 +183,7 @@ class Campaign extends Model
 
     /** Ended on Meta's clock, whatever its status says. */
     /**
-     * Where it stands, as its client sees it: running; ended; paused by the client; paused because
+     * Where it stands, as its client sees it: running; ended; paused by the client or by the team; paused because
      * their money ran out; or held on the agency's side (the ad account could not be charged or is
      * disabled, Meta flagged it, or it was paused there).
      */
@@ -190,6 +192,7 @@ class Campaign extends Model
         return match (true) {
             $this->hasEnded() => 'ended',
             $this->paused_by_client_at !== null && ! $this->isLive() => 'paused_client',
+            $this->paused_by_team_at !== null && ! $this->isLive() => 'paused_team',
             $this->paused_for_credit_at !== null && ! $this->isLive() => 'paused_credit',
             $this->isLive() && $this->account?->problem === null => 'live',
             default => 'held',

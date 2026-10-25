@@ -14,6 +14,7 @@ import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import KField from '@/components/k/KField.vue';
 import { useFilters } from '@/composables/useFilters';
+import { confirmAction, toast } from '@/lib/feedback';
 import { ago, endsAt, money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Option, Paginated } from '@/types';
@@ -27,6 +28,8 @@ type Row = {
     daily_budget: number | null;
     spend_cap: number | null;
     paused_for_credit: boolean;
+    state: string | null;
+    controllable: boolean;
     limits_error: string | null;
     guarded: boolean;
     renewal: { id: number; status: string } | null;
@@ -164,6 +167,68 @@ function extend(): void {
             onFinish: () => (saving.value = false),
             onSuccess: () => (extendOpen.value = false),
             onError: (e) => (extendError.value = e.days ?? null),
+        },
+    );
+}
+
+// On, off and the budget a day, on Meta through Pilot — as the client can on the portal.
+const busyId = ref<number | null>(null);
+async function setActive(row: Row, on: boolean): Promise<void> {
+    if (
+        !on &&
+        !(await confirmAction({
+            title: t('Campaign থামাবেন?'),
+            body: row.client
+                ? t(
+                      '{client} portal-এ দেখবেন “Klok Ads থামিয়েছে”, আর খবর পাবেন।',
+                      {
+                          client: row.client,
+                      },
+                  )
+                : undefined,
+            confirm: t('থামান'),
+            danger: true,
+        }))
+    ) {
+        return;
+    }
+    busyId.value = row.id;
+    router.post(
+        `/campaigns/${row.id}/${on ? 'resume' : 'pause'}`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => (busyId.value = null),
+            onError: (e) => e.control && toast(e.control, 'error'),
+        },
+    );
+}
+
+const budgeting = ref<Row | null>(null);
+const budgetOpen = ref(false);
+const budgetValue = ref('');
+const budgetError = ref<string | null>(null);
+function startBudget(row: Row): void {
+    budgeting.value = row;
+    budgetValue.value = row.daily_budget
+        ? (row.daily_budget / 100).toFixed(2)
+        : '';
+    budgetError.value = null;
+    budgetOpen.value = true;
+}
+function saveBudget(): void {
+    if (!budgeting.value) {
+        return;
+    }
+    saving.value = true;
+    router.post(
+        `/campaigns/${budgeting.value.id}/budget`,
+        { budget: budgetValue.value },
+        {
+            preserveScroll: true,
+            onFinish: () => (saving.value = false),
+            onSuccess: () => (budgetOpen.value = false),
+            onError: (e) => (budgetError.value = e.budget ?? e.control ?? null),
         },
     );
 }
@@ -331,6 +396,47 @@ function sync(): void {
                                     >
                                     <template v-if="c.spend_cap">
                                         · cap {{ spend(c.spend_cap) }}</template
+                                    >
+                                </p>
+                                <p
+                                    v-if="c.controllable && can['runs.edit']"
+                                    class="mt-1.5 flex flex-wrap items-center gap-1.5 pl-4"
+                                >
+                                    <KButton
+                                        v-if="c.live"
+                                        size="sm"
+                                        variant="quiet"
+                                        :loading="busyId === c.id"
+                                        @click="setActive(c, false)"
+                                        >{{ t('থামান') }}</KButton
+                                    >
+                                    <KButton
+                                        v-else
+                                        size="sm"
+                                        :loading="busyId === c.id"
+                                        @click="setActive(c, true)"
+                                        >{{ t('চালু করুন') }}</KButton
+                                    >
+                                    <KButton
+                                        size="sm"
+                                        variant="quiet"
+                                        @click="startBudget(c)"
+                                        >Budget</KButton
+                                    >
+                                    <KTag
+                                        v-if="c.state === 'paused_client'"
+                                        tone="wait"
+                                        >{{ t('Client থামিয়েছেন') }}</KTag
+                                    >
+                                    <KTag
+                                        v-else-if="c.state === 'paused_team'"
+                                        tone="wait"
+                                        >{{ t('Team থামিয়েছে') }}</KTag
+                                    >
+                                    <KTag
+                                        v-else-if="c.state === 'held'"
+                                        tone="out"
+                                        >{{ t('Account-এ সমস্যা') }}</KTag
                                     >
                                 </p>
                                 <p
@@ -532,6 +638,43 @@ function sync(): void {
                 @click="extend"
                 >Extend</KButton
             >
+        </template>
+    </KModal>
+
+    <KModal v-model="budgetOpen" :title="budgeting?.name ?? 'Campaign'">
+        <p class="text-[13.5px] text-ink-2">
+            {{
+                t(
+                    'দিনে কত খরচ হবে, Meta-তে বসবে। Client-এর টাকার বাইরে গেলে spend cap আগেই থামিয়ে দেবে।',
+                )
+            }}
+        </p>
+        <KField
+            :label="t('দৈনিক budget')"
+            :error="budgetError ?? undefined"
+            class="mt-4"
+            :hint="
+                budgeting?.daily_budget
+                    ? t('এখন {amount}', {
+                          amount: spend(budgeting.daily_budget),
+                      })
+                    : undefined
+            "
+        >
+            <KInput
+                v-model="budgetValue"
+                inputmode="decimal"
+                prefix="$"
+                class="max-w-[160px]"
+            />
+        </KField>
+        <template #footer>
+            <KButton variant="quiet" @click="budgetOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton variant="primary" :loading="saving" @click="saveBudget">{{
+                t('Budget বদলান')
+            }}</KButton>
         </template>
     </KModal>
 

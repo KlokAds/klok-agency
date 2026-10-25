@@ -146,14 +146,15 @@ class CampaignBilling
         $now = in_array(strtoupper((string) $campaign->status), Campaign::LIVE, true);
 
         if ($now && ! $was) {
-            $mine = $campaign->paused_by_client_at !== null || $campaign->paused_for_credit_at !== null;
+            $mine = $campaign->paused_by_client_at !== null || $campaign->paused_for_credit_at !== null || $campaign->paused_by_team_at !== null;
             $campaign->paused_by_client_at = null;
+            $campaign->paused_by_team_at = null;
             $campaign->saveQuietly();
 
             return $mine ? null : 'back';
         }
 
-        return $was && ! $now && ! $campaign->hasEnded() && $campaign->paused_by_client_at === null && $campaign->paused_for_credit_at === null ? 'held' : null;
+        return $was && ! $now && ! $campaign->hasEnded() && $campaign->paused_by_client_at === null && $campaign->paused_for_credit_at === null && $campaign->paused_by_team_at === null ? 'held' : null;
     }
 
     /** The account itself stopped (or started) on Meta: the team, and every client running ads on it. */

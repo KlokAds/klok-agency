@@ -122,6 +122,31 @@ function post(what: 'pause' | 'resume'): void {
         >
     </section>
 
+    <!-- Paused by the agency: the client cannot switch it on; they can ask why. -->
+    <section
+        v-else-if="control.state === 'paused_team'"
+        class="mt-4 rounded-2xl border border-wait/30 bg-wait-soft p-5"
+    >
+        <p class="text-[15px] font-bold text-wait">
+            {{ t('Klok Ads campaign-টা থামিয়ে রেখেছে') }}
+        </p>
+        <p class="mt-1 text-[13.5px] text-ink-2">
+            {{
+                t(
+                    'এ সময় আপনার টাকা খরচ হচ্ছে না। কেন থামানো বা কবে চালু হবে জানতে আমাদের লিখুন।',
+                )
+            }}
+        </p>
+        <a
+            v-if="contact"
+            :href="contact"
+            target="_blank"
+            rel="noopener"
+            class="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-[13.5px] font-semibold text-white"
+            ><KIcon name="chat" :size="16" />{{ t('WhatsApp-এ কথা বলুন') }}</a
+        >
+    </section>
+
     <section
         v-else-if="control.state === 'paused_credit'"
         class="mt-4 rounded-2xl border border-out/30 bg-out-soft p-5"

@@ -197,6 +197,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('campaigns/{campaign}/client', [CampaignController::class, 'link'])->middleware('can:clients.edit')->name('campaigns.link');
     Route::post('campaigns/link-suggested', [CampaignController::class, 'linkSuggested'])->middleware('can:clients.edit')->name('campaigns.link-suggested');
     Route::post('campaigns/sync', [CampaignController::class, 'sync'])->middleware('can:runs.view')->name('campaigns.sync');
+    Route::post('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->middleware(['can:runs.edit', 'throttle:20,1'])->name('campaigns.pause');
+    Route::post('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->middleware(['can:runs.edit', 'throttle:20,1'])->name('campaigns.resume');
+    Route::post('campaigns/{campaign}/budget', [CampaignController::class, 'budget'])->middleware(['can:runs.edit', 'throttle:20,1'])->name('campaigns.budget');
     Route::post('campaigns/{campaign}/extend', [RenewalController::class, 'extend'])->middleware(['can:clients.edit', 'throttle:20,1'])->name('campaigns.extend');
 
     Route::get('renewals', [RenewalController::class, 'index'])->middleware('can:runs.view')->name('renewals.index');

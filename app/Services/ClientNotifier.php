@@ -36,6 +36,8 @@ class ClientNotifier
 
     public const BACK_TITLE = 'Campaign আবার চলছে'; // i18n
 
+    public const TEAM_PAUSED_TITLE = 'Klok Ads campaign থামিয়েছে'; // i18n
+
     /** @return int how many people heard */
     public function send(?int $clientId, AgencyAlert $alert): int
     {
