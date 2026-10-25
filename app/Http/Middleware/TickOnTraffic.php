@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\KeepAlive;
 use App\Services\Ticker;
 use Closure;
 use Illuminate\Http\Request;
@@ -23,6 +24,9 @@ class TickOnTraffic
 
     public function terminate(Request $request, Response $response): void
     {
+        // The in-app timer: started again by any visit if the host ended it.
+        rescue(fn () => app(KeepAlive::class)->ensure());
+
         if (app()->runningUnitTests() || ! Cache::add('agency:tick:recent', true, 300)) {
             return;
         }

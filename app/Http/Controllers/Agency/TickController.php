@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\KeepAlive;
 use App\Services\Ticker;
 use Illuminate\Http\JsonResponse;
 
@@ -17,6 +18,8 @@ class TickController extends Controller
     {
         $secret = (string) Setting::get('tick_token');
         abort_unless($secret !== '' && hash_equals($secret, $token), 404);
+
+        app(KeepAlive::class)->ensure();
 
         return response()->json(['ok' => true] + $ticker->run());
     }
