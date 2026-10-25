@@ -41,7 +41,11 @@ const props = defineProps<{
     due: { count: number; amount: number };
     next_invoice: InvoiceRow | null;
     app?: string | null;
-    lifetime?: { spent_usd: number; paid_bdt: number };
+    lifetime?: {
+        spent_usd: number;
+        paid_bdt: number;
+        by_platform?: { name: string; usd: number }[];
+    };
     payments?: {
         date: string | null;
         amount: number;
@@ -106,6 +110,17 @@ const low = computed(
             <p class="text-[12px] text-ink-3">{{ t('বিজ্ঞাপনে খরচ') }}</p>
             <p class="num mt-0.5 text-[18px] font-bold">
                 {{ money(lifetime?.spent_usd ?? credit.spent, 'usd') }}
+            </p>
+            <!-- Where it went, when more than one platform: Meta $195 · Google $5 -->
+            <p
+                v-if="(lifetime?.by_platform?.length ?? 0) > 1"
+                class="num mt-0.5 truncate text-[11px] text-ink-3"
+            >
+                {{
+                    lifetime?.by_platform
+                        ?.map((p) => `${p.name} ${money(p.usd, 'usd')}`)
+                        .join(' · ')
+                }}
             </p>
         </div>
         <div class="panel p-3.5">

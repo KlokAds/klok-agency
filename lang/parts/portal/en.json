@@ -207,5 +207,9 @@
     "এখন {amount}": "Now {amount}",
     "দিনে কত খরচ হবে, Meta-তে বসবে। Client-এর টাকার বাইরে গেলে spend cap আগেই থামিয়ে দেবে।": "What it may spend a day, set on Meta. Beyond the client’s money, the spend cap stops it first.",
     "আগের": "Previous",
-    "পরের": "Next"
+    "পরের": "Next",
+    "Google ইত্যাদি — উপরের Meta campaign-এর বাইরে।": "Google and others — besides the Meta campaigns above.",
+    "Invoice-এ নেওয়া অন্য কাজ — page, design, setup ইত্যাদি।": "Other work on your invoices — pages, design, setup and so on.",
+    "অন্য platform-এ বিজ্ঞাপন": "Ads on other platforms",
+    "সেবা": "Services"
 }

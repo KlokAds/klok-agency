@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Renewal;
 use App\Models\UsdEntry;
 use App\Models\User;
@@ -128,6 +129,11 @@ class PortalController extends Controller
             // paid with its date — the whole amount they gave, never split into our share.
             'lifetime' => [
                 'spent_usd' => -(int) UsdEntry::where('client_id', $client->id)->where('category', 'client_spend')->sum('amount'),
+                // The same spend by platform (Meta, Google…), so the total adds up to what they see.
+                'by_platform' => UsdEntry::with('account:id,name')->where('client_id', $client->id)->where('category', 'client_spend')->get()
+                    ->groupBy(fn (UsdEntry $e) => $e->account->name)
+                    ->map(fn ($rows, $name) => ['name' => $name, 'usd' => -(int) $rows->sum('amount')])
+                    ->sortByDesc('usd')->values()->all(),
                 'paid_bdt' => (int) BdtEntry::where('client_id', $client->id)->whereIn('category', self::PAID)->sum('amount'),
             ],
             'payments' => BdtEntry::where('client_id', $client->id)->whereIn('category', self::PAID)
@@ -165,7 +171,41 @@ class PortalController extends Controller
             'totals' => $this->totals($days),
             'series' => $this->series($days, $from, $to),
             'campaigns' => $rows,
+            ...$this->beyondMeta($client),
         ]);
+    }
+
+    /**
+     * What the client is billed for besides the Meta campaigns above: ad spend on other platforms
+     * (Google…), with what is still due, and the services on their invoices.
+     *
+     * @return array{other_spend: array<int, array<string, mixed>>, services: array<int, array<string, mixed>>}
+     */
+    private function beyondMeta(Client $client): array
+    {
+        return [
+            'other_spend' => UsdEntry::with('account:id,code,name')->where('client_id', $client->id)->where('category', 'client_spend')
+                ->whereHas('account', fn ($q) => $q->where('code', '!=', 'meta'))
+                ->orderByDesc('entry_date')->orderByDesc('id')->limit(200)->get()
+                ->map(fn (UsdEntry $e) => [
+                    'date' => $e->entry_date?->format('j M Y'),
+                    'platform' => $e->account?->name,
+                    'description' => $e->description,
+                    'usd' => -$e->amount,
+                    'due' => $e->status === 'pending',
+                ])->values()->all(),
+            'services' => InvoiceItem::with('invoice')->whereIn('kind', ['service', 'other'])
+                ->whereHas('invoice', fn ($q) => $q->where('client_id', $client->id)->shared())
+                ->latest('id')->limit(200)->get()
+                ->map(fn (InvoiceItem $i) => [
+                    'description' => $i->description,
+                    'amount' => $i->amount,
+                    'date' => $i->invoice->issue_date->format('j M Y'),
+                    'invoice' => $i->invoice->number,
+                    'paid' => $i->invoice->status === 'paid',
+                    'url' => $i->invoice->publicUrl(),
+                ])->values()->all(),
+        ];
     }
 
     public function campaign(Request $request, Campaign $campaign): Response

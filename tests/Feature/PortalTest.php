@@ -1,11 +1,13 @@
 <?php
 
+use App\Models\Account;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PilotAccount;
 use App\Models\Setting;
+use App\Models\UsdEntry;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Services\CampaignAlerts;
@@ -100,6 +102,14 @@ it('shows a linked client only their own campaigns, spend over a period, and inv
     app(Invoices::class)->save(['client_id' => $this->other->id, 'issue_date' => now()->toDateString(), 'due_date' => null, 'notes' => null, 'items' => [$line]]);
     $this->actingAs($user->fresh())->get('/portal/invoices')
         ->assertInertia(fn ($page) => $page->component('portal/Invoices')->has('invoices', 1)->where('invoices.0.number', $shared->number));
+
+    // Google spend and the invoice's services show beside the Meta campaigns; the other client's never.
+    $google = Account::firstOrCreate(['code' => 'google'], ['name' => 'Google', 'kind' => 'platform', 'is_active' => true]);
+    UsdEntry::create(['entry_date' => now()->toDateString(), 'description' => 'GFFS - Google ad spend', 'category' => 'client_spend', 'account_id' => $google->id, 'client_id' => $this->gffs->id, 'amount' => -500, 'status' => 'pending']);
+    UsdEntry::create(['entry_date' => now()->toDateString(), 'description' => 'Edge - Google ad spend', 'category' => 'client_spend', 'account_id' => $google->id, 'client_id' => $this->other->id, 'amount' => -900, 'status' => 'pending']);
+    $this->actingAs($user->fresh())->get('/portal/campaigns')
+        ->assertInertia(fn ($page) => $page->has('other_spend', 1)->where('other_spend.0.usd', 500)->where('other_spend.0.due', true)
+            ->has('services', 1)->where('services.0.description', 'Page')->where('services.0.amount', 100000));
 
     // Unlinked: back to waiting.
     $this->actingAs($this->owner)->delete("/clients/{$this->gffs->id}/portal-users/{$user->id}")->assertRedirect();

@@ -32,6 +32,21 @@ const props = defineProps<{
     totals: Totals;
     series: { day: string; spend: number; results: number }[];
     campaigns: Row[];
+    other_spend?: {
+        date: string | null;
+        platform: string | null;
+        description: string;
+        usd: number;
+        due: boolean;
+    }[];
+    services?: {
+        description: string;
+        amount: number;
+        date: string;
+        invoice: string;
+        paid: boolean;
+        url: string;
+    }[];
 }>();
 
 const cur = (c: string) => (c === 'BDT' ? 'bdt' : 'usd');
@@ -153,5 +168,69 @@ const totalName = computed(() => {
                 </span>
             </Link>
         </template>
+    </section>
+
+    <!-- Besides the Meta campaigns: ad spend on other platforms, and services. -->
+    <section v-if="other_spend?.length" class="panel mt-6 p-5">
+        <h2 class="text-[16px] font-bold">
+            {{ t('অন্য platform-এ বিজ্ঞাপন') }}
+        </h2>
+        <p class="mt-0.5 text-[12.5px] text-ink-3">
+            {{ t('Google ইত্যাদি — উপরের Meta campaign-এর বাইরে।') }}
+        </p>
+        <ul class="mt-3 divide-y divide-line">
+            <li
+                v-for="(o, i) in other_spend"
+                :key="i"
+                class="flex items-center justify-between gap-3 py-2.5 text-[13.5px]"
+            >
+                <span class="min-w-0">
+                    <span class="block font-medium">{{ o.platform }}</span>
+                    <span class="block truncate text-[12px] text-ink-3"
+                        >{{ o.date }} · {{ o.description }}</span
+                    >
+                </span>
+                <span class="shrink-0 text-right">
+                    <b class="num block">{{ money(o.usd, 'usd') }}</b>
+                    <span
+                        class="text-[11.5px] font-semibold"
+                        :class="o.due ? 'text-wait' : 'text-in'"
+                        >{{ o.due ? t('বাকি') : t('পরিশোধ') }}</span
+                    >
+                </span>
+            </li>
+        </ul>
+    </section>
+
+    <section v-if="services?.length" class="panel mt-4 p-5">
+        <h2 class="text-[16px] font-bold">{{ t('সেবা') }}</h2>
+        <p class="mt-0.5 text-[12.5px] text-ink-3">
+            {{ t('Invoice-এ নেওয়া অন্য কাজ — page, design, setup ইত্যাদি।') }}
+        </p>
+        <ul class="mt-3 divide-y divide-line">
+            <li v-for="(s, i) in services" :key="i">
+                <a
+                    :href="s.url"
+                    class="flex items-center justify-between gap-3 py-2.5 text-[13.5px]"
+                >
+                    <span class="min-w-0">
+                        <span class="block truncate font-medium">{{
+                            s.description
+                        }}</span>
+                        <span class="block text-[12px] text-ink-3"
+                            >{{ s.date }} · {{ s.invoice }}</span
+                        >
+                    </span>
+                    <span class="shrink-0 text-right">
+                        <b class="num block">{{ money(s.amount, 'bdt') }}</b>
+                        <span
+                            class="text-[11.5px] font-semibold"
+                            :class="s.paid ? 'text-in' : 'text-wait'"
+                            >{{ s.paid ? t('পরিশোধ') : t('বাকি') }}</span
+                        >
+                    </span>
+                </a>
+            </li>
+        </ul>
     </section>
 </template>
