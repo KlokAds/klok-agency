@@ -86,7 +86,7 @@ const tone = computed(() =>
             <component
                 :is="item.url ? Link : 'p'"
                 :href="item.url ?? undefined"
-                class="block text-[13.5px] leading-snug font-semibold break-words"
+                class="block text-[14.5px] leading-snug font-semibold break-words"
                 :class="[
                     item.url ? 'hover:text-brand-ink' : '',
                     item.read ? 'text-ink-2' : 'text-ink',
@@ -97,7 +97,7 @@ const tone = computed(() =>
             </component>
             <p
                 v-if="item.body"
-                class="mt-0.5 text-[12.5px] break-words text-ink-2"
+                class="mt-0.5 text-[13.5px] break-words text-ink-2"
             >
                 {{ t(item.body, item.params) }}
             </p>
@@ -105,7 +105,7 @@ const tone = computed(() =>
             <!-- The end-of-day note, in full on the notifications page -->
             <div
                 v-if="full && item.summary"
-                class="mt-3 grid grid-cols-1 gap-3 rounded-xl border border-line p-3 text-[12.5px]"
+                class="mt-3 grid grid-cols-1 gap-3 rounded-xl border border-line p-3 text-[13.5px]"
             >
                 <p class="flex flex-wrap gap-x-4 gap-y-1 text-ink-2">
                     <span
@@ -182,7 +182,7 @@ const tone = computed(() =>
 
             <div class="mt-1.5 flex flex-wrap items-center gap-2">
                 <span
-                    class="flex items-center gap-1.5 text-[11.5px] whitespace-nowrap text-ink-3"
+                    class="flex items-center gap-1.5 text-[12.5px] whitespace-nowrap text-ink-3"
                 >
                     <span
                         v-if="!item.read"
@@ -197,13 +197,13 @@ const tone = computed(() =>
                     :href="item.whatsapp"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-in/30 bg-in-soft px-3 text-[12.5px] font-semibold whitespace-nowrap text-in hover:border-in hover:bg-in hover:text-white"
+                    class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-in/30 bg-in-soft px-3 text-[13.5px] font-semibold whitespace-nowrap text-in hover:border-in hover:bg-in hover:text-white"
                     ><KIcon name="chat" :size="14" />WhatsApp</a
                 >
                 <a
                     v-if="item.sms"
                     :href="item.sms"
-                    class="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                    class="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
                     :class="item.whatsapp ? '' : 'ml-auto'"
                     ><KIcon name="mail" :size="14" />SMS</a
                 >

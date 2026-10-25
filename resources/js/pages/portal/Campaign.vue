@@ -8,6 +8,7 @@ import type { Control } from '@/components/portal/CampaignControl.vue';
 import CampaignState from '@/components/portal/CampaignState.vue';
 import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
 import RangePicker from '@/components/portal/RangePicker.vue';
+import DayRows from '@/components/portal/DayRows.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
 import { money } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -121,7 +122,7 @@ async function stopIt(): Promise<void> {
     <h1 class="mt-3 text-[22px] leading-snug font-bold">{{ campaign.name }}</h1>
 
     <section
-        class="panel mt-4 grid grid-cols-1 gap-3 p-5 text-[13.5px] sm:grid-cols-3"
+        class="panel mt-4 grid grid-cols-1 gap-3 p-5 text-[14.5px] sm:grid-cols-3"
     >
         <p>
             <span class="block text-ink-3">{{ t('অবস্থা') }}</span>
@@ -132,7 +133,7 @@ async function stopIt(): Promise<void> {
             <b>{{ campaign.stops ?? t('শেষের তারিখ নেই') }}</b>
             <span
                 v-if="campaign.live && campaign.days_left !== null"
-                class="block text-[12.5px] text-ink-3"
+                class="block text-[13.5px] text-ink-3"
                 >{{ t('আর {n} দিন', { n: campaign.days_left }) }}</span
             >
         </p>
@@ -143,7 +144,7 @@ async function stopIt(): Promise<void> {
             }}</b>
             <span
                 v-if="campaign.started"
-                class="block text-[12.5px] text-ink-3"
+                class="block text-[13.5px] text-ink-3"
                 >{{ t('শুরু {date}', { date: campaign.started }) }}</span
             >
         </p>
@@ -160,7 +161,7 @@ async function stopIt(): Promise<void> {
         <h2 class="text-[16px] font-bold">{{ t('Campaign চালু রাখবেন?') }}</h2>
 
         <template v-if="renew.status === 'invoiced' && renew.invoice_url">
-            <p class="mt-2 text-[14px] text-ink-2">
+            <p class="mt-2 text-[15px] text-ink-2">
                 {{
                     t(
                         '{days} দিনের invoice তৈরি আছে — pay করলেই campaign নিজে বাড়বে।',
@@ -183,7 +184,7 @@ async function stopIt(): Promise<void> {
                     })
                 }}</KButton
             >
-            <p class="mt-3 text-[12.5px] text-ink-3">
+            <p class="mt-3 text-[13.5px] text-ink-3">
                 {{
                     t(
                         'অন্য কয়দিন চাইলে নিচে বেছে নিন — আগের invoice বাতিল হয়ে নতুন হবে।',
@@ -194,7 +195,7 @@ async function stopIt(): Promise<void> {
 
         <p
             v-else-if="renew.status === 'declined'"
-            class="mt-2 rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait"
+            class="mt-2 rounded-lg bg-wait-soft px-3 py-2 text-[14.5px] text-wait"
         >
             {{
                 t(
@@ -205,7 +206,7 @@ async function stopIt(): Promise<void> {
                 )
             }}
         </p>
-        <p v-else class="mt-2 text-[14px] text-ink-2">
+        <p v-else class="mt-2 text-[15px] text-ink-2">
             {{
                 t(
                     '{stops}। চালু রাখতে কত দিন বাড়াবেন বেছে নিন, তারপর pay করুন।',
@@ -219,7 +220,7 @@ async function stopIt(): Promise<void> {
                 v-for="d in choices"
                 :key="d"
                 type="button"
-                class="h-12 rounded-xl border-2 text-[15px] font-semibold transition-colors"
+                class="h-12 rounded-xl border-2 text-[16px] font-semibold transition-colors"
                 :class="
                     renewDays === d
                         ? 'border-brand bg-brand-soft text-brand'
@@ -236,7 +237,7 @@ async function stopIt(): Promise<void> {
                 max="90"
                 inputmode="numeric"
                 :placeholder="t('অন্য')"
-                class="h-12 min-w-0 rounded-xl border-2 border-line-2 bg-transparent text-center text-[15px] font-semibold transition-colors focus:border-brand"
+                class="h-12 min-w-0 rounded-xl border-2 border-line-2 bg-transparent text-center text-[16px] font-semibold transition-colors focus:border-brand"
                 @input="
                     renewDays = Math.min(
                         90,
@@ -250,7 +251,7 @@ async function stopIt(): Promise<void> {
             />
         </div>
 
-        <p class="mt-3 text-[13.5px] text-ink-2">
+        <p class="mt-3 text-[14.5px] text-ink-2">
             {{
                 t('দিনে {budget} × {days} দিন', {
                     budget: money(renew.budget, cur),
@@ -261,7 +262,7 @@ async function stopIt(): Promise<void> {
                 = {{ money(price, 'bdt') }}</b
             >
         </p>
-        <p v-if="error" class="mt-2 text-[13px] text-out">{{ error }}</p>
+        <p v-if="error" class="mt-2 text-[14px] text-out">{{ error }}</p>
 
         <KButton
             variant="primary"
@@ -291,17 +292,17 @@ async function stopIt(): Promise<void> {
 
     <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('খরচ') }}</p>
+            <p class="text-[13.5px] text-ink-3">{{ t('খরচ') }}</p>
             <p class="num mt-1 text-[22px] font-bold">
                 {{ money(totals.spend, cur) }}
             </p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ campaign.result_name }}</p>
+            <p class="text-[13.5px] text-ink-3">{{ campaign.result_name }}</p>
             <p class="num mt-1 text-[22px] font-bold">{{ totals.results }}</p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('প্রতি result-এ') }}</p>
+            <p class="text-[13.5px] text-ink-3">{{ t('প্রতি result-এ') }}</p>
             <p class="num mt-1 text-[22px] font-bold">
                 {{
                     totals.cpr !== null ? money(totals.cpr, cur) : t('এখনো নেই')
@@ -309,7 +310,7 @@ async function stopIt(): Promise<void> {
             </p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">Click</p>
+            <p class="text-[13.5px] text-ink-3">Click</p>
             <p class="num mt-1 text-[22px] font-bold">{{ totals.clicks }}</p>
         </div>
     </section>
@@ -322,69 +323,22 @@ async function stopIt(): Promise<void> {
         <h2 class="border-b border-line px-5 py-3.5 text-[16px] font-bold">
             {{ t('দিনে দিনে') }}
         </h2>
-        <p v-if="!days.length" class="px-5 py-4 text-[13.5px] text-ink-3">
+        <p v-if="!days.length" class="px-5 py-4 text-[14.5px] text-ink-3">
             {{ t('এই সময়ে কোনো খরচ হয়নি।') }}
         </p>
-        <!-- Five narrow columns: tight on a phone, so the card scrolls sideways only if it must. -->
-        <div v-else class="overflow-x-auto">
-            <table class="w-full text-[13px]">
-                <thead class="bg-surface-2 text-left text-[12px] text-ink-3">
-                    <tr>
-                        <th class="px-4 py-2 font-medium whitespace-nowrap">
-                            {{ t('তারিখ') }}
-                        </th>
-                        <th
-                            class="px-2.5 py-2 text-right font-medium whitespace-nowrap"
-                        >
-                            {{ t('খরচ') }}
-                        </th>
-                        <th
-                            class="px-2.5 py-2 text-right font-medium whitespace-nowrap"
-                        >
-                            {{ campaign.result_name }}
-                        </th>
-                        <th
-                            class="px-2.5 py-2 text-right font-medium whitespace-nowrap"
-                        >
-                            {{ t('প্রতি result') }}
-                        </th>
-                        <th
-                            class="px-4 py-2 text-right font-medium whitespace-nowrap"
-                        >
-                            Click
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        v-for="d in days"
-                        :key="d.day"
-                        class="border-t border-line"
-                    >
-                        <td class="num px-4 py-2.5">{{ d.day }}</td>
-                        <td class="num px-2.5 py-2.5 text-right">
-                            {{ money(d.spend, cur) }}
-                        </td>
-                        <td class="num px-2.5 py-2.5 text-right">
-                            {{ d.results }}
-                        </td>
-                        <td class="num px-2.5 py-2.5 text-right">
-                            {{ d.cpr !== null ? money(d.cpr, cur) : '—' }}
-                        </td>
-                        <td class="num px-4 py-2.5 text-right">
-                            {{ d.clicks }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <DayRows
+            v-else
+            :days="days"
+            :currency="campaign.currency"
+            :result-name="campaign.result_name"
+        />
     </section>
 
     <section v-if="extensions.length" class="panel mt-4 p-5">
         <h2 class="text-[16px] font-bold">
             {{ t('কবে কত দিন বাড়ানো হয়েছে') }}
         </h2>
-        <ul class="mt-3 divide-y divide-line text-[13.5px]">
+        <ul class="mt-3 divide-y divide-line text-[14.5px]">
             <li
                 v-for="(e, i) in extensions"
                 :key="i"
@@ -395,7 +349,7 @@ async function stopIt(): Promise<void> {
                         ? t('{n} দিন বাড়ানো হয়েছে', { n: e.days })
                         : t('বাড়ানো হয়েছে')
                 }}</span>
-                <span class="num text-[12.5px] text-ink-3"
+                <span class="num text-[13.5px] text-ink-3"
                     >{{ e.at
                     }}<template v-if="e.until">
                         · {{ t('{date} পর্যন্ত', { date: e.until }) }}</template

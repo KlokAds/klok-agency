@@ -7,11 +7,11 @@ const model = defineModel<boolean>({ default: false });
     <label
         class="flex cursor-pointer items-start justify-between gap-4 select-none"
     >
-        <span v-if="label" class="text-[14px] font-medium">
+        <span v-if="label" class="text-[15px] font-medium">
             {{ label }}
             <span
                 v-if="hint"
-                class="block text-[12.5px] font-normal text-ink-3"
+                class="block text-[13.5px] font-normal text-ink-3"
                 >{{ hint }}</span
             >
         </span>

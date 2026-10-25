@@ -107,7 +107,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
         <div
             class="no-print mx-auto flex max-w-[880px] items-center justify-between gap-3 px-4 pt-5 sm:px-6"
         >
-            <p class="truncate text-[13px] font-semibold text-ink-2">
+            <p class="truncate text-[14px] font-semibold text-ink-2">
                 {{ business.name }}
             </p>
             <div class="flex items-center gap-1">
@@ -116,7 +116,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                 </KButton>
                 <button
                     type="button"
-                    class="h-8 rounded-lg px-2.5 text-[12.5px] font-bold text-ink-2 hover:bg-sunken"
+                    class="h-8 rounded-lg px-2.5 text-[13.5px] font-bold text-ink-2 hover:bg-sunken"
                     @click="switchLocale(locale === 'en' ? 'bn' : 'en')"
                 >
                     {{ otherLanguage }}
@@ -131,7 +131,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
             <section class="panel p-6 sm:p-8">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div class="min-w-0">
-                        <p class="text-[13px] text-ink-3">
+                        <p class="text-[14px] text-ink-3">
                             {{ t('Campaign renewal') }} · {{ r.client }}
                         </p>
                         <h1
@@ -141,7 +141,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                         </h1>
                     </div>
                     <div class="text-right">
-                        <p class="text-[12.5px] text-ink-3">
+                        <p class="text-[13.5px] text-ink-3">
                             {{ t('শেষ হবে') }}
                         </p>
                         <p class="text-[17px] font-semibold">
@@ -154,7 +154,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                     class="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4"
                 >
                     <div class="bg-surface px-4 py-3">
-                        <dt class="text-[12px] text-ink-3">
+                        <dt class="text-[13px] text-ink-3">
                             {{ t('খরচ হয়েছে') }}
                         </dt>
                         <dd class="num mt-0.5 text-[17px] font-semibold">
@@ -162,19 +162,19 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                         </dd>
                     </div>
                     <div class="bg-surface px-4 py-3">
-                        <dt class="text-[12px] text-ink-3">{{ t('ফলাফল') }}</dt>
+                        <dt class="text-[13px] text-ink-3">{{ t('ফলাফল') }}</dt>
                         <dd class="num mt-0.5 text-[17px] font-semibold">
                             {{ r.results.toLocaleString('en-US') }}
                         </dd>
                     </div>
                     <div class="bg-surface px-4 py-3">
-                        <dt class="text-[12px] text-ink-3">Clicks</dt>
+                        <dt class="text-[13px] text-ink-3">Clicks</dt>
                         <dd class="num mt-0.5 text-[17px] font-semibold">
                             {{ r.clicks.toLocaleString('en-US') }}
                         </dd>
                     </div>
                     <div class="bg-surface px-4 py-3">
-                        <dt class="text-[12px] text-ink-3">
+                        <dt class="text-[13px] text-ink-3">
                             {{ t('দিনের budget') }}
                         </dt>
                         <dd class="num mt-0.5 text-[17px] font-semibold">
@@ -182,7 +182,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                         </dd>
                     </div>
                 </dl>
-                <p v-if="r.since" class="mt-2 text-[12px] text-ink-3">
+                <p v-if="r.since" class="mt-2 text-[13px] text-ink-3">
                     {{
                         t('{date} থেকে এ পর্যন্ত', { date: niceDate(r.since) })
                     }}
@@ -205,7 +205,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                         })
                     }}
                 </p>
-                <p class="mt-1 text-[13px] text-ink-3">{{ t('ধন্যবাদ!') }}</p>
+                <p class="mt-1 text-[14px] text-ink-3">{{ t('ধন্যবাদ!') }}</p>
             </section>
 
             <section
@@ -219,7 +219,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                 <p class="mt-3 text-[17px] font-semibold">
                     {{ t('টাকা পেয়েছি — ধন্যবাদ!') }}
                 </p>
-                <p class="mt-1 text-[13px] text-ink-3">
+                <p class="mt-1 text-[14px] text-ink-3">
                     {{
                         t(
                             'আরও {n} দিনের জন্য campaign extend করা হচ্ছে, শেষ হলে জানিয়ে দেব।',
@@ -232,7 +232,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
             <template v-else>
                 <section
                     v-if="r.status === 'declined'"
-                    class="panel px-5 py-4 text-[13.5px] text-ink-2"
+                    class="panel px-5 py-4 text-[14.5px] text-ink-2"
                 >
                     {{
                         t(
@@ -246,7 +246,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                     v-if="r.status === 'invoiced' && r.invoice_url"
                     class="panel flex flex-wrap items-center justify-between gap-3 px-5 py-4"
                 >
-                    <p class="text-[13.5px]">
+                    <p class="text-[14.5px]">
                         {{
                             t('{n} দিনের invoice তৈরি — {amount}', {
                                 n: r.days ?? 0,
@@ -277,7 +277,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             v-for="n in r.choices"
                             :key="n"
                             type="button"
-                            class="h-11 rounded-xl border-2 px-4 text-[14px] font-semibold whitespace-nowrap transition-colors sm:min-w-[88px]"
+                            class="h-11 rounded-xl border-2 px-4 text-[15px] font-semibold whitespace-nowrap transition-colors sm:min-w-[88px]"
                             :class="
                                 custom === '' && days === n
                                     ? 'border-brand bg-brand-soft text-brand'
@@ -297,7 +297,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             class="w-full sm:w-[120px]"
                         >
                             <template #trail
-                                ><span class="text-[12.5px] text-ink-3">{{
+                                ><span class="text-[13.5px] text-ink-3">{{
                                     t('দিন')
                                 }}</span></template
                             >
@@ -305,10 +305,10 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                     </div>
 
                     <div
-                        class="mt-6 grid grid-cols-1 gap-3 rounded-xl bg-sunken px-5 py-4 text-[13.5px] sm:grid-cols-3"
+                        class="mt-6 grid grid-cols-1 gap-3 rounded-xl bg-sunken px-5 py-4 text-[14.5px] sm:grid-cols-3"
                     >
                         <div>
-                            <p class="text-[12px] text-ink-3">
+                            <p class="text-[13px] text-ink-3">
                                 {{ t('Ad budget') }}
                             </p>
                             <p class="num font-semibold">
@@ -318,7 +318,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             </p>
                             <p
                                 v-if="r.due"
-                                class="num mt-1 text-[12px] text-out"
+                                class="num mt-1 text-[13px] text-out"
                             >
                                 {{
                                     t('+ আগের বাকি {amount}', {
@@ -328,7 +328,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             </p>
                         </div>
                         <div>
-                            <p class="text-[12px] text-ink-3">
+                            <p class="text-[13px] text-ink-3">
                                 {{ t('চলবে') }}
                             </p>
                             <p class="font-semibold">
@@ -337,7 +337,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                             </p>
                         </div>
                         <div class="sm:text-right">
-                            <p class="text-[12px] text-ink-3">
+                            <p class="text-[13px] text-ink-3">
                                 {{ t('মোট') }}
                             </p>
                             <p class="num text-[20px] font-semibold">
@@ -346,7 +346,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                         </div>
                     </div>
 
-                    <p v-if="error" class="mt-3 text-[13px] text-out">
+                    <p v-if="error" class="mt-3 text-[14px] text-out">
                         {{ error }}
                     </p>
 
@@ -381,7 +381,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
 
                 <section
                     v-else-if="r.budget === null || r.rate === null"
-                    class="panel px-5 py-4 text-[13.5px] text-ink-2"
+                    class="panel px-5 py-4 text-[14.5px] text-ink-2"
                 >
                     {{
                         t(
@@ -393,7 +393,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
                 </section>
             </template>
 
-            <p class="text-center text-[12px] text-ink-3">
+            <p class="text-center text-[13px] text-ink-3">
                 {{ business.name }}
                 <template v-if="business.phone">
                     · {{ business.phone }}</template
@@ -405,7 +405,7 @@ const otherLanguage = computed(() => (locale.value === 'en' ? 'বাং' : 'EN'
         </main>
 
         <KModal v-model="confirmEnd" :title="t('Contract শেষ করবেন?')">
-            <p class="text-[13.5px] text-ink-2">
+            <p class="text-[14.5px] text-ink-2">
                 {{
                     t(
                         'Campaign {date}-এ বন্ধ হবে, আর বাড়ানো হবে না। পরে মত বদলালে এই পাতা থেকেই আবার চালু করতে পারবেন।',

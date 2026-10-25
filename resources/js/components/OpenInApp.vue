@@ -49,12 +49,12 @@ function hide(): void {
             class="grid size-8 shrink-0 place-items-center rounded-lg bg-brand text-white"
             ><KIcon name="bell" :size="16"
         /></span>
-        <span class="min-w-0 flex-1 text-[12.5px] leading-tight text-ink-2">{{
+        <span class="min-w-0 flex-1 text-[13.5px] leading-tight text-ink-2">{{
             t('KlokOne app-এ আরও সহজে দেখুন')
         }}</span>
         <a
             :href="link"
-            class="inline-flex h-8 shrink-0 items-center rounded-lg bg-brand px-3 text-[12.5px] font-bold whitespace-nowrap text-white dark:text-rail"
+            class="inline-flex h-8 shrink-0 items-center rounded-lg bg-brand px-3 text-[13.5px] font-bold whitespace-nowrap text-white dark:text-rail"
             >{{ t('App-এ খুলুন') }}</a
         >
         <button

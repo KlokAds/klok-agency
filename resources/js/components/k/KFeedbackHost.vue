@@ -42,7 +42,7 @@ function answer(ok: boolean): void {
             >
                 <span class="w-1 shrink-0" :class="tone[item.type]" />
                 <p
-                    class="flex-1 px-4 py-3 text-[13.5px] leading-snug font-medium"
+                    class="flex-1 px-4 py-3 text-[14.5px] leading-snug font-medium"
                 >
                     {{ item.message }}
                 </p>
@@ -68,7 +68,7 @@ function answer(ok: boolean): void {
     </Teleport>
 
     <KModal v-model="confirmOpen" width="sm" :title="feedback.confirm?.title">
-        <p class="text-[14px] leading-relaxed text-ink-2">
+        <p class="text-[15px] leading-relaxed text-ink-2">
             {{ feedback.confirm?.body }}
         </p>
         <template #footer>

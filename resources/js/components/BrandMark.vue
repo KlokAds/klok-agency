@@ -51,19 +51,19 @@ withDefaults(
                 <span
                     class="truncate font-bold tracking-[-0.02em]"
                     :class="[
-                        compact ? 'text-[14.5px]' : 'text-[15px]',
+                        compact ? 'text-[15.5px]' : 'text-[16px]',
                         light ? 'text-white' : 'text-ink',
                     ]"
                     >KlokOne</span
                 >
                 <span
                     v-if="badge"
-                    class="shrink-0 rounded-[5px] px-1.5 py-[3px] text-[9px] font-bold tracking-[0.06em] uppercase"
-                    :class="
+                    class="shrink-0 rounded-[5px] px-1.5 py-[3px] text-[10px] font-bold tracking-[0.06em] uppercase"
+                    :class="[
                         light
                             ? 'bg-[#2dd4bf]/20 text-[#5eead4]'
-                            : 'bg-brand-soft text-brand'
-                    "
+                            : 'bg-brand-soft text-brand',
+                    ]"
                     >{{ badge }}</span
                 >
             </span>
@@ -71,8 +71,8 @@ withDefaults(
                 class="mt-0.5 truncate py-px leading-[1.45] font-semibold"
                 :class="[
                     compact
-                        ? 'text-[9.5px] tracking-[0.1em]'
-                        : 'text-[10.5px] tracking-[0.16em]',
+                        ? 'text-[10.5px] tracking-[0.1em]'
+                        : 'text-[11.5px] tracking-[0.16em]',
                     light ? 'text-rail-dim' : 'text-ink-3',
                 ]"
             >

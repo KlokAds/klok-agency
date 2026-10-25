@@ -146,7 +146,7 @@ function saveAccount(): void {
         class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
     >
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p class="text-[12.5px] font-medium text-rail-dim">
+            <p class="text-[13.5px] font-medium text-rail-dim">
                 {{ t('Card-এ এখন') }}
             </p>
             <p class="num mt-3 text-[30px] leading-none font-medium text-white">
@@ -161,7 +161,7 @@ function saveAccount(): void {
             <p class="num mt-3 text-[30px] leading-none font-medium text-wait">
                 {{ money(summary.platform_due, 'usd') }}
             </p>
-            <p class="mt-3 text-[12.5px] text-ink-3">
+            <p class="mt-3 text-[13.5px] text-ink-3">
                 {{ t('খরচ হয়েছে, card থেকে এখনো কাটেনি') }}
             </p>
         </div>
@@ -173,7 +173,7 @@ function saveAccount(): void {
             >
                 {{ money(summary.card_after, 'usd') }}
             </p>
-            <p class="mt-3 text-[12.5px] text-ink-3">
+            <p class="mt-3 text-[13.5px] text-ink-3">
                 {{ t('Card − Meta এখনো কাটবে') }}
             </p>
         </div>
@@ -182,7 +182,7 @@ function saveAccount(): void {
             <p class="num mt-3 text-[30px] leading-none font-medium">
                 {{ money(summary.holding, 'usd') }}
             </p>
-            <p class="mt-3 truncate text-[12.5px] text-ink-3">
+            <p class="mt-3 truncate text-[13.5px] text-ink-3">
                 {{
                     holdings.length
                         ? holdings.map((h) => h.name).join(', ')
@@ -194,7 +194,7 @@ function saveAccount(): void {
 
     <!-- Check -->
     <div
-        class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[13.5px]"
+        class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[14.5px]"
     >
         <span
             class="flex items-center gap-1.5"
@@ -240,7 +240,7 @@ function saveAccount(): void {
                     >FX Batch</KButton
                 >
             </div>
-            <p class="mt-1 text-[12.5px] text-ink-3">
+            <p class="mt-1 text-[13.5px] text-ink-3">
                 {{
                     t(
                         'খরচ সবসময় পুরনো batch থেকে কাটে (FIFO) — সেই batch-এর দামে হিসাব হয়।',
@@ -249,7 +249,7 @@ function saveAccount(): void {
             </p>
             <p
                 v-if="!inUse"
-                class="mt-4 rounded-lg bg-out-soft px-3 py-2 text-[13px] text-out"
+                class="mt-4 rounded-lg bg-out-soft px-3 py-2 text-[14px] text-out"
             >
                 {{ t('কোনো batch-এ dollar বাকি নেই — নতুন dollar কিনতে হবে।') }}
             </p>
@@ -259,7 +259,7 @@ function saveAccount(): void {
                     :key="b!.id"
                 >
                     <div
-                        class="flex items-center justify-between gap-3 text-[13px]"
+                        class="flex items-center justify-between gap-3 text-[14px]"
                     >
                         <span class="flex items-center gap-2">
                             <span class="font-semibold"
@@ -288,7 +288,7 @@ function saveAccount(): void {
                             }"
                         />
                     </div>
-                    <p v-if="b!.date" class="mt-1 text-[11.5px] text-ink-3">
+                    <p v-if="b!.date" class="mt-1 text-[12.5px] text-ink-3">
                         {{ niceDate(b!.date, false) }}
                     </p>
                 </li>
@@ -299,7 +299,7 @@ function saveAccount(): void {
         <section class="panel min-w-0 overflow-hidden">
             <div class="px-5 pt-5 sm:px-6">
                 <h2 class="text-[16px] font-bold">{{ t('Platform ধরে') }}</h2>
-                <p class="mt-1 text-[12.5px] text-ink-3">
+                <p class="mt-1 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'কোন platform-এ কত খরচ হয়েছে, card থেকে কত কেটেছে, কত বাকি।',
@@ -309,10 +309,10 @@ function saveAccount(): void {
             </div>
             <KEmpty v-if="!platforms.length" :title="t('কোনো platform নেই')" />
             <div v-else class="mt-3 overflow-x-auto">
-                <table v-stack class="stack w-full min-w-[440px] text-[13px]">
+                <table v-stack class="stack w-full min-w-[440px] text-[14px]">
                     <thead>
                         <tr
-                            class="border-b border-line text-left text-[12.5px] font-semibold text-ink-3"
+                            class="border-b border-line text-left text-[13.5px] font-semibold text-ink-3"
                         >
                             <th class="px-5 py-2.5 sm:px-6">Platform</th>
                             <th class="px-3 py-2.5 text-right">
@@ -362,7 +362,7 @@ function saveAccount(): void {
                     <h2 class="text-[16px] font-bold">
                         {{ t('USD account ও platform') }}
                     </h2>
-                    <p class="mt-1 text-[12.5px] text-ink-3">
+                    <p class="mt-1 text-[13.5px] text-ink-3">
                         {{
                             t(
                                 'Card, dollar রাখার অন্য account, আর ad platform।',
@@ -382,26 +382,27 @@ function saveAccount(): void {
                 <li
                     v-for="a in accounts"
                     :key="a.id"
-                    class="flex items-center gap-3 border-b border-line py-2.5 text-[14px]"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[15px]"
                 >
                     <span
                         class="min-w-0 flex-1 truncate font-medium"
                         :class="!a.is_active && 'text-ink-3 line-through'"
                         >{{ a.name }}</span
                     >
-                    <span v-if="a.balance !== null" class="num text-[13px]">{{
+                    <span v-if="a.balance !== null" class="num text-[14px]">{{
                         money(a.balance, 'usd')
                     }}</span>
                     <KTag>{{ kindLabel(a.kind) }}</KTag>
                     <button
                         v-if="can['usd.edit']"
                         type="button"
-                        class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
-                        :aria-label="t('বদলান')"
-                        :title="t('বদলান')"
+                        class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
                         @click="startAccount(a)"
                     >
-                        <KIcon name="pen" :size="16" />
+                        <KIcon name="pen" :size="15" />
+                        <span class="text-[13px] leading-none">{{
+                            t('বদলান')
+                        }}</span>
                     </button>
                 </li>
             </ul>

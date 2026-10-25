@@ -269,7 +269,7 @@ const needsDirection = computed(() =>
     </section>
 
     <!-- Totals for what is shown -->
-    <div class="mb-4 flex flex-wrap gap-x-8 gap-y-2 px-1 text-[13px]">
+    <div class="mb-4 flex flex-wrap gap-x-8 gap-y-2 px-1 text-[14px]">
         <span class="text-ink-3"
             ><b class="num text-ink">{{ totals.count }}</b> row</span
         >
@@ -321,7 +321,7 @@ const needsDirection = computed(() =>
                             class="group"
                         >
                             <td
-                                class="num text-[12.5px] whitespace-nowrap text-ink-2"
+                                class="num text-[13.5px] whitespace-nowrap text-ink-2"
                             >
                                 {{
                                     row.date
@@ -345,13 +345,13 @@ const needsDirection = computed(() =>
                                     }}</KTag>
                                     <span
                                         v-if="row.notes"
-                                        class="text-[12px] text-ink-3"
+                                        class="text-[13px] text-ink-3"
                                         >{{ row.notes }}</span
                                     >
                                 </p>
                             </td>
                             <td
-                                class="text-[13px] whitespace-nowrap text-ink-2"
+                                class="text-[14px] whitespace-nowrap text-ink-2"
                             >
                                 {{ row.account }}
                             </td>
@@ -388,7 +388,7 @@ const needsDirection = computed(() =>
                                         money(row.fifo_cost, 'bdt')
                                     }}</span>
                                     <span
-                                        class="num block text-[11.5px] text-ink-3"
+                                        class="num block text-[12.5px] text-ink-3"
                                         >@ {{ row.fifo_rate }}</span
                                     >
                                 </template>
@@ -404,22 +404,22 @@ const needsDirection = computed(() =>
                                     <button
                                         v-if="can['usd.edit']"
                                         type="button"
-                                        class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-sunken hover:text-ink focus:opacity-100"
-                                        :aria-label="t('বদলান')"
-                                        :title="t('বদলান')"
+                                        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[13px] font-semibold text-ink-3 hover:bg-sunken hover:text-ink"
                                         @click="startEdit(row)"
                                     >
-                                        <KIcon name="pen" :size="16" />
+                                        <KIcon name="pen" :size="15" />{{
+                                            t('বদলান')
+                                        }}
                                     </button>
                                     <button
                                         v-if="can['usd.delete']"
                                         type="button"
-                                        class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100"
-                                        :aria-label="t('মুছুন')"
-                                        :title="t('মুছুন')"
+                                        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[13px] font-semibold text-ink-3 hover:bg-out-soft hover:text-out"
                                         @click="remove(row)"
                                     >
-                                        <KIcon name="bin" :size="16" />
+                                        <KIcon name="bin" :size="15" />{{
+                                            t('মুছুন')
+                                        }}
                                     </button>
                                 </template>
                             </td>
@@ -442,7 +442,7 @@ const needsDirection = computed(() =>
                                 row.description
                             }}</span>
                             <span
-                                class="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3"
+                                class="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-ink-3"
                             >
                                 <span class="num">{{
                                     row.date
@@ -475,7 +475,7 @@ const needsDirection = computed(() =>
                             />
                             <span
                                 v-if="row.fifo_cost !== null"
-                                class="num text-[12px] text-ink-3"
+                                class="num text-[13px] text-ink-3"
                                 >{{ money(row.fifo_cost, 'bdt') }}</span
                             >
                         </span>

@@ -275,7 +275,7 @@ const needsClient = computed(() =>
         </div>
     </section>
 
-    <div class="mb-4 flex flex-wrap gap-x-8 gap-y-2 px-1 text-[13px]">
+    <div class="mb-4 flex flex-wrap gap-x-8 gap-y-2 px-1 text-[14px]">
         <span class="text-ink-3"
             ><b class="num text-ink">{{ totals.count }}</b> row</span
         >
@@ -326,7 +326,7 @@ const needsClient = computed(() =>
                             class="group"
                         >
                             <td
-                                class="num text-[12.5px] whitespace-nowrap text-ink-2"
+                                class="num text-[13.5px] whitespace-nowrap text-ink-2"
                             >
                                 {{
                                     row.date
@@ -351,20 +351,20 @@ const needsClient = computed(() =>
                                     >
                                     <span
                                         v-if="row.notes"
-                                        class="text-[12px] text-ink-3"
+                                        class="text-[13px] text-ink-3"
                                         >{{ row.notes }}</span
                                     >
                                 </p>
                             </td>
                             <td
-                                class="text-[13px] whitespace-nowrap text-ink-2"
+                                class="text-[14px] whitespace-nowrap text-ink-2"
                             >
                                 {{
                                     row.client ?? row.employee ?? row.head ?? ''
                                 }}
                                 <span
                                     v-if="row.wallet"
-                                    class="ml-1.5 rounded-md bg-sunken px-1.5 py-0.5 text-[11.5px] text-ink-3"
+                                    class="ml-1.5 rounded-md bg-sunken px-1.5 py-0.5 text-[12.5px] text-ink-3"
                                     >{{
                                         options.wallets.find(
                                             (w) => w.value === row.wallet,
@@ -398,22 +398,22 @@ const needsClient = computed(() =>
                                     <button
                                         v-if="can['bdt.edit']"
                                         type="button"
-                                        class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-sunken hover:text-ink focus:opacity-100"
-                                        :aria-label="t('বদলান')"
-                                        :title="t('বদলান')"
+                                        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[13px] font-semibold text-ink-3 hover:bg-sunken hover:text-ink"
                                         @click="startEdit(row)"
                                     >
-                                        <KIcon name="pen" :size="16" />
+                                        <KIcon name="pen" :size="15" />{{
+                                            t('বদলান')
+                                        }}
                                     </button>
                                     <button
                                         v-if="can['bdt.delete']"
                                         type="button"
-                                        class="rounded-md p-1.5 text-ink-3 opacity-0 group-hover:opacity-100 hover:bg-out-soft hover:text-out focus:opacity-100"
-                                        :aria-label="t('মুছুন')"
-                                        :title="t('মুছুন')"
+                                        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[13px] font-semibold text-ink-3 hover:bg-out-soft hover:text-out"
                                         @click="remove(row)"
                                     >
-                                        <KIcon name="bin" :size="16" />
+                                        <KIcon name="bin" :size="15" />{{
+                                            t('মুছুন')
+                                        }}
                                     </button>
                                 </template>
                             </td>
@@ -435,7 +435,7 @@ const needsClient = computed(() =>
                                 row.description
                             }}</span>
                             <span
-                                class="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3"
+                                class="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-ink-3"
                             >
                                 <span class="num">{{
                                     row.date
@@ -464,7 +464,7 @@ const needsClient = computed(() =>
                                 sign
                                 class="block font-semibold"
                             />
-                            <span class="num text-[12px] text-ink-3">{{
+                            <span class="num text-[13px] text-ink-3">{{
                                 money(row.balance, 'bdt')
                             }}</span>
                         </span>
@@ -580,7 +580,7 @@ const needsClient = computed(() =>
                 v-if="editing?.review_note"
                 class="rounded-xl bg-wait-soft px-4 py-3 sm:col-span-2"
             >
-                <p class="text-[13px] font-medium text-wait">
+                <p class="text-[14px] font-medium text-wait">
                     {{
                         t('পুরনো sheet থেকে: {note}', {
                             note: editing.review_note,

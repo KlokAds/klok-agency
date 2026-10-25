@@ -157,16 +157,16 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                         >
                     </div>
                 </component>
-                <p v-if="business.logo" class="text-[15px] font-semibold">
+                <p v-if="business.logo" class="text-[16px] font-semibold">
                     {{ business.name }}
                 </p>
                 <p
                     v-if="business.address"
-                    class="inv-muted mt-1 max-w-xs text-[12.5px] leading-relaxed wrap-anywhere whitespace-pre-line"
+                    class="inv-muted mt-1 max-w-xs text-[13.5px] leading-relaxed wrap-anywhere whitespace-pre-line"
                 >
                     {{ business.address }}
                 </p>
-                <p class="inv-muted mt-0.5 text-[12.5px]">
+                <p class="inv-muted mt-0.5 text-[13.5px]">
                     <span v-if="business.phone">{{ business.phone }}</span>
                     <span v-if="business.phone && business.email"> · </span>
                     <span v-if="business.email" class="break-all">{{
@@ -176,7 +176,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
             </div>
             <div class="@xl:text-right">
                 <p class="inv-title">Invoice</p>
-                <p class="num inv-muted mt-1 text-[14px] font-medium">
+                <p class="num inv-muted mt-1 text-[15px] font-medium">
                     {{ invoice.number }}
                 </p>
                 <p class="mt-3 flex flex-wrap gap-1.5 @xl:justify-end">
@@ -198,23 +198,23 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
         >
             <div class="col-span-2 @xl:col-span-1">
                 <p class="inv-label">{{ t('যার জন্য') }}</p>
-                <p class="mt-1 text-[15px] font-semibold">
+                <p class="mt-1 text-[16px] font-semibold">
                     {{ invoice.client }}
                 </p>
-                <p v-if="invoice.company" class="inv-muted text-[12.5px]">
+                <p v-if="invoice.company" class="inv-muted text-[13.5px]">
                     {{ invoice.company }}
                 </p>
             </div>
             <div>
                 <p class="inv-label">{{ t('তারিখ') }}</p>
-                <p class="num mt-1 text-[13.5px] font-medium">
+                <p class="num mt-1 text-[14.5px] font-medium">
                     {{ niceDate(invoice.issue_date) }}
                 </p>
             </div>
             <div>
                 <p class="inv-label">{{ t('শেষ তারিখ') }}</p>
                 <p
-                    class="num mt-1 text-[13.5px] font-medium"
+                    class="num mt-1 text-[14.5px] font-medium"
                     :class="invoice.overdue ? 'inv-out' : ''"
                 >
                     {{
@@ -238,7 +238,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
 
         <!-- Lines: a table when there is room (and on paper), stacked on a phone -->
         <section class="px-6 pt-2 @xl:px-10">
-            <table class="inv-table hidden w-full text-[13px] @xl:table">
+            <table class="inv-table hidden w-full text-[14px] @xl:table">
                 <thead>
                     <tr>
                         <th class="w-8 py-3 pr-2 text-left">#</th>
@@ -257,13 +257,13 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                             <p class="font-semibold">{{ line.description }}</p>
                             <p
                                 v-if="period(line)"
-                                class="num inv-muted mt-0.5 text-[12px]"
+                                class="num inv-muted mt-0.5 text-[13px]"
                             >
                                 {{ period(line) }}
                             </p>
                             <p
                                 v-if="outcome(line)"
-                                class="inv-muted mt-0.5 text-[12px]"
+                                class="inv-muted mt-0.5 text-[13px]"
                             >
                                 {{ outcome(line) }}
                             </p>
@@ -301,19 +301,19 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                     </div>
                     <p
                         v-if="period(line)"
-                        class="num inv-muted mt-0.5 text-[12px]"
+                        class="num inv-muted mt-0.5 text-[13px]"
                     >
                         {{ period(line) }}
                     </p>
                     <p
                         v-if="outcome(line)"
-                        class="inv-muted mt-0.5 text-[12px]"
+                        class="inv-muted mt-0.5 text-[13px]"
                     >
                         {{ outcome(line) }}
                     </p>
                     <p
                         v-if="line.usd !== null"
-                        class="num inv-muted mt-1 text-[12px]"
+                        class="num inv-muted mt-1 text-[13px]"
                     >
                         {{ usd(line.usd) }} × {{ rate(line.rate) }}
                     </p>
@@ -325,7 +325,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
         <section
             class="flex flex-col gap-6 px-6 pt-2 pb-7 @xl:flex-row @xl:items-start @xl:justify-between @xl:px-10"
         >
-            <div class="max-w-sm text-[12.5px]">
+            <div class="max-w-sm text-[13.5px]">
                 <template v-if="invoice.notes">
                     <p class="inv-label">{{ t('Note') }}</p>
                     <p class="inv-muted mt-1 wrap-anywhere whitespace-pre-line">
@@ -334,7 +334,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                 </template>
             </div>
             <dl
-                class="inv-totals w-full text-[13px] @xl:ml-auto @xl:max-w-[300px]"
+                class="inv-totals w-full text-[14px] @xl:ml-auto @xl:max-w-[300px]"
             >
                 <div v-if="invoice.usd" class="flex justify-between py-1.5">
                     <dt class="inv-muted">{{ t('Ad খরচ (USD)') }}</dt>
@@ -360,7 +360,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
         </section>
 
         <footer
-            class="inv-foot flex flex-col gap-1 px-6 py-4 text-[11.5px] @xl:flex-row @xl:justify-between @xl:px-10"
+            class="inv-foot flex flex-col gap-1 px-6 py-4 text-[12.5px] @xl:flex-row @xl:justify-between @xl:px-10"
         >
             <span>{{
                 t('ধন্যবাদ — {name}-এর সাথে কাজ করার জন্য।', {

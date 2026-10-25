@@ -103,12 +103,12 @@ const willEnd = computed(() => {
                 v-if="r.status === 'paid'"
                 class="panel border-wait/40 p-5 sm:p-6"
             >
-                <h2 class="flex items-center gap-2 text-[15px] font-semibold">
+                <h2 class="flex items-center gap-2 text-[16px] font-semibold">
                     <KIcon name="check" class="text-in" />{{
                         t('Client টাকা দিয়েছে')
                     }}
                 </h2>
-                <p class="mt-2 text-[13.5px] text-ink-2">
+                <p class="mt-2 text-[14.5px] text-ink-2">
                     {{
                         t(
                             '{n} দিনের জন্য {amount} পাওয়া গেছে। Approve করলে Klok Pilot Meta-তে campaign-এর শেষ {date} পর্যন্ত বাড়াবে।',
@@ -122,7 +122,7 @@ const willEnd = computed(() => {
                 </p>
                 <p
                     v-if="r.error || errors.renewal"
-                    class="mt-3 rounded-lg bg-out-soft px-3 py-2 text-[12.5px] text-out"
+                    class="mt-3 rounded-lg bg-out-soft px-3 py-2 text-[13.5px] text-out"
                 >
                     {{ errors.renewal ?? r.error }}
                 </p>
@@ -141,20 +141,20 @@ const willEnd = computed(() => {
             </section>
 
             <section v-else-if="r.status === 'approved'" class="panel p-5">
-                <p class="text-[14px]">
+                <p class="text-[15px]">
                     {{
                         t('Extend হয়েছে — campaign {date} পর্যন্ত চলবে।', {
                             date: niceDate(r.new_end),
                         })
                     }}
                 </p>
-                <p v-if="r.approved_at" class="mt-1 text-[12.5px] text-ink-3">
+                <p v-if="r.approved_at" class="mt-1 text-[13.5px] text-ink-3">
                     {{ ago(r.approved_at) }}
                 </p>
             </section>
 
             <section v-else-if="r.status === 'declined'" class="panel p-5">
-                <p class="text-[14px]">
+                <p class="text-[15px]">
                     {{
                         t(
                             'Client contract এখানেই শেষ করেছে — campaign {date}-এ নিজে বন্ধ হবে, কিছু করতে হবে না।',
@@ -166,10 +166,10 @@ const willEnd = computed(() => {
 
             <!-- The link -->
             <section class="panel p-5 sm:p-6">
-                <h2 class="text-[15px] font-semibold">
+                <h2 class="text-[16px] font-semibold">
                     {{ t('Client-এর link') }}
                 </h2>
-                <p class="mt-1 text-[13px] text-ink-3">
+                <p class="mt-1 text-[14px] text-ink-3">
                     {{
                         t(
                             'Client এখানে দিন বেছে pay করে, অথবা contract শেষ করে। Print করে PDF-ও বানানো যায়।',
@@ -178,7 +178,7 @@ const willEnd = computed(() => {
                 </p>
                 <div class="mt-4 grid grid-cols-1 gap-2">
                     <code
-                        class="num min-w-0 truncate rounded-lg bg-sunken px-3 py-2.5 text-[12.5px]"
+                        class="num min-w-0 truncate rounded-lg bg-sunken px-3 py-2.5 text-[13.5px]"
                         >{{ r.url }}</code
                     >
                     <div class="grid grid-cols-2 gap-2 sm:flex">
@@ -189,7 +189,7 @@ const willEnd = computed(() => {
                             :href="r.url"
                             target="_blank"
                             rel="noopener"
-                            class="inline-flex h-8 items-center justify-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                            class="inline-flex h-8 items-center justify-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
                             ><KIcon name="eye" :size="15" />{{ t('খুলুন') }}</a
                         >
                     </div>
@@ -200,20 +200,20 @@ const willEnd = computed(() => {
                         :href="r.message.whatsapp"
                         target="_blank"
                         rel="noopener"
-                        class="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-brand px-4 text-[13.5px] font-semibold whitespace-nowrap text-white hover:bg-brand-ink dark:text-rail"
+                        class="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-brand px-4 text-[14.5px] font-semibold whitespace-nowrap text-white hover:bg-brand-ink dark:text-rail"
                         ><KIcon name="chat" :size="16" />WhatsApp</a
                     >
                     <a
                         v-if="r.message.sms"
                         :href="r.message.sms"
-                        class="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-line-2 bg-surface px-4 text-[13.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                        class="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-line-2 bg-surface px-4 text-[14.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
                         ><KIcon name="mail" :size="16" />SMS</a
                     >
                     <KButton icon="list" @click="copy(r.message.text)">{{
                         t('বার্তা copy')
                     }}</KButton>
                 </div>
-                <p v-if="!r.message.phone" class="mt-3 text-[12.5px] text-wait">
+                <p v-if="!r.message.phone" class="mt-3 text-[13.5px] text-wait">
                     {{
                         t(
                             'Client-এর phone নম্বর নেই — client-এর পাতায় দিলে WhatsApp/SMS বোতাম আসবে।',
@@ -223,7 +223,7 @@ const willEnd = computed(() => {
             </section>
         </div>
 
-        <aside class="panel h-fit p-5 text-[13px]">
+        <aside class="panel h-fit p-5 text-[14px]">
             <dl class="grid grid-cols-1 gap-3">
                 <div class="flex justify-between gap-3">
                     <dt class="text-ink-3">{{ t('এখন শেষ') }}</dt>
@@ -272,7 +272,7 @@ const willEnd = computed(() => {
     </div>
 
     <KModal v-model="confirm" :title="t('Extend করবেন?')">
-        <p class="text-[13.5px] text-ink-2">
+        <p class="text-[14.5px] text-ink-2">
             {{
                 t(
                     '{campaign} Meta-তে {date} পর্যন্ত চলবে, বন্ধ থাকলে আবার চালু হবে।',

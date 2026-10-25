@@ -15,7 +15,7 @@ const model = defineModel<string | null>();
             v-model="model"
             :rows="rows ?? 2"
             :placeholder="placeholder"
-            class="w-full resize-none text-[14px] leading-relaxed"
+            class="w-full resize-none text-[15px] leading-relaxed"
         />
     </div>
 </template>

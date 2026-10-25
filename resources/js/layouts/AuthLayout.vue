@@ -15,7 +15,7 @@ defineProps<{ title?: string; description?: string }>();
             <BrandMark light />
 
             <div class="relative mt-auto max-w-md">
-                <p class="text-[12.5px] font-medium text-rail-dim">
+                <p class="text-[13.5px] font-medium text-rail-dim">
                     Klok Ads · Agency Books
                 </p>
                 <p
@@ -27,7 +27,7 @@ defineProps<{ title?: string; description?: string }>();
                         )
                     }}
                 </p>
-                <p class="mt-4 text-[14.5px] leading-relaxed text-rail-ink/75">
+                <p class="mt-4 text-[15.5px] leading-relaxed text-rail-ink/75">
                     {{
                         t(
                             'USD আর BDT দুই খাতা, FIFO cost, client-এর margin আর বেতন — সব এখানে, সব পরিবর্তন log করা।',
@@ -68,13 +68,13 @@ defineProps<{ title?: string; description?: string }>();
                 >
                     {{ t(title) }}
                 </h1>
-                <p v-if="description" class="mt-1.5 text-[14px] text-ink-2">
+                <p v-if="description" class="mt-1.5 text-[15px] text-ink-2">
                     {{ t(description) }}
                 </p>
                 <div class="mt-8">
                     <slot />
                 </div>
-                <p class="mt-10 flex items-center gap-2 text-[12px] text-ink-3">
+                <p class="mt-10 flex items-center gap-2 text-[13px] text-ink-3">
                     <svg
                         viewBox="0 0 20 20"
                         class="size-4"

@@ -169,7 +169,7 @@ onMounted(() => {
                         :disabled="!editable"
                     >
                         <template #trail
-                            ><span class="text-[13px] font-semibold text-ink-3"
+                            ><span class="text-[14px] font-semibold text-ink-3"
                                 >%</span
                             ></template
                         >
@@ -190,7 +190,7 @@ onMounted(() => {
                         :disabled="!editable"
                     >
                         <template #trail
-                            ><span class="text-[13px] font-semibold text-ink-3"
+                            ><span class="text-[14px] font-semibold text-ink-3"
                                 >&#2547;</span
                             ></template
                         >
@@ -271,7 +271,7 @@ onMounted(() => {
             />
             <p
                 v-if="form.errors.require_2fa"
-                class="-mt-3 rounded-lg border border-out/30 bg-out-soft px-3 py-2 text-[12.5px] font-medium text-out"
+                class="-mt-3 rounded-lg border border-out/30 bg-out-soft px-3 py-2 text-[13.5px] font-medium text-out"
             >
                 {{ form.errors.require_2fa }}
             </p>
@@ -372,10 +372,10 @@ onMounted(() => {
                 </KField>
             </div>
             <div class="border-t border-line pt-5">
-                <p class="text-[13.5px] font-semibold">
+                <p class="text-[14.5px] font-semibold">
                     {{ t('Meta receipt-এর mailbox') }}
                 </p>
-                <p class="mt-1 text-[12.5px] text-ink-3">
+                <p class="mt-1 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'Gmail-এ filter দিয়ে Meta-র receipt এই mailbox-এ forward করুন — প্রতি কয়েক মিনিটে পড়ে card charge নিজে খাতায় উঠবে, campaign-এর ভাগসহ।',
@@ -452,7 +452,7 @@ onMounted(() => {
             "
             icon="down"
         >
-            <p v-if="!update" class="text-[13px] text-ink-3">
+            <p v-if="!update" class="text-[14px] text-ink-3">
                 {{
                     checking
                         ? t('GitHub-এর সাথে মেলানো হচ্ছে…')
@@ -462,7 +462,7 @@ onMounted(() => {
             <div v-if="update" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="rounded-lg border border-line px-4 py-3">
                     <p class="eyebrow">{{ t('এখন চলছে') }}</p>
-                    <p v-if="update.current" class="mt-1 text-[13.5px]">
+                    <p v-if="update.current" class="mt-1 text-[14.5px]">
                         <span class="num font-semibold">{{
                             update.current.sha.slice(0, 7)
                         }}</span>
@@ -472,21 +472,21 @@ onMounted(() => {
                     </p>
                     <p
                         v-if="update.current"
-                        class="mt-0.5 truncate text-[12.5px] text-ink-2"
+                        class="mt-0.5 truncate text-[13.5px] text-ink-2"
                         :title="update.current.subject"
                     >
                         {{ update.current.subject }}
                     </p>
                     <p
                         v-if="!update.available"
-                        class="mt-1 text-[13px] text-ink-3"
+                        class="mt-1 text-[14px] text-ink-3"
                     >
                         {{ t('এটা git checkout নয় (local)') }}
                     </p>
                 </div>
                 <div class="rounded-lg border border-line px-4 py-3">
                     <p class="eyebrow">GitHub · {{ update.branch }}</p>
-                    <p class="mt-1 text-[13.5px] font-semibold">
+                    <p class="mt-1 text-[14.5px] font-semibold">
                         <span v-if="update.latest" class="num">{{
                             update.latest.slice(0, 7)
                         }}</span>
@@ -495,7 +495,7 @@ onMounted(() => {
                         }}</span>
                     </p>
                     <p
-                        class="mt-0.5 flex items-center gap-1.5 text-[12.5px] font-medium"
+                        class="mt-0.5 flex items-center gap-1.5 text-[13.5px] font-medium"
                         :class="update.behind ? 'text-wait' : 'text-in'"
                     >
                         <KIcon
@@ -518,7 +518,7 @@ onMounted(() => {
                 class="rounded-lg border border-line"
             >
                 <summary
-                    class="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-[13px] font-semibold"
+                    class="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
                 >
                     <KTag :tone="update.last_run.ok ? 'in' : 'out'">{{
                         update.last_run.ok ? t('সফল') : t('ব্যর্থ')
@@ -527,7 +527,7 @@ onMounted(() => {
                     {{ niceDate(update.last_run.at.slice(0, 10)) }}
                 </summary>
                 <pre
-                    class="max-h-72 overflow-auto border-t border-line bg-sunken px-4 py-3 font-mono text-[11.5px] leading-relaxed whitespace-pre-wrap"
+                    class="max-h-72 overflow-auto border-t border-line bg-sunken px-4 py-3 font-mono text-[12.5px] leading-relaxed whitespace-pre-wrap"
                     >{{ update.last_run.log.join('\n\n') }}</pre>
             </details>
 

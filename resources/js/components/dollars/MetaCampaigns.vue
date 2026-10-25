@@ -146,7 +146,7 @@ const extendCost = computed(() => {
                 <h2 class="text-[16px] font-bold">
                     {{ t('Client অনুযায়ী — Meta') }}
                 </h2>
-                <p class="mt-1 max-w-2xl text-[12.5px] text-ink-3">
+                <p class="mt-1 max-w-2xl text-[13.5px] text-ink-3">
                     {{
                         t(
                             'প্রতিটা client এখন কোথায়: শেষ কবে কত দিয়েছে, due না টাকা বাকি, campaign কবে শেষ, আর পরের payment কত লাগবে। নতুন টাকা আগে পুরনো due শোধ করে, বাকিটায় দিন বাড়ে।',
@@ -154,7 +154,7 @@ const extendCost = computed(() => {
                     }}
                 </p>
             </div>
-            <p class="text-[12.5px] whitespace-nowrap text-ink-3 sm:text-right">
+            <p class="text-[13.5px] whitespace-nowrap text-ink-3 sm:text-right">
                 {{ t('Meta এখনো কাটবে') }}
                 <span class="num block text-[17px] font-semibold text-wait">{{
                     money(forecast.pending, 'usd')
@@ -173,7 +173,7 @@ const extendCost = computed(() => {
         />
 
         <div v-else class="mt-4 overflow-x-auto">
-            <table class="ledger w-full min-w-[1120px] text-[13px]">
+            <table class="ledger w-full min-w-[1120px] text-[14px]">
                 <thead>
                     <tr>
                         <th class="px-5 py-2.5 text-left sm:px-6">Client</th>
@@ -216,7 +216,7 @@ const extendCost = computed(() => {
                                 class="font-semibold hover:text-brand"
                                 >{{ c.name }}</Link
                             >
-                            <p class="mt-0.5 text-[11.5px] text-ink-3">
+                            <p class="mt-0.5 text-[12.5px] text-ink-3">
                                 <template v-if="c.last_paid">
                                     {{ t('শেষ payment') }}
                                     <template v-if="c.last_paid.date"
@@ -233,7 +233,7 @@ const extendCost = computed(() => {
                                     t('এখনো কোনো payment নেই')
                                 }}</template>
                             </p>
-                            <p class="mt-1 text-[11px] text-ink-3">
+                            <p class="mt-1 text-[12px] text-ink-3">
                                 {{
                                     c.prepaid
                                         ? t('আগে টাকা দেয়')
@@ -262,7 +262,7 @@ const extendCost = computed(() => {
                                 </span>
                                 <span
                                     v-if="row.campaign.budget"
-                                    class="num pl-3.5 text-[11.5px] text-ink-3"
+                                    class="num pl-3.5 text-[12.5px] text-ink-3"
                                     >{{ money(row.campaign.budget, 'usd') }}/{{
                                         t('দিন')
                                     }}</span
@@ -307,7 +307,7 @@ const extendCost = computed(() => {
                                 <template v-if="row.campaign.ended">
                                     {{ t('শেষ হয়েছে') }}
                                     <span
-                                        class="block text-[11.5px] text-ink-3"
+                                        class="block text-[12.5px] text-ink-3"
                                         >{{
                                             endsAt(row.campaign.ends_at)
                                         }}</span
@@ -319,7 +319,7 @@ const extendCost = computed(() => {
                                 <template v-else-if="row.campaign.ends_at">
                                     {{ endsAt(row.campaign.ends_at) }}
                                     <span
-                                        class="block text-[11.5px] text-ink-3"
+                                        class="block text-[12.5px] text-ink-3"
                                         >{{
                                             t('{n} দিন বাকি', {
                                                 n: row.campaign.days_left ?? 0,
@@ -343,7 +343,7 @@ const extendCost = computed(() => {
                             </td>
                         </template>
                         <template v-else>
-                            <td class="px-3 py-3 text-[12.5px] text-ink-3">
+                            <td class="px-3 py-3 text-[13.5px] text-ink-3">
                                 {{
                                     row.amount
                                         ? t('হাতে লেখা খরচ (campaign ছাড়া)')
@@ -372,7 +372,7 @@ const extendCost = computed(() => {
                                     >
                                     <span
                                         v-if="c.due_now_bdt"
-                                        class="num block text-[11.5px] text-ink-3"
+                                        class="num block text-[12.5px] text-ink-3"
                                         >≈
                                         {{ money(c.due_now_bdt, 'bdt') }}</span
                                     >
@@ -382,7 +382,7 @@ const extendCost = computed(() => {
                                         class="num block font-semibold text-in"
                                         >+{{ money(c.credit_now, 'usd') }}</span
                                     >
-                                    <span class="block text-[11.5px] text-ink-3"
+                                    <span class="block text-[12.5px] text-ink-3"
                                         >{{ t('টাকা বাকি') }}
                                         <template v-if="c.lasts_until">
                                             ·
@@ -406,12 +406,12 @@ const extendCost = computed(() => {
                                     }}</span>
                                     <span
                                         v-if="c.due_bdt"
-                                        class="num block text-[11.5px] text-ink-3"
+                                        class="num block text-[12.5px] text-ink-3"
                                         >≈ {{ money(c.due_bdt, 'bdt') }}</span
                                     >
                                     <span
                                         v-if="c.ends_on"
-                                        class="block text-[11px] text-ink-3"
+                                        class="block text-[12px] text-ink-3"
                                         >{{
                                             t('{date} পর্যন্ত', {
                                                 date: niceDate(
@@ -458,7 +458,7 @@ const extendCost = computed(() => {
                             }}</span>
                             <span
                                 v-if="c.collected_usd"
-                                class="num block text-[11.5px] text-ink-3"
+                                class="num block text-[12.5px] text-ink-3"
                                 >{{ money(c.collected_usd, 'usd') }}
                                 {{ t('ad-এর জন্য') }}</span
                             >
@@ -469,7 +469,7 @@ const extendCost = computed(() => {
         </div>
         <p
             v-if="forecast.other"
-            class="px-5 py-3 text-[12px] text-ink-3 sm:px-6"
+            class="px-5 py-3 text-[13px] text-ink-3 sm:px-6"
         >
             {{
                 t('Client ছাড়া Meta খরচ (নিজের ad, adjustment): {amount}', {
@@ -479,7 +479,7 @@ const extendCost = computed(() => {
         </p>
 
         <KModal v-model="extendOpen" :title="extending?.name ?? 'Campaign'">
-            <p class="text-[13.5px] text-ink-2">
+            <p class="text-[14.5px] text-ink-2">
                 {{
                     t(
                         'Campaign আরও কত দিন চলবে? শেষের তারিখ Meta-তে বাড়বে; টাকা শেষ হয়ে বন্ধ থাকলে আবার চালু হবে। Client-এর টাকা খাতায় না থাকলে spend cap আবার থামিয়ে দেবে।',
@@ -504,7 +504,7 @@ const extendCost = computed(() => {
                     class="max-w-[140px]"
                 >
                     <template #trail
-                        ><span class="text-[12.5px] text-ink-3">{{
+                        ><span class="text-[13.5px] text-ink-3">{{
                             t('দিন')
                         }}</span></template
                     >
@@ -512,7 +512,7 @@ const extendCost = computed(() => {
             </KField>
             <p
                 v-if="extending?.budget"
-                class="num mt-3 rounded-lg bg-sunken px-3 py-2 text-[12.5px]"
+                class="num mt-3 rounded-lg bg-sunken px-3 py-2 text-[13.5px]"
             >
                 {{ money(extending.budget, 'usd') }} ×
                 {{ Number.parseInt(extendDays, 10) || 0 }} =

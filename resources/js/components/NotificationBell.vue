@@ -107,16 +107,20 @@ const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
     <div ref="anchor">
         <button
             type="button"
-            class="relative grid size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken hover:text-ink"
-            :aria-label="t('Notification')"
+            class="flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-ink-2 hover:bg-sunken hover:text-ink"
             @click="menu.toggle()"
         >
-            <KIcon name="bell" />
-            <span
-                v-if="unread > 0"
-                class="num absolute top-1.5 right-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-out px-1 text-[10px] font-bold text-white"
-                >{{ badge }}</span
-            >
+            <span class="relative">
+                <KIcon name="bell" :size="16" />
+                <span
+                    v-if="unread > 0"
+                    class="num absolute -top-1.5 -right-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-out px-1 text-[11px] font-bold text-white"
+                    >{{ badge }}</span
+                >
+            </span>
+            <span class="text-[12.5px] leading-none">{{
+                t('Notification')
+            }}</span>
         </button>
 
         <Teleport to="body">
@@ -129,11 +133,11 @@ const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
                 <div
                     class="flex min-h-[52px] items-center justify-between gap-3 border-b border-line py-2 pr-2 pl-4"
                 >
-                    <p class="text-[14px] font-bold">
+                    <p class="text-[15px] font-bold">
                         {{ t('Notification') }}
                         <span
                             v-if="unread > 0"
-                            class="num ml-1 rounded-md bg-out-soft px-1.5 py-0.5 text-[11.5px] font-semibold text-out"
+                            class="num ml-1 rounded-md bg-out-soft px-1.5 py-0.5 text-[12.5px] font-semibold text-out"
                             >{{ unread }}</span
                         >
                     </p>
@@ -149,7 +153,7 @@ const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
                 <div class="min-h-0 flex-1 overflow-y-auto p-1.5">
                     <p
                         v-if="!items.length"
-                        class="px-4 py-10 text-center text-[13px] text-ink-3"
+                        class="px-4 py-10 text-center text-[14px] text-ink-3"
                     >
                         {{
                             loading
@@ -166,7 +170,7 @@ const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
                 </div>
                 <Link
                     href="/notifications"
-                    class="flex min-h-11 items-center justify-center gap-1.5 border-t border-line px-4 text-[13px] font-semibold text-ink-2 hover:bg-sunken hover:text-ink"
+                    class="flex min-h-11 items-center justify-center gap-1.5 border-t border-line px-4 text-[14px] font-semibold text-ink-2 hover:bg-sunken hover:text-ink"
                     @click="menu.close()"
                     >{{ t('সব দেখুন')
                     }}<KIcon name="arrow" :size="14" class="text-ink-3"

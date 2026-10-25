@@ -93,7 +93,7 @@ function submit(): void {
             class="mt-2"
             >{{ t('Account খুলুন') }}</KButton
         >
-        <p class="text-center text-[13px] text-ink-3">
+        <p class="text-center text-[14px] text-ink-3">
             {{ t('আগে থেকে account আছে?') }}
             <Link href="/login" class="font-semibold text-brand hover:underline"
                 >Sign in</Link

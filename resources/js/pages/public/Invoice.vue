@@ -451,7 +451,7 @@ const STATUS_WORD: Record<string, string> = {
                 :href="isClient ? '/portal/invoices' : '/'"
                 >{{ isClient ? t('সব invoice') : t('হোম') }}</KButton
             >
-            <p v-else class="truncate text-[13px] font-semibold text-ink-2">
+            <p v-else class="truncate text-[14px] font-semibold text-ink-2">
                 {{ business.name }}
             </p>
             <div class="flex items-center gap-1">
@@ -460,7 +460,7 @@ const STATUS_WORD: Record<string, string> = {
                 </KButton>
                 <button
                     type="button"
-                    class="h-8 rounded-lg px-2.5 text-[12.5px] font-bold text-ink-2 hover:bg-sunken"
+                    class="h-8 rounded-lg px-2.5 text-[13.5px] font-bold text-ink-2 hover:bg-sunken"
                     @click="switchLocale(locale === 'en' ? 'bn' : 'en')"
                 >
                     {{ otherLanguage }}
@@ -507,7 +507,7 @@ const STATUS_WORD: Record<string, string> = {
                     <h2 class="text-[16px] font-bold">
                         {{ t('কত দিন চালু রাখবেন?') }}
                     </h2>
-                    <p class="mt-1 text-[13px] text-ink-3">
+                    <p class="mt-1 text-[14px] text-ink-3">
                         {{ state.renewal.campaign }} ·
                         {{ state.renewal.stops }}
                     </p>
@@ -516,7 +516,7 @@ const STATUS_WORD: Record<string, string> = {
                             v-for="d in dayChoices"
                             :key="d"
                             type="button"
-                            class="flex h-14 flex-col items-center justify-center rounded-xl border-2 text-[14.5px] font-semibold transition-colors"
+                            class="flex h-14 flex-col items-center justify-center rounded-xl border-2 text-[15.5px] font-semibold transition-colors"
                             :class="
                                 state.renewal.days === d
                                     ? 'border-brand bg-brand-soft text-brand'
@@ -528,14 +528,14 @@ const STATUS_WORD: Record<string, string> = {
                             {{ t('{n} দিন', { n: d }) }}
                             <span
                                 v-if="daysPrice(d)"
-                                class="num text-[11px] font-medium text-ink-3"
+                                class="num text-[12px] font-medium text-ink-3"
                                 >{{ bdt(daysPrice(d) ?? 0) }}</span
                             >
                         </button>
                         <!-- Any other number of days: a choice like the rest, then a box to type it. -->
                         <button
                             type="button"
-                            class="flex h-14 flex-col items-center justify-center rounded-xl border-2 text-[14.5px] font-semibold transition-colors"
+                            class="flex h-14 flex-col items-center justify-center rounded-xl border-2 text-[15.5px] font-semibold transition-colors"
                             :class="
                                 otherOpen ||
                                 (state.renewal.days &&
@@ -551,7 +551,7 @@ const STATUS_WORD: Record<string, string> = {
                                     ? t('{n} দিন', { n: state.renewal.days })
                                     : t('অন্য')
                             }}
-                            <span class="text-[11px] font-medium text-ink-3">{{
+                            <span class="text-[12px] font-medium text-ink-3">{{
                                 t('নিজে লিখুন')
                             }}</span>
                         </button>
@@ -564,7 +564,7 @@ const STATUS_WORD: Record<string, string> = {
                             max="90"
                             inputmode="numeric"
                             :placeholder="t('কত দিন? (১–৯০)')"
-                            class="h-12 min-w-0 flex-1 rounded-xl border-2 border-brand bg-transparent px-4 text-[15px] font-semibold"
+                            class="h-12 min-w-0 flex-1 rounded-xl border-2 border-brand bg-transparent px-4 text-[16px] font-semibold"
                             @keyup.enter="pickDays && setDays(pickDays)"
                         />
                         <KButton
@@ -580,18 +580,18 @@ const STATUS_WORD: Record<string, string> = {
                             >{{ t('ঠিক আছে') }}</KButton
                         >
                     </div>
-                    <p class="mt-2 text-[12.5px] text-ink-3">
+                    <p class="mt-2 text-[13.5px] text-ink-3">
                         {{
                             t(
                                 'দিন বদলালে নিচের মোট টাকাও বদলাবে। Pay হলেই campaign নিজে বেড়ে যাবে।',
                             )
                         }}
                     </p>
-                    <p v-if="daysError" class="mt-2 text-[13px] text-out">
+                    <p v-if="daysError" class="mt-2 text-[14px] text-out">
                         {{ daysError }}
                     </p>
                     <div class="mt-4 border-t border-line pt-4">
-                        <p class="text-[13px] text-ink-3">
+                        <p class="text-[14px] text-ink-3">
                             {{ t('চালু রাখতে না চাইলে:') }}
                         </p>
                         <KButton
@@ -606,7 +606,7 @@ const STATUS_WORD: Record<string, string> = {
                 </section>
                 <section
                     v-if="state.renewal?.declined"
-                    class="panel mb-4 p-5 text-[14px] text-ink-2"
+                    class="panel mb-4 p-5 text-[15px] text-ink-2"
                 >
                     {{
                         t(
@@ -632,7 +632,7 @@ const STATUS_WORD: Record<string, string> = {
                         <span class="block text-[17px] font-bold">
                             {{ t('পেমেন্ট পাওয়া গেছে ✓') }}
                         </span>
-                        <span class="block text-[13px] text-ink-3">
+                        <span class="block text-[14px] text-ink-3">
                             {{ t('ধন্যবাদ! এই invoice পুরো পরিশোধ হয়েছে।') }}
                         </span>
                     </span>
@@ -640,7 +640,7 @@ const STATUS_WORD: Record<string, string> = {
 
                 <section
                     v-else-if="state.status === 'void'"
-                    class="panel p-6 text-center text-[14px] text-ink-2"
+                    class="panel p-6 text-center text-[15px] text-ink-2"
                 >
                     {{ t('এই invoice বাতিল করা হয়েছে।') }}
                 </section>
@@ -677,7 +677,7 @@ const STATUS_WORD: Record<string, string> = {
                         v-if="!state.session.qr"
                         class="mt-4 rounded-xl border border-brand/30 bg-brand-soft p-4 text-center"
                     >
-                        <p class="text-[12px] text-ink-2">
+                        <p class="text-[13px] text-ink-2">
                             {{ t('ঠিক এই পরিমাণ পাঠান') }}
                         </p>
                         <div
@@ -705,7 +705,7 @@ const STATUS_WORD: Record<string, string> = {
                         </div>
                         <p
                             v-if="state.session.charge"
-                            class="mt-2 text-[12px] text-ink-3"
+                            class="mt-2 text-[13px] text-ink-3"
                         >
                             {{
                                 t('এর মধ্যে {charge} payment charge।', {
@@ -715,7 +715,7 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
                         <p
                             v-if="state.session.extra > 0"
-                            class="mt-2 text-[12px] text-wait"
+                            class="mt-2 text-[13px] text-wait"
                         >
                             {{
                                 t(
@@ -728,7 +728,7 @@ const STATUS_WORD: Record<string, string> = {
 
                     <p
                         v-if="sessionMethod.number && state.session.sender"
-                        class="mt-3 flex items-center gap-2 rounded-xl bg-wait-soft px-4 py-3 text-[13px] text-wait"
+                        class="mt-3 flex items-center gap-2 rounded-xl bg-wait-soft px-4 py-3 text-[14px] text-wait"
                     >
                         <KIcon name="warn" :size="15" class="shrink-0" />{{
                             t(
@@ -742,7 +742,7 @@ const STATUS_WORD: Record<string, string> = {
                         class="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line p-4"
                     >
                         <div class="min-w-0">
-                            <p class="text-[12px] text-ink-3">
+                            <p class="text-[13px] text-ink-3">
                                 {{ typeLabel(sessionMethod.type) }}
                             </p>
                             <p class="num mt-0.5 text-[22px] font-semibold">
@@ -767,7 +767,7 @@ const STATUS_WORD: Record<string, string> = {
                             class="mb-3 flex items-center justify-between gap-3 text-left"
                         >
                             <div>
-                                <p class="text-[12px] text-ink-2">
+                                <p class="text-[13px] text-ink-2">
                                     {{ t('ঠিক এই পরিমাণ') }}
                                 </p>
                                 <p
@@ -800,7 +800,7 @@ const STATUS_WORD: Record<string, string> = {
                         />
                         <p
                             v-if="state.session.qr"
-                            class="mt-2 flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-brand-ink"
+                            class="mt-2 flex items-center justify-center gap-1.5 text-[13.5px] font-semibold text-brand-ink"
                         >
                             <KIcon name="lock" :size="13" />{{
                                 t(
@@ -813,7 +813,7 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
                         <p
                             v-if="state.session.qr && state.session.charge"
-                            class="mt-1 text-[12px] text-ink-3"
+                            class="mt-1 text-[13px] text-ink-3"
                         >
                             {{
                                 t('এর মধ্যে {charge} payment charge।', {
@@ -823,7 +823,7 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
                         <p
                             v-if="state.session.qr && state.session.extra > 0"
-                            class="mt-1 text-[12px] text-wait"
+                            class="mt-1 text-[13px] text-wait"
                         >
                             {{
                                 t(
@@ -834,17 +834,17 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
                         <p
                             v-if="sessionMethod.merchant"
-                            class="mt-2 text-[12.5px] text-ink-2"
+                            class="mt-2 text-[13.5px] text-ink-2"
                         >
                             {{ sessionMethod.merchant }}
                         </p>
                     </div>
 
-                    <ol class="mt-4 space-y-2 text-[13px] text-ink-2">
+                    <ol class="mt-4 space-y-2 text-[14px] text-ink-2">
                         <template v-if="state.session.method === 'qr'">
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[11px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
                                     >1</span
                                 >
                                 {{
@@ -855,7 +855,7 @@ const STATUS_WORD: Record<string, string> = {
                             </li>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[11px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
                                     >2</span
                                 >
                                 {{
@@ -868,7 +868,7 @@ const STATUS_WORD: Record<string, string> = {
                         <template v-else>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[11px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
                                     >1</span
                                 >
                                 {{
@@ -880,7 +880,7 @@ const STATUS_WORD: Record<string, string> = {
                             </li>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[11px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
                                     >2</span
                                 >
                                 {{
@@ -891,7 +891,7 @@ const STATUS_WORD: Record<string, string> = {
                             </li>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[11px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
                                     >3</span
                                 >
                                 {{
@@ -917,7 +917,7 @@ const STATUS_WORD: Record<string, string> = {
 
                     <div
                         v-if="state.auto"
-                        class="mt-4 flex items-center justify-between rounded-xl bg-sunken px-4 py-3 text-[13px]"
+                        class="mt-4 flex items-center justify-between rounded-xl bg-sunken px-4 py-3 text-[14px]"
                     >
                         <span class="flex items-center gap-2.5"
                             ><span class="relative flex size-2.5"
@@ -926,14 +926,14 @@ const STATUS_WORD: Record<string, string> = {
                                     class="relative inline-flex size-2.5 rounded-full bg-brand" /></span
                             >{{ t('পেমেন্টের অপেক্ষায়…') }}</span
                         >
-                        <span class="num text-[12px] text-ink-3">{{
+                        <span class="num text-[13px] text-ink-3">{{
                             clock
                         }}</span>
                     </div>
 
                     <details class="mt-4" :open="!state.auto || claimOpen">
                         <summary
-                            class="cursor-pointer text-[12.5px] font-semibold text-ink-2 hover:text-ink"
+                            class="cursor-pointer text-[13.5px] font-semibold text-ink-2 hover:text-ink"
                         >
                             {{
                                 state.auto
@@ -988,7 +988,7 @@ const STATUS_WORD: Record<string, string> = {
                     </details>
                     <!-- Bottom of the card, level with the invoice's own footer. -->
                     <p
-                        class="mt-5 flex items-center gap-2 border-t border-line pt-4 text-[12px] text-ink-3 lg:mt-auto"
+                        class="mt-5 flex items-center gap-2 border-t border-line pt-4 text-[13px] text-ink-3 lg:mt-auto"
                     >
                         <KIcon
                             name="lock"
@@ -1017,7 +1017,7 @@ const STATUS_WORD: Record<string, string> = {
                     </h2>
                     <ol
                         v-if="keys.length"
-                        class="mt-3 grid grid-cols-3 gap-2 text-center text-[11.5px] leading-tight text-ink-3"
+                        class="mt-3 grid grid-cols-3 gap-2 text-center text-[12.5px] leading-tight text-ink-3"
                     >
                         <li
                             v-for="(step, i) in [
@@ -1029,7 +1029,7 @@ const STATUS_WORD: Record<string, string> = {
                             class="flex flex-col items-center gap-1"
                         >
                             <span
-                                class="grid size-6 place-items-center rounded-full text-[12px] font-bold"
+                                class="grid size-6 place-items-center rounded-full text-[13px] font-bold"
                                 :class="
                                     i === 0 || (i === 1 && chosen)
                                         ? 'bg-brand text-white'
@@ -1042,7 +1042,7 @@ const STATUS_WORD: Record<string, string> = {
 
                     <p
                         v-if="state.checking"
-                        class="mt-3 flex items-center gap-2 rounded-lg bg-wait-soft px-3 py-2 text-[12.5px] text-wait"
+                        class="mt-3 flex items-center gap-2 rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait"
                     >
                         <KIcon name="clock" :size="15" />{{
                             t(
@@ -1051,7 +1051,7 @@ const STATUS_WORD: Record<string, string> = {
                         }}
                     </p>
 
-                    <p v-if="!keys.length" class="mt-3 text-[13px] text-ink-2">
+                    <p v-if="!keys.length" class="mt-3 text-[14px] text-ink-2">
                         {{
                             t(
                                 'পেমেন্টের উপায় জানতে {name}-এর সাথে যোগাযোগ করুন।',
@@ -1084,7 +1084,7 @@ const STATUS_WORD: Record<string, string> = {
 
                     <p
                         v-if="keys.length"
-                        class="mt-5 mb-2 text-[13px] font-semibold text-ink"
+                        class="mt-5 mb-2 text-[14px] font-semibold text-ink"
                     >
                         {{ t('১. কীভাবে দেবেন?') }}
                     </p>
@@ -1099,7 +1099,7 @@ const STATUS_WORD: Record<string, string> = {
                             ]"
                             :key="key"
                             type="button"
-                            class="flex min-h-16 items-center gap-3 rounded-xl border-2 px-3.5 py-3 text-left text-[14.5px] font-semibold transition-colors"
+                            class="flex min-h-16 items-center gap-3 rounded-xl border-2 px-3.5 py-3 text-left text-[15.5px] font-semibold transition-colors"
                             :class="
                                 chosen === key
                                     ? 'border-brand bg-brand-soft'
@@ -1122,12 +1122,12 @@ const STATUS_WORD: Record<string, string> = {
                                 class="flex min-w-0 flex-1 flex-col leading-tight"
                                 >{{ methods[key].label
                                 }}<span
-                                    class="mt-0.5 truncate text-[12px] font-medium text-ink-3"
+                                    class="mt-0.5 truncate text-[13px] font-medium text-ink-3"
                                     >{{ howTo(key) }}</span
                                 ></span
                             ><span
                                 v-if="state.charges?.[key]"
-                                class="shrink-0 rounded-full bg-wait-soft px-2 py-0.5 text-[11px] font-semibold text-wait"
+                                class="shrink-0 rounded-full bg-wait-soft px-2 py-0.5 text-[12px] font-semibold text-wait"
                                 >+{{ bdt(state.charges[key]) }}</span
                             >
                         </button>
@@ -1138,14 +1138,14 @@ const STATUS_WORD: Record<string, string> = {
                         v-if="needsPayer(chosen) && !state.session"
                         class="mt-5 rounded-2xl border border-brand/40 bg-brand-soft p-4"
                     >
-                        <p class="text-[14px] font-bold text-ink">
+                        <p class="text-[15px] font-bold text-ink">
                             {{
                                 t('২. আপনার {wallet} নম্বর দিন', {
                                     wallet: method?.label ?? '',
                                 })
                             }}
                         </p>
-                        <p class="mt-0.5 text-[12.5px] text-ink-2">
+                        <p class="mt-0.5 text-[13.5px] text-ink-2">
                             {{
                                 t(
                                     'যে নম্বর থেকে আপনি টাকা পাঠাবেন — আপনার নিজের নম্বর। এটা দিলে টাকা পাঠানোর সাথে সাথে নিজে থেকে মিলে যাবে।',
@@ -1155,7 +1155,7 @@ const STATUS_WORD: Record<string, string> = {
 
                         <!-- Which way the money goes: from your number, to ours. -->
                         <div
-                            class="mt-3 flex items-center gap-2 rounded-xl bg-surface p-2.5 text-[12px]"
+                            class="mt-3 flex items-center gap-2 rounded-xl bg-surface p-2.5 text-[13px]"
                         >
                             <span
                                 class="min-w-0 flex-1 rounded-lg border-2 border-brand bg-brand-soft px-2.5 py-1.5"
@@ -1220,7 +1220,7 @@ const STATUS_WORD: Record<string, string> = {
                         >
                     </div>
 
-                    <p v-if="error" class="mt-3 text-[12.5px] text-out">
+                    <p v-if="error" class="mt-3 text-[13.5px] text-out">
                         {{ error }}
                     </p>
 
@@ -1229,7 +1229,7 @@ const STATUS_WORD: Record<string, string> = {
                         v-if="chosen === 'bank' && method"
                         class="mt-5 border-t border-line pt-4"
                     >
-                        <p class="text-[13px] text-ink-2">
+                        <p class="text-[14px] text-ink-2">
                             {{
                                 t(
                                     '{amount} এই account-এ পাঠান (NPSB / BEFTN / RTGS):',
@@ -1244,7 +1244,7 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
                         <p
                             v-if="state.charges?.bank"
-                            class="mt-1 text-[12px] text-ink-3"
+                            class="mt-1 text-[13px] text-ink-3"
                         >
                             {{
                                 t('বাকি {due} + {charge} payment charge।', {
@@ -1254,7 +1254,7 @@ const STATUS_WORD: Record<string, string> = {
                             }}
                         </p>
                         <dl
-                            class="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-line p-4 text-[13px]"
+                            class="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-line p-4 text-[14px]"
                         >
                             <div
                                 v-for="[label, value] in [
@@ -1275,7 +1275,7 @@ const STATUS_WORD: Record<string, string> = {
                                 </dd>
                             </div>
                         </dl>
-                        <p class="mt-2 text-[12px] text-ink-3">
+                        <p class="mt-2 text-[13px] text-ink-3">
                             {{
                                 t('Reference-এ লিখুন: {number}', {
                                     number: invoice.number,
@@ -1287,7 +1287,7 @@ const STATUS_WORD: Record<string, string> = {
                             class="mt-4 grid grid-cols-1 gap-3"
                             @submit.prevent="sendClaim"
                         >
-                            <p class="text-[13px] font-semibold">
+                            <p class="text-[14px] font-semibold">
                                 {{ t('পাঠানোর পর জানান') }}
                             </p>
                             <KField
@@ -1330,7 +1330,7 @@ const STATUS_WORD: Record<string, string> = {
                     </div>
                     <!-- Bottom of the card, level with the invoice's own footer. -->
                     <p
-                        class="mt-5 flex items-center gap-2 border-t border-line pt-4 text-[12px] text-ink-3 lg:mt-auto"
+                        class="mt-5 flex items-center gap-2 border-t border-line pt-4 text-[13px] text-ink-3 lg:mt-auto"
                     >
                         <KIcon
                             name="lock"
@@ -1349,7 +1349,7 @@ const STATUS_WORD: Record<string, string> = {
                 <section v-if="state.payments.length" class="panel p-5">
                     <h2 class="text-[16px] font-bold">{{ t('পেমেন্ট') }}</h2>
                     <ul
-                        class="mt-2 divide-y divide-dashed divide-line text-[13px]"
+                        class="mt-2 divide-y divide-dashed divide-line text-[14px]"
                     >
                         <li
                             v-for="p in state.payments"
@@ -1359,7 +1359,7 @@ const STATUS_WORD: Record<string, string> = {
                             <span class="min-w-0">
                                 <span class="font-medium">{{ p.method }}</span>
                                 <span
-                                    class="num block truncate text-[11.5px] text-ink-3"
+                                    class="num block truncate text-[12.5px] text-ink-3"
                                     >{{ niceDate(p.at.slice(0, 10))
                                     }}<template v-if="p.reference">
                                         · {{ p.reference }}</template
@@ -1371,7 +1371,7 @@ const STATUS_WORD: Record<string, string> = {
                                     bdt(p.amount)
                                 }}</span>
                                 <span
-                                    class="block text-[11.5px]"
+                                    class="block text-[12.5px]"
                                     :class="
                                         p.status === 'verified'
                                             ? 'text-in'
@@ -1389,7 +1389,7 @@ const STATUS_WORD: Record<string, string> = {
         </main>
 
         <footer
-            class="no-print mx-auto max-w-[1080px] px-4 pb-10 text-[11.5px] text-ink-3 sm:px-6"
+            class="no-print mx-auto max-w-[1080px] px-4 pb-10 text-[12.5px] text-ink-3 sm:px-6"
         >
             {{
                 t('প্রশ্ন থাকলে {name}-এর সাথে যোগাযোগ করুন', {
@@ -1438,7 +1438,7 @@ const STATUS_WORD: Record<string, string> = {
                         <h2 class="mt-4 text-[22px] font-bold">
                             {{ t('অভিনন্দন!') }}
                         </h2>
-                        <p class="mt-1 text-[14.5px] text-ink-2">
+                        <p class="mt-1 text-[15.5px] text-ink-2">
                             {{ t('আপনার পুরো পেমেন্ট আমরা পেয়েছি।') }}
                         </p>
                         <p class="num mt-3 text-[32px] font-bold text-ink">
@@ -1446,7 +1446,7 @@ const STATUS_WORD: Record<string, string> = {
                         </p>
                     </div>
                     <dl
-                        class="grid grid-cols-1 gap-2 px-7 py-5 text-left text-[13px]"
+                        class="grid grid-cols-1 gap-2 px-7 py-5 text-left text-[14px]"
                     >
                         <div class="flex justify-between gap-3">
                             <dt class="text-ink-3">Invoice</dt>
@@ -1498,7 +1498,7 @@ const STATUS_WORD: Record<string, string> = {
                         <KButton block icon="print" @click="printReceipt">{{
                             t('Download / Print')
                         }}</KButton>
-                        <p class="mt-2 text-[12px] text-ink-3">
+                        <p class="mt-2 text-[13px] text-ink-3">
                             {{
                                 t('{name}-এর সাথে থাকার জন্য ধন্যবাদ।', {
                                     name: business.name,

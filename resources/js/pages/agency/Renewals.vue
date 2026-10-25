@@ -87,7 +87,7 @@ const options = computed<Option[]>(() => [
         <div v-else class="overflow-x-auto">
             <table
                 v-stack
-                class="stack ledger w-full min-w-[720px] text-[13px]"
+                class="stack ledger w-full min-w-[720px] text-[14px]"
             >
                 <thead>
                     <tr>
@@ -106,7 +106,7 @@ const options = computed<Option[]>(() => [
                                 class="block truncate font-medium hover:text-brand"
                                 >{{ r.campaign }}</Link
                             >
-                            <span class="text-[12px] text-ink-3">{{
+                            <span class="text-[13px] text-ink-3">{{
                                 r.client
                             }}</span>
                         </td>
@@ -117,7 +117,7 @@ const options = computed<Option[]>(() => [
                             {{ r.days ?? '—' }}
                             <span
                                 v-if="r.usd"
-                                class="block text-[11.5px] text-ink-3"
+                                class="block text-[12.5px] text-ink-3"
                                 >{{ money(r.usd, 'usd') }}</span
                             >
                         </td>
@@ -131,7 +131,7 @@ const options = computed<Option[]>(() => [
                             <span v-else>—</span>
                             <span
                                 v-if="r.invoice"
-                                class="block text-[11.5px] text-ink-3"
+                                class="block text-[12.5px] text-ink-3"
                                 >{{ r.invoice.total }}</span
                             >
                         </td>

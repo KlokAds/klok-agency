@@ -68,7 +68,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                 <h2 class="dash-title">
                     {{ t('Client-দের হিসাব') }}
                 </h2>
-                <p class="mt-0.5 text-[12.5px] text-ink-3">
+                <p class="mt-0.5 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'আগাম যা দিয়েছে, campaign-এ যা খরচ হয়েছে, কত বাকি — আর Meta এখনো card থেকে কত কাটবে।',
@@ -104,7 +104,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                         <KTag :tone="c.tag.tone">{{ c.tag.label }}</KTag>
                     </div>
                     <dl
-                        class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[12.5px]"
+                        class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[13.5px]"
                     >
                         <div class="flex justify-between gap-2">
                             <dt class="text-ink-3">{{ t('আগাম credit') }}</dt>
@@ -112,7 +112,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.credit_usd)
                                 }}<span
                                     v-if="c.credit_bdt"
-                                    class="block text-[11px] text-ink-3"
+                                    class="block text-[12px] text-ink-3"
                                     >{{ money(c.credit_bdt, 'bdt') }}</span
                                 >
                             </dd>
@@ -123,7 +123,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.spent_usd)
                                 }}<span
                                     v-if="c.spent_bdt"
-                                    class="block text-[11px] text-ink-3"
+                                    class="block text-[12px] text-ink-3"
                                     >{{ money(c.spent_bdt, 'bdt') }}</span
                                 >
                             </dd>
@@ -169,7 +169,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                     </dl>
                     <p
                         v-if="c.unearned > 0 || c.pending_cost > 0"
-                        class="mt-1.5 text-[12px] text-ink-3"
+                        class="mt-1.5 text-[13px] text-ink-3"
                     >
                         <template v-if="c.unearned > 0">{{
                             t('আগাম টাকা জমা {amount}', {
@@ -207,7 +207,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                     class="group flex items-center gap-2.5 font-medium"
                                 >
                                     <span
-                                        class="grid size-7 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-[12px] font-semibold text-ink-2"
+                                        class="grid size-7 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-[13px] font-semibold text-ink-2"
                                         >{{ c.name.charAt(0) }}</span
                                     >
                                     <span
@@ -220,7 +220,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.credit_usd) }}
                                 <span
                                     v-if="c.credit_bdt"
-                                    class="block text-[11.5px] text-ink-3"
+                                    class="block text-[12.5px] text-ink-3"
                                     >{{ money(c.credit_bdt, 'bdt') }}</span
                                 >
                             </td>
@@ -228,7 +228,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.spent_usd) }}
                                 <span
                                     v-if="c.spent_bdt"
-                                    class="block text-[11.5px] text-ink-3"
+                                    class="block text-[12.5px] text-ink-3"
                                     >{{ money(c.spent_bdt, 'bdt') }}</span
                                 >
                             </td>
@@ -244,13 +244,13 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 }}</span>
                                 <span
                                     v-if="c.unearned > 0"
-                                    class="num block text-[11.5px] text-ink-3"
+                                    class="num block text-[12.5px] text-ink-3"
                                     >{{ money(c.unearned, 'bdt') }}
                                     {{ t('জমা') }}</span
                                 >
                                 <span
                                     v-else-if="c.pending_cost > 0"
-                                    class="num block text-[11.5px] text-ink-3"
+                                    class="num block text-[12.5px] text-ink-3"
                                     >{{
                                         t('কেনা দামে {amount}', {
                                             amount: money(
@@ -275,7 +275,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                             : t('Credit শেষ')
                                     }}
                                     <span
-                                        class="block text-[11.5px] font-normal text-ink-3"
+                                        class="block text-[12.5px] font-normal text-ink-3"
                                         >{{
                                             t('রোজ {amount}', {
                                                 amount: money(
@@ -319,7 +319,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(total.credit) }}
                                 <span
                                     v-if="total.creditBdt"
-                                    class="block text-[11.5px] text-ink-3"
+                                    class="block text-[12.5px] text-ink-3"
                                     >{{ money(total.creditBdt, 'bdt') }}</span
                                 >
                             </td>
@@ -329,7 +329,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(total.spent) }}
                                 <span
                                     v-if="total.spentBdt"
-                                    class="block text-[11.5px] text-ink-3"
+                                    class="block text-[12.5px] text-ink-3"
                                     >{{ money(total.spentBdt, 'bdt') }}</span
                                 >
                             </td>
@@ -339,7 +339,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(total.held) }}
                                 <span
                                     v-if="total.owed"
-                                    class="block text-[11.5px] text-out"
+                                    class="block text-[12.5px] text-out"
                                     >{{ t('পাওনা') }}
                                     {{ money(-total.owed, 'usd') }}</span
                                 >
@@ -358,7 +358,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
 
             <!-- Phone totals -->
             <dl
-                class="mx-4 mb-4 rounded-xl bg-surface-2 px-4 py-2 text-[13px] md:hidden"
+                class="mx-4 mb-4 rounded-xl bg-surface-2 px-4 py-2 text-[14px] md:hidden"
             >
                 <div class="flex justify-between border-b border-line py-1.5">
                     <dt class="text-ink-2">{{ t('মোট বাকি credit') }}</dt>

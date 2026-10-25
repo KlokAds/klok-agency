@@ -117,7 +117,7 @@ const tip = computed(() =>
                         :x="c.cx"
                         :y="H - 8"
                         text-anchor="middle"
-                        class="fill-ink-3 text-[11px]"
+                        class="fill-ink-3 text-[12px]"
                         font-family="var(--font-sans)"
                     >
                         {{ c.label }}
@@ -146,7 +146,7 @@ const tip = computed(() =>
 
             <div
                 v-if="tip"
-                class="popover pointer-events-none absolute z-10 w-52 -translate-x-1/2 px-3.5 py-3 text-[12.5px]"
+                class="popover pointer-events-none absolute z-10 w-52 -translate-x-1/2 px-3.5 py-3 text-[13.5px]"
                 :style="{
                     left: `${Math.min(Math.max((tip.cx / W) * 100, 18), 82)}%`,
                     top: '0',
@@ -186,7 +186,7 @@ const tip = computed(() =>
         </div>
 
         <div
-            class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-3"
+            class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-3"
         >
             <span class="flex items-center gap-1.5"
                 ><span class="size-2.5 rounded-[3px] bg-brand" />

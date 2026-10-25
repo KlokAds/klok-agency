@@ -105,7 +105,7 @@ const diff = computed(() =>
 
                 <div
                     v-if="diff !== null"
-                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-[14px] font-medium"
+                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium"
                     :class="
                         diff === 0
                             ? 'bg-in-soft text-in'
@@ -176,11 +176,11 @@ const diff = computed(() =>
                     </thead>
                     <tbody>
                         <tr v-for="h in history.data" :key="h.id">
-                            <td class="num text-[12.5px]">
+                            <td class="num text-[13.5px]">
                                 {{ niceDate(h.date)
                                 }}<span
                                     v-if="h.note"
-                                    class="block font-sans text-[12px] text-ink-3"
+                                    class="block font-sans text-[13px] text-ink-3"
                                     >{{ h.note }}</span
                                 >
                             </td>
@@ -200,7 +200,7 @@ const diff = computed(() =>
                                           })
                                 }}
                             </td>
-                            <td class="text-[13px] text-ink-2">{{ h.by }}</td>
+                            <td class="text-[14px] text-ink-2">{{ h.by }}</td>
                         </tr>
                     </tbody>
                 </table>

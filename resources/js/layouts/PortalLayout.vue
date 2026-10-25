@@ -7,6 +7,7 @@ import OpenInApp from '@/components/OpenInApp.vue';
 import KFeedbackHost from '@/components/k/KFeedbackHost.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import { useAppearance } from '@/composables/useAppearance';
+import { useLiveRefresh } from '@/composables/useLiveRefresh';
 import { usePopover } from '@/composables/usePopover';
 import { locale, switchLocale, t } from '@/lib/i18n';
 import { forgetPages, offline, startOffline } from '@/lib/offline';
@@ -73,6 +74,9 @@ async function logout(): Promise<void> {
 }
 
 // No internet: pages already opened still open, read from the phone.
+// Figures keep up by themselves: fetched again every minute, and when the app comes back.
+useLiveRefresh();
+
 onMounted(() =>
     startOffline(
         () => null,
@@ -101,7 +105,7 @@ onMounted(() =>
                         v-for="tab in tabs"
                         :key="tab.href"
                         :href="tab.href"
-                        class="rounded-lg px-3 py-2 text-[14px] font-semibold transition-colors"
+                        class="rounded-lg px-3 py-2 text-[15px] font-semibold transition-colors"
                         :class="
                             active(tab.href)
                                 ? 'bg-brand-soft text-brand'
@@ -114,26 +118,30 @@ onMounted(() =>
                 <Link
                     v-if="linked"
                     href="/portal/notifications"
-                    class="relative grid size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken"
-                    :aria-label="t('Notification')"
+                    class="flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-2 hover:bg-sunken"
                 >
-                    <KIcon name="bell" />
-                    <span
-                        v-if="unread > 0"
-                        class="absolute top-1 right-1 grid min-w-4 place-items-center rounded-full bg-out px-1 text-[10px] font-bold text-white"
-                        >{{ unread > 9 ? '9+' : unread }}</span
-                    >
+                    <span class="relative">
+                        <KIcon name="bell" :size="16" />
+                        <span
+                            v-if="unread > 0"
+                            class="absolute -top-1.5 -right-2.5 grid min-w-4 place-items-center rounded-full bg-out px-1 text-[11px] font-bold text-white"
+                            >{{ unread > 9 ? '9+' : unread }}</span
+                        >
+                    </span>
+                    <span class="text-[13px] leading-none">{{
+                        t('Notification')
+                    }}</span>
                 </Link>
                 <button
                     type="button"
-                    class="hidden h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken sm:block"
+                    class="hidden h-10 rounded-lg px-2.5 text-[14px] font-bold text-ink-2 hover:bg-sunken sm:block"
                     @click="switchLocale(locale === 'en' ? 'bn' : 'en')"
                 >
                     {{ otherLanguage }}
                 </button>
                 <button
                     type="button"
-                    class="hidden size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken sm:grid"
+                    class="hidden h-10 min-w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-2 hover:bg-sunken sm:flex"
                     :aria-label="
                         resolvedAppearance === 'dark'
                             ? 'Light mode'
@@ -147,12 +155,16 @@ onMounted(() =>
                 >
                     <KIcon
                         :name="resolvedAppearance === 'dark' ? 'sun' : 'moon'"
+                        :size="16"
                     />
+                    <span class="text-[13px] leading-none">{{
+                        resolvedAppearance === 'dark' ? 'Light' : 'Dark'
+                    }}</span>
                 </button>
                 <div ref="menuAnchor">
                     <button
                         type="button"
-                        class="relative grid size-9 place-items-center rounded-lg bg-ink text-[13px] font-bold text-paper"
+                        class="relative grid size-9 place-items-center rounded-lg bg-ink text-[14px] font-bold text-paper"
                         :aria-label="t('আমার account')"
                         @click="menu.toggle()"
                     >
@@ -170,17 +182,17 @@ onMounted(() =>
                             class="popover k-rise w-64 p-1.5"
                         >
                             <div class="px-3 py-2.5">
-                                <p class="text-[13.5px] font-semibold">
+                                <p class="text-[14.5px] font-semibold">
                                     {{ user?.name }}
                                 </p>
-                                <p class="truncate text-[12px] text-ink-3">
+                                <p class="truncate text-[13px] text-ink-3">
                                     {{ user?.email }}
                                 </p>
                             </div>
                             <div class="my-1 h-px bg-line" />
                             <Link
                                 href="/settings/profile"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="menu.close()"
                                 ><KIcon
                                     name="user"
@@ -189,13 +201,13 @@ onMounted(() =>
                                 />Profile</Link
                             >
                             <p
-                                class="px-3 pt-2.5 pb-1 text-[11px] font-bold tracking-wide text-ink-3 uppercase"
+                                class="px-3 pt-2.5 pb-1 text-[12px] font-bold tracking-wide text-ink-3 uppercase"
                             >
                                 {{ t('নিরাপত্তা') }}
                             </p>
                             <Link
                                 href="/settings/security"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="menu.close()"
                             >
                                 <KIcon
@@ -204,7 +216,7 @@ onMounted(() =>
                                     class="text-ink-3"
                                 />{{ t('Password ও 2FA') }}
                                 <span
-                                    class="ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                                    class="ml-auto rounded-full px-2 py-0.5 text-[12px] font-semibold"
                                     :class="
                                         twoFactorOff
                                             ? 'bg-wait-soft text-wait'
@@ -220,7 +232,7 @@ onMounted(() =>
                             <button
                                 v-if="inApp"
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="
                                     menu.close();
                                     appSettings();
@@ -238,7 +250,7 @@ onMounted(() =>
                                 :href="whatsapp"
                                 target="_blank"
                                 rel="noopener"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="menu.close()"
                                 ><KIcon
                                     name="chat"
@@ -248,7 +260,7 @@ onMounted(() =>
                             >
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="
                                     menu.close();
                                     feedback = true;
@@ -263,20 +275,20 @@ onMounted(() =>
                             <div class="my-1 h-px bg-line" />
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken sm:hidden"
                                 @click="
                                     menu.close();
                                     switchLocale(locale === 'en' ? 'bn' : 'en');
                                 "
                             >
                                 <span
-                                    class="grid w-4 place-items-center text-[11px] font-bold text-ink-3"
+                                    class="grid w-4 place-items-center text-[12px] font-bold text-ink-3"
                                     >{{ otherLanguage }}</span
                                 >{{ switchLabel }}
                             </button>
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken sm:hidden"
                                 @click="
                                     updateAppearance(
                                         resolvedAppearance === 'dark'
@@ -301,7 +313,7 @@ onMounted(() =>
                             </button>
                             <button
                                 type="button"
-                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] text-out hover:bg-out-soft"
+                                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] text-out hover:bg-out-soft"
                                 @click="logout"
                             >
                                 <KIcon name="out" :size="16" />Sign out
@@ -316,7 +328,7 @@ onMounted(() =>
         <main class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
             <p
                 v-if="!offline.online"
-                class="mb-4 rounded-xl border border-wait/40 bg-wait/10 px-4 py-2.5 text-[13.5px] font-semibold"
+                class="mb-4 rounded-xl border border-wait/40 bg-wait/10 px-4 py-2.5 text-[14.5px] font-semibold"
                 role="status"
             >
                 {{ t('নেট নেই — আগে খোলা পাতা দেখা যাচ্ছে') }}
@@ -333,7 +345,7 @@ onMounted(() =>
                 v-for="tab in tabs"
                 :key="tab.href"
                 :href="tab.href"
-                class="flex flex-col items-center gap-0.5 py-2.5 text-[11.5px] font-semibold"
+                class="flex flex-col items-center gap-0.5 py-2.5 text-[12.5px] font-semibold"
                 :class="active(tab.href) ? 'text-brand' : 'text-ink-3'"
                 ><KIcon :name="tab.icon" :size="21" />{{ t(tab.label) }}</Link
             >

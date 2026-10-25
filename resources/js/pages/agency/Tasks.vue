@@ -205,7 +205,7 @@ onMounted(() => {
                 </button>
                 <div class="min-w-0 flex-1">
                     <p
-                        class="text-[14px] font-semibold"
+                        class="text-[15px] font-semibold"
                         :class="task.done_at && 'text-ink-3 line-through'"
                     >
                         <span v-if="task.client" class="text-brand-ink"
@@ -214,7 +214,7 @@ onMounted(() => {
                         {{ t(task.title) }}
                     </p>
                     <p
-                        class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-3"
+                        class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-3"
                     >
                         <span class="flex items-center gap-1">
                             <KIcon
@@ -241,7 +241,7 @@ onMounted(() => {
                             >{{ task.ad_run }}</Link
                         >
                     </p>
-                    <p v-if="task.notes" class="mt-1 text-[12.5px] text-ink-2">
+                    <p v-if="task.notes" class="mt-1 text-[13.5px] text-ink-2">
                         {{ task.notes }}
                     </p>
                 </div>
@@ -253,20 +253,24 @@ onMounted(() => {
                     <button
                         v-if="can['tasks.edit'] && !task.auto"
                         type="button"
-                        class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
-                        :aria-label="t('বদলান')"
+                        class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
                         @click="startEdit(task)"
                     >
-                        <KIcon name="pen" :size="16" />
+                        <KIcon name="pen" :size="15" />
+                        <span class="text-[13px] leading-none">{{
+                            t('বদলান')
+                        }}</span>
                     </button>
                     <button
                         v-if="can['tasks.delete']"
                         type="button"
-                        class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
-                        :aria-label="t('মুছুন')"
+                        class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
                         @click="remove(task)"
                     >
-                        <KIcon name="bin" :size="16" />
+                        <KIcon name="bin" :size="15" />
+                        <span class="text-[13px] leading-none">{{
+                            t('মুছুন')
+                        }}</span>
                     </button>
                 </div>
             </li>

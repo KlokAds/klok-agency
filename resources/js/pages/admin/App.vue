@@ -110,7 +110,7 @@ function phone(agent: string | null): string {
             icon="bell"
         >
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <span class="text-[13.5px] font-medium">{{ t('অবস্থা') }}</span>
+                <span class="text-[14.5px] font-medium">{{ t('অবস্থা') }}</span>
                 <KTag :tone="firebase ? 'in' : 'neutral'">{{
                     firebase ? firebase.project : t('দেওয়া নেই')
                 }}</KTag>
@@ -171,7 +171,7 @@ function phone(agent: string | null): string {
                 >
                     <div class="min-w-0 flex-1">
                         <p
-                            class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] font-medium"
+                            class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-medium"
                         >
                             <span :class="!d.user && 'text-ink-3'">{{
                                 d.user ?? t('Login করা নেই')
@@ -183,7 +183,7 @@ function phone(agent: string | null): string {
                                 t('পৌঁছাচ্ছে না')
                             }}</KTag>
                         </p>
-                        <p class="text-[12.5px] text-ink-3">
+                        <p class="text-[13.5px] text-ink-3">
                             {{ phone(d.device) }} ·
                             <span class="num">v{{ d.version }}</span>
                             <template v-if="d.last_seen_at">
@@ -205,12 +205,12 @@ function phone(agent: string | null): string {
                     >
                 </li>
             </ul>
-            <p v-else class="text-[13.5px] text-ink-3">
+            <p v-else class="text-[14.5px] text-ink-3">
                 {{ t('এখনো কোনো phone-এ app নেই।') }}
             </p>
             <p
                 v-if="smsLastSeen"
-                class="flex items-center gap-1.5 text-[12.5px] text-ink-3"
+                class="flex items-center gap-1.5 text-[13.5px] text-ink-3"
             >
                 <KIcon name="mail" :size="14" />
                 {{ t('শেষ SMS এসেছে') }} {{ ago(smsLastSeen) }}
@@ -272,14 +272,14 @@ function phone(agent: string | null): string {
                 class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"
             >
                 <div class="min-w-0">
-                    <p class="text-[13.5px] font-medium">
+                    <p class="text-[14.5px] font-medium">
                         {{
                             r.flavor === 'sms'
                                 ? t('SMS-সহ app (শুধু Owner-এর phone)')
                                 : t('সাধারণ app (সবার জন্য)')
                         }}
                     </p>
-                    <p class="text-[12.5px] text-ink-3">
+                    <p class="text-[13.5px] text-ink-3">
                         <template v-if="r.version">
                             <span class="num">v{{ r.version }}</span>
                             <template v-if="r.at"> · {{ ago(r.at) }}</template>
@@ -302,7 +302,7 @@ function phone(agent: string | null): string {
             </div>
             <p
                 v-if="releases.some((r) => r.flavor === 'sms')"
-                class="text-[12.5px] leading-relaxed text-ink-3"
+                class="text-[13.5px] leading-relaxed text-ink-3"
             >
                 {{
                     t(

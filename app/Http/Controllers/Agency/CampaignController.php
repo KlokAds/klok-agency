@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
+use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Services\CampaignBilling;
 use App\Services\CampaignLimits;
+use App\Services\CampaignStats;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
 use App\Support\Lookups;
@@ -121,6 +123,39 @@ class CampaignController extends Controller
             'filters' => ['q' => $filters['q'] ?? null, 'status' => $status],
             'synced_at' => Setting::get('pilot_spend_synced_at'),
             'options' => ['clients' => Lookups::clients(true)],
+        ]);
+    }
+
+    /** One campaign's numbers for the team: spend, results and clicks over a period, day by day. */
+    public function show(Request $request, Campaign $campaign): Response
+    {
+        $campaign->load(['account:id,name,platform,currency,problem', 'client:id,name']);
+        [$from, $to, $range] = CampaignStats::range($request, CampaignStats::firstDay([$campaign->id]), '7d');
+        $days = CampaignDay::where('campaign_id', $campaign->id)->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->orderBy('day')->get();
+
+        return Inertia::render('agency/Campaign', [
+            'campaign' => [
+                'id' => $campaign->id,
+                'name' => $campaign->name,
+                'account' => $campaign->account?->name,
+                'client' => $campaign->client ? ['id' => $campaign->client->id, 'name' => $campaign->client->name] : null,
+                'live' => $campaign->isLive(),
+                'ended' => $campaign->hasEnded(),
+                'state' => $campaign->client_id !== null ? $campaign->clientState() : null,
+                'stops' => $campaign->stopsText(),
+                'started' => $campaign->start_at?->setTimezone(config('app.timezone'))->format('j M Y'),
+                'budget' => $campaign->dailyBudget(),
+                'spend_cap' => $campaign->spend_cap,
+                'currency' => strtoupper((string) ($campaign->account->currency ?? 'USD')),
+                'result_name' => $campaign->resultName(),
+                'bill_from' => $campaign->bill_from?->format('j M Y'),
+                'spend_total' => $campaign->spend_total,
+            ],
+            'range' => ['key' => $range, 'from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'totals' => CampaignStats::totals($days),
+            'series' => CampaignStats::series($days, $from, $to),
+            'days' => CampaignStats::dayRows($days),
+            'synced_at' => Setting::get('pilot_spend_synced_at'),
         ]);
     }
 

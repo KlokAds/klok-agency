@@ -159,7 +159,7 @@ function copy(text: string): void {
             icon="signal"
         >
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <span class="text-[13.5px] font-medium">{{ t('অবস্থা') }}</span>
+                <span class="text-[14.5px] font-medium">{{ t('অবস্থা') }}</span>
                 <KTag :tone="settings.pilot_connected ? 'in' : 'neutral'">{{
                     settings.pilot_connected ? t('যুক্ত') : t('যুক্ত নয়')
                 }}</KTag>
@@ -201,7 +201,7 @@ function copy(text: string): void {
             </form>
             <ul
                 v-if="accounts"
-                class="rounded-lg border border-line text-[13px]"
+                class="rounded-lg border border-line text-[14px]"
             >
                 <li
                     v-for="a in accounts"
@@ -259,7 +259,7 @@ function copy(text: string): void {
             />
             <p
                 v-if="settings.credit_guard_error"
-                class="rounded-lg border border-out/30 bg-out-soft px-3 py-2 text-[12.5px] text-out"
+                class="rounded-lg border border-out/30 bg-out-soft px-3 py-2 text-[13.5px] text-out"
             >
                 {{ settings.credit_guard_error }}
             </p>
@@ -284,7 +284,7 @@ function copy(text: string): void {
         >
             <div v-if="tick.url" class="flex flex-wrap items-center gap-2">
                 <code
-                    class="num min-w-0 flex-1 truncate rounded-lg bg-sunken px-3 py-2 text-[12.5px]"
+                    class="num min-w-0 flex-1 truncate rounded-lg bg-sunken px-3 py-2 text-[13.5px]"
                     >{{ tick.url }}</code
                 >
                 <KButton
@@ -295,7 +295,7 @@ function copy(text: string): void {
                     >Copy</KButton
                 >
             </div>
-            <p class="flex items-center gap-1.5 text-[13px] text-ink-3">
+            <p class="flex items-center gap-1.5 text-[14px] text-ink-3">
                 <KIcon
                     :name="tick.last ? 'check' : 'clock'"
                     :size="14"

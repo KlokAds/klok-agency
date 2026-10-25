@@ -137,7 +137,7 @@ void props;
                             </h2>
                             <p
                                 v-if="subtitle"
-                                class="mt-0.5 text-[13px] text-ink-3"
+                                class="mt-0.5 text-[14px] text-ink-3"
                             >
                                 {{ subtitle }}
                             </p>

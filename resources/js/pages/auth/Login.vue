@@ -39,7 +39,7 @@ function submit(): void {
 
     <p
         v-if="status"
-        class="mb-6 rounded-xl border border-wait/30 bg-wait-soft px-4 py-3 text-[13.5px] font-medium text-wait"
+        class="mb-6 rounded-xl border border-wait/30 bg-wait-soft px-4 py-3 text-[14.5px] font-medium text-wait"
     >
         {{ status }}
     </p>
@@ -77,7 +77,7 @@ function submit(): void {
             <Link
                 v-if="canResetPassword"
                 href="/forgot-password"
-                class="-my-2 py-2 text-[13px] font-semibold whitespace-nowrap text-brand-ink hover:underline"
+                class="-my-2 py-2 text-[14px] font-semibold whitespace-nowrap text-brand-ink hover:underline"
                 >{{ t('Password ভুলে গেছেন?') }}</Link
             >
         </div>
@@ -93,7 +93,7 @@ function submit(): void {
         >
     </form>
 
-    <p class="mt-5 text-center text-[13.5px] text-ink-3">
+    <p class="mt-5 text-center text-[14.5px] text-ink-3">
         {{ t('আমাদের client? নিজের campaign আর invoice দেখতে') }}
         <Link
             href="/portal/register"
@@ -118,10 +118,10 @@ function submit(): void {
             />
         </svg>
         <span class="min-w-0 flex-1">
-            <span class="block text-[14px] font-semibold">{{
+            <span class="block text-[15px] font-semibold">{{
                 t('Android app নামান')
             }}</span>
-            <span class="block text-[12.5px] text-ink-3"
+            <span class="block text-[13.5px] text-ink-3"
                 >{{ t('শব্দসহ notification, আঙুলের ছাপে খোলা') }} · v{{
                     app
                 }}</span

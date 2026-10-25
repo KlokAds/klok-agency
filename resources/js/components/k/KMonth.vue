@@ -31,7 +31,7 @@ function pick(index: number): void {
         <button
             :id="id"
             type="button"
-            class="field-box cursor-pointer text-left text-[14.5px]"
+            class="field-box cursor-pointer text-left text-[15.5px]"
             :data-open="open"
             :data-invalid="invalid"
             @click="toggle"
@@ -79,7 +79,7 @@ function pick(index: number): void {
                             <path d="M10 3.5L5.5 8l4.5 4.5" />
                         </svg>
                     </button>
-                    <span class="num text-[15px] font-semibold">{{
+                    <span class="num text-[16px] font-semibold">{{
                         year
                     }}</span>
                     <button
@@ -105,7 +105,7 @@ function pick(index: number): void {
                         v-for="(name, i) in monthNames()"
                         :key="name"
                         type="button"
-                        class="rounded-lg py-2.5 font-bn text-[13px] hover:bg-sunken"
+                        class="rounded-lg py-2.5 font-bn text-[14px] hover:bg-sunken"
                         :class="
                             model ===
                             `${year}-${String(i + 1).padStart(2, '0')}`

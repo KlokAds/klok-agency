@@ -52,7 +52,7 @@ function look(kind: string): { icon: string; tone: string } {
 
     <p
         v-if="!notifications.length"
-        class="panel mt-5 p-5 text-[14px] text-ink-3"
+        class="panel mt-5 p-5 text-[15px] text-ink-3"
     >
         {{ t('এখনো কিছু নেই। Invoice, পেমেন্ট আর বিজ্ঞাপনের খবর এখানে আসবে।') }}
     </p>
@@ -75,15 +75,15 @@ function look(kind: string): { icon: string; tone: string } {
                 /></span>
                 <span class="min-w-0 flex-1">
                     <span
-                        class="block text-[14.5px] leading-snug font-semibold break-words"
+                        class="block text-[15.5px] leading-snug font-semibold break-words"
                         >{{ fill(n.title, n.params) }}</span
                     >
                     <span
                         v-if="n.body"
-                        class="mt-1 block text-[13px] leading-relaxed break-words text-ink-2"
+                        class="mt-1 block text-[14px] leading-relaxed break-words text-ink-2"
                         >{{ fill(n.body, n.params) }}</span
                     >
-                    <span class="num mt-1.5 block text-[12px] text-ink-3">{{
+                    <span class="num mt-1.5 block text-[13px] text-ink-3">{{
                         ago(n.at)
                     }}</span>
                 </span>

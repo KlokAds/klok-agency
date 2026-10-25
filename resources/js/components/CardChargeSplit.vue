@@ -132,7 +132,7 @@ const rest = computed(() => cents(props.amount) - given.value);
         <div
             class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2.5"
         >
-            <p class="text-[13px] font-semibold">
+            <p class="text-[14px] font-semibold">
                 {{ t('কোনটার জন্য কাটল') }}
             </p>
             <KSwitch
@@ -142,7 +142,7 @@ const rest = computed(() => cents(props.amount) - given.value);
         </div>
         <p
             v-if="byHand"
-            class="border-b border-line px-3 py-2 text-[12px] text-ink-3"
+            class="border-b border-line px-3 py-2 text-[13px] text-ink-3"
         >
             {{
                 t(
@@ -154,13 +154,13 @@ const rest = computed(() => cents(props.amount) - given.value);
             <li
                 v-for="r in rows"
                 :key="r.key"
-                class="flex items-center gap-3 border-b border-line px-3 py-2 text-[12.5px] last:border-0"
+                class="flex items-center gap-3 border-b border-line px-3 py-2 text-[13.5px] last:border-0"
                 :class="byHand && 'cursor-pointer hover:bg-surface-2'"
                 @click="byHand && toggle(r.key)"
             >
                 <span
                     v-if="byHand"
-                    class="grid size-6 shrink-0 place-items-center rounded-full border text-[11px] font-semibold"
+                    class="grid size-6 shrink-0 place-items-center rounded-full border text-[12px] font-semibold"
                     :class="
                         order.includes(r.key)
                             ? 'border-brand bg-brand text-white'
@@ -191,7 +191,7 @@ const rest = computed(() => cents(props.amount) - given.value);
                     @update:model-value="(v) => type(r.key, v)"
                 >
                     <template #trail
-                        ><span class="text-[12px] text-ink-3"
+                        ><span class="text-[13px] text-ink-3"
                             >usd</span
                         ></template
                     >
@@ -199,7 +199,7 @@ const rest = computed(() => cents(props.amount) - given.value);
             </li>
         </ul>
         <p
-            class="border-t border-line px-3 py-2 text-[12px]"
+            class="border-t border-line px-3 py-2 text-[13px]"
             :class="rest < 0 ? 'text-out' : 'text-ink-3'"
         >
             <template v-if="rest < 0">{{

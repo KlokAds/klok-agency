@@ -80,17 +80,17 @@ defineProps<{
                 </div>
             </div>
             <div class="mt-auto border-t border-line">
-                <p class="px-5 pt-4 text-[12px] font-medium text-ink-3 sm:px-6">
+                <p class="px-5 pt-4 text-[13px] font-medium text-ink-3 sm:px-6">
                     {{ t('সর্বশেষ card charge') }}
                 </p>
                 <ul v-if="p.charges.length" class="px-5 pb-3 sm:px-6">
                     <li
                         v-for="c in p.charges"
                         :key="c.id"
-                        class="flex items-baseline gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                        class="flex items-baseline gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
                     >
                         <span
-                            class="num w-16 shrink-0 text-[12px] text-ink-3"
+                            class="num w-16 shrink-0 text-[13px] text-ink-3"
                             >{{ niceDate(c.date, false) }}</span
                         >
                         <span

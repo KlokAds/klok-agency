@@ -135,34 +135,34 @@ function diff(a: Activity): { key: string; from: string | null; to: string }[] {
                 <div
                     class="flex flex-wrap items-baseline gap-x-2 sm:flex-col sm:gap-0"
                 >
-                    <p class="text-[13.5px] font-semibold">{{ a.by }}</p>
+                    <p class="text-[14.5px] font-semibold">{{ a.by }}</p>
                     <p
-                        class="text-[12px] whitespace-nowrap text-ink-3"
+                        class="text-[13px] whitespace-nowrap text-ink-3"
                         :title="a.at"
                     >
                         {{ ago(a.at) }}
                     </p>
                 </div>
                 <div class="min-w-0">
-                    <p class="flex flex-wrap items-center gap-2 text-[13.5px]">
+                    <p class="flex flex-wrap items-center gap-2 text-[14.5px]">
                         <KTag :tone="events[a.event]?.tone ?? 'neutral'">{{
                             events[a.event] ? t(events[a.event].label) : a.event
                         }}</KTag>
                         <span class="font-medium">{{ a.log }}</span>
                         <span
                             v-if="a.subject_id"
-                            class="num text-[12px] text-ink-3"
+                            class="num text-[13px] text-ink-3"
                             >#{{ a.subject_id }}</span
                         >
                         <span
                             v-if="a.properties?.ip"
-                            class="num text-[12px] text-ink-3"
+                            class="num text-[13px] text-ink-3"
                             >{{ a.properties.ip }}</span
                         >
                     </p>
                     <dl
                         v-if="diff(a).length"
-                        class="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[12.5px] sm:grid-cols-[140px_1fr]"
+                        class="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[13.5px] sm:grid-cols-[140px_1fr]"
                     >
                         <template v-for="d in diff(a)" :key="d.key">
                             <dt class="num truncate text-ink-3">{{ d.key }}</dt>

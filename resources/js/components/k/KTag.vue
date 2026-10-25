@@ -7,7 +7,7 @@ withDefaults(
 
 <template>
     <span
-        class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] leading-tight font-semibold whitespace-nowrap"
+        class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[12.5px] leading-tight font-semibold whitespace-nowrap"
         :class="
             {
                 neutral: 'bg-sunken text-ink-2',

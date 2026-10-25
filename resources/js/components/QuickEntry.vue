@@ -389,16 +389,16 @@ const directions = computed<Option[]>(() => [
                     />
                     <span class="min-w-0">
                         <span
-                            class="flex items-center gap-1.5 text-[13.5px] font-semibold"
+                            class="flex items-center gap-1.5 text-[14.5px] font-semibold"
                             :class="job === j.key && 'text-brand-ink'"
                             >{{ t(j.label)
                             }}<span
                                 v-if="'auto' in j"
-                                class="rounded bg-in-soft px-1.5 text-[10.5px] font-semibold text-in"
+                                class="rounded bg-in-soft px-1.5 text-[11.5px] font-semibold text-in"
                                 >Auto</span
                             ></span
                         >
-                        <span class="block text-[11.5px] text-ink-3">{{
+                        <span class="block text-[12.5px] text-ink-3">{{
                             t(j.note)
                         }}</span>
                     </span>
@@ -412,7 +412,7 @@ const directions = computed<Option[]>(() => [
                 @submit.prevent="submit"
             >
                 <div
-                    class="hidden rounded-xl border border-dashed border-line-2 bg-surface-2 px-4 py-3 text-[13px] text-ink-2 md:block"
+                    class="hidden rounded-xl border border-dashed border-line-2 bg-surface-2 px-4 py-3 text-[14px] text-ink-2 md:block"
                 >
                     <span class="font-semibold text-ink">{{
                         t(current.label)
@@ -553,7 +553,7 @@ const directions = computed<Option[]>(() => [
                             class="sm:col-span-2"
                         >
                             <p
-                                class="mb-2 text-[13px] font-semibold text-ink-2"
+                                class="mb-2 text-[14px] font-semibold text-ink-2"
                             >
                                 {{
                                     t('কোন Pending খরচগুলো এই টাকায় শোধ হলো?')
@@ -577,29 +577,29 @@ const directions = computed<Option[]>(() => [
                                                 toggleSettle(p.id, v)
                                         "
                                     >
-                                        <span class="text-[13.5px]">{{
+                                        <span class="text-[14.5px]">{{
                                             p.description
                                         }}</span>
                                         <span
-                                            class="ml-2 text-[12px] text-ink-3"
+                                            class="ml-2 text-[13px] text-ink-3"
                                             >{{ niceDate(p.date) }}</span
                                         >
                                     </KCheck>
                                     <span
-                                        class="num ml-auto text-[13.5px] font-medium"
+                                        class="num ml-auto text-[14.5px] font-medium"
                                         >{{ money(p.amount, 'usd') }}</span
                                     >
                                 </div>
                             </div>
                             <p
                                 v-else
-                                class="rounded-xl bg-sunken px-3.5 py-3 text-[13px] text-ink-3"
+                                class="rounded-xl bg-sunken px-3.5 py-3 text-[14px] text-ink-3"
                             >
                                 {{ t('এই client-এর কোনো Pending খরচ নেই।') }}
                             </p>
                             <p
                                 v-if="effectiveRate"
-                                class="mt-2 text-[12.5px] text-ink-2"
+                                class="mt-2 text-[13.5px] text-ink-2"
                             >
                                 {{ t('বাছাই করা') }}
                                 <span class="num font-semibold">{{
@@ -628,7 +628,7 @@ const directions = computed<Option[]>(() => [
                         </KField>
                         <p
                             v-if="isMeta"
-                            class="rounded-lg bg-wait-soft px-3 py-2 text-[12.5px] text-wait sm:col-span-2"
+                            class="rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait sm:col-span-2"
                         >
                             {{
                                 t(
@@ -654,7 +654,7 @@ const directions = computed<Option[]>(() => [
                         />
                         <p
                             v-if="form.errors.allocations"
-                            class="-mt-2 text-[12.5px] text-out"
+                            class="-mt-2 text-[13.5px] text-out"
                         >
                             {{ form.errors.allocations }}
                         </p>
@@ -713,7 +713,7 @@ const directions = computed<Option[]>(() => [
                         </KField>
                         <div
                             v-if="rate"
-                            class="flex items-center rounded-xl bg-brand-soft px-4 py-3 text-[13.5px] text-brand-ink sm:col-span-2"
+                            class="flex items-center rounded-xl bg-brand-soft px-4 py-3 text-[14.5px] text-brand-ink sm:col-span-2"
                         >
                             {{ t('এই batch-এর rate:') }}
                             <span class="num ml-1.5 text-[16px] font-semibold"

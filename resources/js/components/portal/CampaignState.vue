@@ -21,7 +21,7 @@ const look = computed(
     () =>
         ({
             live: { label: 'চলছে', tone: 'bg-in-soft text-in' }, // i18n
-            ended: { label: 'শেষ হয়েছে', tone: 'bg-sunken text-ink-2' }, // i18n
+            ended: { label: 'শেষ হয়েছে', tone: 'bg-done-soft text-done' }, // i18n
             paused_client: {
                 label: 'আপনি থামিয়েছেন',
                 tone: 'bg-wait-soft text-wait',
@@ -48,8 +48,8 @@ const look = computed(
         :class="[
             look.tone,
             size === 'md'
-                ? 'px-3 py-1 text-[12.5px]'
-                : 'px-2.5 py-0.5 text-[11.5px]',
+                ? 'px-3 py-1 text-[13.5px]'
+                : 'px-2.5 py-0.5 text-[12.5px]',
         ]"
     >
         <span v-if="state === 'live'" class="relative flex size-2">

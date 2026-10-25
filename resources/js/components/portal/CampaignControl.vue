@@ -100,12 +100,12 @@ function post(what: 'pause' | 'resume'): void {
         v-if="control.state === 'held'"
         class="mt-4 rounded-2xl border border-out/30 bg-out-soft p-5"
     >
-        <p class="flex items-center gap-2 text-[15px] font-bold text-out">
+        <p class="flex items-center gap-2 text-[16px] font-bold text-out">
             <KIcon name="warn" :size="18" />{{
                 t('আমাদের দিকে সাময়িক সমস্যা')
             }}
         </p>
-        <p class="mt-1.5 text-[13.5px] text-ink-2">
+        <p class="mt-1.5 text-[14.5px] text-ink-2">
             {{
                 t(
                     'Ad account বা Meta-র দিকের একটা সমস্যায় campaign এখন চলছে না। Klok Ads ঠিক করছে — এ সময় আপনার টাকা খরচ হচ্ছে না, আর ঠিক হলেই আপনাকে জানানো হবে।',
@@ -117,7 +117,7 @@ function post(what: 'pause' | 'resume'): void {
             :href="contact"
             target="_blank"
             rel="noopener"
-            class="mt-3 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#25D366] px-4 text-[13.5px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] active:translate-y-px"
+            class="mt-3 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#25D366] px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] active:translate-y-px"
             ><KIcon name="chat" :size="16" />{{ t('WhatsApp-এ কথা বলুন') }}</a
         >
     </section>
@@ -127,10 +127,10 @@ function post(what: 'pause' | 'resume'): void {
         v-else-if="control.state === 'paused_team'"
         class="mt-4 rounded-2xl border border-wait/30 bg-wait-soft p-5"
     >
-        <p class="text-[15px] font-bold text-wait">
+        <p class="text-[16px] font-bold text-wait">
             {{ t('Klok Ads campaign-টা থামিয়ে রেখেছে') }}
         </p>
-        <p class="mt-1 text-[13.5px] text-ink-2">
+        <p class="mt-1 text-[14.5px] text-ink-2">
             {{
                 t(
                     'এ সময় আপনার টাকা খরচ হচ্ছে না। কেন থামানো বা কবে চালু হবে জানতে আমাদের লিখুন।',
@@ -142,7 +142,7 @@ function post(what: 'pause' | 'resume'): void {
             :href="contact"
             target="_blank"
             rel="noopener"
-            class="mt-3 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#25D366] px-4 text-[13.5px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] active:translate-y-px"
+            class="mt-3 inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#25D366] px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-[#1ebe5b] active:translate-y-px"
             ><KIcon name="chat" :size="16" />{{ t('WhatsApp-এ কথা বলুন') }}</a
         >
     </section>
@@ -151,10 +151,10 @@ function post(what: 'pause' | 'resume'): void {
         v-else-if="control.state === 'paused_credit'"
         class="mt-4 rounded-2xl border border-out/30 bg-out-soft p-5"
     >
-        <p class="text-[15px] font-bold text-out">
+        <p class="text-[16px] font-bold text-out">
             {{ t('বিজ্ঞাপনের টাকা শেষ — campaign থামানো আছে') }}
         </p>
-        <p class="mt-1 text-[13.5px] text-ink-2">
+        <p class="mt-1 text-[14.5px] text-ink-2">
             {{ t('বাকি invoice pay করলেই নিজে থেকে আবার চালু হবে।') }}
         </p>
         <KButton variant="primary" href="/portal/invoices" class="mt-3">{{
@@ -169,7 +169,7 @@ function post(what: 'pause' | 'resume'): void {
         <div
             class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sunken p-4"
         >
-            <p class="text-[13.5px] text-ink-2">
+            <p class="text-[14.5px] text-ink-2">
                 {{
                     control.state === 'live'
                         ? t('চলছে। থামালে আর টাকা খরচ হবে না।')
@@ -198,14 +198,14 @@ function post(what: 'pause' | 'resume'): void {
                 control.prepaid &&
                 control.credit_left <= 0
             "
-            class="mt-2 text-[13px] font-medium text-out"
+            class="mt-2 text-[14px] font-medium text-out"
         >
             {{ t('টাকা শেষ — চালু করতে আগে pay করুন।') }}
         </p>
 
         <!-- Budget a day -->
         <div class="mt-5">
-            <p class="text-[13.5px] font-semibold">{{ t('দিনের budget') }}</p>
+            <p class="text-[14.5px] font-semibold">{{ t('দিনের budget') }}</p>
             <div class="mt-2 flex flex-wrap items-start gap-2">
                 <div class="w-40">
                     <KInput
@@ -214,7 +214,7 @@ function post(what: 'pause' | 'resume'): void {
                         :invalid="tooMuch || outOfRange || !!form.errors.budget"
                     >
                         <template #trail
-                            ><span class="text-[13px] font-semibold text-ink-3"
+                            ><span class="text-[14px] font-semibold text-ink-3"
                                 >USD</span
                             ></template
                         >
@@ -230,7 +230,7 @@ function post(what: 'pause' | 'resume'): void {
             </div>
             <p
                 v-if="tooMuch"
-                class="mt-2 flex items-start gap-1.5 text-[13px] font-medium text-out"
+                class="mt-2 flex items-start gap-1.5 text-[14px] font-medium text-out"
             >
                 <KIcon name="warn" :size="15" class="mt-0.5 shrink-0" />
                 <span>{{
@@ -249,7 +249,7 @@ function post(what: 'pause' | 'resume'): void {
             </p>
             <p
                 v-else-if="outOfRange && form.budget"
-                class="mt-2 text-[13px] text-out"
+                class="mt-2 text-[14px] text-out"
             >
                 {{
                     t('দিনে {min} থেকে {max}-এর মধ্যে দিন।', {
@@ -258,18 +258,18 @@ function post(what: 'pause' | 'resume'): void {
                     })
                 }}
             </p>
-            <p v-else-if="lasts !== null" class="mt-2 text-[13px] text-ink-3">
+            <p v-else-if="lasts !== null" class="mt-2 text-[14px] text-ink-3">
                 {{
                     t('এই budget-এ বাকি টাকায় আনুমানিক {n} দিন চলবে।', {
                         n: lasts,
                     })
                 }}
             </p>
-            <p v-if="form.errors.budget" class="mt-2 text-[13px] text-out">
+            <p v-if="form.errors.budget" class="mt-2 text-[14px] text-out">
                 {{ form.errors.budget }}
             </p>
         </div>
-        <p v-if="error" class="mt-3 text-[13px] font-medium text-out">
+        <p v-if="error" class="mt-3 text-[14px] font-medium text-out">
             {{ error }}
         </p>
     </section>

@@ -226,7 +226,7 @@ const wallets = [
                     />
                     <!-- The file picker looks like a button; the browser's own control stays hidden. -->
                     <label
-                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
+                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
                     >
                         <KIcon name="doc" :size="15" class="text-ink-3" />
                         {{ images.logo ? t('বদলান') : t('ছবি বাছুন') }}
@@ -239,7 +239,7 @@ const wallets = [
                     </label>
                     <span
                         v-if="picked.logo"
-                        class="max-w-full min-w-0 truncate text-[12.5px] text-ink-2"
+                        class="max-w-full min-w-0 truncate text-[13.5px] text-ink-2"
                         >{{ picked.logo }}</span
                     >
                     <KButton
@@ -321,7 +321,7 @@ const wallets = [
                         class="size-24 rounded-lg border border-line bg-white p-1"
                     />
                     <label
-                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
+                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
                     >
                         <KIcon name="doc" :size="15" class="text-ink-3" />
                         {{ images.qr ? t('বদলান') : t('QR-এর ছবি বাছুন') }}
@@ -334,7 +334,7 @@ const wallets = [
                     </label>
                     <span
                         v-if="picked.qr"
-                        class="max-w-full min-w-0 truncate text-[12.5px] text-ink-2"
+                        class="max-w-full min-w-0 truncate text-[13.5px] text-ink-2"
                         >{{ picked.qr }}</span
                     >
                     <KButton
@@ -348,7 +348,7 @@ const wallets = [
                 </div>
                 <p
                     v-if="err('qr')"
-                    class="-mt-3 text-[12px] font-medium text-out"
+                    class="-mt-3 text-[13px] font-medium text-out"
                 >
                     {{ err('qr') }}
                 </p>
@@ -428,10 +428,10 @@ const wallets = [
 
             <!-- Try a real SMS before trusting a bank. -->
             <div class="rounded-xl border border-line p-4">
-                <p class="text-[13.5px] font-semibold">
+                <p class="text-[14.5px] font-semibold">
                     {{ t('একটা SMS দিয়ে পরীক্ষা করুন') }}
                 </p>
-                <p class="mt-0.5 text-[12.5px] text-ink-3">
+                <p class="mt-0.5 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'Phone থেকে টাকা আসার একটা SMS copy করে দিন — system কী বুঝল দেখাবে। কিছু জমা হয় না। আগে উপরের sender list সংরক্ষণ করুন।',
@@ -465,7 +465,7 @@ const wallets = [
                 </div>
                 <ul
                     v-if="smsResult"
-                    class="mt-3 flex flex-col gap-1.5 rounded-lg bg-sunken p-3 text-[13px]"
+                    class="mt-3 flex flex-col gap-1.5 rounded-lg bg-sunken p-3 text-[14px]"
                 >
                     <li :class="smsResult.trusted ? 'text-in' : 'text-out'">
                         {{
@@ -572,7 +572,7 @@ const wallets = [
                         inputmode="decimal"
                     >
                         <template #trail
-                            ><span class="text-[13px] font-semibold text-ink-3"
+                            ><span class="text-[14px] font-semibold text-ink-3"
                                 >%</span
                             ></template
                         >
@@ -592,7 +592,7 @@ const wallets = [
                         inputmode="decimal"
                     >
                         <template #trail
-                            ><span class="text-[13px] font-semibold text-ink-3"
+                            ><span class="text-[14px] font-semibold text-ink-3"
                                 >%</span
                             ></template
                         >
@@ -607,7 +607,7 @@ const wallets = [
                         inputmode="decimal"
                     />
                 </KField>
-                <p class="text-[12.5px] text-ink-3 sm:col-span-2">
+                <p class="text-[13.5px] text-ink-3 sm:col-span-2">
                     {{
                         t(
                             'Client-এর payment charge (bKash ও bank-এ) — invoice-এর টাকার উপরে client দেয়, আর আমাদের আয় হিসেবে লেখা হয়। Bangla QR-এ নেওয়া হয় না। 0 দিলে নেওয়া হয় না।',
@@ -623,7 +623,7 @@ const wallets = [
                         inputmode="decimal"
                     >
                         <template #trail
-                            ><span class="text-[13px] font-semibold text-ink-3"
+                            ><span class="text-[14px] font-semibold text-ink-3"
                                 >%</span
                             ></template
                         >
@@ -656,12 +656,12 @@ const wallets = [
             icon="signal"
         >
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <span class="text-[13.5px] font-medium">{{ t('অবস্থা') }}</span>
+                <span class="text-[14.5px] font-medium">{{ t('অবস্থা') }}</span>
                 <KTag :tone="forwarder.connected ? 'in' : 'neutral'">{{
                     forwarder.connected ? t('চালু') : t('বন্ধ')
                 }}</KTag>
             </div>
-            <p class="text-[13px] leading-relaxed text-ink-2">
+            <p class="text-[14px] leading-relaxed text-ink-2">
                 {{
                     t(
                         'যে Android phone-এ bKash/Nagad-এর SIM আছে, তাতে একটা SMS forwarder app বসিয়ে নিচের URL-এ POST করতে দিন (from আর text field)। Klok Ads website-এ যে phone চলে, সেটাই এই URL-এও পাঠাতে পারে।',
@@ -672,7 +672,7 @@ const wallets = [
                 v-if="forwarder.url"
                 class="rounded-lg border border-wait/40 bg-wait-soft p-4"
             >
-                <p class="text-[12.5px] font-semibold text-wait">
+                <p class="text-[13.5px] font-semibold text-wait">
                     {{
                         t(
                             'এই URL শুধু এখন একবার দেখানো হচ্ছে — এখনই copy করে phone-এ বসান।',
@@ -681,7 +681,7 @@ const wallets = [
                 </p>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
                     <code
-                        class="num min-w-0 flex-1 rounded-lg bg-surface px-3 py-2 text-[12px] break-all"
+                        class="num min-w-0 flex-1 rounded-lg bg-surface px-3 py-2 text-[13px] break-all"
                         >{{ forwarder.url }}</code
                     >
                     <KButton
@@ -694,7 +694,7 @@ const wallets = [
                 </div>
             </div>
             <div
-                class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line pt-4 text-[12.5px] text-ink-3"
+                class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line pt-4 text-[13.5px] text-ink-3"
             >
                 <span class="whitespace-nowrap">{{
                     forwarder.last_seen

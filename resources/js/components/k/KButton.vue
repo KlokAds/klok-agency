@@ -21,9 +21,9 @@ const props = withDefaults(
 const classes = computed(() => [
     'inline-flex items-center justify-center gap-2 rounded-[10px] font-semibold whitespace-nowrap transition-[background,border,color,transform] select-none active:translate-y-px',
     {
-        sm: 'h-8 px-3 text-[12.5px]',
-        md: 'h-10 px-4 text-[13.5px]',
-        lg: 'h-12 px-5 text-[15px]',
+        sm: 'h-8 px-3 text-[13.5px]',
+        md: 'h-10 px-4 text-[14.5px]',
+        lg: 'h-12 px-5 text-[16px]',
     }[props.size],
     {
         primary: 'bg-brand text-white hover:bg-brand-ink dark:text-rail',

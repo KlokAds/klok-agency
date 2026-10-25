@@ -291,7 +291,7 @@ const PAY_STATUS: Record<
         <aside class="flex flex-col gap-4">
             <section v-if="claims.length" class="panel border-wait/40 p-5">
                 <h2
-                    class="flex items-center gap-2 text-[15px] font-bold text-wait"
+                    class="flex items-center gap-2 text-[16px] font-bold text-wait"
                 >
                     <KIcon name="warn" :size="17" />{{ t('যাচাই করুন') }}
                 </h2>
@@ -299,7 +299,7 @@ const PAY_STATUS: Record<
                     <li
                         v-for="c in claims"
                         :key="c.id"
-                        class="rounded-xl border border-line p-3 text-[13px]"
+                        class="rounded-xl border border-line p-3 text-[14px]"
                     >
                         <p class="flex justify-between gap-2">
                             <span class="font-semibold">{{
@@ -307,11 +307,11 @@ const PAY_STATUS: Record<
                             }}</span>
                             <span class="num">{{ bdt(c.amount) }}</span>
                         </p>
-                        <p class="num mt-0.5 text-[12px] break-all text-ink-3">
+                        <p class="num mt-0.5 text-[13px] break-all text-ink-3">
                             {{ c.reference }} · {{ c.sender }} ·
                             {{ ago(c.created_at) }}
                         </p>
-                        <p v-if="c.note" class="mt-1 text-[12px] text-wait">
+                        <p v-if="c.note" class="mt-1 text-[13px] text-wait">
                             {{ c.note }}
                         </p>
                         <div
@@ -332,7 +332,7 @@ const PAY_STATUS: Record<
                 </ul>
             </section>
 
-            <section v-if="openSession" class="panel p-5 text-[13px]">
+            <section v-if="openSession" class="panel p-5 text-[14px]">
                 <p class="flex items-center gap-2 font-semibold">
                     <span class="size-2 animate-pulse rounded-full bg-brand" />
                     {{
@@ -345,16 +345,16 @@ const PAY_STATUS: Record<
             </section>
 
             <section class="panel p-5">
-                <h2 class="text-[15px] font-bold">{{ t('কী কী হয়েছে') }}</h2>
+                <h2 class="text-[16px] font-bold">{{ t('কী কী হয়েছে') }}</h2>
                 <ol class="mt-3 space-y-3">
                     <li v-for="(s, i) in timeline" :key="i" class="flex gap-3">
                         <span
                             class="mt-1.5 size-2.5 shrink-0 rounded-full"
                             :class="s.tone"
                         />
-                        <div class="min-w-0 text-[13px]">
+                        <div class="min-w-0 text-[14px]">
                             <p class="font-medium">{{ s.label }}</p>
-                            <p class="text-[12px] break-words text-ink-3">
+                            <p class="text-[13px] break-words text-ink-3">
                                 {{ ago(s.at)
                                 }}<template v-if="s.detail">
                                     · {{ s.detail }}</template
@@ -366,8 +366,8 @@ const PAY_STATUS: Record<
             </section>
 
             <section v-if="payments.length" class="panel p-5">
-                <h2 class="text-[15px] font-bold">{{ t('পেমেন্ট') }}</h2>
-                <ul class="mt-2 divide-y divide-dashed divide-line text-[13px]">
+                <h2 class="text-[16px] font-bold">{{ t('পেমেন্ট') }}</h2>
+                <ul class="mt-2 divide-y divide-dashed divide-line text-[14px]">
                     <li v-for="p in payments" :key="p.id" class="py-2.5">
                         <div class="flex items-center justify-between gap-2">
                             <span class="font-medium">{{
@@ -376,7 +376,7 @@ const PAY_STATUS: Record<
                             <span class="num">{{ bdt(p.amount) }}</span>
                         </div>
                         <div
-                            class="mt-0.5 flex items-center justify-between gap-2 text-[12px] text-ink-3"
+                            class="mt-0.5 flex items-center justify-between gap-2 text-[13px] text-ink-3"
                         >
                             <span class="num truncate"
                                 >{{
@@ -396,7 +396,7 @@ const PAY_STATUS: Record<
                         </div>
                         <p
                             v-if="p.usd_credit"
-                            class="mt-0.5 text-[11.5px] text-ink-3"
+                            class="mt-0.5 text-[12.5px] text-ink-3"
                         >
                             {{
                                 t('Ad credit {usd}', {
@@ -410,7 +410,7 @@ const PAY_STATUS: Record<
 
             <section
                 v-if="invoice.payable && can['clients.edit']"
-                class="panel p-5 text-[13px]"
+                class="panel p-5 text-[14px]"
             >
                 <KSwitch
                     :model-value="invoice.allow_partial"
@@ -435,7 +435,7 @@ const PAY_STATUS: Record<
                 />
                 <p
                     v-if="invoice.qr_fee"
-                    class="mt-4 rounded-lg bg-wait-soft px-3 py-2 text-[12.5px] text-ink-2"
+                    class="mt-4 rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-ink-2"
                 >
                     {{
                         t(
@@ -450,10 +450,10 @@ const PAY_STATUS: Record<
                 </p>
             </section>
 
-            <section class="panel p-5 text-[13px]">
+            <section class="panel p-5 text-[14px]">
                 <p class="eyebrow">{{ t('Client-এর link') }}</p>
                 <p
-                    class="num mt-2 truncate rounded-lg bg-sunken px-3 py-2 text-[12px]"
+                    class="num mt-2 truncate rounded-lg bg-sunken px-3 py-2 text-[13px]"
                 >
                     {{ invoice.url }}
                 </p>
@@ -481,7 +481,7 @@ const PAY_STATUS: Record<
         :subtitle="invoice.client ?? undefined"
     >
         <p
-            class="rounded-xl bg-sunken p-3 text-[13px] wrap-anywhere whitespace-pre-line text-ink-2"
+            class="rounded-xl bg-sunken p-3 text-[14px] wrap-anywhere whitespace-pre-line text-ink-2"
         >
             {{ share.text }}
         </p>
@@ -490,14 +490,14 @@ const PAY_STATUS: Record<
                 :href="share.whatsapp"
                 target="_blank"
                 rel="noopener"
-                class="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-[#25d366] px-4 text-[13.5px] font-semibold text-white"
+                class="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-[#25d366] px-4 text-[14.5px] font-semibold text-white"
                 @click="markSent"
             >
                 <KIcon name="chat" :size="17" />WhatsApp
             </a>
             <a
                 :href="share.sms"
-                class="flex h-11 items-center justify-center gap-2 rounded-[10px] border border-line-2 px-4 text-[13.5px] font-semibold"
+                class="flex h-11 items-center justify-center gap-2 rounded-[10px] border border-line-2 px-4 text-[14.5px] font-semibold"
                 @click="markSent"
             >
                 <KIcon name="chat" :size="17" />SMS
@@ -509,7 +509,7 @@ const PAY_STATUS: Record<
                 t('Email পাঠান')
             }}</KButton>
         </div>
-        <p v-if="!invoice.client_phone" class="mt-3 text-[12px] text-ink-3">
+        <p v-if="!invoice.client_phone" class="mt-3 text-[13px] text-ink-3">
             {{
                 t(
                     'Client-এর ফোন নম্বর নেই — WhatsApp-এ কাকে পাঠাবেন বেছে নিতে হবে।',
@@ -528,14 +528,14 @@ const PAY_STATUS: Record<
             v-if="!pay.payment_id && earlier_payments?.length"
             class="mb-4 rounded-xl border border-wait/40 bg-wait/10 p-3"
         >
-            <p class="text-[13px] font-semibold">
+            <p class="text-[14px] font-semibold">
                 {{
                     t(
                         'এই client-এর আগে খাতায় লেখা পেমেন্ট — কোনো invoice-এ নেই',
                     )
                 }}
             </p>
-            <p class="mt-0.5 text-[12px] text-ink-3">
+            <p class="mt-0.5 text-[13px] text-ink-3">
                 {{
                     t(
                         'এই invoice-এর টাকা আগেই খাতায় তুলে থাকলে সেটা বাছুন — দ্বিতীয়বার যোগ হবে না।',
@@ -545,7 +545,7 @@ const PAY_STATUS: Record<
             <!-- Our own radio dot: the browser's is reset away by the base styles. -->
             <div class="mt-2 flex flex-col gap-1">
                 <label
-                    class="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
+                    class="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[14px] hover:bg-surface"
                 >
                     <input
                         v-model="pay.existing_entry_id"
@@ -571,7 +571,7 @@ const PAY_STATUS: Record<
                 <label
                     v-for="e in earlier_payments"
                     :key="e.id"
-                    class="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
+                    class="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[14px] hover:bg-surface"
                 >
                     <input
                         v-model="pay.existing_entry_id"
@@ -604,7 +604,7 @@ const PAY_STATUS: Record<
             </div>
             <p
                 v-if="pay.errors.existing_entry_id"
-                class="mt-1 text-[12px] text-out"
+                class="mt-1 text-[13px] text-out"
             >
                 {{ pay.errors.existing_entry_id }}
             </p>
@@ -643,7 +643,7 @@ const PAY_STATUS: Record<
                 <KInput v-model="pay.reference" />
             </KField>
         </div>
-        <p class="mt-3 text-[12px] text-ink-3">
+        <p class="mt-3 text-[13px] text-ink-3">
             {{
                 t(
                     'BDT খাতায় client পেমেন্ট হিসেবে যাবে, invoice-এর ad USD-এর ভাগ client-এর credit হবে। Bangla QR হলে QR fee ব্যাংক থেকে খরচ হিসেবে লেখা হবে।',

@@ -11,13 +11,13 @@ defineProps<{ title: string; description?: string; icon?: string }>();
         class="grid grid-cols-1 gap-4 border-b border-line py-8 first:pt-2 last:border-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10"
     >
         <div>
-            <h2 class="flex items-center gap-2 text-[15px] font-semibold">
+            <h2 class="flex items-center gap-2 text-[16px] font-semibold">
                 <KIcon v-if="icon" :name="icon" :size="17" class="text-brand" />
                 {{ title }}
             </h2>
             <p
                 v-if="description"
-                class="mt-1.5 text-[13px] leading-relaxed text-ink-3"
+                class="mt-1.5 text-[14px] leading-relaxed text-ink-3"
             >
                 {{ description }}
             </p>

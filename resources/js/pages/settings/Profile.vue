@@ -102,7 +102,7 @@ function saveNotify(): void {
                 label="Email"
                 :hint="t('Email বদলাতে Owner-কে বলুন — এটাই sign-in নাম।')"
             >
-                <div class="field-box bg-sunken! text-[14.5px] text-ink-2">
+                <div class="field-box bg-sunken! text-[15.5px] text-ink-2">
                     {{ user.email }}
                 </div>
             </KField>
@@ -122,7 +122,7 @@ function saveNotify(): void {
             class="panel p-4 sm:p-6 lg:col-start-1"
         >
             <h2 class="text-[16px] font-bold">{{ t('Notification') }}</h2>
-            <p class="mt-1 text-[13px] text-ink-3">
+            <p class="mt-1 text-[14px] text-ink-3">
                 {{
                     notify.owner
                         ? t(
@@ -134,9 +134,9 @@ function saveNotify(): void {
                 }}
             </p>
             <div class="mt-4 overflow-x-auto">
-                <table v-stack class="stack w-full min-w-[440px] text-[13.5px]">
+                <table v-stack class="stack w-full min-w-[440px] text-[14.5px]">
                     <thead>
-                        <tr class="text-left text-[12px] text-ink-3">
+                        <tr class="text-left text-[13px] text-ink-3">
                             <th class="py-2 pr-3 font-medium">
                                 {{ t('কোন খবর') }}
                             </th>
@@ -162,7 +162,7 @@ function saveNotify(): void {
                                 {{ t(g.label) }}
                                 <span
                                     v-if="!g.reaches"
-                                    class="block text-[12px] text-ink-3"
+                                    class="block text-[13px] text-ink-3"
                                     >{{
                                         t('আপনার role-এ এর permission নেই')
                                     }}</span
@@ -209,7 +209,7 @@ function saveNotify(): void {
                     </tbody>
                 </table>
             </div>
-            <p v-if="!notify.mail" class="mt-3 text-[12.5px] text-ink-3">
+            <p v-if="!notify.mail" class="mt-3 text-[13.5px] text-ink-3">
                 {{
                     t(
                         'Email পাঠাতে আগে Settings › সাধারণ-এ mailbox (SMTP) দিতে হবে।',
@@ -223,7 +223,7 @@ function saveNotify(): void {
             <p class="mt-1 text-[18px] font-bold">
                 {{ user.role ?? t('Role নেই') }}
             </p>
-            <p class="mt-3 text-[13px] text-ink-3">
+            <p class="mt-3 text-[14px] text-ink-3">
                 {{
                     t(
                         'কোন পাতায় কী করতে পারবেন, তা Role ঠিক করে। বদলাতে Owner-এর সাথে কথা বলুন।',

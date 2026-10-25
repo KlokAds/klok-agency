@@ -128,7 +128,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <p class="text-[17px] font-bold">{{ r.name }}</p>
-                    <p class="text-[12.5px] text-ink-3">
+                    <p class="text-[13.5px] text-ink-3">
                         <span class="num">{{ r.users }}</span> {{ t('জন') }} ·
                         <span class="num">{{ count(r) }}</span> permission
                     </p>
@@ -137,7 +137,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                     ><KIcon name="key" :size="12" />{{ t('সব ক্ষমতা') }}</KTag
                 >
             </div>
-            <p v-if="r.is_owner" class="mt-4 text-[13px] text-ink-2">
+            <p v-if="r.is_owner" class="mt-4 text-[14px] text-ink-2">
                 {{
                     t(
                         'Owner সব কিছু করতে পারে, আর একমাত্র Owner-ই অন্যকে Owner বানাতে পারে। এই role বদলানো যায় না।',
@@ -154,7 +154,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                 >
                 <span
                     v-if="!r.permissions.length"
-                    class="text-[13px] text-ink-3"
+                    class="text-[14px] text-ink-3"
                     >{{ t('কোনো permission নেই') }}</span
                 >
             </div>
@@ -194,23 +194,23 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
             <!-- The matrix stays a table; on a phone the first column is sticky so the page name
                  is read while the checkboxes scroll sideways. -->
             <div class="overflow-x-auto rounded-xl border border-line">
-                <table class="w-full text-[13.5px]">
+                <table class="w-full text-[14.5px]">
                     <thead class="bg-surface-2">
                         <tr>
                             <th
-                                class="sticky left-0 z-10 bg-surface-2 px-3 py-3 text-left text-[12.5px] font-medium whitespace-nowrap text-ink-3 sm:px-4"
+                                class="sticky left-0 z-10 bg-surface-2 px-3 py-3 text-left text-[13.5px] font-medium whitespace-nowrap text-ink-3 sm:px-4"
                             >
                                 {{ t('পাতা') }}
                             </th>
                             <th
                                 v-for="a in allActions"
                                 :key="a"
-                                class="px-2 py-3 text-center text-[12.5px] font-medium whitespace-nowrap text-ink-3 sm:px-3"
+                                class="px-2 py-3 text-center text-[13.5px] font-medium whitespace-nowrap text-ink-3 sm:px-3"
                             >
                                 {{ actions[a] }}
                             </th>
                             <th
-                                class="px-2 py-3 text-center text-[12.5px] font-medium whitespace-nowrap text-ink-3 sm:px-3"
+                                class="px-2 py-3 text-center text-[13.5px] font-medium whitespace-nowrap text-ink-3 sm:px-3"
                             >
                                 {{ t('সব') }}
                             </th>
@@ -254,7 +254,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                     </tbody>
                 </table>
             </div>
-            <p class="text-[12.5px] text-ink-3">
+            <p class="text-[13.5px] text-ink-3">
                 {{
                     t(
                         '“দেখা” ছাড়া অন্য কিছু দিলে “দেখা” নিজে চালু হয়। Server-এ প্রতিটা কাজের আগে permission যাচাই হয় — পাতায় বোতাম লুকানো শুধু সুবিধার জন্য।',

@@ -168,12 +168,12 @@ async function remove(user: User): Promise<void> {
                             {{ u.name }}
                             <span
                                 v-if="u.id === me.id"
-                                class="text-[12px] font-normal text-ink-3"
+                                class="text-[13px] font-normal text-ink-3"
                                 >{{ t('(আপনি)') }}</span
                             >
                         </p>
                         <p
-                            class="text-[12.5px] font-normal break-all text-ink-3"
+                            class="text-[13.5px] font-normal break-all text-ink-3"
                         >
                             {{ u.email }}
                         </p>
@@ -184,7 +184,7 @@ async function remove(user: User): Promise<void> {
                             :tone="u.role === 'Owner' ? 'brand' : 'neutral'"
                             >{{ u.role }}</KTag
                         >
-                        <span v-else class="text-[12.5px] text-ink-3">{{
+                        <span v-else class="text-[13.5px] text-ink-3">{{
                             t('Role নেই')
                         }}</span>
                     </td>
@@ -206,7 +206,7 @@ async function remove(user: User): Promise<void> {
                             }}</KTag>
                         </div>
                     </td>
-                    <td class="text-[13px] text-ink-2">
+                    <td class="text-[14px] text-ink-2">
                         <span class="whitespace-nowrap">{{
                             u.last_login_at
                                 ? ago(u.last_login_at)
@@ -214,7 +214,7 @@ async function remove(user: User): Promise<void> {
                         }}</span>
                         <span
                             v-if="u.last_login_ip"
-                            class="num block text-[11.5px] text-ink-3"
+                            class="num block text-[12.5px] text-ink-3"
                             >{{ u.last_login_ip }}</span
                         >
                     </td>
@@ -300,7 +300,7 @@ async function remove(user: User): Promise<void> {
                     <template #trail>
                         <button
                             type="button"
-                            class="shrink-0 rounded-md px-2 py-1 text-[12px] font-semibold text-brand-ink hover:bg-brand-soft"
+                            class="shrink-0 rounded-md px-2 py-1 text-[13px] font-semibold text-brand-ink hover:bg-brand-soft"
                             @click.stop="suggestPassword"
                         >
                             {{ t('বানিয়ে দাও') }}

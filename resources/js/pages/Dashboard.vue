@@ -84,7 +84,7 @@ const greeting =
     <!-- Data that still needs a human look -->
     <div
         v-if="s.review_count || s.undated_count"
-        class="mb-7 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-wait/25 bg-wait-soft px-4 py-3 text-[13px] text-wait"
+        class="mb-7 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-wait/25 bg-wait-soft px-4 py-3 text-[14px] text-wait"
     >
         <KIcon name="warn" :size="16" />
         <span v-if="s.review_count">{{
@@ -122,7 +122,7 @@ const greeting =
             <p class="dash-fig">
                 {{ money(wallets.total, 'bdt') }}
             </p>
-            <ul class="mt-4 space-y-1.5 text-[12.5px]">
+            <ul class="mt-4 space-y-1.5 text-[13.5px]">
                 <li
                     v-for="p in wallets.places"
                     :key="p.key"
@@ -149,7 +149,7 @@ const greeting =
             </ul>
             <Link
                 href="/wallets"
-                class="no-print mt-3 inline-block text-[13px] font-medium text-brand-ink hover:underline"
+                class="no-print mt-3 inline-block text-[14px] font-medium text-brand-ink hover:underline"
                 >{{ t('বিস্তারিত') }} →</Link
             >
         </div>
@@ -158,7 +158,7 @@ const greeting =
             <p class="dash-fig">
                 {{ money(s.unearned, 'bdt') }}
             </p>
-            <p class="mt-4 text-[12.5px] text-ink-3">
+            <p class="mt-4 text-[13.5px] text-ink-3">
                 {{
                     t(
                         'Client আগাম দিয়েছে কিন্তু campaign-এ এখনো খরচ হয়নি। এটা client-দের টাকা — লাভ নয়।',
@@ -172,7 +172,7 @@ const greeting =
                 <p class="dash-fig">
                     {{ money(s.owner_due, 'bdt') }}
                 </p>
-                <p class="mt-4 text-[12.5px] text-ink-3">
+                <p class="mt-4 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'Owner কিছুদিনের জন্য নিয়েছেন, ফেরত দেবেন — এটা ব্যবসার টাকা।',
@@ -188,7 +188,7 @@ const greeting =
                 >
                     {{ money(s.receivable_cost, 'bdt') }}
                 </p>
-                <p class="mt-4 text-[12.5px] text-ink-3">
+                <p class="mt-4 text-[13.5px] text-ink-3">
                     {{
                         t(
                             '{amount} খরচ হয়েছে, client এখনো টাকা দেয়নি (কেনা দামে)।',
@@ -205,7 +205,7 @@ const greeting =
             <p class="dash-fig">
                 <KAmount :value="month_net" currency="bdt" sign />
             </p>
-            <p class="mt-4 text-[12.5px] text-ink-3">
+            <p class="mt-4 text-[13.5px] text-ink-3">
                 {{ t('শুরু থেকে') }}
                 <KAmount
                     :value="s.net"
@@ -233,7 +233,7 @@ const greeting =
                     <h2 class="dash-title">
                         {{ t('মাসে মাসে ফলাফল') }}
                     </h2>
-                    <p class="text-[12.5px] text-ink-3">
+                    <p class="text-[13.5px] text-ink-3">
                         {{
                             t(
                                 'Client-এর টাকা − USD-এর FIFO cost − খরচ · শেষ ৬ মাস',
@@ -243,7 +243,7 @@ const greeting =
                 </div>
                 <Link
                     href="/reports"
-                    class="shrink-0 text-[13px] font-medium whitespace-nowrap text-brand-ink hover:underline"
+                    class="shrink-0 text-[14px] font-medium whitespace-nowrap text-brand-ink hover:underline"
                     >P&L →</Link
                 >
             </div>
@@ -262,17 +262,17 @@ const greeting =
             <li
                 v-for="r in recent"
                 :key="r.book + r.id"
-                class="dash-entry flex items-center gap-3 border-b border-line py-3 text-[13.5px]"
+                class="dash-entry flex items-center gap-3 border-b border-line py-3 text-[14.5px]"
             >
                 <span
-                    class="grid size-8 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-[12px] font-semibold text-ink-2"
+                    class="grid size-8 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-[13px] font-semibold text-ink-2"
                     >{{ r.book === 'usd' ? '$' : '\u09F3' }}</span
                 >
                 <span class="min-w-0 flex-1">
                     <span class="block truncate font-medium">{{
                         r.description
                     }}</span>
-                    <span class="block truncate text-[12px] text-ink-3"
+                    <span class="block truncate text-[13px] text-ink-3"
                         >{{ r.category
                         }}<template v-if="r.client"> · {{ r.client }}</template>
                         · {{ niceDate(r.date) }}</span

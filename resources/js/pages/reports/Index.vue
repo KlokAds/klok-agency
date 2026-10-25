@@ -289,10 +289,10 @@ const clients = computed(() => {
         <div
             class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
         >
-            <p class="text-[15px] font-semibold">
+            <p class="text-[16px] font-semibold">
                 <span class="eyebrow mr-2">Klok Ads</span>{{ periodLabel }}
             </p>
-            <p v-if="previous" class="text-[12.5px] text-ink-3">
+            <p v-if="previous" class="text-[13.5px] text-ink-3">
                 {{ t('তুলনা: আগের সময় {period}', { period: previousLabel }) }}
             </p>
         </div>
@@ -314,7 +314,7 @@ const clients = computed(() => {
                 <p
                     :class="
                         c.key === 'net'
-                            ? 'text-[11px] font-bold text-rail-dim uppercase'
+                            ? 'text-[12px] font-bold text-rail-dim uppercase'
                             : 'eyebrow'
                     "
                 >
@@ -333,14 +333,14 @@ const clients = computed(() => {
                     {{ money(c.value, 'bdt', { sign: c.key === 'net' }) }}
                 </p>
                 <p
-                    class="mt-2 text-[12px]"
+                    class="mt-2 text-[13px]"
                     :class="c.key === 'net' ? 'text-rail-dim' : 'text-ink-3'"
                 >
                     {{ c.hint }}
                 </p>
                 <p
                     v-if="c.change"
-                    class="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-[12px]"
+                    class="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-[13px]"
                 >
                     <span
                         class="num font-semibold"
@@ -371,7 +371,7 @@ const clients = computed(() => {
         <!-- Trend -->
         <section class="panel mt-6 p-5 sm:p-6">
             <h2 class="text-[16px] font-bold">{{ t('মাসে মাসে') }}</h2>
-            <p class="mb-4 text-[12.5px] text-ink-3">
+            <p class="mb-4 text-[13.5px] text-ink-3">
                 {{
                     t(
                         'প্রতি মাসের আয়, মোট খরচ আর লাভ। বাছাই করা সময়ের বাইরের মাস হালকা দেখানো।',
@@ -388,11 +388,11 @@ const clients = computed(() => {
                     <h2 class="text-[16px] font-bold">
                         {{ t('খরচ কোথায় যাচ্ছে') }}
                     </h2>
-                    <span class="num text-[14px] font-semibold">{{
+                    <span class="num text-[15px] font-semibold">{{
                         money(spend.total, 'bdt')
                     }}</span>
                 </div>
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{ t('Client-দের ad খরচ বাদে — অফিস চালাতে যা লাগল।') }}
                 </p>
 
@@ -403,13 +403,13 @@ const clients = computed(() => {
                 <ul v-else class="mt-4 space-y-3.5">
                     <li v-for="x in spend.items" :key="x.name">
                         <div
-                            class="flex items-baseline justify-between gap-3 text-[13.5px]"
+                            class="flex items-baseline justify-between gap-3 text-[14.5px]"
                         >
                             <span class="min-w-0 truncate font-medium"
                                 >{{ x.name }}
                                 <span
                                     v-if="x.note"
-                                    class="num text-[12px] font-normal text-ink-3"
+                                    class="num text-[13px] font-normal text-ink-3"
                                     >{{ x.note }}</span
                                 ></span
                             >
@@ -418,7 +418,7 @@ const clients = computed(() => {
                                     money(x.amount, 'bdt')
                                 }}</span>
                                 <span
-                                    class="num ml-2 inline-block w-12 text-right text-[12px] text-ink-3"
+                                    class="num ml-2 inline-block w-12 text-right text-[13px] text-ink-3"
                                     >{{ x.share }}</span
                                 >
                             </span>
@@ -438,7 +438,7 @@ const clients = computed(() => {
             <!-- Profit by client -->
             <section class="panel p-5 sm:p-6">
                 <h2 class="text-[16px] font-bold">{{ t('Client ধরে লাভ') }}</h2>
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{
                         t(
                             'Client যা দিয়েছে − তাদের ad-এর cost (শুধু Settled)। বড় লাভ আগে।',
@@ -453,7 +453,7 @@ const clients = computed(() => {
                 <ul v-else class="mt-4 space-y-4">
                     <li v-for="c in clients" :key="c.id">
                         <div
-                            class="flex items-baseline justify-between gap-3 text-[13.5px]"
+                            class="flex items-baseline justify-between gap-3 text-[14.5px]"
                         >
                             <Link
                                 :href="`/clients/${c.id}`"
@@ -467,7 +467,7 @@ const clients = computed(() => {
                                     class="font-semibold"
                                 />
                                 <span
-                                    class="num ml-2 inline-block w-12 text-right text-[12px]"
+                                    class="num ml-2 inline-block w-12 text-right text-[13px]"
                                     :class="
                                         c.margin < 0 ? 'text-out' : 'text-ink-3'
                                     "
@@ -489,7 +489,7 @@ const clients = computed(() => {
                             />
                         </div>
                         <p
-                            class="mt-1 flex flex-wrap gap-x-3 text-[12px] text-ink-3"
+                            class="mt-1 flex flex-wrap gap-x-3 text-[13px] text-ink-3"
                         >
                             <span class="whitespace-nowrap"
                                 >{{ t('আয়') }}
@@ -519,7 +519,7 @@ const clients = computed(() => {
                 </ul>
                 <p
                     v-if="pl.unlinked_income"
-                    class="mt-4 border-t border-line pt-3 text-[12.5px] text-ink-3"
+                    class="mt-4 border-t border-line pt-3 text-[13.5px] text-ink-3"
                 >
                     {{ t('Client ছাড়া service / অন্যান্য আয়') }}
                     <b class="num font-semibold text-ink-2">{{
@@ -539,7 +539,7 @@ const clients = computed(() => {
                 <p class="num mt-2.5 text-[22px] leading-none font-medium">
                     {{ money(outside.unearned, 'bdt') }}
                 </p>
-                <p class="mt-2 text-[12.5px] text-ink-3">
+                <p class="mt-2 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'আগাম দিয়েছে, এখনো খরচ হয়নি — client-দের টাকা, আয় নয়। (আজ পর্যন্ত)',
@@ -555,7 +555,7 @@ const clients = computed(() => {
                 >
                     {{ money(pl.pending_cost, 'bdt') }}
                 </p>
-                <p class="mt-2 text-[12.5px] text-ink-3">
+                <p class="mt-2 text-[13.5px] text-ink-3">
                     {{
                         t(
                             '{amount} খরচ হয়েছে, টাকা আসেনি (কেনা দামে) — টাকা পেলে আয়ে ঢুকবে।',
@@ -569,13 +569,13 @@ const clients = computed(() => {
                 <p class="num mt-2.5 text-[22px] leading-none font-medium">
                     {{ money(outside.owner_due, 'bdt') }}
                 </p>
-                <p class="mt-2 text-[12.5px] text-ink-3">
+                <p class="mt-2 text-[13.5px] text-ink-3">
                     {{ t('Owner নিয়েছেন, ফেরত দেবেন — খরচও নয়, লাভও নয়।') }}
                 </p>
             </div>
         </section>
 
-        <p class="mt-4 text-[12px] text-ink-3">
+        <p class="mt-4 text-[13px] text-ink-3">
             {{
                 t(
                     'Owner-এর তোলা টাকা (drawing) খরচ নয় — তাই P&L-এ নেই, capital থেকে কমে।',

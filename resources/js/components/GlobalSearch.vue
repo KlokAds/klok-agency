@@ -137,7 +137,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
     <!-- Desktop: a search field look-alike; phone: an icon -->
     <button
         type="button"
-        class="hidden h-10 w-full max-w-[360px] items-center gap-2 rounded-xl border border-line bg-surface px-3 text-left text-[13.5px] text-ink-3 transition-colors hover:border-line-2 md:flex"
+        class="hidden h-10 w-full max-w-[360px] items-center gap-2 rounded-xl border border-line bg-surface px-3 text-left text-[14.5px] text-ink-3 transition-colors hover:border-line-2 md:flex"
         @click="show"
     >
         <KIcon name="search" :size="16" />
@@ -145,17 +145,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
             t('খুঁজুন — client, campaign, entry…')
         }}</span>
         <kbd
-            class="rounded-md border border-line px-1.5 py-0.5 font-mono text-[11px]"
+            class="rounded-md border border-line px-1.5 py-0.5 font-mono text-[12px]"
             >Ctrl K</kbd
         >
     </button>
     <button
         type="button"
-        class="grid size-10 place-items-center rounded-lg hover:bg-sunken md:hidden"
-        :aria-label="t('খুঁজুন')"
+        class="flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-ink-2 hover:bg-sunken hover:text-ink md:hidden"
         @click="show"
     >
-        <KIcon name="search" :size="18" />
+        <KIcon name="search" :size="16" />
+        <span class="text-[12.5px] leading-none">{{ t('খুঁজুন') }}</span>
     </button>
 
     <Teleport to="body">
@@ -175,7 +175,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                         ref="input"
                         v-model="q"
                         type="text"
-                        class="h-14 min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-3"
+                        class="h-14 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-3"
                         :placeholder="
                             t('Client, campaign, entry, কাজ বা পাতা খুঁজুন…')
                         "
@@ -187,7 +187,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     />
                     <button
                         type="button"
-                        class="hidden rounded-md border border-line px-1.5 py-0.5 font-mono text-[11px] text-ink-3 hover:bg-sunken hover:text-ink sm:block"
+                        class="hidden rounded-md border border-line px-1.5 py-0.5 font-mono text-[12px] text-ink-3 hover:bg-sunken hover:text-ink sm:block"
                         :aria-label="t('বন্ধ করুন')"
                         @click="close"
                     >
@@ -211,13 +211,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                             !groups.length &&
                             !pageHits.length
                         "
-                        class="px-3 py-8 text-center text-[13px] text-ink-3"
+                        class="px-3 py-8 text-center text-[14px] text-ink-3"
                     >
                         {{ t('কিছু পাওয়া যায়নি') }}
                     </p>
                     <div v-for="g in all" :key="g.key" class="mb-2 last:mb-0">
                         <p
-                            class="px-3 pt-2 pb-1 text-[12.5px] font-medium text-ink-3"
+                            class="px-3 pt-2 pb-1 text-[13.5px] font-medium text-ink-3"
                         >
                             {{ g.label }}
                         </p>
@@ -236,12 +236,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                         >
                             <span class="min-w-0 flex-1">
                                 <span
-                                    class="block truncate text-[14px] font-medium"
+                                    class="block truncate text-[15px] font-medium"
                                     >{{ hit.title }}</span
                                 >
                                 <span
                                     v-if="hit.hint"
-                                    class="block truncate text-[12px] text-ink-3"
+                                    class="block truncate text-[13px] text-ink-3"
                                     >{{ hit.hint }}</span
                                 >
                             </span>

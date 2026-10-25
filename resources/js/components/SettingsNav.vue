@@ -25,7 +25,7 @@ const tabs = computed(() =>
                 v-for="tab in tabs"
                 :key="tab.href"
                 :href="tab.href"
-                class="-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3.5 py-2.5 text-[13.5px] font-semibold whitespace-nowrap transition-colors"
+                class="-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3.5 py-2.5 text-[14.5px] font-semibold whitespace-nowrap transition-colors"
                 :class="
                     path === tab.href || path.startsWith(tab.href + '/')
                         ? 'border-brand text-ink'

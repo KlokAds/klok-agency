@@ -22,11 +22,11 @@ defineProps<{
     <Head title="Invoice" />
 
     <h1 class="text-[24px] font-bold">Invoice</h1>
-    <p class="mt-1 text-[13.5px] text-ink-3">
+    <p class="mt-1 text-[14.5px] text-ink-3">
         {{ t('খুললে দেখা, pay করা আর রসিদ — সব এক পাতায়।') }}
     </p>
 
-    <p v-if="!invoices.length" class="panel mt-5 p-5 text-[14px] text-ink-3">
+    <p v-if="!invoices.length" class="panel mt-5 p-5 text-[15px] text-ink-3">
         {{ t('এখনো কোনো invoice নেই।') }}
     </p>
 
@@ -39,11 +39,11 @@ defineProps<{
         >
             <span class="min-w-0 flex-1">
                 <span class="flex flex-wrap items-center gap-2">
-                    <span class="num text-[15px] font-semibold">{{
+                    <span class="num text-[16px] font-semibold">{{
                         i.number
                     }}</span>
                     <span
-                        class="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                        class="rounded-full px-2.5 py-0.5 text-[12.5px] font-bold"
                         :class="
                             i.status === 'paid'
                                 ? 'bg-in-soft text-in'
@@ -66,7 +66,7 @@ defineProps<{
                         }}</span
                     >
                 </span>
-                <span class="mt-1 block text-[12.5px] text-ink-3">
+                <span class="mt-1 block text-[13.5px] text-ink-3">
                     {{ i.issued }}
                     <template v-if="i.due_date && i.status !== 'paid'">
                         ·
@@ -82,7 +82,7 @@ defineProps<{
                 }}</span>
                 <span
                     v-if="i.due > 0 && i.status !== 'void'"
-                    class="num block text-[12.5px] font-semibold text-wait"
+                    class="num block text-[13.5px] font-semibold text-wait"
                     >{{
                         t('বাকি {amount}', { amount: money(i.due, 'bdt') })
                     }}</span

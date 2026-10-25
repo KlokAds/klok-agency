@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import KButton from '@/components/k/KButton.vue';
+import { niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
-/** The period a client looks at: all of it, today to a year, or any two dates. */
+/**
+ * The period a client looks at: every choice in view at once as bordered buttons (a grid on a
+ * phone, one row on a computer), the dates it covers written under, and any two dates of
+ * their own.
+ */
 const props = defineProps<{
     url: string;
     range: { key: string; from: string; to: string };
 }>();
 
 const ranges = [
-    { key: 'all', label: 'শুরু থেকে' }, // i18n
     { key: 'today', label: 'আজ' }, // i18n
     { key: 'yesterday', label: 'গতকাল' }, // i18n
     { key: '7d', label: '৭ দিন' }, // i18n
@@ -20,12 +24,21 @@ const ranges = [
     { key: '90d', label: '৩ মাস' }, // i18n
     { key: '180d', label: '৬ মাস' }, // i18n
     { key: '365d', label: '১ বছর' }, // i18n
-    { key: 'custom', label: 'নিজে বাছুন' }, // i18n
+    { key: 'all', label: 'শুরু থেকে', wide: true }, // i18n
+    { key: 'custom', label: 'নিজে বাছুন', wide: true }, // i18n
 ];
 
 const custom = ref(props.range.key === 'custom');
 const from = ref(props.range.from);
 const to = ref(props.range.to);
+const chosen = computed(() => (custom.value ? 'custom' : props.range.key));
+
+// The dates the chosen period covers: one date for a day, else from – to.
+const covers = computed(() =>
+    props.range.from === props.range.to
+        ? niceDate(props.range.from)
+        : `${niceDate(props.range.from, false)} – ${niceDate(props.range.to)}`,
+);
 
 function go(key: string): void {
     if (key === 'custom') {
@@ -47,42 +60,44 @@ function apply(): void {
 
 <template>
     <div>
-        <div
-            class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
-        >
+        <div class="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
             <button
                 v-for="r in ranges"
                 :key="r.key"
                 type="button"
-                class="inline-flex h-9 shrink-0 items-center rounded-full border px-3.5 text-[13px] font-semibold whitespace-nowrap transition-colors"
-                :class="
-                    (custom ? 'custom' : range.key) === r.key
-                        ? 'border-brand bg-brand text-white'
-                        : 'border-line-2 text-ink-2 hover:border-ink-3'
-                "
+                class="h-10 rounded-[10px] border px-2 text-[14px] font-semibold whitespace-nowrap transition-colors sm:px-4"
+                :class="[
+                    r.wide ? 'col-span-2 sm:col-span-1' : '',
+                    chosen === r.key
+                        ? 'border-brand bg-brand text-white shadow-[0_8px_18px_-10px_var(--brand)]'
+                        : 'border-line-2 bg-surface text-ink-2 hover:border-ink-3 hover:text-ink',
+                ]"
                 @click="go(r.key)"
             >
                 {{ t(r.label) }}
             </button>
         </div>
+        <p v-if="!custom" class="num mt-2 text-[13.5px] text-ink-3">
+            {{ covers }}
+        </p>
         <!-- Two dates side by side, the button under them on a phone; one row on a computer. -->
         <div
             v-if="custom"
             class="panel mt-3 grid grid-cols-2 gap-2 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-            <label class="grid min-w-0 gap-1 text-[12px] text-ink-3"
+            <label class="grid min-w-0 gap-1 text-[14px] text-ink-3"
                 >{{ t('থেকে') }}
                 <input
                     v-model="from"
                     type="date"
-                    class="num h-10 w-full min-w-0 rounded-[10px] border border-line-2 bg-surface px-3 text-[14px] text-ink transition-colors focus:border-brand"
+                    class="num h-10 w-full min-w-0 rounded-[10px] border border-line-2 bg-surface px-3 text-[16px] text-ink transition-colors focus:border-brand"
             /></label>
-            <label class="grid min-w-0 gap-1 text-[12px] text-ink-3"
+            <label class="grid min-w-0 gap-1 text-[14px] text-ink-3"
                 >{{ t('পর্যন্ত') }}
                 <input
                     v-model="to"
                     type="date"
-                    class="num h-10 w-full min-w-0 rounded-[10px] border border-line-2 bg-surface px-3 text-[14px] text-ink transition-colors focus:border-brand"
+                    class="num h-10 w-full min-w-0 rounded-[10px] border border-line-2 bg-surface px-3 text-[16px] text-ink transition-colors focus:border-brand"
             /></label>
             <KButton
                 variant="primary"

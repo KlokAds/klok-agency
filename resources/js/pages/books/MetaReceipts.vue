@@ -79,7 +79,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
         >
     </PageHeader>
 
-    <p v-if="!configured" class="panel mb-4 px-5 py-4 text-[13px] text-ink-2">
+    <p v-if="!configured" class="panel mb-4 px-5 py-4 text-[14px] text-ink-2">
         {{
             t(
                 'Receipt-এর mailbox এখনো দেওয়া হয়নি — Settings → Email-এ mailbox আর password দিন।',
@@ -88,11 +88,11 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
     </p>
     <p
         v-if="error || errors.mailbox"
-        class="panel mb-4 border-out/30 bg-out-soft px-5 py-3 text-[13px] text-out"
+        class="panel mb-4 border-out/30 bg-out-soft px-5 py-3 text-[14px] text-out"
     >
         {{ errors.mailbox ?? error }}
     </p>
-    <p v-if="configured && checked_at" class="mb-3 text-[12.5px] text-ink-3">
+    <p v-if="configured && checked_at" class="mb-3 text-[13.5px] text-ink-3">
         {{ t('শেষ দেখা') }} {{ ago(checked_at) }}
     </p>
 
@@ -109,7 +109,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
         <div v-else class="overflow-x-auto">
             <table
                 v-stack
-                class="stack ledger w-full min-w-[760px] text-[13px]"
+                class="stack ledger w-full min-w-[760px] text-[14px]"
             >
                 <thead>
                     <tr>
@@ -143,7 +143,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                             >
                             <span
                                 v-if="r.transaction_id || r.card"
-                                class="num text-[12px] text-ink-3"
+                                class="num text-[13px] text-ink-3"
                                 >{{ r.transaction_id
                                 }}<template v-if="r.card">
                                     <template v-if="r.transaction_id"
@@ -157,7 +157,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                             <p
                                 v-for="c in r.campaigns"
                                 :key="c.name"
-                                class="flex justify-between gap-3 text-[12.5px]"
+                                class="flex justify-between gap-3 text-[13.5px]"
                             >
                                 <span
                                     class="truncate"
@@ -171,7 +171,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                             </p>
                             <span
                                 v-if="!r.campaigns.length"
-                                class="text-[12px] text-ink-3"
+                                class="text-[13px] text-ink-3"
                                 >{{ t('ভাগ নেই — পুরনো খরচে যাবে') }}</span
                             >
                         </td>
@@ -186,7 +186,7 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
                             }}</KTag>
                             <p
                                 v-if="r.problem"
-                                class="mt-1 max-w-[260px] text-[12px] text-ink-3"
+                                class="mt-1 max-w-[260px] text-[13px] text-ink-3"
                             >
                                 {{ r.problem }}
                             </p>

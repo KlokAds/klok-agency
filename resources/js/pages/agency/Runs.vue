@@ -366,22 +366,22 @@ onMounted(() => {
                 >
             </div>
 
-            <dl class="mt-4 grid grid-cols-3 gap-3 text-[12.5px]">
+            <dl class="mt-4 grid grid-cols-3 gap-3 text-[13.5px]">
                 <div>
                     <dt class="text-ink-3">Budget</dt>
-                    <dd class="num mt-0.5 text-[15px] font-medium">
+                    <dd class="num mt-0.5 text-[16px] font-medium">
                         {{ money(run.budget_usd, 'usd') }}
                     </dd>
                 </div>
                 <div>
                     <dt class="text-ink-3">{{ t('দৈনিক') }}</dt>
-                    <dd class="num mt-0.5 text-[15px] font-medium">
+                    <dd class="num mt-0.5 text-[16px] font-medium">
                         {{ money(run.daily_usd, 'usd') }}
                     </dd>
                 </div>
                 <div>
                     <dt class="text-ink-3">{{ t('তারিখ') }}</dt>
-                    <dd class="num mt-0.5 text-[13px]">
+                    <dd class="num mt-0.5 text-[14px]">
                         {{ niceDate(run.start_on, false) }} –
                         {{ niceDate(run.end_on, false) }}
                     </dd>
@@ -396,7 +396,7 @@ onMounted(() => {
                 />
             </div>
 
-            <div class="mt-3 flex flex-wrap items-center gap-2 text-[12.5px]">
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-[13.5px]">
                 <KTag v-if="run.result" :tone="RESULT[run.result].tone">{{
                     t(RESULT[run.result].label)
                 }}</KTag>
@@ -414,7 +414,7 @@ onMounted(() => {
                     {{ t('{n}টা reminder বাকি', { n: run.open_tasks }) }}</span
                 >
             </div>
-            <p v-if="run.result_note" class="mt-2 text-[12.5px] text-ink-2">
+            <p v-if="run.result_note" class="mt-2 text-[13.5px] text-ink-2">
                 {{ run.result_note }}
             </p>
 
@@ -432,13 +432,13 @@ onMounted(() => {
                         :href="run.whatsapp"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] bg-in-soft px-3 text-[12.5px] font-semibold whitespace-nowrap text-in hover:bg-in hover:text-white"
+                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] bg-in-soft px-3 text-[13.5px] font-semibold whitespace-nowrap text-in hover:bg-in hover:text-white"
                         ><KIcon name="chat" :size="15" />WhatsApp</a
                     >
                     <a
                         v-if="run.sms"
                         :href="run.sms"
-                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[12.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
                         ><KIcon name="mail" :size="15" />SMS</a
                     >
                     <KButton
@@ -470,15 +470,14 @@ onMounted(() => {
                         @click="startRenew(run)"
                         >Renew</KButton
                     >
-                    <button
+                    <KButton
                         v-if="can['runs.edit']"
-                        type="button"
-                        class="grid size-9 shrink-0 place-items-center rounded-[10px] border border-line-2 text-ink-3 hover:bg-sunken hover:text-ink"
-                        :aria-label="t('বদলান')"
+                        size="sm"
+                        icon="pen"
+                        class="h-9 shrink-0"
                         @click="startEdit(run)"
+                        >{{ t('বদলান') }}</KButton
                     >
-                        <KIcon name="pen" :size="16" />
-                    </button>
                 </div>
             </div>
         </article>
@@ -551,7 +550,7 @@ onMounted(() => {
             </KField>
             <p
                 v-if="endPreview"
-                class="rounded-xl bg-brand-soft px-4 py-2.5 text-[13px] text-brand-ink sm:col-span-2"
+                class="rounded-xl bg-brand-soft px-4 py-2.5 text-[14px] text-brand-ink sm:col-span-2"
             >
                 {{
                     t('{n} দিন চলবে — শেষ {date}', {
@@ -639,7 +638,7 @@ onMounted(() => {
                     :placeholder="t('কী ভালো বা খারাপ — audience, creative…')"
                 />
             </KField>
-            <p class="text-[12.5px] text-ink-3">
+            <p class="text-[13.5px] text-ink-3">
                 {{
                     t(
                         'ভালো হলে কাল budget বাড়ানোর, খারাপ হলে ঠিক করার reminder আসবে।',

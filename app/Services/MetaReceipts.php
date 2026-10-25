@@ -30,6 +30,9 @@ class MetaReceipts
     /** How often the mailbox is looked at. */
     public const EVERY_MINUTES = 5;
 
+    /** Meta's card charges are read from Pilot this often. */
+    public const CHARGES_EVERY_MINUTES = 60;
+
     /** Receipts in these states are safely in the books, so their mail is deleted. */
     public const DONE = ['booked', 'duplicate', 'ignored'];
 
@@ -405,7 +408,7 @@ class MetaReceipts
      */
     public function fromPilotIfDue(): int
     {
-        if (! PilotClient::connected() || ! Cache::add('meta-charges:pilot', true, 3600)) {
+        if (! PilotClient::connected() || ! Cache::add('meta-charges:pilot', true, self::CHARGES_EVERY_MINUTES * 60)) {
             return 0;
         }
 

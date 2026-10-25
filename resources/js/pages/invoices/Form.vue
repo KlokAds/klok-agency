@@ -370,7 +370,7 @@ const errorAt = (index: number, field: string) =>
                         t('Campaign-এর খরচ থেকে')
                     }}
                 </h2>
-                <p class="mt-1 text-[12.5px] text-ink-3">
+                <p class="mt-1 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'সময় বেছে নিন — এই client-এর প্রতিটা campaign কত খরচ করেছে আর কী ফলাফল এনেছে দেখাবে।',
@@ -393,14 +393,14 @@ const errorAt = (index: number, field: string) =>
                         >{{ t('Campaign দেখুন') }}</KButton
                     >
                 </div>
-                <p v-if="loadError" class="mt-3 text-[12.5px] text-out">
+                <p v-if="loadError" class="mt-3 text-[13.5px] text-out">
                     {{ loadError }}
                 </p>
 
                 <template v-if="spend">
                     <p
                         v-if="!spend.length"
-                        class="mt-4 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+                        class="mt-4 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
                     >
                         {{
                             t(
@@ -435,7 +435,7 @@ const errorAt = (index: number, field: string) =>
                                         t('শেষ হয়েছে')
                                     }}</KTag>
                                 </p>
-                                <p class="mt-0.5 text-[12px] text-ink-3">
+                                <p class="mt-0.5 text-[13px] text-ink-3">
                                     {{
                                         t('{n} result', {
                                             n: c.results.toLocaleString(
@@ -477,7 +477,7 @@ const errorAt = (index: number, field: string) =>
                         v-if="spend.length"
                         class="mt-3 flex flex-wrap items-center justify-between gap-3"
                     >
-                        <p class="num text-[12.5px] text-ink-3">
+                        <p class="num text-[13.5px] text-ink-3">
                             {{ niceDate(period.from, false) }} –
                             {{ niceDate(period.to) }}
                         </p>
@@ -518,7 +518,7 @@ const errorAt = (index: number, field: string) =>
                 </div>
                 <p
                     v-if="form.errors.items"
-                    class="px-5 pt-3 text-[12.5px] text-out"
+                    class="px-5 pt-3 text-[13.5px] text-out"
                 >
                     {{ form.errors.items }}
                 </p>
@@ -539,11 +539,10 @@ const errorAt = (index: number, field: string) =>
                             }}</span>
                             <button
                                 type="button"
-                                class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
-                                :aria-label="t('সরান')"
+                                class="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[13px] font-semibold text-ink-3 hover:bg-out-soft hover:text-out"
                                 @click="remove(index)"
                             >
-                                <KIcon name="close" :size="16" />
+                                <KIcon name="close" :size="15" />{{ t('সরান') }}
                             </button>
                         </div>
                         <KField :error="errorAt(index, 'description')">
@@ -561,7 +560,7 @@ const errorAt = (index: number, field: string) =>
                         </KField>
                         <p
                             v-if="line.kind === 'ad_spend' && line.period_from"
-                            class="num -mt-1 text-[12px] text-ink-3"
+                            class="num -mt-1 text-[13px] text-ink-3"
                         >
                             {{ niceDate(line.period_from, false) }} –
                             {{ niceDate(line.period_to) }}
@@ -597,7 +596,7 @@ const errorAt = (index: number, field: string) =>
                             </KField>
                             <p
                                 v-if="campaignOf(line)"
-                                class="text-[12px]"
+                                class="text-[13px]"
                                 :class="
                                     daysFor(line)
                                         ? 'text-brand-ink'
@@ -658,7 +657,7 @@ const errorAt = (index: number, field: string) =>
                                 />
                             </KField>
                             <p
-                                class="num col-span-2 text-right text-[15px] font-semibold sm:col-span-1 sm:pb-2.5"
+                                class="num col-span-2 text-right text-[16px] font-semibold sm:col-span-1 sm:pb-2.5"
                             >
                                 {{ bdt(lineBdt(line)) }}
                             </p>
@@ -694,7 +693,7 @@ const errorAt = (index: number, field: string) =>
                 <p class="eyebrow">
                     {{ invoice ? invoice.number : next_number }}
                 </p>
-                <dl class="mt-3 space-y-2 text-[13.5px]">
+                <dl class="mt-3 space-y-2 text-[14.5px]">
                     <div
                         v-if="totalUsd"
                         class="flex justify-between text-ink-2"
@@ -720,7 +719,7 @@ const errorAt = (index: number, field: string) =>
                         invoice ? t('সংরক্ষণ') : t('Invoice তৈরি করুন')
                     }}</KButton
                 >
-                <p class="mt-2 text-[11.5px] text-ink-3">
+                <p class="mt-2 text-[12.5px] text-ink-3">
                     {{
                         t(
                             'Client-কে পাঠানোর আগ পর্যন্ত বদলানো যায়; পাঠানোর পর আর বদলাবে না।',
@@ -728,7 +727,7 @@ const errorAt = (index: number, field: string) =>
                     }}
                 </p>
             </section>
-            <section class="panel p-5 text-[12.5px] text-ink-2">
+            <section class="panel p-5 text-[13.5px] text-ink-2">
                 <p class="font-semibold text-ink">{{ t('Client rate') }}</p>
                 <p class="mt-1">
                     {{

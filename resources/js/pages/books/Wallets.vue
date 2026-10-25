@@ -346,20 +346,20 @@ async function removeMove(move: Move): Promise<void> {
             >
                 {{ money(p.balance, 'bdt', { round: false }) }}
             </p>
-            <p class="mt-2 truncate text-[12px] text-ink-3">
+            <p class="mt-2 truncate text-[13px] text-ink-3">
                 {{ typeLabel(p.type)
                 }}<template v-if="p.detail"> · {{ p.detail }}</template
                 ><template v-if="!p.active"> · {{ t('বন্ধ') }}</template>
             </p>
         </div>
         <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p class="text-[12.5px] font-medium text-rail-dim">
+            <p class="text-[13.5px] font-medium text-rail-dim">
                 {{ t('Card-এ USD') }}
             </p>
             <p class="num mt-3 text-[30px] leading-none font-medium text-white">
                 {{ money(card, 'usd') }}
             </p>
-            <p class="mt-3 text-[12.5px] text-rail-dim">
+            <p class="mt-3 text-[13.5px] text-rail-dim">
                 {{ t('Platform আরো কাটবে') }}
                 <b class="num font-semibold text-rail-ink">{{
                     money(platform_due, 'usd')
@@ -372,7 +372,7 @@ async function removeMove(move: Move): Promise<void> {
     </section>
 
     <div
-        class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[13.5px]"
+        class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[14.5px]"
     >
         <span
             >{{ t('খাতায় মোট BDT') }}
@@ -431,7 +431,7 @@ async function removeMove(move: Move): Promise<void> {
                         v-if="can['bdt.edit'] && untagged.total"
                         class="flex items-center gap-2"
                     >
-                        <span class="text-[12px] text-ink-3">{{
+                        <span class="text-[13px] text-ink-3">{{
                             t('বাকি সব:')
                         }}</span>
                         <div class="flex gap-1">
@@ -439,7 +439,7 @@ async function removeMove(move: Move): Promise<void> {
                                 v-for="w in options.wallets"
                                 :key="String(w.value)"
                                 type="button"
-                                class="h-9 rounded-lg border border-line-2 bg-surface px-3 text-[12.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
+                                class="h-9 rounded-lg border border-line-2 bg-surface px-3 text-[13.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
                                 :class="
                                     busy === `rest:${w.value}` && 'opacity-60'
                                 "
@@ -451,7 +451,7 @@ async function removeMove(move: Move): Promise<void> {
                         </div>
                     </div>
                 </div>
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{
                         t(
                             'প্রতিটা entry-র টাকা কোথায় এসেছে বা কোথা থেকে গেছে, বেছে দিন — তাহলে জায়গার balance মিলবে।',
@@ -467,16 +467,16 @@ async function removeMove(move: Move): Promise<void> {
                 <li
                     v-for="e in untagged.data"
                     :key="e.id"
-                    class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line px-5 py-2.5 text-[13px] sm:flex-nowrap sm:px-6"
+                    class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line px-5 py-2.5 text-[14px] sm:flex-nowrap sm:px-6"
                 >
-                    <span class="num w-20 shrink-0 text-[12px] text-ink-3">{{
+                    <span class="num w-20 shrink-0 text-[13px] text-ink-3">{{
                         e.date ? niceDate(e.date, false) : t('তারিখ নেই')
                     }}</span>
                     <span class="min-w-0 flex-1">
                         <span class="block truncate font-medium">{{
                             e.description
                         }}</span>
-                        <span class="text-[12px] text-ink-3"
+                        <span class="text-[13px] text-ink-3"
                             >{{ e.category
                             }}<template v-if="e.client">
                                 · {{ e.client }}</template
@@ -498,7 +498,7 @@ async function removeMove(move: Move): Promise<void> {
                             v-for="w in options.wallets"
                             :key="String(w.value)"
                             type="button"
-                            class="h-9 rounded-lg border border-line-2 bg-surface px-2.5 text-[12.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
+                            class="h-9 rounded-lg border border-line-2 bg-surface px-2.5 text-[13.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
                             :class="
                                 busy === `${e.id}:${w.value}` && 'opacity-60'
                             "
@@ -516,7 +516,7 @@ async function removeMove(move: Move): Promise<void> {
         <section class="panel overflow-hidden">
             <div class="px-5 pt-5 sm:px-6">
                 <h2 class="text-[16px] font-bold">{{ t('টাকা সরানো') }}</h2>
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{
                         t(
                             'নিজেদের এক জায়গা থেকে আরেক জায়গায় — মোট BDT বদলায় না।',
@@ -532,9 +532,9 @@ async function removeMove(move: Move): Promise<void> {
                 <li
                     v-for="m in moves.data"
                     :key="m.id"
-                    class="flex items-center gap-3 border-t border-line px-5 py-2.5 text-[13px] sm:px-6"
+                    class="flex items-center gap-3 border-t border-line px-5 py-2.5 text-[14px] sm:px-6"
                 >
-                    <span class="num w-20 shrink-0 text-[12px] text-ink-3">{{
+                    <span class="num w-20 shrink-0 text-[13px] text-ink-3">{{
                         niceDate(m.date, false)
                     }}</span>
                     <span class="min-w-0 flex-1 truncate font-medium"
@@ -547,7 +547,7 @@ async function removeMove(move: Move): Promise<void> {
                         >{{ money(m.amount, 'bdt', { round: false }) }}
                         <span
                             v-if="m.fee"
-                            class="block text-[11.5px] text-ink-3"
+                            class="block text-[12.5px] text-ink-3"
                             >fee
                             {{ money(m.fee, 'bdt', { round: false }) }}</span
                         ></span
@@ -555,12 +555,13 @@ async function removeMove(move: Move): Promise<void> {
                     <button
                         v-if="can['bdt.delete']"
                         type="button"
-                        class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
-                        :aria-label="t('মুছুন')"
-                        :title="t('মুছুন')"
+                        class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
                         @click="removeMove(m)"
                     >
-                        <KIcon name="bin" :size="16" />
+                        <KIcon name="bin" :size="15" />
+                        <span class="text-[13px] leading-none">{{
+                            t('মুছুন')
+                        }}</span>
                     </button>
                 </li>
             </ul>
@@ -621,7 +622,7 @@ async function removeMove(move: Move): Promise<void> {
             </KField>
             <div
                 v-if="parseFloat(form.amount || '0') > 0"
-                class="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-sunken px-4 py-3 text-[13px] sm:col-span-2"
+                class="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-sunken px-4 py-3 text-[14px] sm:col-span-2"
             >
                 <span
                     >{{ label(form.from_wallet ?? '') }} {{ t('থেকে যাবে') }}
@@ -676,7 +677,7 @@ async function removeMove(move: Move): Promise<void> {
             <li
                 v-for="w in list"
                 :key="w.id"
-                class="flex items-center gap-3 border-b border-line px-3 py-2.5 text-[13.5px] last:border-0"
+                class="flex items-center gap-3 border-b border-line px-3 py-2.5 text-[14.5px] last:border-0"
             >
                 <span class="min-w-0 flex-1">
                     <span
@@ -684,7 +685,7 @@ async function removeMove(move: Move): Promise<void> {
                         :class="w.is_active ? '' : 'text-ink-3 line-through'"
                         >{{ w.name }}</span
                     >
-                    <span class="text-[12px] text-ink-3"
+                    <span class="text-[13px] text-ink-3"
                         >{{ typeLabel(w.type)
                         }}<template v-if="w.detail">
                             · {{ w.detail }}</template
@@ -696,12 +697,10 @@ async function removeMove(move: Move): Promise<void> {
                 }}</KButton>
                 <button
                     type="button"
-                    class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
-                    :aria-label="t('মুছুন')"
-                    :title="t('মুছুন')"
+                    class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-[13.5px] font-semibold whitespace-nowrap text-ink-3 hover:bg-out-soft hover:text-out"
                     @click="removePlace(w)"
                 >
-                    <KIcon name="bin" :size="16" />
+                    <KIcon name="bin" :size="15" />{{ t('মুছুন') }}
                 </button>
             </li>
         </ul>
@@ -710,7 +709,7 @@ async function removeMove(move: Move): Promise<void> {
             class="mt-5 grid grid-cols-1 gap-4 rounded-xl bg-sunken p-4 sm:grid-cols-2"
             @submit.prevent="savePlace"
         >
-            <p class="text-[13px] font-semibold sm:col-span-2">
+            <p class="text-[14px] font-semibold sm:col-span-2">
                 {{
                     editingPlace
                         ? t('{name} বদলান', { name: editingPlace.name })
@@ -759,7 +758,7 @@ async function removeMove(move: Move): Promise<void> {
     </KModal>
 
     <KModal v-model="openingOpen" :title="t('আসল balance বসান')">
-        <p class="text-[13px] text-ink-2">
+        <p class="text-[14px] text-ink-2">
             {{
                 t(
                     'আজ প্রতিটা জায়গায় আসলে কত আছে লিখুন। এই দিন থেকে প্রতিটা জায়গা এখান থেকে গোনা শুরু করবে — আগের entry-র জায়গা আর বাছতে হবে না।',
@@ -786,7 +785,7 @@ async function removeMove(move: Move): Promise<void> {
                 <KMoney v-model="openingForm.balances[w.key]" currency="bdt" />
             </KField>
             <div
-                class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-sunken px-4 py-3 text-[13px] sm:col-span-2"
+                class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-sunken px-4 py-3 text-[14px] sm:col-span-2"
             >
                 <span
                     >{{ t('মোট') }}

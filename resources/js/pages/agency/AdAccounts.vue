@@ -139,7 +139,7 @@ function live(status: string | null): boolean {
 
     <p
         v-if="error"
-        class="panel mb-6 border-out/30 bg-out-soft px-5 py-3 text-[13px] text-out"
+        class="panel mb-6 border-out/30 bg-out-soft px-5 py-3 text-[14px] text-out"
     >
         Klok Pilot: {{ error }}
     </p>
@@ -174,7 +174,7 @@ function live(status: string | null): boolean {
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
                     <h2 class="truncate text-[16px] font-bold">{{ a.name }}</h2>
-                    <p class="num mt-0.5 truncate text-[12.5px] text-ink-3">
+                    <p class="num mt-0.5 truncate text-[13.5px] text-ink-3">
                         {{ a.platform === 'meta' ? 'Meta' : a.platform }}
                         <template v-if="a.external_id">
                             · {{ a.external_id }}</template
@@ -202,25 +202,25 @@ function live(status: string | null): boolean {
                 </div>
             </div>
 
-            <p v-if="a.error" class="mt-4 text-[13px] text-out">
+            <p v-if="a.error" class="mt-4 text-[14px] text-out">
                 {{ a.error }}
             </p>
             <template v-else>
                 <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                        <p class="text-[12px] text-ink-3">{{ t('খরচ') }}</p>
+                        <p class="text-[13px] text-ink-3">{{ t('খরচ') }}</p>
                         <p class="num mt-0.5 text-[16px] font-bold">
                             {{ adMoney(a.totals.spend ?? 0, a.currency) }}
                         </p>
                     </div>
                     <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                        <p class="text-[12px] text-ink-3">Result</p>
+                        <p class="text-[13px] text-ink-3">Result</p>
                         <p class="num mt-0.5 text-[16px] font-bold">
                             {{ a.totals.results ?? 0 }}
                         </p>
                     </div>
                     <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                        <p class="text-[12px] text-ink-3">
+                        <p class="text-[13px] text-ink-3">
                             {{ t('প্রতি result খরচ') }}
                         </p>
                         <p class="num mt-0.5 text-[16px] font-bold">
@@ -228,7 +228,7 @@ function live(status: string | null): boolean {
                         </p>
                     </div>
                     <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                        <p class="text-[12px] text-ink-3">Click</p>
+                        <p class="text-[13px] text-ink-3">Click</p>
                         <p class="num mt-0.5 text-[16px] font-bold">
                             {{ (a.totals.clicks ?? 0).toLocaleString('en-US') }}
                         </p>
@@ -237,7 +237,7 @@ function live(status: string | null): boolean {
 
                 <p
                     v-if="!a.campaigns.length"
-                    class="mt-4 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+                    class="mt-4 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
                 >
                     {{ t('এই সময়ে কোনো campaign-এ খরচ হয়নি।') }}
                 </p>
@@ -245,7 +245,7 @@ function live(status: string | null): boolean {
                     <li
                         v-for="c in a.campaigns"
                         :key="c.name"
-                        class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                        class="flex items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
                     >
                         <span
                             class="size-2 shrink-0 rounded-full"
@@ -275,7 +275,7 @@ function live(status: string | null): boolean {
             </template>
 
             <div
-                class="mt-auto flex items-center justify-between gap-3 pt-4 text-[12px] text-ink-3"
+                class="mt-auto flex items-center justify-between gap-3 pt-4 text-[13px] text-ink-3"
             >
                 <span v-if="a.synced_at"
                     >{{ t('Pilot sync') }} {{ ago(a.synced_at) }}</span

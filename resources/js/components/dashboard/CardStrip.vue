@@ -59,7 +59,7 @@ const meter = computed(() => {
             <div class="p-5 sm:p-7">
                 <div class="flex items-center justify-between gap-3">
                     <p
-                        class="flex items-center gap-2 text-[13.5px] font-medium text-ink-2"
+                        class="flex items-center gap-2 text-[14.5px] font-medium text-ink-2"
                     >
                         <KIcon name="wallet" :size="15" class="text-brand" />
                         {{ t('Card-এ এখন') }}
@@ -81,7 +81,7 @@ const meter = computed(() => {
                         hero.cents
                     }}</span>
                 </p>
-                <p class="mt-2.5 text-[13px] text-ink-3">
+                <p class="mt-2.5 text-[14px] text-ink-3">
                     {{ t('Agency-র USD card-এ আজকের balance') }}
                     <template v-if="s.holding">
                         · {{ t('অন্য account-এ') }}
@@ -114,7 +114,7 @@ const meter = computed(() => {
                 >
                     <div>
                         <dt
-                            class="flex items-center gap-2 text-[13px] text-ink-2"
+                            class="flex items-center gap-2 text-[14px] text-ink-2"
                         >
                             <span class="size-2 rounded-full bg-wait" />
                             {{ t('Meta এখনো কাটবে') }}
@@ -127,7 +127,7 @@ const meter = computed(() => {
                         </dd>
                         <ul
                             v-if="dueRows.length"
-                            class="mt-1.5 space-y-0.5 text-[12.5px]"
+                            class="mt-1.5 space-y-0.5 text-[13.5px]"
                         >
                             <li
                                 v-for="p in dueRows"
@@ -140,13 +140,13 @@ const meter = computed(() => {
                                 }}</span>
                             </li>
                         </ul>
-                        <p v-else class="mt-1.5 text-[12.5px] text-ink-3">
+                        <p v-else class="mt-1.5 text-[13.5px] text-ink-3">
                             {{ t('সব খরচ card থেকে কাটা হয়ে গেছে।') }}
                         </p>
                     </div>
                     <div>
                         <dt
-                            class="flex items-center gap-2 text-[13px] text-ink-2"
+                            class="flex items-center gap-2 text-[14px] text-ink-2"
                         >
                             <span
                                 class="size-2 rounded-full"
@@ -165,7 +165,7 @@ const meter = computed(() => {
                         >
                             {{ money(s.card_after, 'usd') }}
                         </dd>
-                        <p class="num mt-1.5 text-[12.5px] text-ink-3">
+                        <p class="num mt-1.5 text-[13.5px] text-ink-3">
                             {{ money(s.card, 'usd') }} −
                             {{ money(s.platform_due, 'usd') }}
                         </p>
@@ -174,7 +174,7 @@ const meter = computed(() => {
 
                 <p
                     v-if="afterTone !== 'ok'"
-                    class="mt-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[13px] font-medium"
+                    class="mt-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[14px] font-medium"
                     :class="
                         afterTone === 'out'
                             ? 'bg-out-soft text-out'
@@ -197,7 +197,7 @@ const meter = computed(() => {
                 class="flex flex-col border-t border-line bg-surface-2 p-5 sm:p-7 lg:border-t-0 lg:border-l"
             >
                 <div class="flex items-center justify-between gap-3">
-                    <p class="text-[13.5px] font-medium text-ink-2">
+                    <p class="text-[14.5px] font-medium text-ink-2">
                         {{ t('কেনা dollar বাকি') }}
                     </p>
                     <KButton href="/fx" size="sm" class="no-print shrink-0">{{
@@ -217,11 +217,11 @@ const meter = computed(() => {
                     {{ money(fx.remaining, 'usd') }}
                 </p>
 
-                <p v-if="!fx.current" class="mt-3 text-[13px] text-ink-3">
+                <p v-if="!fx.current" class="mt-3 text-[14px] text-ink-3">
                     {{ t('কোনো batch-এ dollar বাকি নেই') }}
                 </p>
 
-                <dl class="mt-auto space-y-2.5 pt-6 text-[13px]">
+                <dl class="mt-auto space-y-2.5 pt-6 text-[14px]">
                     <div
                         v-if="fx.current"
                         class="flex justify-between gap-3 border-b border-line pb-2.5"
@@ -287,7 +287,7 @@ const meter = computed(() => {
 
                 <p
                     v-if="fx.low"
-                    class="flex items-start gap-2 pt-4 text-[13px] font-medium"
+                    class="flex items-start gap-2 pt-4 text-[14px] font-medium"
                     :class="fx.remaining < 0 ? 'text-out' : 'text-wait'"
                 >
                     <KIcon name="warn" :size="15" class="mt-0.5 shrink-0" />

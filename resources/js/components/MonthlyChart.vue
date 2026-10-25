@@ -134,7 +134,7 @@ const showTable = ref(false);
                         :x="b.cx"
                         :y="H - 8"
                         text-anchor="middle"
-                        class="fill-ink-3 text-[11px]"
+                        class="fill-ink-3 text-[12px]"
                         font-family="var(--font-sans)"
                     >
                         {{ b.label }}
@@ -144,7 +144,7 @@ const showTable = ref(false);
 
             <div
                 v-if="tip"
-                class="popover pointer-events-none absolute z-10 w-52 -translate-x-1/2 px-3.5 py-3 text-[12.5px]"
+                class="popover pointer-events-none absolute z-10 w-52 -translate-x-1/2 px-3.5 py-3 text-[13.5px]"
                 :style="{ left: `${(tip.cx / W) * 100}%`, top: '0' }"
             >
                 <p class="font-bn font-semibold text-ink">
@@ -179,7 +179,7 @@ const showTable = ref(false);
             </div>
         </div>
 
-        <div class="mt-3 flex items-center gap-4 text-[12px] text-ink-3">
+        <div class="mt-3 flex items-center gap-4 text-[13px] text-ink-3">
             <span class="flex items-center gap-1.5"
                 ><span class="size-2.5 rounded-[3px] bg-[var(--pos)]" />
                 {{ t('লাভ') }}</span
@@ -206,7 +206,7 @@ const showTable = ref(false);
             <li v-for="r in rows" :key="r.month" class="py-3">
                 <div class="flex items-baseline justify-between gap-3">
                     <span
-                        class="font-bn text-[14px] font-semibold whitespace-nowrap"
+                        class="font-bn text-[15px] font-semibold whitespace-nowrap"
                         >{{ monthLabel(r.month) }}</span
                     >
                     <span
@@ -223,7 +223,7 @@ const showTable = ref(false);
                 </div>
                 <p
                     v-if="r.received || r.cost || r.expense"
-                    class="mt-1 flex flex-wrap gap-x-3 text-[12px] text-ink-3"
+                    class="mt-1 flex flex-wrap gap-x-3 text-[13px] text-ink-3"
                 >
                     <span class="whitespace-nowrap"
                         >{{ t('পেয়েছি') }}

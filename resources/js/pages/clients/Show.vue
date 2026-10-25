@@ -241,11 +241,13 @@ const rate = computed(() =>
 );
 
 const open = ref(false);
+// The client's own details; where they are empty, their portal person's, so there is something to start from.
+const person = props.portal.users[0];
 const form = useForm({
     ...props.client,
-    phone: props.client.phone ?? '',
-    email: props.client.email ?? '',
-    company: props.client.company ?? '',
+    phone: props.client.phone ?? person?.phone ?? '',
+    email: props.client.email ?? person?.email ?? '',
+    company: props.client.company ?? person?.company ?? '',
     notes: props.client.notes ?? '',
     renew_days: props.client.renew_days ? String(props.client.renew_days) : '',
 });
@@ -310,14 +312,14 @@ function print(): void {
             <p class="num mt-2 text-[22px]">
                 {{ money(f.usd_settled, 'usd') }}
             </p>
-            <p class="num mt-1 text-[12px] text-ink-3">
+            <p class="num mt-1 text-[13px] text-ink-3">
                 FIFO cost {{ money(f.cost_settled, 'bdt') }}
             </p>
         </div>
         <div class="bg-surface p-5">
             <p class="eyebrow">{{ t('দিয়েছে') }}</p>
             <p class="num mt-2 text-[22px]">{{ money(f.received, 'bdt') }}</p>
-            <p v-if="rate" class="num mt-1 text-[12px] text-ink-3">
+            <p v-if="rate" class="num mt-1 text-[13px] text-ink-3">
                 {{ t('গড়') }} &#2547;{{ rate }} / USD
             </p>
         </div>
@@ -332,7 +334,7 @@ function print(): void {
             <p class="num mt-2 text-[22px] text-wait">
                 {{ money(f.usd_pending, 'usd') }}
             </p>
-            <p class="num mt-1 text-[12px] text-ink-3">
+            <p class="num mt-1 text-[13px] text-ink-3">
                 cost {{ money(f.cost_pending, 'bdt') }}
             </p>
         </div>
@@ -357,7 +359,7 @@ function print(): void {
         </div>
         <p
             v-if="!invoices.length"
-            class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+            class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
         >
             {{ t('এখনো কোনো invoice নেই।') }}
         </p>
@@ -369,7 +371,7 @@ function print(): void {
             >
                 <Link
                     :href="`/invoices/${i.uid}`"
-                    class="flex items-center gap-3 py-2.5 text-[13px]"
+                    class="flex items-center gap-3 py-2.5 text-[14px]"
                 >
                     <span class="num font-semibold">{{ i.number }}</span>
                     <span class="num text-ink-3">{{
@@ -379,7 +381,7 @@ function print(): void {
                     <span class="num text-right"
                         >{{ money(i.total, 'bdt') }}
                         <span
-                            class="block text-[12px]"
+                            class="block text-[13px]"
                             :class="
                                 i.overdue
                                     ? 'text-out'
@@ -413,7 +415,7 @@ function print(): void {
             </div>
             <div
                 v-if="credit && (credit.credit_usd || credit.campaign_usd)"
-                class="mt-3 grid grid-cols-3 gap-2 text-[12.5px]"
+                class="mt-3 grid grid-cols-3 gap-2 text-[13.5px]"
             >
                 <div class="rounded-lg bg-sunken px-3 py-2">
                     <p class="text-ink-3">{{ t('আগাম credit') }}</p>
@@ -456,7 +458,7 @@ function print(): void {
             </div>
             <p
                 v-if="credit && credit.credit_usd && credit.daily_usd"
-                class="mt-2 text-[12.5px] text-ink-3"
+                class="mt-2 text-[13.5px] text-ink-3"
             >
                 {{
                     t(
@@ -470,7 +472,7 @@ function print(): void {
             </p>
             <p
                 v-if="!campaigns.length"
-                class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+                class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
             >
                 {{ t('এখনো কোনো campaign এই client-এর সাথে যুক্ত নয়।') }}
             </p>
@@ -478,7 +480,7 @@ function print(): void {
                 <li
                     v-for="c in campaigns"
                     :key="c.id"
-                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
                 >
                     <span
                         class="size-2 shrink-0 rounded-full"
@@ -488,7 +490,7 @@ function print(): void {
                         <span class="block truncate font-medium">{{
                             c.name
                         }}</span>
-                        <span class="text-[12px] text-ink-3"
+                        <span class="text-[13px] text-ink-3"
                             >{{ c.account }}
                             <template v-if="c.bill_from">
                                 ·
@@ -502,7 +504,7 @@ function print(): void {
                     </span>
                     <span class="num shrink-0 text-right"
                         >{{ money(c.spend_7d, 'usd') }}
-                        <span class="block text-[12px] text-ink-3">{{
+                        <span class="block text-[13px] text-ink-3">{{
                             t('৭ দিনে')
                         }}</span></span
                     >
@@ -524,7 +526,7 @@ function print(): void {
             </div>
             <p
                 v-if="!tasks.length"
-                class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+                class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
             >
                 {{ t('কোনো কাজ বাকি নেই।') }}
             </p>
@@ -532,13 +534,13 @@ function print(): void {
                 <li
                     v-for="task in tasks"
                     :key="task.id"
-                    class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                    class="flex items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
                 >
                     <span class="min-w-0 flex-1 truncate font-medium">{{
                         t(task.title)
                     }}</span>
                     <span
-                        class="num shrink-0 text-[12px]"
+                        class="num shrink-0 text-[13px]"
                         :class="
                             task.overdue
                                 ? 'font-semibold text-out'
@@ -581,7 +583,7 @@ function print(): void {
                 :key="a.id"
                 class="mt-5 border-t border-line pt-4 first:border-0 first:pt-0"
             >
-                <p class="num truncate text-[13px] font-semibold">
+                <p class="num truncate text-[14px] font-semibold">
                     {{ a.name
                     }}<span class="font-normal text-ink-3">
                         <template v-if="a.external_id">
@@ -591,13 +593,13 @@ function print(): void {
                         ></span
                     >
                 </p>
-                <p v-if="a.error" class="mt-2 text-[13px] text-out">
+                <p v-if="a.error" class="mt-2 text-[14px] text-out">
                     {{ a.error }}
                 </p>
                 <template v-else>
                     <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div class="rounded-xl bg-sunken px-4 py-3">
-                            <p class="text-[12px] text-ink-3">
+                            <p class="text-[13px] text-ink-3">
                                 {{ t('খরচ') }}
                             </p>
                             <p class="num mt-1 text-[17px] font-bold">
@@ -605,13 +607,13 @@ function print(): void {
                             </p>
                         </div>
                         <div class="rounded-xl bg-sunken px-4 py-3">
-                            <p class="text-[12px] text-ink-3">Result</p>
+                            <p class="text-[13px] text-ink-3">Result</p>
                             <p class="num mt-1 text-[17px] font-bold">
                                 {{ a.totals.results ?? 0 }}
                             </p>
                         </div>
                         <div class="rounded-xl bg-sunken px-4 py-3">
-                            <p class="text-[12px] text-ink-3">
+                            <p class="text-[13px] text-ink-3">
                                 {{ t('প্রতি result খরচ') }}
                             </p>
                             <p class="num mt-1 text-[17px] font-bold">
@@ -624,7 +626,7 @@ function print(): void {
                             </p>
                         </div>
                         <div class="rounded-xl bg-sunken px-4 py-3">
-                            <p class="text-[12px] text-ink-3">Click</p>
+                            <p class="text-[13px] text-ink-3">Click</p>
                             <p class="num mt-1 text-[17px] font-bold">
                                 {{
                                     (a.totals.clicks ?? 0).toLocaleString(
@@ -636,7 +638,7 @@ function print(): void {
                     </div>
                     <p
                         v-if="!a.campaigns.length"
-                        class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+                        class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
                     >
                         {{ t('এই সময়ে কোনো campaign-এ খরচ হয়নি।') }}
                     </p>
@@ -644,7 +646,7 @@ function print(): void {
                         <li
                             v-for="c in a.campaigns.slice(0, 8)"
                             :key="c.name"
-                            class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                            class="flex items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
                         >
                             <span class="min-w-0 flex-1 truncate font-medium">{{
                                 c.name
@@ -682,7 +684,7 @@ function print(): void {
                 <h2 class="text-[16px] font-bold">
                     {{ t('Budget বনাম আসল খরচ') }}
                 </h2>
-                <p class="mt-1 text-[12.5px] text-ink-3">
+                <p class="mt-1 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'শেষ ৩০ দিন — Meta কোনো দিন budget-এর চেয়ে বেশি, কোনো দিন কম খরচ করে।',
@@ -690,7 +692,7 @@ function print(): void {
                     }}
                 </p>
             </div>
-            <p class="text-[12.5px]">
+            <p class="text-[13.5px]">
                 <span class="text-wait"
                     >{{ t('বেশি গেছে') }}
                     <b class="num">{{
@@ -709,7 +711,7 @@ function print(): void {
         <div class="mt-3 max-h-[360px] overflow-auto">
             <table
                 v-stack
-                class="stack ledger w-full min-w-[480px] text-[13px]"
+                class="stack ledger w-full min-w-[480px] text-[14px]"
             >
                 <thead>
                     <tr>
@@ -762,7 +764,7 @@ function print(): void {
 
     <section class="no-print panel mb-6 p-5 sm:p-6">
         <h2 class="text-[16px] font-bold">{{ t('Client portal') }}</h2>
-        <p class="mt-1 text-[13px] text-ink-3">
+        <p class="mt-1 text-[14px] text-ink-3">
             {{
                 t(
                     'যাঁরা এখানে যুক্ত, তাঁরা login করে এই client-এর campaign, খরচ, result আর invoice দেখেন — অন্য কিছু না।',
@@ -773,11 +775,11 @@ function print(): void {
             <li
                 v-for="u in portal.users"
                 :key="u.id"
-                class="flex items-center gap-3 py-2.5 text-[13.5px]"
+                class="flex items-center gap-3 py-2.5 text-[14.5px]"
             >
                 <span class="min-w-0 flex-1">
                     <span class="block font-semibold">{{ u.name }}</span>
-                    <span class="block truncate text-[12.5px] text-ink-3"
+                    <span class="block truncate text-[13.5px] text-ink-3"
                         >{{ u.email
                         }}<template v-if="u.phone">
                             · {{ u.phone }}</template
@@ -816,7 +818,7 @@ function print(): void {
         </div>
         <p
             v-else-if="!portal.users.length"
-            class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[13px] text-ink-3"
+            class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
         >
             {{
                 t(
@@ -829,7 +831,7 @@ function print(): void {
     <section class="panel overflow-hidden">
         <div class="px-5 pt-5 sm:px-6">
             <h2 class="text-[16px] font-bold">Statement</h2>
-            <p class="mt-1 text-[12.5px] text-ink-3">
+            <p class="mt-1 text-[13.5px] text-ink-3">
                 {{ t('USD খরচ আর BDT পেমেন্ট — তারিখ অনুযায়ী') }}
             </p>
         </div>
@@ -849,13 +851,13 @@ function print(): void {
                 <tbody>
                     <tr v-for="r in statement" :key="r.key">
                         <td
-                            class="num text-[12.5px] whitespace-nowrap text-ink-2"
+                            class="num text-[13.5px] whitespace-nowrap text-ink-2"
                         >
                             {{ niceDate(r.date) }}
                         </td>
                         <td>
                             <p class="font-medium">{{ r.description }}</p>
-                            <p class="text-[12px] text-ink-3">
+                            <p class="text-[13px] text-ink-3">
                                 {{ r.account }}
                             </p>
                         </td>
@@ -964,7 +966,7 @@ function print(): void {
         :options="{ clients: clientOptions, users: options.users }"
     />
     <KModal v-model="refundOpen" :title="t('বাকি credit ফেরত দিন')">
-        <p v-if="credit" class="text-[13.5px] text-ink-2">
+        <p v-if="credit" class="text-[14.5px] text-ink-2">
             {{
                 t(
                     '{client}-এর {usd} credit খরচ হয়নি — যে দামে দিয়েছিল সেই দামে {bdt} ফেরত যাবে, আর credit হবে ০।',
@@ -987,7 +989,7 @@ function print(): void {
         <KField :label="t('Note')" optional class="mt-4">
             <KInput v-model="refund.note" />
         </KField>
-        <p v-if="refundError" class="mt-3 text-[12.5px] text-out">
+        <p v-if="refundError" class="mt-3 text-[13.5px] text-out">
             {{ refundError }}
         </p>
         <template #footer>

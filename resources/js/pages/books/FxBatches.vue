@@ -139,7 +139,7 @@ async function remove(batch: Batch): Promise<void> {
 
     <p
         v-if="totals.overdrawn"
-        class="mb-4 flex items-center gap-2 rounded-xl bg-out-soft px-4 py-3 text-[13.5px] font-medium text-out"
+        class="mb-4 flex items-center gap-2 rounded-xl bg-out-soft px-4 py-3 text-[14.5px] font-medium text-out"
     >
         <KIcon name="warn" :size="16" />
         {{
@@ -152,8 +152,8 @@ async function remove(batch: Batch): Promise<void> {
     <!-- The pool, drawn as one bar -->
     <section class="panel mb-6 p-5 sm:p-6">
         <div class="mb-3 flex items-baseline justify-between">
-            <h2 class="text-[15px] font-bold">FIFO pool</h2>
-            <span class="text-[12.5px] text-ink-3"
+            <h2 class="text-[16px] font-bold">FIFO pool</h2>
+            <span class="text-[13.5px] text-ink-3"
                 >{{ t('খরচ হয়েছে') }}
                 <b class="num text-ink">{{
                     money(totals.consumed, 'usd')
@@ -179,13 +179,13 @@ async function remove(batch: Batch): Promise<void> {
                     :style="{ width: `${(b.used / b.usd) * 100}%` }"
                 />
                 <span
-                    class="num absolute inset-0 grid place-items-center text-[11.5px] font-semibold"
+                    class="num absolute inset-0 grid place-items-center text-[12.5px] font-semibold"
                     :class="b.used / b.usd > 0.5 ? 'text-paper' : 'text-ink'"
                     >#{{ b.number }} · &#2547;{{ b.rate }}</span
                 >
             </div>
         </div>
-        <div class="mt-2 flex gap-4 text-[12px] text-ink-3">
+        <div class="mt-2 flex gap-4 text-[13px] text-ink-3">
             <span class="flex items-center gap-1.5"
                 ><span class="size-2.5 rounded-[3px] bg-ink-2/70" />
                 {{ t('খরচ হয়ে গেছে') }}</span
@@ -221,12 +221,12 @@ async function remove(batch: Batch): Promise<void> {
             <tbody>
                 <tr v-for="b in batches.data" :key="b.id" class="group">
                     <td class="num font-semibold">{{ b.number }}</td>
-                    <td class="num text-[12.5px] text-ink-2">
+                    <td class="num text-[13.5px] text-ink-2">
                         {{ niceDate(b.date) }}
                     </td>
                     <td>
                         <p class="font-medium">{{ b.description }}</p>
-                        <p v-if="b.notes" class="text-[12px] text-ink-3">
+                        <p v-if="b.notes" class="text-[13px] text-ink-3">
                             {{ b.notes }}
                         </p>
                     </td>
@@ -235,7 +235,7 @@ async function remove(batch: Batch): Promise<void> {
                     <td class="r num font-semibold">{{ b.rate }}</td>
                     <td class="r">
                         <span class="num">{{ money(b.used, 'usd') }}</span>
-                        <span class="num block text-[11.5px] text-ink-3">{{
+                        <span class="num block text-[12.5px] text-ink-3">{{
                             t('{amount} বাকি', { amount: money(b.left, 'usd') })
                         }}</span>
                     </td>
@@ -244,22 +244,18 @@ async function remove(batch: Batch): Promise<void> {
                             <button
                                 v-if="can['fx.edit']"
                                 type="button"
-                                class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
-                                :aria-label="t('বদলান')"
-                                :title="t('বদলান')"
+                                class="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold text-ink-3 hover:bg-sunken hover:text-ink"
                                 @click="edit(b)"
                             >
-                                <KIcon name="pen" :size="16" />
+                                <KIcon name="pen" :size="15" />{{ t('বদলান') }}
                             </button>
                             <button
                                 v-if="can['fx.delete'] && b.used === 0"
                                 type="button"
-                                class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
-                                :aria-label="t('মুছুন')"
-                                :title="t('মুছুন')"
+                                class="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold text-ink-3 hover:bg-out-soft hover:text-out"
                                 @click="remove(b)"
                             >
-                                <KIcon name="bin" :size="16" />
+                                <KIcon name="bin" :size="15" />{{ t('মুছুন') }}
                             </button>
                         </div>
                     </td>
@@ -308,7 +304,7 @@ async function remove(batch: Batch): Promise<void> {
                 />
             </KField>
             <p
-                class="rounded-xl bg-brand-soft px-4 py-2.5 text-[13.5px] text-brand-ink sm:col-span-2"
+                class="rounded-xl bg-brand-soft px-4 py-2.5 text-[14.5px] text-brand-ink sm:col-span-2"
             >
                 Rate: <b class="num">&#2547;{{ previewRate }}</b> / USD
             </p>

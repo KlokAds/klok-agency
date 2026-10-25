@@ -183,7 +183,7 @@ const low = computed(
 <template>
     <Head :title="t('হোম')" />
 
-    <p class="text-[13px] font-semibold tracking-wide text-ink-3 uppercase">
+    <p class="text-[14px] font-semibold tracking-wide text-ink-3 uppercase">
         {{ client }}
     </p>
     <h1 class="mt-1 text-[24px] font-bold">
@@ -193,7 +193,7 @@ const low = computed(
     <!-- Everything so far, small, first thing on the page. -->
     <section class="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <div class="panel p-3.5">
-            <p class="text-[12px] text-ink-3">
+            <p class="text-[13px] text-ink-3">
                 {{ t('বিজ্ঞাপনের ডলার নিয়েছেন') }}
             </p>
             <p class="num mt-0.5 text-[18px] font-bold">
@@ -202,7 +202,7 @@ const low = computed(
             <!-- Where it went, when more than one platform: FB Ads, GL Ads, others — a line each. -->
             <ul
                 v-if="(lifetime?.by_platform?.length ?? 0) > 1"
-                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[11px] text-ink-3"
+                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[12px] text-ink-3"
             >
                 <li
                     v-for="p in lifetime?.by_platform"
@@ -217,13 +217,13 @@ const low = computed(
             </ul>
         </div>
         <div class="panel p-3.5">
-            <p class="text-[12px] text-ink-3">{{ t('আপনি দিয়েছেন') }}</p>
+            <p class="text-[13px] text-ink-3">{{ t('আপনি দিয়েছেন') }}</p>
             <p class="num mt-0.5 text-[18px] font-bold">
                 {{ money(lifetime?.paid_bdt ?? 0, 'bdt') }}
             </p>
             <ul
                 v-if="lastPayment"
-                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[11px] text-ink-3"
+                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[12px] text-ink-3"
             >
                 <li class="flex items-center justify-between gap-2">
                     <span class="truncate">{{ t('শেষ পেমেন্ট') }}</span>
@@ -242,7 +242,7 @@ const low = computed(
             </ul>
         </div>
         <div class="panel p-3.5">
-            <p class="text-[12px] text-ink-3">
+            <p class="text-[13px] text-ink-3">
                 {{ t('বিজ্ঞাপনের জন্য বাকি') }}
             </p>
             <p class="mt-0.5 flex flex-wrap items-baseline gap-x-2">
@@ -254,7 +254,7 @@ const low = computed(
                 <!-- Asked back now: at our dollar rate; the commission stays. -->
                 <span
                     v-if="credit.refund"
-                    class="num text-[11.5px] text-ink-3"
+                    class="num text-[12.5px] text-ink-3"
                     :title="t('আমাদের ডলার রেটে; commission ফেরতযোগ্য নয়')"
                     >{{
                         t('ফেরত ≈ {amount}', {
@@ -278,7 +278,7 @@ const low = computed(
             class="panel p-3.5"
             :class="next_invoice ? 'transition-colors hover:border-brand' : ''"
         >
-            <p class="text-[12px] text-ink-3">{{ t('Invoice বাকি') }}</p>
+            <p class="text-[13px] text-ink-3">{{ t('Invoice বাকি') }}</p>
             <p class="mt-0.5 flex items-baseline gap-1.5">
                 <span
                     class="num text-[18px] font-bold"
@@ -293,7 +293,7 @@ const low = computed(
                 >
                 <span
                     v-if="due.count > 0"
-                    class="rounded-full bg-sunken px-1.5 py-0.5 text-[11px] font-semibold text-ink-2"
+                    class="rounded-full bg-sunken px-1.5 py-0.5 text-[12px] font-semibold text-ink-2"
                     >{{ t('{n}টা', { n: due.count }) }}</span
                 >
             </p>
@@ -310,16 +310,16 @@ const low = computed(
             ><KIcon name="bell" :size="22"
         /></span>
         <span class="min-w-0 flex-1">
-            <span class="block text-[14.5px] font-semibold">{{
+            <span class="block text-[15.5px] font-semibold">{{
                 t('KlokOne app নামান')
             }}</span>
-            <span class="block text-[12.5px] text-ink-3">{{
+            <span class="block text-[13.5px] text-ink-3">{{
                 t(
                     'Invoice, পেমেন্ট আর বিজ্ঞাপনের খবর সাথে সাথে phone-এ — আঙুলের ছাপে খোলা',
                 )
             }}</span>
         </span>
-        <span class="shrink-0 text-[12px] font-semibold text-brand"
+        <span class="shrink-0 text-[13px] font-semibold text-brand"
             >Android · v{{ app }}</span
         >
     </a>
@@ -359,13 +359,13 @@ const low = computed(
                 </svg>
                 <span class="relative text-center leading-tight">
                     <b class="num block text-[20px]">{{ leftShare }}%</b>
-                    <span class="block text-[10.5px] text-white/70">{{
+                    <span class="block text-[11.5px] text-white/70">{{
                         t('বাকি')
                     }}</span>
                 </span>
             </span>
             <div class="min-w-0">
-                <p class="text-[13px] text-white/70">
+                <p class="text-[14px] text-white/70">
                     {{ t('বিজ্ঞাপনের জন্য বাকি') }}
                 </p>
                 <p class="num mt-0.5 text-[34px] leading-none font-bold">
@@ -373,7 +373,7 @@ const low = computed(
                 </p>
                 <p
                     v-if="credit.paid > 0"
-                    class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[12.5px] font-semibold"
+                    class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[13.5px] font-semibold"
                     :class="
                         leftShare < 20
                             ? 'bg-[#ef4444] text-white'
@@ -394,27 +394,27 @@ const low = computed(
         >
             <p class="px-1">
                 <span
-                    class="block text-[11.5px] whitespace-nowrap text-white/65"
+                    class="block text-[12.5px] whitespace-nowrap text-white/65"
                     >{{ t('দেওয়া') }}</span
                 >
                 <b class="num mt-0.5 block text-[16px]">{{
                     money(credit.round?.paid ?? credit.paid, 'usd')
                 }}</b>
                 <span
-                    class="num mt-0.5 block text-[10.5px] whitespace-nowrap text-white/55"
+                    class="num mt-0.5 block text-[11.5px] whitespace-nowrap text-white/55"
                     >{{ credit.round?.since ?? t('এ পর্যন্ত') }}</span
                 >
             </p>
             <p class="px-1">
                 <span
-                    class="block text-[11.5px] whitespace-nowrap text-white/65"
+                    class="block text-[12.5px] whitespace-nowrap text-white/65"
                     >{{ t('খরচ') }}</span
                 >
                 <b class="num mt-0.5 block text-[16px]">{{
                     money(credit.round?.spent ?? credit.spent, 'usd')
                 }}</b>
                 <span
-                    class="mt-0.5 block text-[10.5px] whitespace-nowrap text-white/55"
+                    class="mt-0.5 block text-[11.5px] whitespace-nowrap text-white/55"
                     >{{
                         credit.round
                             ? t('{date} থেকে', { date: credit.round.since })
@@ -424,7 +424,7 @@ const low = computed(
             </p>
             <p class="px-1">
                 <span
-                    class="block text-[11.5px] whitespace-nowrap text-white/65"
+                    class="block text-[12.5px] whitespace-nowrap text-white/65"
                     >{{ t('দিনে') }}</span
                 >
                 <b class="num mt-0.5 block text-[16px]">{{
@@ -433,7 +433,7 @@ const low = computed(
                         : t('এখনো নেই')
                 }}</b>
                 <span
-                    class="mt-0.5 block text-[10.5px] whitespace-nowrap text-white/55"
+                    class="mt-0.5 block text-[11.5px] whitespace-nowrap text-white/55"
                     >{{ t('গড়ে') }}</span
                 >
             </p>
@@ -455,7 +455,7 @@ const low = computed(
                 ><KIcon name="doc" :size="20"
             /></span>
             <span class="min-w-0 flex-1">
-                <span class="block text-[14px] font-semibold text-[#14211f]">{{
+                <span class="block text-[15px] font-semibold text-[#14211f]">{{
                     due.count > 1
                         ? t('{n}টা invoice বাকি · মোট {amount}', {
                               n: due.count,
@@ -465,7 +465,7 @@ const low = computed(
                               amount: money(next_invoice.due, 'bdt'),
                           })
                 }}</span>
-                <span class="block text-[12px] text-[#5b6b68]">{{
+                <span class="block text-[13px] text-[#5b6b68]">{{
                     next_invoice.overdue
                         ? t('Invoice {number} · শেষ তারিখ পার হয়ে গেছে', {
                               number: next_invoice.number,
@@ -479,13 +479,13 @@ const low = computed(
                 }}</span>
             </span>
             <span
-                class="shrink-0 rounded-xl bg-[#0f766e] px-4 py-2 text-[13.5px] font-bold text-white"
+                class="shrink-0 rounded-xl bg-[#0f766e] px-4 py-2 text-[14.5px] font-bold text-white"
                 >{{ t('Pay') }}</span
             >
         </a>
         <p
             v-else-if="low"
-            class="mt-4 rounded-xl bg-white/10 px-3.5 py-2.5 text-[13px] text-white/90"
+            class="mt-4 rounded-xl bg-white/10 px-3.5 py-2.5 text-[14px] text-white/90"
         >
             {{ t('টাকা শেষের দিকে — চালু রাখতে চাইলে আমাদের জানান।') }}
         </p>
@@ -494,32 +494,32 @@ const low = computed(
     <!-- Today and the week -->
     <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('আজ খরচ') }}</p>
+            <p class="text-[13.5px] text-ink-3">{{ t('আজ খরচ') }}</p>
             <p class="num mt-1 text-[22px] font-bold">
                 {{ money(today?.spend ?? 0, 'usd') }}
             </p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('আজ result') }}</p>
+            <p class="text-[13.5px] text-ink-3">{{ t('আজ result') }}</p>
             <p class="num mt-1 text-[22px] font-bold">
                 {{ today?.results ?? 0 }}
             </p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('৭ দিনে খরচ') }}</p>
+            <p class="text-[13.5px] text-ink-3">{{ t('৭ দিনে খরচ') }}</p>
             <p class="num mt-1 text-[22px] font-bold">
                 {{ money(weekSpend, 'usd') }}
             </p>
         </div>
         <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('৭ দিনে result') }}</p>
+            <p class="text-[13.5px] text-ink-3">{{ t('৭ দিনে result') }}</p>
             <p class="num mt-1 text-[22px] font-bold">{{ weekResults }}</p>
         </div>
     </section>
 
     <section class="panel mt-4 p-5">
         <div class="mb-3 flex items-center justify-between">
-            <h2 class="text-[15px] font-bold">{{ t('গত ৭ দিন') }}</h2>
+            <h2 class="text-[16px] font-bold">{{ t('গত ৭ দিন') }}</h2>
             <KButton size="sm" variant="plain" href="/portal/campaigns">{{
                 t('সব দেখুন')
             }}</KButton>
@@ -530,7 +530,7 @@ const low = computed(
     <!-- What runs now -->
     <section class="mt-6">
         <h2 class="mb-3 text-[16px] font-bold">{{ t('আপনার campaign') }}</h2>
-        <p v-if="!running.length" class="panel p-5 text-[14px] text-ink-3">
+        <p v-if="!running.length" class="panel p-5 text-[15px] text-ink-3">
             {{ t('এখন কোনো চালু campaign নেই।') }}
         </p>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -541,17 +541,17 @@ const low = computed(
                 class="panel block p-4 transition-colors hover:border-brand"
             >
                 <span class="flex items-center justify-between gap-2">
-                    <span class="truncate text-[14.5px] font-semibold">{{
+                    <span class="truncate text-[15.5px] font-semibold">{{
                         c.name
                     }}</span>
                     <CampaignState :state="c.state" />
                 </span>
-                <span class="mt-2 block text-[13px] text-ink-2">
+                <span class="mt-2 block text-[14px] text-ink-2">
                     {{ c.stops ?? t('শেষের তারিখ নেই') }}
                 </span>
                 <span
                     v-if="c.days_left !== null"
-                    class="mt-1 block text-[12.5px] text-ink-3"
+                    class="mt-1 block text-[13.5px] text-ink-3"
                     >{{ t('আর {n} দিন', { n: c.days_left }) }}
                     <template v-if="c.budget">
                         ·
@@ -572,18 +572,18 @@ const low = computed(
     <!-- Every payment with its date, at the very end. -->
     <section class="panel mt-6 p-5">
         <h2 class="text-[16px] font-bold">{{ t('পেমেন্টের ইতিহাস') }}</h2>
-        <p v-if="!payments?.length" class="mt-2 text-[13px] text-ink-3">
+        <p v-if="!payments?.length" class="mt-2 text-[14px] text-ink-3">
             {{ t('এখনো কোনো পেমেন্ট নেই।') }}
         </p>
         <ul v-else class="mt-2 divide-y divide-line">
             <li
                 v-for="(p, i) in shownPayments"
                 :key="`${payPage}-${i}`"
-                class="flex items-center justify-between gap-3 py-2.5 text-[13.5px]"
+                class="flex items-center justify-between gap-3 py-2.5 text-[14.5px]"
             >
                 <span class="min-w-0">
                     <span class="block font-medium">{{ p.date }}</span>
-                    <span class="block truncate text-[12px] text-ink-3">
+                    <span class="block truncate text-[13px] text-ink-3">
                         {{ p.refund ? t('ফেরত') : (p.via ?? t('পেমেন্ট')) }}
                         <template v-if="p.invoice"> · {{ p.invoice }}</template>
                     </span>
@@ -608,7 +608,7 @@ const low = computed(
                 @click="payPage--"
                 >{{ t('আগের') }}</KButton
             >
-            <span class="num text-[12.5px] text-ink-3"
+            <span class="num text-[13.5px] text-ink-3"
                 >{{ payPage }} / {{ payPages }}</span
             >
             <KButton
@@ -631,7 +631,7 @@ const low = computed(
                 : undefined
         "
     >
-        <p class="text-[13px] text-ink-3">
+        <p class="text-[14px] text-ink-3">
             {{
                 t(
                     'আমাদের ডলার রেটে, commission বাদে — চূড়ান্ত অঙ্ক Klok Ads নিশ্চিত করবে।',

@@ -355,10 +355,10 @@ function saveRename(): void {
                 <li
                     v-for="r in rows.data"
                     :key="r.id"
-                    class="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line px-4 py-3 text-[13.5px] last:border-0 sm:flex-nowrap sm:px-5"
+                    class="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line px-4 py-3 text-[14.5px] last:border-0 sm:flex-nowrap sm:px-5"
                 >
                     <span
-                        class="num w-full shrink-0 text-[12px] text-ink-3 sm:w-20"
+                        class="num w-full shrink-0 text-[13px] text-ink-3 sm:w-20"
                         >{{
                             r.date ? niceDate(r.date, false) : t('তারিখ নেই')
                         }}</span
@@ -368,7 +368,7 @@ function saveRename(): void {
                             r.description
                         }}</span>
                         <span
-                            class="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3"
+                            class="mt-0.5 flex flex-wrap items-center gap-1.5 text-[13px] text-ink-3"
                         >
                             <span>{{
                                 isIn
@@ -402,22 +402,24 @@ function saveRename(): void {
                         <button
                             v-if="can['bdt.edit']"
                             type="button"
-                            class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
-                            :aria-label="t('বদলান')"
-                            :title="t('বদলান')"
+                            class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-sunken hover:text-ink"
                             @click="startEdit(r)"
                         >
-                            <KIcon name="pen" :size="16" />
+                            <KIcon name="pen" :size="15" />
+                            <span class="text-[13px] leading-none">{{
+                                t('বদলান')
+                            }}</span>
                         </button>
                         <button
                             v-if="can['bdt.delete']"
                             type="button"
-                            class="grid size-9 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
-                            :aria-label="t('মুছুন')"
-                            :title="t('মুছুন')"
+                            class="flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
                             @click="remove(r)"
                         >
-                            <KIcon name="bin" :size="16" />
+                            <KIcon name="bin" :size="15" />
+                            <span class="text-[13px] leading-none">{{
+                                t('মুছুন')
+                            }}</span>
                         </button>
                     </span>
                 </li>
@@ -428,15 +430,15 @@ function saveRename(): void {
         <aside class="flex min-w-0 flex-col gap-6">
             <!-- Breakdown -->
             <section class="panel p-5">
-                <h2 class="text-[15px] font-bold">
+                <h2 class="text-[16px] font-bold">
                     {{ isIn ? t('Client ধরে') : t('খাত ধরে') }}
                 </h2>
-                <p v-if="!breakdown.length" class="mt-3 text-[13px] text-ink-3">
+                <p v-if="!breakdown.length" class="mt-3 text-[14px] text-ink-3">
                     {{ t('কোনো row নেই') }}
                 </p>
                 <ul v-else class="mt-3 flex flex-col gap-3">
                     <li v-for="b in breakdown" :key="b.name">
-                        <div class="flex justify-between gap-3 text-[13px]">
+                        <div class="flex justify-between gap-3 text-[14px]">
                             <span class="truncate">{{ b.name }}</span>
                             <span class="num shrink-0 font-semibold">{{
                                 money(Math.abs(b.total), 'bdt')
@@ -460,8 +462,8 @@ function saveRename(): void {
 
             <!-- Expense heads -->
             <section v-if="!isIn && heads" class="panel p-5">
-                <h2 class="text-[15px] font-bold">{{ t('খরচের খাত') }}</h2>
-                <p class="mt-1 text-[12.5px] text-ink-3">
+                <h2 class="text-[16px] font-bold">{{ t('খরচের খাত') }}</h2>
+                <p class="mt-1 text-[13.5px] text-ink-3">
                     {{
                         t(
                             'খরচ লেখার সময় এগুলো থেকে বাছা যায়। Switch বন্ধ করলে নতুন entry-তে দেখাবে না, পুরনো খরচ যেমন আছে থাকবে। ✎ দিয়ে নাম বদলান।',
@@ -472,7 +474,7 @@ function saveRename(): void {
                     <li
                         v-for="h in heads"
                         :key="h.id"
-                        class="flex items-center gap-3 border-b border-line py-2.5 text-[13px] last:border-0"
+                        class="flex items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
                     >
                         <template v-if="renaming?.id === h.id">
                             <KInput
@@ -496,12 +498,12 @@ function saveRename(): void {
                         <template v-else>
                             <span class="min-w-0 flex-1">
                                 <span
-                                    class="block truncate text-[13.5px] font-medium"
+                                    class="block truncate text-[14.5px] font-medium"
                                     :class="h.is_active ? '' : 'text-ink-3'"
                                     >{{ h.name }}</span
                                 >
                                 <span
-                                    class="block text-[12px]"
+                                    class="block text-[13px]"
                                     :class="
                                         h.is_active ? 'text-ink-3' : 'text-wait'
                                     "
@@ -515,15 +517,15 @@ function saveRename(): void {
                             <template v-if="can['bdt.edit']">
                                 <button
                                     type="button"
-                                    class="grid size-9 shrink-0 place-items-center rounded-lg border border-line text-ink-2 hover:border-ink-3 hover:text-ink"
-                                    :aria-label="t('নাম বদলান')"
-                                    :title="t('নাম বদলান')"
+                                    class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-line px-2.5 text-[13px] font-semibold whitespace-nowrap text-ink-2 hover:border-ink-3 hover:text-ink"
                                     @click="
                                         renaming = h;
                                         renameTo = h.name;
                                     "
                                 >
-                                    <KIcon name="pen" :size="15" />
+                                    <KIcon name="pen" :size="14" />{{
+                                        t('নাম বদলান')
+                                    }}
                                 </button>
                                 <KSwitch
                                     :model-value="h.is_active"
@@ -566,7 +568,7 @@ function saveRename(): void {
                 </form>
                 <p
                     v-if="headForm.errors.name"
-                    class="mt-1.5 text-[12.5px] text-out"
+                    class="mt-1.5 text-[13.5px] text-out"
                 >
                     {{ headForm.errors.name }}
                 </p>

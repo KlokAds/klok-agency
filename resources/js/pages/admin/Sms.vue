@@ -74,7 +74,7 @@ const label = (s: Sms['status']) =>
             size="sm"
             @update:model-value="show"
         />
-        <span class="text-[12.5px] text-ink-3">
+        <span class="text-[13.5px] text-ink-3">
             {{
                 last_seen
                     ? t('Phone থেকে শেষ খবর {ago}', { ago: ago(last_seen) })
@@ -97,7 +97,7 @@ const label = (s: Sms['status']) =>
                     label(s.status)
                 }}</KTag>
                 <span class="min-w-0 flex-1">
-                    <span class="block text-[13.5px] font-medium">
+                    <span class="block text-[14.5px] font-medium">
                         {{ s.sender ?? s.provider }}
                         <template v-if="s.amount !== null">
                             ·
@@ -109,7 +109,7 @@ const label = (s: Sms['status']) =>
                             · {{ s.payer }}</span
                         >
                     </span>
-                    <span class="block text-[12px] text-ink-3"
+                    <span class="block text-[13px] text-ink-3"
                         ><span v-if="s.trx_id" class="num">{{ s.trx_id }}</span
                         ><template v-if="s.at"
                             ><template v-if="s.trx_id"> · </template
@@ -122,7 +122,7 @@ const label = (s: Sms['status']) =>
                 <Link
                     v-if="s.invoice"
                     :href="`/invoices/${s.invoice.uid}`"
-                    class="shrink-0 text-[12.5px] font-semibold text-brand hover:underline"
+                    class="shrink-0 text-[13.5px] font-semibold text-brand hover:underline"
                     @click.stop
                     >{{ s.invoice.number
                     }}<span
@@ -135,7 +135,7 @@ const label = (s: Sms['status']) =>
             </button>
             <p
                 v-if="opened === s.id && s.body"
-                class="mx-4 mb-4 rounded-lg bg-sunken p-3 text-[12.5px] wrap-anywhere whitespace-pre-wrap text-ink-2 sm:mx-6"
+                class="mx-4 mb-4 rounded-lg bg-sunken p-3 text-[13.5px] wrap-anywhere whitespace-pre-wrap text-ink-2 sm:mx-6"
             >
                 {{ s.body }}
             </p>

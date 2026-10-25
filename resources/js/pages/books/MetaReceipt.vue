@@ -37,12 +37,12 @@ defineProps<{
     <section class="panel max-w-3xl p-5 sm:p-6">
         <div class="flex flex-wrap items-center gap-2">
             <KTag>{{ t(statuses[receipt.status] ?? receipt.status) }}</KTag>
-            <span v-if="receipt.problem" class="text-[12.5px] text-ink-3">{{
+            <span v-if="receipt.problem" class="text-[13.5px] text-ink-3">{{
                 receipt.problem
             }}</span>
         </div>
         <pre
-            class="mt-4 max-h-[70vh] overflow-auto rounded-lg bg-sunken p-4 text-[12.5px] leading-relaxed wrap-anywhere whitespace-pre-wrap"
+            class="mt-4 max-h-[70vh] overflow-auto rounded-lg bg-sunken p-4 text-[13.5px] leading-relaxed wrap-anywhere whitespace-pre-wrap"
             >{{ receipt.body }}</pre>
     </section>
 </template>

@@ -139,7 +139,7 @@ function ignore(sms: Sms): void {
             <p class="num mt-2 text-[26px] leading-none font-medium">
                 {{ bdt(totals.unpaid) }}
             </p>
-            <p v-if="totals.claims" class="mt-2 text-[12px] text-wait">
+            <p v-if="totals.claims" class="mt-2 text-[13px] text-wait">
                 {{ t('{n}টা পেমেন্ট যাচাই বাকি', { n: totals.claims }) }}
             </p>
         </div>
@@ -151,7 +151,7 @@ function ignore(sms: Sms): void {
             >
                 {{ bdt(totals.overdue) }}
             </p>
-            <p class="mt-2 text-[12px] text-ink-3">
+            <p class="mt-2 text-[13px] text-ink-3">
                 {{ t('{n}টা invoice', { n: totals.overdue_count }) }}
             </p>
         </div>
@@ -251,7 +251,7 @@ function ignore(sms: Sms): void {
                                 i.number
                             }}</span>
                             <span
-                                class="block truncate text-[12.5px] text-ink-3"
+                                class="block truncate text-[13.5px] text-ink-3"
                                 >{{ i.client }} ·
                                 {{ niceDate(i.issue_date, false) }}</span
                             >
@@ -274,7 +274,7 @@ function ignore(sms: Sms): void {
     <section v-if="sms && sms.length" class="panel mt-6 overflow-hidden">
         <div class="border-b border-line px-5 py-4">
             <h2 class="text-[16px] font-bold">{{ t('মেলেনি এমন SMS') }}</h2>
-            <p class="mt-0.5 text-[12.5px] text-ink-3">
+            <p class="mt-0.5 text-[13.5px] text-ink-3">
                 {{
                     t(
                         'Wallet-এ টাকা এসেছে কিন্তু কোনো invoice-এর সাথে নিজে থেকে মেলেনি। কোন invoice-এর টাকা, বেছে দিন।',
@@ -296,13 +296,13 @@ function ignore(sms: Sms): void {
                                 ? money(s.amount, 'bdt', { round: false })
                                 : '—'
                         }}</span>
-                        <span class="num text-[12px] text-ink-3"
+                        <span class="num text-[13px] text-ink-3"
                             >{{ s.trx_id }} · {{ s.payer ?? '—' }} ·
                             {{ ago(s.at) }}</span
                         >
                     </p>
                     <p
-                        class="mt-1 line-clamp-2 text-[12px] break-words text-ink-3"
+                        class="mt-1 line-clamp-2 text-[13px] break-words text-ink-3"
                     >
                         {{ s.body }}
                     </p>
@@ -323,7 +323,7 @@ function ignore(sms: Sms): void {
     </section>
 
     <KModal v-model="assignOpen" :title="t('এই SMS কোন invoice-এর?')">
-        <p v-if="assigning" class="mb-4 text-[13.5px] text-ink-2">
+        <p v-if="assigning" class="mb-4 text-[14.5px] text-ink-2">
             {{ assigning.provider }} ·
             <span class="num font-semibold">{{
                 assigning.amount !== null

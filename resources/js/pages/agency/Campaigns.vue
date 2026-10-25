@@ -268,7 +268,7 @@ function sync(): void {
         >
     </PageHeader>
 
-    <p v-if="error" class="panel mb-6 px-5 py-3 text-[13px] text-out">
+    <p v-if="error" class="panel mb-6 px-5 py-3 text-[14px] text-out">
         Klok Pilot: {{ error }}
     </p>
 
@@ -301,7 +301,7 @@ function sync(): void {
                     :options="statuses"
                     size="sm"
                 />
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{
                         t('{linked}/{total}টা campaign client-এর সাথে যুক্ত', {
                             linked: counts.linked,
@@ -315,7 +315,7 @@ function sync(): void {
             </div>
             <p
                 v-if="account && !usdAccount"
-                class="mt-3 rounded-lg bg-wait-soft px-3 py-2 text-[12.5px] text-wait"
+                class="mt-3 rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait"
             >
                 {{
                     t(
@@ -326,7 +326,7 @@ function sync(): void {
             </p>
             <div
                 v-if="suggestedCount && can['clients.edit']"
-                class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-brand-soft px-3 py-2 text-[13px] text-brand-ink"
+                class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-brand-soft px-3 py-2 text-[14px] text-brand-ink"
             >
                 <span>{{
                     t('{n}টা campaign-এর নামে client-এর নাম আছে।', {
@@ -362,10 +362,12 @@ function sync(): void {
                             :class="c.live ? 'bg-in' : 'bg-line-2'"
                         />
                         <div class="min-w-0 flex-1">
-                            <p class="text-[14.5px] leading-snug font-semibold">
-                                {{ c.name }}
-                            </p>
-                            <p class="mt-0.5 text-[12px] text-ink-3">
+                            <Link
+                                :href="`/campaigns/${c.id}`"
+                                class="block text-[15.5px] leading-snug font-semibold hover:text-brand"
+                                >{{ c.name }}</Link
+                            >
+                            <p class="mt-0.5 text-[13px] text-ink-3">
                                 {{
                                     c.live
                                         ? t('চালু')
@@ -389,26 +391,26 @@ function sync(): void {
                         class="mt-3 grid grid-cols-3 divide-x divide-line rounded-xl bg-sunken py-2 text-center"
                     >
                         <p>
-                            <span class="block text-[11px] text-ink-3">{{
+                            <span class="block text-[12px] text-ink-3">{{
                                 t('৭ দিনে')
                             }}</span>
-                            <b class="num text-[13.5px]">{{
+                            <b class="num text-[14.5px]">{{
                                 spend(c.spend_7d)
                             }}</b>
                         </p>
                         <p>
-                            <span class="block text-[11px] text-ink-3">{{
+                            <span class="block text-[12px] text-ink-3">{{
                                 t('মোট খরচ')
                             }}</span>
-                            <b class="num text-[13.5px]">{{
+                            <b class="num text-[14.5px]">{{
                                 spend(c.spend_total)
                             }}</b>
                         </p>
                         <p>
-                            <span class="block text-[11px] text-ink-3">{{
+                            <span class="block text-[12px] text-ink-3">{{
                                 t('শেষ খরচ')
                             }}</span>
-                            <b class="num text-[13.5px]">{{
+                            <b class="num text-[14.5px]">{{
                                 c.last_spend_day
                                     ? niceDate(c.last_spend_day, false)
                                     : '—'
@@ -419,7 +421,7 @@ function sync(): void {
                     <!-- Whose it is: the client, with a pen to change it; or the one thing to do. -->
                     <div
                         v-if="c.client_id"
-                        class="mt-3 flex items-center gap-2 border-t border-line pt-3 text-[12.5px]"
+                        class="mt-3 flex items-center gap-2 border-t border-line pt-3 text-[13.5px]"
                     >
                         <KIcon
                             name="user"
@@ -443,11 +445,11 @@ function sync(): void {
                         <button
                             v-if="can['clients.edit']"
                             type="button"
-                            class="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
+                            class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold whitespace-nowrap text-ink-3 hover:bg-sunken hover:text-ink"
                             :aria-label="t('Client বদলান')"
                             @click="startLink(c)"
                         >
-                            <KIcon name="pen" :size="15" />
+                            <KIcon name="pen" :size="14" />{{ t('বদলান') }}
                         </button>
                     </div>
                     <div
@@ -535,11 +537,11 @@ function sync(): void {
                 class="hidden overflow-x-auto sm:block"
             >
                 <table
-                    class="w-full min-w-[760px] text-[13px] [&_th]:whitespace-nowrap"
+                    class="w-full min-w-[760px] text-[14px] [&_th]:whitespace-nowrap"
                 >
                     <thead>
                         <tr
-                            class="border-b border-line text-left text-[12.5px] font-semibold text-ink-3"
+                            class="border-b border-line text-left text-[13.5px] font-semibold text-ink-3"
                         >
                             <th class="px-5 py-3">Campaign</th>
                             <th class="px-3 py-3 text-right">
@@ -565,11 +567,13 @@ function sync(): void {
                                         :class="c.live ? 'bg-in' : 'bg-line-2'"
                                         :title="c.status ?? ''"
                                     />
-                                    <span class="truncate font-medium">{{
-                                        c.name
-                                    }}</span>
+                                    <Link
+                                        :href="`/campaigns/${c.id}`"
+                                        class="truncate font-medium hover:text-brand"
+                                        >{{ c.name }}</Link
+                                    >
                                 </p>
-                                <p class="mt-0.5 pl-4 text-[12px] text-ink-3">
+                                <p class="mt-0.5 pl-4 text-[13px] text-ink-3">
                                     {{
                                         c.live
                                             ? t('চালু')
@@ -641,7 +645,7 @@ function sync(): void {
                                     >
                                     <span
                                         v-if="c.limits_error"
-                                        class="text-[11.5px] text-wait"
+                                        class="text-[12.5px] text-wait"
                                         >{{ c.limits_error }}</span
                                     >
                                 </p>
@@ -669,7 +673,7 @@ function sync(): void {
                                             c.client
                                         }}</span>
                                         <span
-                                            class="block text-[11.5px] whitespace-nowrap text-ink-3"
+                                            class="block text-[12.5px] whitespace-nowrap text-ink-3"
                                             >{{
                                                 t('{date} থেকে', {
                                                     date: niceDate(
@@ -684,7 +688,7 @@ function sync(): void {
                                         <Link
                                             v-if="c.renewal"
                                             :href="`/renewals/${c.renewal.id}`"
-                                            class="rounded-md px-2 py-1 text-[12px] font-semibold text-brand hover:bg-brand-soft"
+                                            class="rounded-md px-2 py-1 text-[13px] font-semibold text-brand hover:bg-brand-soft"
                                             >Renewal</Link
                                         >
                                         <KButton
@@ -791,7 +795,7 @@ function sync(): void {
     </KModal>
 
     <KModal v-model="extendOpen" :title="extending?.name ?? 'Campaign'">
-        <p class="text-[13.5px] text-ink-2">
+        <p class="text-[14.5px] text-ink-2">
             {{
                 t(
                     'Campaign আরও কত দিন চলবে? শেষের তারিখ Meta-তে বাড়বে; টাকা শেষ হয়ে বন্ধ থাকলে আবার চালু হবে। Client-এর টাকা খাতায় না থাকলে spend cap আবার থামিয়ে দেবে।',
@@ -816,7 +820,7 @@ function sync(): void {
                 class="max-w-[140px]"
             >
                 <template #trail
-                    ><span class="text-[12.5px] text-ink-3">{{
+                    ><span class="text-[13.5px] text-ink-3">{{
                         t('দিন')
                     }}</span></template
                 >
@@ -837,7 +841,7 @@ function sync(): void {
     </KModal>
 
     <KModal v-model="budgetOpen" :title="budgeting?.name ?? 'Campaign'">
-        <p class="text-[13.5px] text-ink-2">
+        <p class="text-[14.5px] text-ink-2">
             {{
                 t(
                     'দিনে কত খরচ হবে, Meta-তে বসবে। Client-এর টাকার বাইরে গেলে spend cap আগেই থামিয়ে দেবে।',
@@ -874,7 +878,7 @@ function sync(): void {
     </KModal>
 
     <KModal v-model="bulkOpen" :title="t('নাম দেখে যুক্ত করুন')">
-        <p class="text-[13.5px] text-ink-2">
+        <p class="text-[14.5px] text-ink-2">
             {{
                 t(
                     'যে campaign-এর নামে ঠিক একজন client-এর নাম আছে, সেগুলো সেই client-এর সাথে যুক্ত হবে।',

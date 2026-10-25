@@ -142,7 +142,7 @@ void props;
         class="mb-6 flex items-start gap-3 rounded-xl border border-wait/30 bg-wait-soft px-4 py-3.5 text-wait"
     >
         <KIcon name="warn" class="mt-0.5" />
-        <p class="text-[14px] font-medium">
+        <p class="text-[15px] font-medium">
             {{
                 t(
                     'প্রথমবার ঢুকেছেন বা password reset হয়েছে — কাজ শুরুর আগে নিজের একটা নতুন password দিন।',
@@ -155,7 +155,7 @@ void props;
         class="mb-6 flex items-start gap-3 rounded-xl border border-wait/30 bg-wait-soft px-4 py-3.5 text-wait"
     >
         <KIcon name="shield" class="mt-0.5" />
-        <p class="text-[14px] font-medium">
+        <p class="text-[15px] font-medium">
             {{
                 t(
                     'Owner সবার জন্য 2FA বাধ্যতামূলক করেছেন। নিচে চালু করলেই খাতা খুলবে।',
@@ -172,7 +172,7 @@ void props;
         >
             <div>
                 <h2 class="text-[17px] font-bold">{{ t('Password বদলান') }}</h2>
-                <p class="mt-1 text-[13px] text-ink-3">
+                <p class="mt-1 text-[14px] text-ink-3">
                     {{
                         t('বদলালে অন্য সব device থেকে নিজে থেকে sign out হবে।')
                     }}
@@ -228,7 +228,7 @@ void props;
                     <h2 class="text-[17px] font-bold">
                         {{ t('দুই ধাপের যাচাই (2FA)') }}
                     </h2>
-                    <p class="mt-1 text-[13px] text-ink-3">
+                    <p class="mt-1 text-[14px] text-ink-3">
                         {{
                             t(
                                 'Password-এর পরে phone-এর authenticator app-এর কোড লাগবে।',
@@ -246,14 +246,14 @@ void props;
                 <ol class="flex flex-col gap-5">
                     <li class="flex gap-3">
                         <span
-                            class="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[13px] font-bold text-brand-ink"
+                            class="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[14px] font-bold text-brand-ink"
                             >1</span
                         >
                         <div class="min-w-0 flex-1">
-                            <p class="text-[14px] font-semibold">
+                            <p class="text-[15px] font-semibold">
                                 {{ t('QR scan করুন') }}
                             </p>
-                            <p class="mt-0.5 text-[12.5px] text-ink-3">
+                            <p class="mt-0.5 text-[13.5px] text-ink-3">
                                 {{
                                     t(
                                         'Google Authenticator / Microsoft Authenticator খুলে এই QR scan করুন।',
@@ -267,11 +267,11 @@ void props;
                                     v-html="qr"
                                 />
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-[12px] text-ink-3">
+                                    <p class="text-[13px] text-ink-3">
                                         {{ t('Scan না হলে এই key হাতে লিখুন') }}
                                     </p>
                                     <p
-                                        class="num mt-1 rounded-lg bg-sunken px-3 py-2 text-[13px] break-all select-all"
+                                        class="num mt-1 rounded-lg bg-sunken px-3 py-2 text-[14px] break-all select-all"
                                     >
                                         {{ secret }}
                                     </p>
@@ -281,7 +281,7 @@ void props;
                     </li>
                     <li class="flex gap-3">
                         <span
-                            class="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[13px] font-bold text-brand-ink"
+                            class="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[14px] font-bold text-brand-ink"
                             >2</span
                         >
                         <div class="min-w-0 flex-1">
@@ -314,19 +314,19 @@ void props;
                 <div
                     class="rounded-xl border border-dashed border-line-2 bg-surface-2 p-4"
                 >
-                    <p class="text-[13px] font-semibold">
+                    <p class="text-[14px] font-semibold">
                         {{
                             t('Recovery code — phone হারালে এগুলো দিয়ে ঢুকবেন')
                         }}
                     </p>
-                    <p class="mt-0.5 text-[12px] text-ink-3">
+                    <p class="mt-0.5 text-[13px] text-ink-3">
                         {{
                             t(
                                 'নিরাপদ জায়গায় লিখে রাখুন। প্রতিটা একবারই কাজ করে।',
                             )
                         }}
                     </p>
-                    <div class="num mt-3 grid grid-cols-2 gap-1.5 text-[13px]">
+                    <div class="num mt-3 grid grid-cols-2 gap-1.5 text-[14px]">
                         <span
                             v-for="c in codes"
                             :key="c"
@@ -352,7 +352,7 @@ void props;
             </template>
 
             <template v-else>
-                <ul class="flex flex-col gap-2 text-[13.5px] text-ink-2">
+                <ul class="flex flex-col gap-2 text-[14.5px] text-ink-2">
                     <li class="flex gap-2">
                         <KIcon name="check" :size="16" class="mt-0.5 text-in" />
                         {{ t('Password চুরি হলেও কেউ ঢুকতে পারবে না') }}

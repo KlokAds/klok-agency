@@ -118,7 +118,7 @@ function onGridKey(event: KeyboardEvent): void {
             :id="id"
             type="button"
             class="field-box cursor-pointer text-left"
-            :class="size === 'sm' ? 'min-h-9! text-[13px]' : 'text-[14.5px]'"
+            :class="size === 'sm' ? 'min-h-9! text-[14px]' : 'text-[15.5px]'"
             :data-open="open"
             :data-invalid="invalid"
             aria-haspopup="dialog"
@@ -192,7 +192,7 @@ function onGridKey(event: KeyboardEvent): void {
                     </button>
                     <button
                         type="button"
-                        class="rounded-lg px-2.5 py-1 font-bn text-[14.5px] font-semibold hover:bg-sunken"
+                        class="rounded-lg px-2.5 py-1 font-bn text-[15.5px] font-semibold hover:bg-sunken"
                         @click="mode = mode === 'days' ? 'months' : 'days'"
                     >
                         <template v-if="mode === 'days'"
@@ -233,7 +233,7 @@ function onGridKey(event: KeyboardEvent): void {
                         <span
                             v-for="(w, i) in WEEK"
                             :key="w"
-                            class="py-1 text-center font-bn text-[11.5px] font-medium"
+                            class="py-1 text-center font-bn text-[12.5px] font-medium"
                             :class="i === 6 ? 'text-out' : 'text-ink-3'"
                             >{{ t(w) }}</span
                         >
@@ -245,7 +245,7 @@ function onGridKey(event: KeyboardEvent): void {
                             type="button"
                             tabindex="-1"
                             :disabled="!!d.disabled"
-                            class="num relative grid h-9 place-items-center rounded-lg text-[13px] transition-colors disabled:pointer-events-none disabled:opacity-30"
+                            class="num relative grid h-9 place-items-center rounded-lg text-[14px] transition-colors disabled:pointer-events-none disabled:opacity-30"
                             :class="[
                                 d.iso === model
                                     ? 'bg-brand font-semibold text-white'
@@ -274,7 +274,7 @@ function onGridKey(event: KeyboardEvent): void {
                         v-for="(name, i) in monthNames()"
                         :key="name"
                         type="button"
-                        class="rounded-lg py-2.5 font-bn text-[13.5px] hover:bg-sunken"
+                        class="rounded-lg py-2.5 font-bn text-[14.5px] hover:bg-sunken"
                         :class="
                             i === view.getMonth()
                                 ? 'bg-brand-soft font-semibold text-brand-ink'
@@ -294,14 +294,14 @@ function onGridKey(event: KeyboardEvent): void {
                 >
                     <button
                         type="button"
-                        class="rounded-md bg-sunken px-2.5 py-1 text-[12.5px] font-medium hover:bg-brand-soft hover:text-brand-ink"
+                        class="rounded-md bg-sunken px-2.5 py-1 text-[13.5px] font-medium hover:bg-brand-soft hover:text-brand-ink"
                         @click="quick(0)"
                     >
                         {{ t('আজ') }}
                     </button>
                     <button
                         type="button"
-                        class="rounded-md bg-sunken px-2.5 py-1 text-[12.5px] font-medium hover:bg-brand-soft hover:text-brand-ink"
+                        class="rounded-md bg-sunken px-2.5 py-1 text-[13.5px] font-medium hover:bg-brand-soft hover:text-brand-ink"
                         @click="quick(-1)"
                     >
                         {{ t('গতকাল') }}
@@ -310,7 +310,7 @@ function onGridKey(event: KeyboardEvent): void {
                     <button
                         v-if="clearable && model"
                         type="button"
-                        class="rounded-md px-2 py-1 text-[12.5px] text-ink-3 hover:text-out"
+                        class="rounded-md px-2 py-1 text-[13.5px] text-ink-3 hover:text-out"
                         @click="
                             model = null;
                             close();

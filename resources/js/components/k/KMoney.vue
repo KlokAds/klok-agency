@@ -45,7 +45,7 @@ function pretty(raw: string | null | undefined): string {
         :class="size === 'sm' && 'min-h-9!'"
         :data-invalid="invalid"
     >
-        <span class="num text-[14px] font-medium text-ink-3">{{ symbol }}</span>
+        <span class="num text-[15px] font-medium text-ink-3">{{ symbol }}</span>
         <input
             :id="id"
             :value="pretty(model)"
@@ -53,9 +53,9 @@ function pretty(raw: string | null | undefined): string {
             inputmode="decimal"
             autocomplete="off"
             :placeholder="placeholder ?? '0.00'"
-            class="num h-full min-w-0 flex-1 py-2 text-[15px]"
+            class="num h-full min-w-0 flex-1 py-2 text-[16px]"
             @input="onInput"
         />
-        <span class="text-[12.5px] font-medium text-ink-3">{{ currency }}</span>
+        <span class="text-[13.5px] font-medium text-ink-3">{{ currency }}</span>
     </div>
 </template>

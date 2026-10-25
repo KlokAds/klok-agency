@@ -15,17 +15,17 @@ defineProps<{
         <label
             v-if="label"
             :for="$props.for"
-            class="flex items-baseline gap-2 text-[13px] font-semibold text-ink-2"
+            class="flex items-baseline gap-2 text-[14px] font-semibold text-ink-2"
         >
             {{ label }}
-            <span v-if="optional" class="text-[11px] font-normal text-ink-3"
+            <span v-if="optional" class="text-[12px] font-normal text-ink-3"
                 >({{ t('ঐচ্ছিক') }})</span
             >
         </label>
         <slot />
         <p
             v-if="error"
-            class="flex items-start gap-1.5 text-[12.5px] font-medium text-out"
+            class="flex items-start gap-1.5 text-[13.5px] font-medium text-out"
         >
             <svg
                 viewBox="0 0 16 16"
@@ -38,6 +38,6 @@ defineProps<{
             </svg>
             {{ error }}
         </p>
-        <p v-else-if="hint" class="text-[12px] text-ink-3">{{ hint }}</p>
+        <p v-else-if="hint" class="text-[13px] text-ink-3">{{ hint }}</p>
     </div>
 </template>

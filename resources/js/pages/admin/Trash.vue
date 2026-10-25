@@ -80,7 +80,7 @@ function restore(type: string, id: number): void {
                         }}</span>
                     </p>
                     <p
-                        class="mt-0.5 flex flex-wrap gap-x-2 text-[12.5px] text-ink-3"
+                        class="mt-0.5 flex flex-wrap gap-x-2 text-[13.5px] text-ink-3"
                     >
                         <span v-if="i.amount !== null" class="num text-ink-2">{{
                             money(i.amount, i.currency)

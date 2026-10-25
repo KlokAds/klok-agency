@@ -154,7 +154,7 @@ function onKey(event: KeyboardEvent): void {
             type="button"
             class="field-box text-left"
             :class="[
-                size === 'sm' ? 'min-h-9! text-[13px]' : 'text-[14.5px]',
+                size === 'sm' ? 'min-h-9! text-[14px]' : 'text-[15.5px]',
                 disabled ? 'pointer-events-none opacity-55' : 'cursor-pointer',
             ]"
             :data-open="open"
@@ -186,7 +186,7 @@ function onKey(event: KeyboardEvent): void {
                 }}</span>
                 <span
                     v-if="selected?.note"
-                    class="block truncate text-[12px] font-normal text-ink-3"
+                    class="block truncate text-[13px] font-normal text-ink-3"
                     >{{ selected.note }}</span
                 >
             </span>
@@ -250,7 +250,7 @@ function onKey(event: KeyboardEvent): void {
                             ref="search"
                             v-model="query"
                             type="text"
-                            class="h-9 w-full text-[13.5px]"
+                            class="h-9 w-full text-[14.5px]"
                             :placeholder="t('খুঁজুন…')"
                         />
                     </div>
@@ -270,7 +270,7 @@ function onKey(event: KeyboardEvent): void {
                         :aria-selected="
                             String(option.value) === String(model ?? '')
                         "
-                        class="flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-[14px]"
+                        class="flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-[15px]"
                         :class="
                             index === active
                                 ? 'bg-brand-soft text-brand-ink'
@@ -303,18 +303,18 @@ function onKey(event: KeyboardEvent): void {
                             >
                             <span
                                 v-if="option.note"
-                                class="block truncate text-[12px] text-ink-3"
+                                class="block truncate text-[13px] text-ink-3"
                                 >{{ option.note }}</span
                             >
                         </span>
                         <span
                             v-if="statusOf(option)"
-                            class="shrink-0 rounded-full border border-line px-2 py-px text-[11px] font-medium text-ink-3"
+                            class="shrink-0 rounded-full border border-line px-2 py-px text-[12px] font-medium text-ink-3"
                             >{{ statusOf(option)?.label }}</span
                         >
                         <span
                             v-if="option.hint"
-                            class="shrink-0 text-[11.5px] text-ink-3"
+                            class="shrink-0 text-[12.5px] text-ink-3"
                             >{{ option.hint }}</span
                         >
                         <svg
@@ -332,7 +332,7 @@ function onKey(event: KeyboardEvent): void {
                     </li>
                     <li
                         v-if="!filtered.length"
-                        class="px-3 py-6 text-center text-[13px] text-ink-3"
+                        class="px-3 py-6 text-center text-[14px] text-ink-3"
                     >
                         {{ t('কিছু পাওয়া যায়নি') }}
                     </li>

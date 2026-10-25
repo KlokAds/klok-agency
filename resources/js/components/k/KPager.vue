@@ -22,7 +22,7 @@ function resize(size: number): void {
 <template>
     <nav
         v-if="page.last_page > 1 || (props.sizes && page.total > 0)"
-        class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-[13px]"
+        class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-[14px]"
         :aria-label="t('পাতা')"
     >
         <span class="flex items-center gap-3 text-ink-3"
@@ -35,7 +35,7 @@ function resize(size: number): void {
                     v-for="size in sizes"
                     :key="size"
                     type="button"
-                    class="num h-7 rounded-md px-2 text-[12px]"
+                    class="num h-7 rounded-md px-2 text-[13px]"
                     :class="
                         page.per_page === size
                             ? 'bg-sunken font-semibold text-ink'
@@ -45,7 +45,7 @@ function resize(size: number): void {
                 >
                     {{ size }}
                 </button>
-                <span class="text-[12px]">{{ t('প্রতি পাতায়') }}</span>
+                <span class="text-[13px]">{{ t('প্রতি পাতায়') }}</span>
             </span></span
         >
         <div class="flex gap-1">

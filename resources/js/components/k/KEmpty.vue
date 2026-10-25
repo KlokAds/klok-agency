@@ -15,8 +15,8 @@ defineProps<{ title: string; body?: string }>();
             <rect x="6" y="4" width="52" height="40" rx="6" />
             <path d="M6 14h52M18 24h28M18 32h18" stroke-dasharray="3 4" />
         </svg>
-        <p class="text-[15px] font-semibold">{{ title }}</p>
-        <p v-if="body" class="mt-1 max-w-sm text-[13.5px] text-ink-3">
+        <p class="text-[16px] font-semibold">{{ title }}</p>
+        <p v-if="body" class="mt-1 max-w-sm text-[14.5px] text-ink-3">
             {{ body }}
         </p>
         <div v-if="$slots.default" class="mt-4"><slot /></div>

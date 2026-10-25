@@ -155,7 +155,7 @@ const showOptions = computed<Option[]>(() => [
                     </p>
                     <p
                         v-if="c.notes || c.company"
-                        class="truncate text-[12.5px] text-ink-3"
+                        class="truncate text-[13.5px] text-ink-3"
                     >
                         {{ c.notes ?? c.company }}
                     </p>
@@ -167,23 +167,23 @@ const showOptions = computed<Option[]>(() => [
                 </div>
             </div>
             <dl
-                class="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-[12px]"
+                class="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-[13px]"
             >
                 <div>
                     <dt class="text-ink-3">{{ t('ad খরচ') }}</dt>
-                    <dd class="num mt-0.5 text-[14px] text-ink">
+                    <dd class="num mt-0.5 text-[15px] text-ink">
                         {{ money(c.figures?.usd_settled ?? 0, 'usd') }}
                     </dd>
                 </div>
                 <div>
                     <dt class="text-ink-3">{{ t('দিয়েছে') }}</dt>
-                    <dd class="num mt-0.5 text-[14px] text-ink">
+                    <dd class="num mt-0.5 text-[15px] text-ink">
                         {{ money(c.figures?.received ?? 0, 'bdt') }}
                     </dd>
                 </div>
                 <div>
                     <dt class="text-ink-3">Margin</dt>
-                    <dd class="mt-0.5 text-[14px] font-semibold">
+                    <dd class="mt-0.5 text-[15px] font-semibold">
                         <KAmount
                             :value="c.figures?.margin ?? 0"
                             currency="bdt"
@@ -193,7 +193,7 @@ const showOptions = computed<Option[]>(() => [
             </dl>
             <p
                 v-if="c.figures?.pending_count"
-                class="mt-3 rounded-lg bg-wait-soft px-3 py-1.5 text-[12.5px] font-medium text-wait"
+                class="mt-3 rounded-lg bg-wait-soft px-3 py-1.5 text-[13.5px] font-medium text-wait"
             >
                 {{
                     t('{amount} পাওনা', {

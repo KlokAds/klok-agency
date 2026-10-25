@@ -18,7 +18,7 @@ defineProps<{ title: string; eyebrow?: string; lead?: string }>();
             >
                 {{ t(title) }}
             </h1>
-            <p v-if="lead" class="mt-1.5 max-w-2xl text-[14px] text-ink-2">
+            <p v-if="lead" class="mt-1.5 max-w-2xl text-[15px] text-ink-2">
                 {{ t(lead) }}
             </p>
         </div>

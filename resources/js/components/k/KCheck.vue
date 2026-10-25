@@ -35,9 +35,9 @@ const model = defineModel<boolean>({ default: false });
                 <path d="M3.5 8.5l3 3 6-7" />
             </svg>
         </span>
-        <span v-if="label || $slots.default" class="text-[14px] leading-snug">
+        <span v-if="label || $slots.default" class="text-[15px] leading-snug">
             <slot>{{ label }}</slot>
-            <span v-if="hint" class="block text-[12px] text-ink-3">{{
+            <span v-if="hint" class="block text-[13px] text-ink-3">{{
                 hint
             }}</span>
         </span>

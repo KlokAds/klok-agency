@@ -94,7 +94,7 @@ const totalName = computed(() => {
     <Head title="Campaign" />
 
     <h1 class="text-[24px] font-bold">{{ t('Campaign-এর ফল') }}</h1>
-    <p class="mt-1 text-[13.5px] text-ink-3">
+    <p class="mt-1 text-[14.5px] text-ink-3">
         {{
             range.from === range.to ? range.from : `${range.from} – ${range.to}`
         }}
@@ -112,7 +112,7 @@ const totalName = computed(() => {
             type="button"
             role="tab"
             :aria-selected="tab === x.key"
-            class="flex h-10 flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-[13px] font-semibold whitespace-nowrap transition-colors"
+            class="flex h-10 flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-[14px] font-semibold whitespace-nowrap transition-colors"
             :class="
                 tab === x.key
                     ? 'bg-surface text-ink shadow-[0_1px_3px_rgb(0_0_0/0.1)]'
@@ -122,7 +122,7 @@ const totalName = computed(() => {
         >
             {{ x.label }}
             <span
-                class="rounded-full px-1.5 text-[11px]"
+                class="rounded-full px-1.5 text-[12px]"
                 :class="tab === x.key ? 'bg-brand-soft text-brand' : 'bg-line'"
                 >{{ x.count }}</span
             >
@@ -136,7 +136,7 @@ const totalName = computed(() => {
 
         <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div class="panel p-4">
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{ t('Meta-র হিসাবে খরচ') }}
                 </p>
                 <p class="num mt-1 text-[22px] font-bold">
@@ -144,13 +144,13 @@ const totalName = computed(() => {
                 </p>
             </div>
             <div class="panel p-4">
-                <p class="text-[12.5px] text-ink-3">{{ totalName }}</p>
+                <p class="text-[13.5px] text-ink-3">{{ totalName }}</p>
                 <p class="num mt-1 text-[22px] font-bold">
                     {{ totals.results }}
                 </p>
             </div>
             <div class="panel p-4">
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{ t('প্রতি result-এ') }}
                 </p>
                 <p class="num mt-1 text-[22px] font-bold">
@@ -162,7 +162,7 @@ const totalName = computed(() => {
                 </p>
             </div>
             <div class="panel p-4">
-                <p class="text-[12.5px] text-ink-3">Click</p>
+                <p class="text-[13.5px] text-ink-3">Click</p>
                 <p class="num mt-1 text-[22px] font-bold">
                     {{ totals.clicks }}
                 </p>
@@ -176,7 +176,7 @@ const totalName = computed(() => {
         <section class="mt-6 grid grid-cols-1 gap-3">
             <p
                 v-if="!campaigns.length"
-                class="panel p-5 text-[14px] text-ink-3"
+                class="panel p-5 text-[15px] text-ink-3"
             >
                 {{ t('এখনো কোনো campaign নেই।') }}
             </p>
@@ -187,7 +187,7 @@ const totalName = computed(() => {
                 >
                     {{ t(g.title) }}
                     <span
-                        class="num rounded-full bg-sunken px-2 py-0.5 text-[11.5px] font-semibold text-ink-2"
+                        class="num rounded-full bg-sunken px-2 py-0.5 text-[12.5px] font-semibold text-ink-2"
                         >{{ g.list.length }}</span
                     >
                 </h2>
@@ -199,34 +199,34 @@ const totalName = computed(() => {
                 >
                     <span class="flex items-center justify-between gap-2">
                         <span
-                            class="min-w-0 flex-1 truncate text-[15px] font-semibold"
+                            class="min-w-0 flex-1 truncate text-[16px] font-semibold"
                             >{{ c.name }}</span
                         >
                         <CampaignState :state="c.state" />
                     </span>
                     <span
                         v-if="c.stops"
-                        class="mt-1.5 block text-[12.5px] text-ink-3"
+                        class="mt-1.5 block text-[13.5px] text-ink-3"
                         >{{ c.stops }}</span
                     >
                     <span
-                        class="mt-3 grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-4"
+                        class="mt-3 grid grid-cols-2 gap-2 text-[14px] sm:grid-cols-4"
                     >
                         <span class="text-ink-3"
                             >{{ t('খরচ') }}
-                            <b class="num block text-[15px] text-ink">{{
+                            <b class="num block text-[16px] text-ink">{{
                                 money(c.spend, cur(c.currency))
                             }}</b></span
                         >
                         <span class="text-ink-3"
                             >{{ c.result_name }}
-                            <b class="num block text-[15px] text-ink">{{
+                            <b class="num block text-[16px] text-ink">{{
                                 c.results
                             }}</b></span
                         >
                         <span class="text-ink-3"
                             >{{ t('প্রতি result-এ') }}
-                            <b class="num block text-[15px] text-ink">{{
+                            <b class="num block text-[16px] text-ink">{{
                                 c.cpr !== null
                                     ? money(c.cpr, cur(c.currency))
                                     : t('এখনো নেই')
@@ -234,7 +234,7 @@ const totalName = computed(() => {
                         >
                         <span class="text-ink-3"
                             >Click
-                            <b class="num block text-[15px] text-ink">{{
+                            <b class="num block text-[16px] text-ink">{{
                                 c.clicks
                             }}</b></span
                         >
@@ -252,25 +252,25 @@ const totalName = computed(() => {
         <h2 class="text-[16px] font-bold">
             {{ t('অন্য platform-এ বিজ্ঞাপন') }}
         </h2>
-        <p class="mt-0.5 text-[12.5px] text-ink-3">
+        <p class="mt-0.5 text-[13.5px] text-ink-3">
             {{ t('Google ইত্যাদি — উপরের Meta campaign-এর বাইরে।') }}
         </p>
         <ul class="mt-3 divide-y divide-line">
             <li
                 v-for="(o, i) in other_spend"
                 :key="i"
-                class="flex items-center justify-between gap-3 py-2.5 text-[13.5px]"
+                class="flex items-center justify-between gap-3 py-2.5 text-[14.5px]"
             >
                 <span class="min-w-0">
                     <span class="block font-medium">{{ o.platform }}</span>
-                    <span class="block truncate text-[12px] text-ink-3"
+                    <span class="block truncate text-[13px] text-ink-3"
                         >{{ o.date }} · {{ o.description }}</span
                     >
                 </span>
                 <span class="shrink-0 text-right">
                     <b class="num block">{{ money(o.usd, 'usd') }}</b>
                     <span
-                        class="text-[11.5px] font-semibold"
+                        class="text-[12.5px] font-semibold"
                         :class="o.due ? 'text-wait' : 'text-in'"
                         >{{ o.due ? t('বাকি') : t('পরিশোধ') }}</span
                     >
@@ -284,27 +284,27 @@ const totalName = computed(() => {
         class="panel mt-4 p-5"
     >
         <h2 class="text-[16px] font-bold">{{ t('সেবা') }}</h2>
-        <p class="mt-0.5 text-[12.5px] text-ink-3">
+        <p class="mt-0.5 text-[13.5px] text-ink-3">
             {{ t('Invoice-এ নেওয়া অন্য কাজ — page, design, setup ইত্যাদি।') }}
         </p>
         <ul class="mt-3 divide-y divide-line">
             <li v-for="(s, i) in services" :key="i">
                 <a
                     :href="s.url"
-                    class="flex items-center justify-between gap-3 py-2.5 text-[13.5px]"
+                    class="flex items-center justify-between gap-3 py-2.5 text-[14.5px]"
                 >
                     <span class="min-w-0">
                         <span class="block truncate font-medium">{{
                             s.description
                         }}</span>
-                        <span class="block text-[12px] text-ink-3"
+                        <span class="block text-[13px] text-ink-3"
                             >{{ s.date }} · {{ s.invoice }}</span
                         >
                     </span>
                     <span class="shrink-0 text-right">
                         <b class="num block">{{ money(s.amount, 'bdt') }}</b>
                         <span
-                            class="text-[11.5px] font-semibold"
+                            class="text-[12.5px] font-semibold"
                             :class="s.paid ? 'text-in' : 'text-wait'"
                             >{{ s.paid ? t('পরিশোধ') : t('বাকি') }}</span
                         >

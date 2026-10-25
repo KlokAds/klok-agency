@@ -37,7 +37,7 @@ defineExpose({ focus: () => input.value?.focus() });
         @click="input?.focus()"
     >
         <KIcon v-if="icon" :name="icon" :size="16" class="text-ink-3" />
-        <span v-if="prefix" class="text-[13px] font-semibold text-ink-3">{{
+        <span v-if="prefix" class="text-[14px] font-semibold text-ink-3">{{
             prefix
         }}</span>
         <input
@@ -53,7 +53,7 @@ defineExpose({ focus: () => input.value?.focus() });
             :inputmode="inputmode"
             :required="required"
             class="h-full min-w-0 flex-1 py-2"
-            :class="size === 'sm' ? 'text-[13px]' : 'text-[14.5px]'"
+            :class="size === 'sm' ? 'text-[14px]' : 'text-[15.5px]'"
         />
         <button
             v-if="type === 'password'"

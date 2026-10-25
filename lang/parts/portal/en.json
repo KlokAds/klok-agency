@@ -254,5 +254,9 @@
     "ঠিক করা নেই": "Not set",
     "বাড়ানো হয়েছে": "Extended",
     "{stops} — আর বাড়ানো হবে না, বাকি invoice বাতিল হবে। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।": "{stops} — it will not be extended and its open invoice is cancelled. Tap below if you are sure; you will get an email too. Changed your mind later? Pick the days again here.",
-    "{usd} → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।": "{usd} → {to}. Klok Ads confirms the amount within 2 business days and sends it within 7."
+    "{usd} → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।": "{usd} → {to}. Klok Ads confirms the amount within 2 business days and sends it within 7.",
+    "{date} সপ্তাহ": "Week of {date}",
+    "সপ্তাহ ধরে": "By week",
+    "খরচ হয়নি": "No spend",
+    "সময় বাছুন": "Pick a period"
 }

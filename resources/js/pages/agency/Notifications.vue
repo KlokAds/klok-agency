@@ -155,12 +155,11 @@ function opened(item: Notice): void {
             />
             <button
                 type="button"
-                class="mt-2 mr-1 grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-out"
-                :aria-label="t('মুছুন')"
-                :title="t('মুছুন')"
+                class="mt-2 mr-1 flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
                 @click="remove(n)"
             >
                 <KIcon name="close" :size="15" />
+                <span class="text-[13px] leading-none">{{ t('মুছুন') }}</span>
             </button>
         </div>
         <KPager :page="notifications" :sizes="[10, 25, 50, 100]" />

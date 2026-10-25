@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PaymentSmsController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SystemController;
 use App\Http\Controllers\Admin\TrashController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Admin\UserController;
@@ -208,6 +209,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('runs/{run}', [AdRunController::class, 'destroy'])->middleware('can:runs.delete')->name('runs.destroy');
 
     Route::get('campaigns', [CampaignController::class, 'index'])->middleware('can:runs.view')->name('campaigns.index');
+    Route::get('campaigns/{campaign}', [CampaignController::class, 'show'])->middleware('can:runs.view')->whereNumber('campaign')->name('campaigns.show');
     Route::put('campaigns/{campaign}/client', [CampaignController::class, 'link'])->middleware('can:clients.edit')->name('campaigns.link');
     Route::post('campaigns/link-suggested', [CampaignController::class, 'linkSuggested'])->middleware('can:clients.edit')->name('campaigns.link-suggested');
     Route::post('campaigns/sync', [CampaignController::class, 'sync'])->middleware('can:runs.view')->name('campaigns.sync');
@@ -269,6 +271,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sessions', [SessionController::class, 'index'])->middleware('can:users.view')->name('sessions.index');
         Route::delete('sessions/{session}', [SessionController::class, 'destroy'])->middleware('can:users.edit')->name('sessions.destroy');
         Route::get('errors', [ErrorLogController::class, 'index'])->name('errors.index');
+        Route::get('system', [SystemController::class, 'index'])->name('system.index');
+        Route::post('system/run/{job}', [SystemController::class, 'run'])->middleware('throttle:10,1')->name('system.run');
         Route::get('sms', [PaymentSmsController::class, 'index'])->name('sms.index');
         Route::get('roles', [RoleController::class, 'index'])->middleware('can:roles.view')->name('roles.index');
         Route::post('roles', [RoleController::class, 'store'])->middleware('can:roles.create')->name('roles.store');

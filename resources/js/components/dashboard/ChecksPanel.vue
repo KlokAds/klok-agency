@@ -16,7 +16,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
 <template>
     <section class="panel p-5 sm:p-6">
         <h2 class="text-[16px] font-bold">{{ t('হিসাব মিলছে কিনা') }}</h2>
-        <p class="text-[12.5px] text-ink-3">
+        <p class="text-[13.5px] text-ink-3">
             {{ t('দুইভাবে হিসাব করে দেখা — দুটো এক হলে খাতা ঠিক আছে।') }}
         </p>
 
@@ -29,7 +29,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                     : 'border-out/40 bg-out-soft'
             "
         >
-            <p class="flex items-center gap-2 text-[14px] font-semibold">
+            <p class="flex items-center gap-2 text-[15px] font-semibold">
                 <KIcon
                     :name="s.usd_check.ok ? 'check' : 'warn'"
                     :size="16"
@@ -38,7 +38,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                 {{ t('USD: কেনা − খরচ = হাতে থাকা dollar') }}
             </p>
             <div
-                class="mt-2 grid grid-cols-1 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2"
+                class="mt-2 grid grid-cols-1 gap-x-6 gap-y-3 text-[14px] sm:grid-cols-2"
             >
                 <dl class="space-y-1">
                     <div class="flex justify-between gap-3">
@@ -86,7 +86,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                 </dl>
             </div>
             <p
-                class="mt-2 text-[12.5px]"
+                class="mt-2 text-[13.5px]"
                 :class="
                     s.usd_check.ok ? 'text-ink-3' : 'font-semibold text-out'
                 "
@@ -115,7 +115,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                     : 'border-out/40 bg-out-soft'
             "
         >
-            <p class="flex items-center gap-2 text-[14px] font-semibold">
+            <p class="flex items-center gap-2 text-[15px] font-semibold">
                 <KIcon
                     :name="s.equity_ok ? 'check' : 'warn'"
                     :size="16"
@@ -128,7 +128,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                 }}
             </p>
             <div
-                class="mt-2 grid grid-cols-1 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2"
+                class="mt-2 grid grid-cols-1 gap-x-6 gap-y-3 text-[14px] sm:grid-cols-2"
             >
                 <dl class="space-y-1">
                     <div class="flex justify-between gap-3">
@@ -190,7 +190,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                 </dl>
             </div>
             <p
-                class="mt-2 text-[12.5px]"
+                class="mt-2 text-[13.5px]"
                 :class="s.equity_ok ? 'text-ink-3' : 'font-semibold text-out'"
             >
                 {{

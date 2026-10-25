@@ -81,13 +81,13 @@ async function end(s: Session): Promise<void> {
             </span>
             <div class="min-w-0 flex-1">
                 <p
-                    class="flex flex-wrap items-center gap-2 text-[14px] font-semibold"
+                    class="flex flex-wrap items-center gap-2 text-[15px] font-semibold"
                 >
                     {{ s.user }}
                     <KTag v-if="s.mine" tone="brand">{{ t('এটা আপনি') }}</KTag>
                     <KTag v-if="s.active" tone="in">{{ t('এখন চালু') }}</KTag>
                 </p>
-                <p class="text-[12.5px] text-ink-3">
+                <p class="text-[13.5px] text-ink-3">
                     {{ s.device
                     }}<template v-if="s.ip">
                         · <span class="num">{{ s.ip }}</span></template

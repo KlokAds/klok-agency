@@ -279,7 +279,7 @@ const shortMonth = (ym: string) =>
 
     <div
         v-if="totals.unassigned"
-        class="mb-6 flex items-center gap-3 rounded-xl border border-dashed border-wait/50 bg-wait-soft px-4 py-3 text-[13.5px] text-wait"
+        class="mb-6 flex items-center gap-3 rounded-xl border border-dashed border-wait/50 bg-wait-soft px-4 py-3 text-[14.5px] text-wait"
     >
         <KIcon name="warn" :size="16" />
         <span
@@ -330,7 +330,7 @@ const shortMonth = (ym: string) =>
                             <span class="font-semibold">{{ e.name }}</span>
                             <p
                                 v-if="e.designation || e.status === 'left'"
-                                class="text-[12px] text-ink-3"
+                                class="text-[13px] text-ink-3"
                             >
                                 {{ e.designation ?? ''
                                 }}<template v-if="e.status === 'left'">
@@ -345,7 +345,7 @@ const shortMonth = (ym: string) =>
                         <td
                             v-for="m in months"
                             :key="m"
-                            class="r num text-[12.5px]"
+                            class="r num text-[13.5px]"
                             :class="e.months[m] ? 'text-ink' : 'text-ink-3/50'"
                         >
                             {{ e.months[m] ? money(e.months[m], 'bdt') : '·' }}
@@ -363,7 +363,7 @@ const shortMonth = (ym: string) =>
                             {{ e.due === 0 ? '✓' : money(e.due, 'bdt') }}
                             <span
                                 v-if="e.due < 0"
-                                class="block font-sans text-[12px] font-normal"
+                                class="block font-sans text-[13px] font-normal"
                                 >advance</span
                             >
                         </td>
@@ -380,16 +380,13 @@ const shortMonth = (ym: string) =>
                                     @click="startPay(e)"
                                     >{{ t('দিন') }}</KButton
                                 >
-                                <button
+                                <KButton
                                     v-if="can['payroll.edit']"
-                                    type="button"
-                                    class="grid size-8 place-items-center rounded-lg border border-line-2 text-ink-2 hover:border-ink-3 hover:text-ink"
-                                    :aria-label="t('বদলান')"
-                                    :title="t('বদলান')"
+                                    size="sm"
+                                    icon="pen"
                                     @click="startEmployee(e)"
+                                    >{{ t('বদলান') }}</KButton
                                 >
-                                    <KIcon name="pen" :size="15" />
-                                </button>
                             </div>
                         </td>
                     </tr>
@@ -432,16 +429,16 @@ const shortMonth = (ym: string) =>
             <li
                 v-for="p in payments.data"
                 :key="p.id"
-                class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-3 text-[13.5px] last:border-0"
+                class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-3 text-[14.5px] last:border-0"
             >
-                <span class="num w-24 shrink-0 text-[12.5px] text-ink-3">{{
+                <span class="num w-24 shrink-0 text-[13.5px] text-ink-3">{{
                     p.date ? niceDate(p.date) : t('তারিখ নেই')
                 }}</span>
                 <span class="min-w-0 flex-1">
                     <span class="font-medium">{{
                         p.employee ?? t('কর্মী ঠিক করা হয়নি')
                     }}</span>
-                    <span class="ml-2 font-bn text-[12.5px] text-ink-3">{{
+                    <span class="ml-2 font-bn text-[13.5px] text-ink-3">{{
                         monthLabel(p.month)
                     }}</span>
                 </span>
@@ -468,12 +465,13 @@ const shortMonth = (ym: string) =>
                 <button
                     v-if="can['payroll.delete']"
                     type="button"
-                    class="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-out-soft hover:text-out"
-                    :aria-label="t('মুছুন')"
-                    :title="t('মুছুন')"
+                    class="flex h-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-3 hover:bg-out-soft hover:text-out"
                     @click="removePayment(p)"
                 >
-                    <KIcon name="bin" :size="16" />
+                    <KIcon name="bin" :size="15" />
+                    <span class="text-[13px] leading-none">{{
+                        t('মুছুন')
+                    }}</span>
                 </button>
             </li>
         </ul>

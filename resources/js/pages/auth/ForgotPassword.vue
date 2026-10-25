@@ -23,7 +23,7 @@ const form = useForm({ email: '' });
 
     <p
         v-if="status"
-        class="mb-6 rounded-xl bg-in-soft px-4 py-3 text-[13.5px] font-medium text-in"
+        class="mb-6 rounded-xl bg-in-soft px-4 py-3 text-[14.5px] font-medium text-in"
     >
         {{ status }}
     </p>
@@ -53,7 +53,7 @@ const form = useForm({ email: '' });
         >
         <Link
             href="/login"
-            class="inline-flex min-h-10 items-center justify-center gap-1.5 text-[13.5px] font-semibold text-ink-2 hover:text-ink"
+            class="inline-flex min-h-10 items-center justify-center gap-1.5 text-[14.5px] font-semibold text-ink-2 hover:text-ink"
             ><KIcon name="back" :size="15" />{{ t('Sign in-এ ফিরে যান') }}</Link
         >
     </form>

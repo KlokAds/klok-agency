@@ -12,6 +12,7 @@ import KIcon from '@/components/k/KIcon.vue';
 import KModal from '@/components/k/KModal.vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { useIdleLogout } from '@/composables/useIdleLogout';
+import { useLiveRefresh } from '@/composables/useLiveRefresh';
 import { usePopover } from '@/composables/usePopover';
 import { locale, switchLocale, t } from '@/lib/i18n';
 import { postJson } from '@/lib/http';
@@ -187,6 +188,8 @@ onMounted(() => {
     );
     markOpenedNotice();
 });
+// Figures keep up by themselves: fetched again every minute, and when the app comes back.
+useLiveRefresh();
 router.on('navigate', () => markOpenedNotice());
 
 /**
@@ -268,7 +271,7 @@ function appSettings(): void {
                 >
                     <p
                         v-if="group.title"
-                        class="mb-1 px-3 text-[12px] font-medium text-rail-dim"
+                        class="mb-1 px-3 text-[13px] font-medium text-rail-dim"
                     >
                         {{ t(group.title) }}
                     </p>
@@ -276,7 +279,7 @@ function appSettings(): void {
                         v-for="item in group.items"
                         :key="item.href"
                         :href="item.href"
-                        class="group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-1.5 text-[14px] font-medium transition-colors lg:min-h-9"
+                        class="group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-1.5 text-[15px] font-medium transition-colors lg:min-h-9"
                         :class="
                             isActive(item.href)
                                 ? 'bg-rail-2 text-white'
@@ -304,7 +307,7 @@ function appSettings(): void {
             <div v-if="settingsHref" class="px-3 pb-3">
                 <Link
                     :href="settingsHref"
-                    class="group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-1.5 text-[14px] font-medium transition-colors lg:min-h-9"
+                    class="group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-1.5 text-[15px] font-medium transition-colors lg:min-h-9"
                     :class="
                         isActive(settingsHref)
                             ? 'bg-rail-2 text-white'
@@ -329,7 +332,7 @@ function appSettings(): void {
             </div>
 
             <div
-                class="border-t border-rail-2 px-5 py-4 text-[11.5px] text-rail-dim"
+                class="border-t border-rail-2 px-5 py-4 text-[12.5px] text-rail-dim"
             >
                 <p class="flex items-center gap-1.5">
                     <KIcon name="shield" :size="14" />
@@ -357,7 +360,7 @@ function appSettings(): void {
                 >
                     <KIcon name="menu" :size="20" />
                 </button>
-                <Link href="/dashboard" class="min-w-0 shrink lg:hidden"
+                <Link href="/dashboard" class="shrink-0 lg:hidden"
                     ><BrandMark :size="28" compact :badge="roleBadge"
                 /></Link>
 
@@ -379,7 +382,7 @@ function appSettings(): void {
                 <!-- On a phone these two sit in the user menu, so the name in the bar has room. -->
                 <button
                     type="button"
-                    class="hidden h-10 rounded-lg px-2.5 text-[13px] font-bold text-ink-2 hover:bg-sunken hover:text-ink sm:block"
+                    class="hidden h-10 rounded-lg px-2.5 text-[14px] font-bold text-ink-2 hover:bg-sunken hover:text-ink sm:block"
                     :aria-label="
                         locale === 'en' ? 'বাংলায় দেখুন' : 'Switch to English' // i18n
                     "
@@ -390,7 +393,7 @@ function appSettings(): void {
 
                 <button
                     type="button"
-                    class="hidden size-10 place-items-center rounded-lg text-ink-2 hover:bg-sunken hover:text-ink sm:grid"
+                    class="hidden h-10 min-w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-2 hover:bg-sunken hover:text-ink sm:flex"
                     :aria-label="
                         resolvedAppearance === 'dark'
                             ? 'Light mode'
@@ -404,7 +407,11 @@ function appSettings(): void {
                 >
                     <KIcon
                         :name="resolvedAppearance === 'dark' ? 'sun' : 'moon'"
+                        :size="16"
                     />
+                    <span class="text-[13px] leading-none">{{
+                        resolvedAppearance === 'dark' ? 'Light' : 'Dark'
+                    }}</span>
                 </button>
 
                 <div ref="userAnchor">
@@ -416,19 +423,19 @@ function appSettings(): void {
                         @click="userMenu.toggle()"
                     >
                         <span
-                            class="grid size-8 place-items-center rounded-lg bg-ink text-[13px] font-bold text-paper"
+                            class="grid size-8 place-items-center rounded-lg bg-ink text-[14px] font-bold text-paper"
                             >{{ user.name.slice(0, 1).toUpperCase() }}</span
                         >
                         <span
                             class="hidden max-w-[160px] text-left leading-tight md:block"
                         >
                             <span
-                                class="block truncate text-[13px] font-semibold"
+                                class="block truncate text-[14px] font-semibold"
                                 >{{ user.name }}</span
                             >
                             <span
                                 v-if="user.role"
-                                class="block truncate text-[11px] text-ink-3"
+                                class="block truncate text-[12px] text-ink-3"
                                 >{{ user.role }}</span
                             >
                         </span>
@@ -441,17 +448,17 @@ function appSettings(): void {
                             class="popover k-rise w-60 p-1.5"
                         >
                             <div class="px-3 py-2.5">
-                                <p class="truncate text-[13.5px] font-semibold">
+                                <p class="truncate text-[14.5px] font-semibold">
                                     {{ user.name }}
                                 </p>
-                                <p class="truncate text-[12px] text-ink-3">
+                                <p class="truncate text-[13px] text-ink-3">
                                     {{ user.email }}
                                 </p>
                             </div>
                             <div class="my-1 h-px bg-line" />
                             <Link
                                 href="/settings/profile"
-                                class="flex min-h-10 items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="userMenu.close()"
                                 ><KIcon
                                     name="user"
@@ -461,7 +468,7 @@ function appSettings(): void {
                             >
                             <Link
                                 href="/settings/security"
-                                class="flex min-h-10 items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="userMenu.close()"
                             >
                                 <KIcon
@@ -478,7 +485,7 @@ function appSettings(): void {
                             <button
                                 v-if="inApp"
                                 type="button"
-                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="
                                     userMenu.close();
                                     appSettings();
@@ -492,7 +499,7 @@ function appSettings(): void {
                             </button>
                             <button
                                 type="button"
-                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken"
                                 @click="
                                     userMenu.close();
                                     feedbackOpen = true;
@@ -506,20 +513,20 @@ function appSettings(): void {
                             </button>
                             <button
                                 type="button"
-                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken sm:hidden"
                                 @click="
                                     userMenu.close();
                                     switchLocale(locale === 'en' ? 'bn' : 'en');
                                 "
                             >
                                 <span
-                                    class="grid w-4 place-items-center text-[11px] font-bold text-ink-3"
+                                    class="grid w-4 place-items-center text-[12px] font-bold text-ink-3"
                                     >{{ otherLanguage }}</span
                                 >{{ switchLabel }}
                             </button>
                             <button
                                 type="button"
-                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] hover:bg-sunken sm:hidden"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] hover:bg-sunken sm:hidden"
                                 @click="
                                     updateAppearance(
                                         resolvedAppearance === 'dark'
@@ -545,7 +552,7 @@ function appSettings(): void {
                             <div class="my-1 h-px bg-line" />
                             <button
                                 type="button"
-                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] text-out hover:bg-out-soft"
+                                class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[14.5px] text-out hover:bg-out-soft"
                                 @click="logout"
                             >
                                 <KIcon name="out" :size="16" />Sign out
@@ -560,7 +567,7 @@ function appSettings(): void {
             >
                 <div
                     v-if="!offline.online || mine.length"
-                    class="no-print mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-wait/40 bg-wait/10 px-4 py-2.5 text-[13.5px]"
+                    class="no-print mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-wait/40 bg-wait/10 px-4 py-2.5 text-[14.5px]"
                     role="status"
                 >
                     <span
@@ -591,7 +598,7 @@ function appSettings(): void {
         <button
             v-if="canQuick"
             type="button"
-            class="no-print fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-2xl bg-brand px-5 text-[15px] font-bold text-white shadow-pop sm:hidden dark:text-rail"
+            class="no-print fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-2xl bg-brand px-5 text-[16px] font-bold text-white shadow-pop sm:hidden dark:text-rail"
             @click="quick = true"
         >
             <KIcon name="plus" :size="20" /> {{ t('নতুন entry') }}
@@ -614,17 +621,17 @@ function appSettings(): void {
                     class="flex items-start gap-3 py-2.5"
                 >
                     <div class="min-w-0 flex-1">
-                        <p class="text-[14px] font-medium">
+                        <p class="text-[15px] font-medium">
                             {{ item.job }} ·
                             <span class="num">{{
                                 item.data.amount ?? item.data.usd ?? ''
                             }}</span>
                         </p>
-                        <p class="text-[12.5px] text-ink-3">
+                        <p class="text-[13.5px] text-ink-3">
                             <span class="num">{{ item.data.entry_date }}</span>
                             {{ item.data.description ?? '' }}
                         </p>
-                        <p v-if="item.error" class="text-[12.5px] text-out">
+                        <p v-if="item.error" class="text-[13.5px] text-out">
                             {{ item.error }}
                         </p>
                     </div>
@@ -643,7 +650,7 @@ function appSettings(): void {
             :title="t('আপনি কি এখনো আছেন?')"
             @update:model-value="stay"
         >
-            <p class="text-[14px] text-ink-2">
+            <p class="text-[15px] text-ink-2">
                 {{ t('কিছুক্ষণ কোনো কাজ হয়নি। নিরাপত্তার জন্য') }}
                 <span class="num font-semibold text-ink">{{
                     secondsLeft
