@@ -11,6 +11,7 @@ import KModal from '@/components/k/KModal.vue';
 import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KTag from '@/components/k/KTag.vue';
 import KField from '@/components/k/KField.vue';
 import { useFilters } from '@/composables/useFilters';
@@ -347,9 +348,14 @@ function sync(): void {
             <!-- Phone: one card a campaign — name and state first, the money, then what to do. -->
             <ul
                 v-if="campaigns.data.length"
-                class="divide-y divide-line sm:hidden"
+                class="space-y-3 bg-paper p-3 sm:hidden"
             >
-                <li v-for="c in campaigns.data" :key="c.id" class="p-4">
+                <li
+                    v-for="c in campaigns.data"
+                    :key="c.id"
+                    class="panel p-4"
+                    :class="c.live ? 'border-l-[3px] border-l-in' : ''"
+                >
                     <div class="flex items-start gap-2.5">
                         <span
                             class="mt-1.5 size-2.5 shrink-0 rounded-full"
@@ -410,11 +416,17 @@ function sync(): void {
                         </p>
                     </div>
 
-                    <div class="mt-3 flex flex-wrap items-center gap-2">
-                        <span
-                            v-if="c.client_id"
-                            class="mr-auto min-w-0 text-[12.5px]"
-                        >
+                    <!-- Whose it is: the client, with a pen to change it; or the one thing to do. -->
+                    <div
+                        v-if="c.client_id"
+                        class="mt-3 flex items-center gap-2 border-t border-line pt-3 text-[12.5px]"
+                    >
+                        <KIcon
+                            name="user"
+                            :size="14"
+                            class="shrink-0 text-ink-3"
+                        />
+                        <span class="min-w-0 flex-1 truncate">
                             <b class="font-semibold">{{ c.client }}</b>
                             <span class="text-ink-3">
                                 ·
@@ -428,17 +440,62 @@ function sync(): void {
                                 }}</span
                             >
                         </span>
-                        <KTag
-                            v-else-if="!can['clients.edit']"
-                            tone="wait"
-                            class="mr-auto"
-                            >{{ t('Client বাছা হয়নি') }}</KTag
+                        <button
+                            v-if="can['clients.edit']"
+                            type="button"
+                            class="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
+                            :aria-label="t('Client বদলান')"
+                            @click="startLink(c)"
                         >
+                            <KIcon name="pen" :size="15" />
+                        </button>
+                    </div>
+                    <div
+                        v-else
+                        class="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3"
+                    >
+                        <template v-if="can['clients.edit']">
+                            <KButton
+                                v-if="c.suggested"
+                                size="sm"
+                                variant="primary"
+                                icon="check"
+                                @click="startLink(c, c.suggested.id)"
+                                >{{ c.suggested.name }}</KButton
+                            >
+                            <KButton
+                                size="sm"
+                                :variant="c.suggested ? 'plain' : 'primary'"
+                                icon="plus"
+                                @click="startLink(c)"
+                                >{{ t('Client বাছুন') }}</KButton
+                            >
+                        </template>
+                        <KTag v-else tone="wait">{{
+                            t('Client বাছা হয়নি')
+                        }}</KTag>
+                    </div>
+
+                    <!-- What to do with it: switch, budget, more days — at most three, never wrapping. -->
+                    <div
+                        v-if="
+                            c.client_id &&
+                            ((c.controllable && can['runs.edit']) ||
+                                (c.guarded && can['clients.edit']))
+                        "
+                        class="mt-2.5 grid gap-2"
+                        :class="
+                            c.controllable && can['runs.edit']
+                                ? 'grid-cols-3'
+                                : 'grid-cols-1'
+                        "
+                    >
                         <template v-if="c.controllable && can['runs.edit']">
                             <KButton
                                 v-if="c.live"
                                 size="sm"
                                 variant="plain"
+                                block
                                 :loading="busyId === c.id"
                                 @click="setActive(c, false)"
                                 >{{ t('থামান') }}</KButton
@@ -446,6 +503,8 @@ function sync(): void {
                             <KButton
                                 v-else
                                 size="sm"
+                                variant="primary"
+                                block
                                 :loading="busyId === c.id"
                                 @click="setActive(c, true)"
                                 >{{ t('চালু করুন') }}</KButton
@@ -453,45 +512,20 @@ function sync(): void {
                             <KButton
                                 size="sm"
                                 variant="plain"
+                                block
                                 @click="startBudget(c)"
                                 >Budget</KButton
                             >
                         </template>
                         <KButton
-                            v-if="
-                                c.client_id && c.guarded && can['clients.edit']
-                            "
+                            v-if="c.guarded && can['clients.edit']"
                             size="sm"
-                            variant="plain"
+                            variant="primary"
+                            block
                             icon="renew"
                             @click="startExtend(c)"
                             >Extend</KButton
                         >
-                        <KButton
-                            v-if="c.client_id && can['clients.edit']"
-                            size="sm"
-                            variant="plain"
-                            icon="pen"
-                            @click="startLink(c)"
-                            >{{ t('Client বদলান') }}</KButton
-                        >
-                        <template
-                            v-else-if="!c.client_id && can['clients.edit']"
-                        >
-                            <KButton
-                                v-if="c.suggested"
-                                size="sm"
-                                @click="startLink(c, c.suggested.id)"
-                                >{{ c.suggested.name }} ?</KButton
-                            >
-                            <KButton
-                                size="sm"
-                                variant="plain"
-                                icon="plus"
-                                @click="startLink(c)"
-                                >{{ t('Client বাছুন') }}</KButton
-                            >
-                        </template>
                     </div>
                 </li>
             </ul>
@@ -684,7 +718,10 @@ function sync(): void {
                                     >
                                     <KButton
                                         size="sm"
-                                        variant="quiet"
+                                        :variant="
+                                            c.suggested ? 'plain' : 'primary'
+                                        "
+                                        icon="plus"
                                         @click="startLink(c)"
                                         >{{ t('Client বাছুন') }}</KButton
                                     >

@@ -48,15 +48,15 @@
 }
 
 .dark {
-    --paper: #0c1312;
-    --surface: #121b19;
-    --surface-2: #16211f;
-    --sunken: #0f1716;
-    --ink: #e7eeeb;
-    --ink-2: #a8b4b0;
-    --ink-3: #6c7a76;
-    --line: #22302d;
-    --line-2: #2f3f3b;
+    --paper: #0b1211;
+    --surface: #17221f;
+    --surface-2: #1c2926;
+    --sunken: #101917;
+    --ink: #e9efed;
+    --ink-2: #aab6b2;
+    --ink-3: #74837f;
+    --line: #2b3c38;
+    --line-2: #3b4f4a;
     --brand: #2dd4bf;
     --brand-ink: #7fe7d8;
     --brand-soft: #123631;
@@ -71,7 +71,9 @@
     --pos: #2a9f8f;
     --neg: #e0704a;
     --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -8px rgb(0 0 0 / 0.6);
-    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.025);
+    --shadow-card:
+        inset 0 1px 0 rgb(255 255 255 / 0.04), 0 1px 2px rgb(0 0 0 / 0.35),
+        0 8px 24px -12px rgb(0 0 0 / 0.6);
 }
 
 @theme inline {
