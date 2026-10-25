@@ -122,6 +122,11 @@
     "৬ মাস": "6 months",
     "৭ দিনে result": "Results in 7 days",
     "৭ দিনে খরচ": "Spent in 7 days",
-    "{n}টা invoice বাকি": "{n} invoices due",
-    "Invoice বাকি": "Invoice due"
+    "Invoice বাকি": "Invoice due",
+    "{n}টা": "{n}",
+    "নিরাপত্তা": "Security",
+    "2FA বন্ধ": "2FA off",
+    "2FA চালু": "2FA on",
+    "App lock — আঙুলের ছাপ / PIN": "App lock — fingerprint / PIN",
+    "আমার account": "My account"
 }

@@ -110,28 +110,28 @@ const low = computed(
         </div>
         <component
             :is="next_invoice ? 'a' : 'div'"
-            :href="next_invoice?.url"
+            :href="due.count > 1 ? '/portal/invoices' : next_invoice?.url"
             class="panel p-3.5"
             :class="next_invoice ? 'transition-colors hover:border-brand' : ''"
         >
-            <p class="text-[12px] text-ink-3">
-                {{
-                    due.count > 1
-                        ? t('{n}টা invoice বাকি', { n: due.count })
-                        : t('Invoice বাকি')
-                }}
-            </p>
-            <p
-                class="num mt-0.5 text-[18px] font-bold"
-                :class="
-                    due.amount > 0
-                        ? next_invoice?.overdue
-                            ? 'text-out'
-                            : 'text-wait'
-                        : ''
-                "
-            >
-                {{ money(due.amount, 'bdt') }}
+            <p class="text-[12px] text-ink-3">{{ t('Invoice বাকি') }}</p>
+            <p class="mt-0.5 flex items-baseline gap-1.5">
+                <span
+                    class="num text-[18px] font-bold"
+                    :class="
+                        due.amount > 0
+                            ? next_invoice?.overdue
+                                ? 'text-out'
+                                : 'text-wait'
+                            : ''
+                    "
+                    >{{ money(due.amount, 'bdt') }}</span
+                >
+                <span
+                    v-if="due.count > 0"
+                    class="rounded-full bg-sunken px-1.5 py-0.5 text-[11px] font-semibold text-ink-2"
+                    >{{ t('{n}টা', { n: due.count }) }}</span
+                >
             </p>
         </component>
     </section>

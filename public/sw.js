@@ -16,7 +16,7 @@ const KEEP = 60;
 const FALLBACK = `<!doctype html><html lang="bn"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>নেট নেই</title><body style="font-family:system-ui;background:#f6f7f6;color:#14211f;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px">
 <div><h1 style="font-weight:600">নেট নেই</h1><p>এই পাতাটা আগে খোলা হয়নি, তাই রাখা নেই। নেট এলে আবার চেষ্টা করুন।</p>
-<p><a href="/dashboard" style="color:#0d9488">Dashboard-এ যান</a></p></div></body></html>`;
+<p><a href="javascript:history.back()" style="color:#0d9488">ফিরে যান</a></p></div></body></html>`;
 
 self.addEventListener('install', () => self.skipWaiting());
 
