@@ -311,7 +311,7 @@ function saveAccount(): void {
                 </p>
             </div>
             <div class="mt-3 overflow-x-auto">
-                <table class="w-full min-w-[440px] text-[13px]">
+                <table v-stack class="stack w-full min-w-[440px] text-[13px]">
                     <thead>
                         <tr
                             class="border-b border-line text-left text-[12.5px] font-semibold text-ink-3"

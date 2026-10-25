@@ -763,7 +763,10 @@ function print(): void {
             </p>
         </div>
         <div class="mt-3 max-h-[360px] overflow-auto">
-            <table class="ledger w-full min-w-[480px] text-[13px]">
+            <table
+                v-stack
+                class="stack ledger w-full min-w-[480px] text-[13px]"
+            >
                 <thead>
                     <tr>
                         <th class="px-5 py-2.5 text-left sm:px-6">
@@ -822,7 +825,7 @@ function print(): void {
         </div>
         <KEmpty v-if="!statement.length" :title="t('এখনো কোনো লেনদেন নেই')" />
         <div v-else class="mt-3 overflow-x-auto">
-            <table class="ledger">
+            <table v-stack class="stack ledger">
                 <thead>
                     <tr>
                         <th>{{ t('তারিখ') }}</th>

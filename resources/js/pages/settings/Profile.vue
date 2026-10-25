@@ -131,7 +131,7 @@ function saveNotify(): void {
                 }}
             </p>
             <div class="mt-4 overflow-x-auto">
-                <table class="w-full min-w-[440px] text-[13.5px]">
+                <table v-stack class="stack w-full min-w-[440px] text-[13.5px]">
                     <thead>
                         <tr class="text-left text-[12px] text-ink-3">
                             <th class="py-2 pr-3 font-medium">

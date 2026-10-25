@@ -107,7 +107,10 @@ const TONE: Record<string, 'in' | 'neutral' | 'out' | 'wait'> = {
             "
         />
         <div v-else class="overflow-x-auto">
-            <table class="ledger w-full min-w-[760px] text-[13px]">
+            <table
+                v-stack
+                class="stack ledger w-full min-w-[760px] text-[13px]"
+            >
                 <thead>
                     <tr>
                         <th class="px-5 py-2.5 text-left">{{ t('তারিখ') }}</th>

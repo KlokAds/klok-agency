@@ -307,7 +307,7 @@ const shortMonth = (ym: string) =>
             >
         </KEmpty>
         <div v-else class="overflow-x-auto">
-            <table class="ledger">
+            <table v-stack class="stack ledger">
                 <thead>
                     <tr>
                         <th>{{ t('কর্মী') }}</th>

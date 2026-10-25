@@ -85,7 +85,10 @@ const options = computed<Option[]>(() => [
             "
         />
         <div v-else class="overflow-x-auto">
-            <table class="ledger w-full min-w-[720px] text-[13px]">
+            <table
+                v-stack
+                class="stack ledger w-full min-w-[720px] text-[13px]"
+            >
                 <thead>
                     <tr>
                         <th class="px-5 py-3 text-left">Campaign</th>

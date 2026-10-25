@@ -313,7 +313,7 @@ const needsClient = computed(() =>
 
         <template v-else>
             <div class="hidden overflow-x-auto lg:block">
-                <table class="ledger">
+                <table v-stack class="stack ledger">
                     <thead>
                         <tr>
                             <th class="w-[92px]">{{ t('তারিখ') }}</th>

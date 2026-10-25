@@ -164,7 +164,7 @@ const diff = computed(() =>
             />
             <!-- A phone scrolls the table sideways instead of squeezing it. -->
             <div v-else class="mt-3 overflow-x-auto">
-                <table class="ledger min-w-[560px]">
+                <table v-stack class="stack ledger min-w-[560px]">
                     <thead>
                         <tr>
                             <th>{{ t('তারিখ') }}</th>

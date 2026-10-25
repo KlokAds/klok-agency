@@ -1,3 +1,4 @@
+import { vStack } from '@/lib/stack';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -20,6 +21,8 @@ void createInertiaApp({
                 ? PortalLayout
                 : MainLayout,
     withApp: (app) => {
+        // Tables that turn into cards on a phone (see .stack in app.css).
+        app.directive('stack', vStack);
         app.directive('focus', {
             mounted: (el: HTMLElement, shouldFocus) => {
                 if (shouldFocus.value !== false) {

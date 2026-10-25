@@ -500,3 +500,81 @@
         transition: none !important;
     }
 }
+
+/*
+ * A table with v-stack and class "stack": on a phone each row is a card of "column — value" lines
+ * (the first cell is the card's title), so nothing scrolls sideways. Wider screens keep the table.
+ */
+@media (max-width: 639px) {
+    table.stack {
+        min-width: 0 !important;
+        width: 100%;
+    }
+
+    table.stack thead {
+        display: none;
+    }
+
+    table.stack,
+    table.stack tbody,
+    table.stack tfoot,
+    table.stack tr,
+    table.stack td {
+        display: block;
+    }
+
+    table.stack tr {
+        margin: 10px 12px;
+        padding: 10px 14px;
+        border: 1px solid var(--color-line);
+        border-radius: 14px;
+        background: var(--color-surface);
+    }
+
+    table.stack tbody tr:hover td {
+        background: transparent;
+    }
+
+    table.stack td {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 4px 0 !important;
+        border: 0 !important;
+        text-align: right !important;
+        white-space: normal;
+    }
+
+    table.stack td::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        color: var(--color-ink-3);
+        font-size: 12px;
+        font-weight: 500;
+        text-align: left;
+    }
+
+    table.stack td[data-label='']::before {
+        content: none;
+    }
+
+    /* The first cell names the row: full width, on its own line. */
+    table.stack td:first-child {
+        display: block;
+        padding-bottom: 6px !important;
+        text-align: left !important;
+        font-weight: 600;
+    }
+
+    table.stack td:first-child::before {
+        content: none;
+    }
+
+    /* Cells of buttons: the buttons on the right, wrapping when many. */
+    table.stack td > div,
+    table.stack td > span.flex {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
