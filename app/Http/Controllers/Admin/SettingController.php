@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\MetaReceipts;
 use App\Services\MoveFees;
 use App\Support\MailSettings;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +26,7 @@ class SettingController extends Controller
                 'mfs_out_percent' => (string) MoveFees::mfsPercent(),
                 'bank_transfer_fee' => (string) (MoveFees::bankFee() / 100),
                 'business_whatsapp' => (string) Setting::get('business_whatsapp', ''),
+                'meta_cards' => implode(', ', MetaReceipts::ourCards()),
             ],
             'mail' => MailSettings::form(),
         ]);
@@ -38,6 +40,7 @@ class SettingController extends Controller
             'idle_minutes' => ['required', 'integer', 'min:5', 'max:240'],
             'mfs_out_percent' => ['required', 'numeric', 'min:0', 'max:10'],
             'bank_transfer_fee' => ['required', 'numeric', 'min:0', 'max:1000'],
+            'meta_cards' => ['nullable', 'string', 'max:60', 'regex:/^\s*\d{4}(\s*,\s*\d{4})*\s*$/'],
             'business_whatsapp' => ['nullable', 'string', 'regex:/^(\+?880|0)1[3-9]\d{8}$/'],
         ], ['business_whatsapp.regex' => __('১১ সংখ্যার নম্বর দিন, যেমন 01712345678।')]);
 
@@ -53,6 +56,8 @@ class SettingController extends Controller
         Setting::put('bank_transfer_fee', (string) round((float) $data['bank_transfer_fee'], 2));
         // Where clients reach the agency on WhatsApp, from the portal.
         Setting::put('business_whatsapp', $data['business_whatsapp'] ?? null);
+        // The cards Meta charges that are ours: their charges come off the card balance.
+        Setting::put('meta_cards', filled($data['meta_cards'] ?? null) ? preg_replace('/\s+/', '', $data['meta_cards']) : null);
 
         $this->toast(__('Settings সংরক্ষণ হয়েছে।'));
 

@@ -199,8 +199,13 @@ class MetaReceipts
             return $receipt;
         }
 
-        if ($parsed['transaction_id'] !== null && MetaReceipt::where('transaction_id', $parsed['transaction_id'])->exists()) {
-            $receipt->fill(['status' => 'duplicate', 'transaction_id' => null])->save();
+        if ($parsed['transaction_id'] !== null && ($first = MetaReceipt::where('transaction_id', $parsed['transaction_id'])->first()) !== null) {
+            // Already booked from Pilot: the receipt adds what each campaign took.
+            $entry = $first->usd_entry_id ? UsdEntry::find($first->usd_entry_id) : null;
+            if ($entry !== null && ! $entry->allocations) {
+                $entry->forceFill(['allocations' => self::allocations($parsed['campaigns'], $parsed['amount'])])->save();
+            }
+            $receipt->fill(['status' => 'duplicate', 'transaction_id' => null, 'usd_entry_id' => null])->save();
 
             return $receipt;
         }
@@ -212,10 +217,12 @@ class MetaReceipts
 
             // The same charge already written by hand (same amount, within two days):
             // the receipt joins that row instead of booking the charge twice.
-            $byHand = UsdEntry::where('category', 'card_charge')->where('account_id', $meta->id)->whereNull('source')
+            // A charge Pilot already booked counts too (it has no receipt of its own yet).
+            $byHand = UsdEntry::where('category', 'card_charge')->where('account_id', $meta->id)
+                ->where(fn ($q) => $q->whereNull('source')->orWhere('source', 'meta_pilot'))
                 ->where('amount', -$parsed['amount'])
                 ->whereBetween('entry_date', [$parsed['charged_at']->subDays(2)->toDateString(), $parsed['charged_at']->addDays(2)->toDateString()])
-                ->whereNotIn('id', MetaReceipt::whereNotNull('usd_entry_id')->pluck('usd_entry_id'))
+                ->whereNotIn('id', MetaReceipt::whereNotNull('usd_entry_id')->where('message_id', 'not like', 'pilot:%')->pluck('usd_entry_id'))
                 ->get()
                 ->sortBy(fn (UsdEntry $e) => abs($e->entry_date->diffInDays($parsed['charged_at'])))
                 ->first();
@@ -385,6 +392,126 @@ class MetaReceipts
         $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return trim(preg_replace("/\n\s*\n+/", "\n", $text) ?? $text);
+    }
+
+    /**
+     * Meta's card charges read straight from Meta through Klok Pilot, so the card's dollars go
+     * down even when no receipt email comes. Only charges from the first run on, only USD ad
+     * accounts paying with one of our cards; each charge once (Meta's transaction id). A charge
+     * already in the books (by hand, or from its receipt: same amount within two days) is linked,
+     * never booked twice. Once an hour.
+     *
+     * @return int how many charges were booked
+     */
+    public function fromPilotIfDue(): int
+    {
+        if (! PilotClient::connected() || ! Cache::add('meta-charges:pilot', true, 3600)) {
+            return 0;
+        }
+
+        $since = Setting::get('meta_charges_since');
+        if ($since === null) {
+            // From today on: what is already in the books stays as it is.
+            Setting::putQuietly('meta_charges_since', $since = now()->toDateString());
+        }
+        $from = max((string) $since, now()->subDays(35)->toDateString());
+        $cards = self::ourCards();
+        $booked = 0;
+
+        foreach (PilotAccount::where('platform', 'meta')->whereRaw("upper(coalesce(currency, 'USD')) = 'USD'")->get() as $account) {
+            try {
+                $read = app(PilotClient::class)->charges($account->pilot_id, $from);
+            } catch (RuntimeException $e) {
+                report($e);
+
+                continue;
+            }
+
+            $card = preg_match('/(\d{4})\s*$/', (string) ($read['card'] ?? ''), $m) ? $m[1] : null;
+
+            foreach ($read['charges'] ?? [] as $charge) {
+                $booked += $this->bookPilotCharge($account, $charge, $card, $cards) ? 1 : 0;
+            }
+        }
+
+        return $booked;
+    }
+
+    /**
+     * The cards that are ours (the NSave card): set in Settings, else every card our booked
+     * receipts were paid with.
+     *
+     * @return list<string> last four digits
+     */
+    public static function ourCards(): array
+    {
+        $set = array_filter(array_map('trim', explode(',', (string) Setting::get('meta_cards', ''))));
+
+        return array_values($set ?: MetaReceipt::where('status', 'booked')->whereNotNull('card_last4')->distinct()->pluck('card_last4')->all());
+    }
+
+    /**
+     * @param  array{id: string, time: string, amount: int, currency: string}  $charge
+     * @param  list<string>  $cards
+     */
+    private function bookPilotCharge(PilotAccount $account, array $charge, ?string $card, array $cards): bool
+    {
+        $key = 'pilot:'.$charge['id'];
+
+        if (MetaReceipt::where('message_id', $key)->exists() || MetaReceipt::where('transaction_id', $charge['id'])->exists()) {
+            return false;
+        }
+
+        $at = CarbonImmutable::parse($charge['time'])->setTimezone(config('app.timezone'));
+        $receipt = new MetaReceipt([
+            'message_id' => $key, 'transaction_id' => $charge['id'], 'subject' => 'Meta (Klok Pilot)',
+            'account_ref' => ltrim((string) $account->external_id, 'act_'), 'pilot_account_id' => $account->id,
+            'amount' => (int) $charge['amount'], 'currency' => strtoupper($charge['currency']), 'charged_at' => $at, 'card_last4' => $card,
+        ]);
+
+        if ($receipt->currency !== 'USD' || $receipt->amount <= 0) {
+            $receipt->fill(['status' => 'ignored', 'problem' => __(':currency-এর charge — card-এর USD খাতায় নেওয়া হয় না।', ['currency' => $receipt->currency])])->save();
+
+            return false;
+        }
+
+        // Someone else's card (a client paying Meta themselves): not our dollars.
+        if ($card === null || ! in_array($card, $cards, true)) {
+            $receipt->fill(['status' => 'ignored', 'problem' => __('Card :card আমাদের না — খাতায় তোলা হয়নি। Settings-এ card যোগ করলে উঠবে।', ['card' => $card ?? '—'])])->save();
+
+            return false;
+        }
+
+        DB::transaction(function () use ($receipt, $account, $at) {
+            $meta = Account::where('kind', 'platform')->where('code', 'meta')->firstOrFail();
+            $same = UsdEntry::where('category', 'card_charge')->where('account_id', $meta->id)
+                ->where('amount', -$receipt->amount)
+                ->whereBetween('entry_date', [$at->subDays(2)->toDateString(), $at->addDays(2)->toDateString()])
+                ->whereNotIn('id', MetaReceipt::whereNotNull('usd_entry_id')->where('message_id', 'like', 'pilot:%')->pluck('usd_entry_id'))
+                ->get()
+                ->sortBy(fn (UsdEntry $e) => abs($e->entry_date->diffInDays($at)))
+                ->first();
+
+            $entry = $same ?? $this->postings->cardCharge([
+                'entry_date' => $at->toDateString(),
+                'description' => 'Meta charge'.($receipt->card_last4 ? ' · card '.$receipt->card_last4 : ''),
+                'account_id' => $meta->id,
+                'amount' => $receipt->amount,
+                'notes' => $account->name.' · Transaction '.$receipt->transaction_id.' · Klok Pilot',
+            ]);
+
+            if ($same === null) {
+                $entry->forceFill(['source' => 'meta_pilot', 'source_key' => 'meta-pilot:'.$receipt->transaction_id])->save();
+            }
+
+            $receipt->fill(['usd_entry_id' => $entry->id, 'status' => $same === null ? 'booked' : 'duplicate'])->save();
+        });
+
+        if ($receipt->status === 'booked') {
+            $this->tell($receipt, self::BOOKED_TITLE);
+        }
+
+        return $receipt->status === 'booked';
     }
 
     private function tell(MetaReceipt $receipt, string $title): void

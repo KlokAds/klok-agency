@@ -26,6 +26,7 @@ const props = defineProps<{
         mfs_out_percent: string;
         bank_transfer_fee: string;
         business_whatsapp: string;
+        meta_cards: string;
     };
     mail: {
         host: string;
@@ -196,6 +197,22 @@ onMounted(() => {
                     </KInput>
                 </KField>
             </div>
+            <KField
+                :label="t('আমাদের Meta card (শেষ ৪ সংখ্যা)')"
+                :error="form.errors.meta_cards"
+                :hint="
+                    t(
+                        'এই card-এ Meta যা কাটে, Klok Pilot থেকে পড়ে card-এর USD balance থেকে নিজে থেকে কমে। কয়েকটা হলে কমা দিয়ে।',
+                    )
+                "
+            >
+                <KInput
+                    v-model="form.meta_cards"
+                    inputmode="numeric"
+                    placeholder="6903"
+                    :disabled="!editable"
+                />
+            </KField>
             <KField
                 :label="t('Business WhatsApp নম্বর')"
                 :error="form.errors.business_whatsapp"

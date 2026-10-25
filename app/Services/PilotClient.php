@@ -88,6 +88,16 @@ class PilotClient
     }
 
     /**
+     * Meta's card charges on one ad account since a day, and the card it pays with now.
+     *
+     * @return array{card?: string|null, currency?: string, charges?: list<array{id: string, time: string, amount: int, currency: string}>}
+     */
+    public function charges(int $adAccountId, string $since): array
+    {
+        return $this->call('ad_account_charges', ['ad_account_id' => $adAccountId, 'since' => $since]);
+    }
+
+    /**
      * A Meta campaign's end, daily budget, spend cap and on/off; with
      * new_end, spend_cap or active it changes them (needs the token's
      * write:campaigns permission).

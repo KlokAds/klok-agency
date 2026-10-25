@@ -153,6 +153,7 @@ class Ticker
     {
         try {
             app(MetaReceipts::class)->checkIfDue();
+            app(MetaReceipts::class)->fromPilotIfDue();
         } catch (\Throwable $e) {
             report($e);
         }

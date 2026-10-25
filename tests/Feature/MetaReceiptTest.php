@@ -6,6 +6,7 @@ use App\Models\CampaignDay;
 use App\Models\Client;
 use App\Models\MetaReceipt;
 use App\Models\PilotAccount;
+use App\Models\Setting;
 use App\Models\UsdEntry;
 use App\Models\User;
 use App\Services\Books;
@@ -16,6 +17,9 @@ use App\Support\Access;
 use Carbon\CarbonImmutable;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->seed([AccessSeeder::class, BooksSeeder::class]);
@@ -197,4 +201,58 @@ it('pays a campaign\'s spend from before the charge only; before Pilot billing b
     $pending = (new PlatformDue(new Books))->pending($meta);
     expect($pending["l:{$this->gffs->id}"] ?? 0)->toBe(0)
         ->and($pending["c:{$this->sales->id}"] ?? 0)->toBe(800);
+});
+
+it('takes Meta charges off the card straight from Klok Pilot, once, and joins them with their receipt', function () {
+    Cache::flush();
+    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
+    Setting::put('meta_cards', '4242');
+    Setting::put('meta_charges_since', '2026-10-01');
+    $this->travelTo(CarbonImmutable::parse('2026-10-20 10:00'));
+    $this->card = 'Visa *4242';
+    $meta = Account::where('code', 'meta')->first();
+    $byHand = UsdEntry::create(['entry_date' => '2026-10-18', 'description' => 'FACEBK* WV5RA9ATD4', 'category' => 'card_charge', 'account_id' => $meta->id, 'amount' => -500, 'status' => 'na']);
+
+    Http::fake(fn ($request) => Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => match ($request['params']['name']) {
+        'ad_account_charges' => ['card' => $this->card, 'currency' => 'USD', 'charges' => [
+            ['id' => '7654321098765432-1234567', 'time' => '2026-10-15T17:47:00+0000', 'amount' => 1400, 'currency' => 'USD'],
+            ['id' => 'T-hand', 'time' => '2026-10-18T09:00:00+0000', 'amount' => 500, 'currency' => 'USD'],
+        ]],
+        default => [],
+    }]]));
+
+    $receipts = app(MetaReceipts::class);
+    expect($receipts->fromPilotIfDue())->toBe(1);
+
+    // The new charge is booked; the one already written by hand is only linked.
+    $new = UsdEntry::where('source', 'meta_pilot')->sole();
+    expect($new->amount)->toBe(-1400)
+        ->and($new->entry_date->toDateString())->toBe('2026-10-15')
+        ->and(MetaReceipt::where('message_id', 'pilot:T-hand')->value('usd_entry_id'))->toBe($byHand->id)
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(2);
+
+    // An hour later, the same charges again: nothing new.
+    $this->travel(61)->minutes();
+    expect($receipts->fromPilotIfDue())->toBe(0)
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(2);
+
+    // Its receipt email comes later: no second charge, and the campaign split is added.
+    $receipt = $receipts->take('<m1@meta>', 'Your Meta ads receipt', receiptText(), CarbonImmutable::parse('2026-10-16'));
+    expect($receipt->status)->toBe('duplicate')
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(2)
+        ->and($new->fresh()->allocations)->toBe(["c:{$this->leads->id}" => 600, "c:{$this->sales->id}" => 800]);
+    expect((new Books)->summary()['equity_ok'])->toBeTrue();
+});
+
+it('leaves Meta charges on a card that is not ours out of the books', function () {
+    Cache::flush();
+    Setting::put('pilot_token', Crypt::encryptString('agency-token'));
+    Setting::put('meta_cards', '4242');
+    Http::fake(fn () => Http::response(['jsonrpc' => '2.0', 'id' => 1, 'result' => ['structuredContent' => [
+        'card' => 'Mastercard *1111', 'currency' => 'USD', 'charges' => [['id' => 'C-9', 'time' => now()->toIso8601String(), 'amount' => 2500, 'currency' => 'USD']],
+    ]]]));
+
+    expect(app(MetaReceipts::class)->fromPilotIfDue())->toBe(0)
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(0)
+        ->and(MetaReceipt::where('message_id', 'pilot:C-9')->value('status'))->toBe('ignored');
 });
