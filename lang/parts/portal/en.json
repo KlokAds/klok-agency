@@ -121,5 +121,7 @@
     "৩ মাস": "3 months",
     "৬ মাস": "6 months",
     "৭ দিনে result": "Results in 7 days",
-    "৭ দিনে খরচ": "Spent in 7 days"
+    "৭ দিনে খরচ": "Spent in 7 days",
+    "{n}টা invoice বাকি": "{n} invoices due",
+    "Invoice বাকি": "Invoice due"
 }

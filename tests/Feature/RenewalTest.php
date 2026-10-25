@@ -147,16 +147,17 @@ it('makes the renewal link two days before the end, and the client pays for more
         ->and($invoice->status)->toBe('sent')
         ->and($renewal->fresh()->status)->toBe('invoiced');
 
-    // Paid in full: the admin hears, nothing moves on Meta yet.
-    $this->actingAs($this->owner)->post("/invoices/{$invoice->id}/pay", [
-        'method' => 'bank', 'wallet' => 'bank', 'paid_on' => now()->toDateString(), 'amount' => (string) ($invoice->total / 100),
-    ])->assertRedirect();
-    expect($renewal->fresh()->status)->toBe('paid')
+    // The client sends the money by hand and gives the transaction; nothing moves until it is checked.
+    Setting::put('pay_bkash_on', '1');
+    Setting::put('pay_bkash_number', '01700000001');
+    Setting::put('pay_charge_mfs', '0');
+    $this->postJson(route('invoice.public.claim', $invoice->public_token), ['method' => 'bkash', 'reference' => 'BKX4455667', 'sender' => '01712345678'])->assertOk();
+    $claim = $invoice->payments()->where('reference', 'BKX4455667')->sole();
+    expect($renewal->fresh()->status)->toBe('invoiced')
         ->and(collect($this->limits)->whereNotNull('new_end')->count())->toBe(0);
-    Mail::assertSent(RenewalMail::class, fn ($m) => $m->event === 'paid' && $m->hasTo('adsklok@gmail.com'));
 
-    // The OK: Pilot moves the end 7 days past the current one.
-    $this->actingAs($this->owner)->post("/renewals/{$renewal->id}/approve")->assertRedirect();
+    // The Owner verifies it: the client chose the days, so the campaign runs 7 days past its end at once.
+    app(Invoices::class)->verify($claim, $invoice->fresh()->due(), $this->owner);
     $newEnd = now()->addDay()->addDays(7)->toDateString();
     expect(collect($this->limits)->last()['new_end'])->toBe($newEnd)
         ->and($renewal->fresh()->status)->toBe('approved')
