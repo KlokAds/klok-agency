@@ -16,6 +16,7 @@ import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import { money, niceDate } from '@/lib/format';
+import OpenInApp from '@/components/OpenInApp.vue';
 import { confirmAction } from '@/lib/feedback';
 import { HttpError, getJson, postJson } from '@/lib/http';
 import { locale, switchLocale, t } from '@/lib/i18n';
@@ -277,9 +278,11 @@ async function setDays(d: number): Promise<void> {
 async function stopRenewal(): Promise<void> {
     if (
         !(await confirmAction({
-            title: t('এই campaign আর চালাবেন না?'),
-            body: t('Invoice বাতিল হবে, campaign তার তারিখে থেমে যাবে।'),
-            confirm: t('হ্যাঁ, থামবে'),
+            title: t('নিশ্চিতভাবে campaign বন্ধ করবেন?'),
+            body: t(
+                'এই invoice বাতিল হবে, আর campaign তার শেষ দিনে বন্ধ হয়ে যাবে — আর বাড়ানো হবে না। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে।',
+            ),
+            confirm: t('হ্যাঁ, বন্ধ করুন'),
             danger: true,
         }))
     ) {
@@ -347,6 +350,14 @@ async function cancel(): Promise<void> {
 }
 
 const claim = reactive({ reference: '', sender: '', amount: '' });
+// The same mistake on the TrxID form: our number typed as the one it was sent from.
+const senderIsOurs = computed(() =>
+    Object.values(props.methods).some(
+        (m) =>
+            digits(claim.sender).length === 10 &&
+            digits(claim.sender) === digits(m.number),
+    ),
+);
 const claimErrors = ref<Record<string, string[]>>({});
 const claimOpen = ref(false);
 
@@ -417,6 +428,7 @@ const STATUS_WORD: Record<string, string> = {
         :is="isClient ? PortalLayout : 'div'"
         :class="isClient ? '' : 'min-h-dvh bg-paper text-ink'"
     >
+        <OpenInApp v-if="!isClient" />
         <div
             class="no-print mx-auto flex max-w-[1080px] items-center justify-between gap-3"
             :class="isClient ? '' : 'px-4 pt-5 sm:px-6'"
@@ -938,14 +950,22 @@ const STATUS_WORD: Record<string, string> = {
                                 />
                             </KField>
                             <KField
-                                :label="t('যে নম্বর থেকে পাঠিয়েছেন')"
-                                :error="claimErrors.sender?.[0]"
+                                :label="t('আপনার যে নম্বর থেকে পাঠিয়েছেন')"
+                                :error="
+                                    (senderIsOurs
+                                        ? t(
+                                              'এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।',
+                                          )
+                                        : null) ?? claimErrors.sender?.[0]
+                                "
                             >
                                 <KInput
                                     v-model="claim.sender"
                                     type="tel"
                                     inputmode="tel"
-                                    :invalid="!!claimErrors.sender"
+                                    :invalid="
+                                        senderIsOurs || !!claimErrors.sender
+                                    "
                                     placeholder="01XXXXXXXXX"
                                 />
                             </KField>

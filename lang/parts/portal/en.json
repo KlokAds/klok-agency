@@ -230,11 +230,9 @@
     "এ পর্যন্ত": "so far",
     "KlokOne-এ স্বাগতম": "Welcome to KlokOne",
     "আপনার account Klok Ads-এর সাথে যুক্ত হয়েছে": "Your account is now linked with Klok Ads",
-    "আপনি campaign চালু না রাখার কথা জানিয়েছেন": "You told us not to keep the campaign running",
     "ফেরতের অনুরোধ পেয়েছি": "We have your refund request",
     "আপনার account তৈরি হয়েছে। Klok Ads আপনার ব্যবসার সাথে account-টা যুক্ত করলেই আপনার বিজ্ঞাপন, invoice আর পেমেন্ট এখানে দেখতে পাবেন — হলে আপনাকে জানানো হবে।": "Your account is ready. Once Klok Ads links it with your business you will see your ads, invoices and payments here — we will tell you when it is done.",
     "এখন থেকে {client}-এর সব campaign, খরচ, invoice আর পেমেন্ট KlokOne-এ দেখতে পাবেন — phone-এ আর email-এও খবর পাবেন।": "From now on you see all of {client}’s campaigns, spend, invoices and payments in KlokOne — with news on your phone and by email.",
-    "{campaign} — {time}। মত বদলালে KlokOne থেকে আবার দিন বেছে নিন। বিজ্ঞাপনের টাকা বাকি থাকলে ফেরত চাইতে পারেন।": "{campaign} — {time}. Changed your mind? Pick the days again in KlokOne. Ad money left can be asked back.",
     "Client বাকি টাকা ফেরত চেয়েছেন": "A client asked for their credit back",
     "{client} · {who} · {usd} (≈ {bdt}) → {to}{note}": "{client} · {who} · {usd} (≈ {bdt}) → {to}{note}",
     "{usd} (আনুমানিক {bdt}) → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।": "{usd} (about {bdt}) → {to}. Klok Ads confirms the amount within 2 business days and sends it within 7.",
@@ -244,5 +242,14 @@
     "কোথায় পাঠাব? (যেমন bKash 01712345678)": "Where should we send it? (e.g. bKash 01712345678)",
     "কিছু বলার থাকলে (ঐচ্ছিক)": "Anything to add (optional)",
     "অনুরোধ পাঠান": "Send request",
-    "আমাদের ডলার রেটে, commission বাদে — চূড়ান্ত অঙ্ক Klok Ads নিশ্চিত করবে।": "At our dollar rate, commission not included — Klok Ads confirms the final figure."
+    "আমাদের ডলার রেটে, commission বাদে — চূড়ান্ত অঙ্ক Klok Ads নিশ্চিত করবে।": "At our dollar rate, commission not included — Klok Ads confirms the final figure.",
+    "KlokOne app-এ আরও সহজে দেখুন": "Easier in the KlokOne app",
+    "App-এ খুলুন": "Open in app",
+    "বন্ধ": "Close",
+    "Campaign বন্ধের নিশ্চয়তা": "Campaign stop confirmed",
+    "আপনার জানানো সিদ্ধান্ত অনুযায়ী {campaign} আর বাড়ানো হবে না — {time}। এর invoice বাতিল করা হয়েছে, আপনার কাছে কোনো টাকা পাওনা নেই। মত বদলালে যেকোনো সময় KlokOne থেকে আবার দিন বেছে নিতে পারবেন; বিজ্ঞাপনের টাকা বাকি থাকলে সেখান থেকেই ফেরত চাইতে পারবেন। Klok Ads-এর সাথে থাকার জন্য ধন্যবাদ।": "As you told us, {campaign} will not be extended — {time}. Its invoice is cancelled and you owe nothing. If you change your mind, pick the days again in KlokOne at any time; any ad money left can be asked back there. Thank you for being with Klok Ads.",
+    "নিশ্চিতভাবে campaign বন্ধ করবেন?": "Stop the campaign for sure?",
+    "এই invoice বাতিল হবে, আর campaign তার শেষ দিনে বন্ধ হয়ে যাবে — আর বাড়ানো হবে না। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে।": "This invoice is cancelled and the campaign stops on its last day — it will not be extended. Tap below if you are sure; you will get an email too.",
+    "হ্যাঁ, বন্ধ করুন": "Yes, stop it",
+    "{stops} — আর বাড়ানো হবে না, বাকি invoice বাতিল হবে। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।": "{stops} — it will not be extended and its open invoice is cancelled. Tap below if you are sure; you will get an email too. Changed your mind later? Pick the days again here."
 }

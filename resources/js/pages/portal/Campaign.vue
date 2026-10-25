@@ -91,9 +91,9 @@ function renewNow(): void {
 async function stopIt(): Promise<void> {
     if (
         !(await confirmAction({
-            title: t('এই campaign আর চালাবেন না?'),
+            title: t('নিশ্চিতভাবে campaign বন্ধ করবেন?'),
             body: t(
-                '{stops}। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।',
+                '{stops} — আর বাড়ানো হবে না, বাকি invoice বাতিল হবে। নিশ্চিত হলে নিচে চাপুন; আপনাকে email-এও জানানো হবে। পরে মত বদলালে এখান থেকেই আবার দিন বেছে নিতে পারবেন।',
                 {
                     stops: props.campaign.stops ?? '',
                 },

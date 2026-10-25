@@ -680,3 +680,14 @@ it('refuses our own wallet number as the number the client pays from', function 
         ->assertStatus(422)->assertJsonValidationErrors('payer');
     $this->postJson(route('invoice.public.start', $invoice->public_token), ['method' => 'bkash', 'payer' => '01712345678'])->assertOk();
 });
+
+it('refuses our own wallet number on the TrxID form, and lets Android open our links in the app', function () {
+    $invoice = sentInvoice($this->client);
+
+    $this->postJson(route('invoice.public.claim', $invoice->public_token), ['method' => 'bkash', 'reference' => 'OURNUM0001', 'sender' => '01700000001'])
+        ->assertStatus(422)->assertJsonValidationErrors('sender');
+
+    $this->getJson('/.well-known/assetlinks.json')->assertOk()
+        ->assertJsonPath('0.target.package_name', 'com.klokads.finance')
+        ->assertJsonPath('0.target.sha256_cert_fingerprints.0', 'A4:A3:62:42:AB:96:4A:1F:7C:2A:E9:92:EC:A8:FD:BB:71:BA:05:5F:C0:FF:D2:7C:F0:9C:8A:28:AB:D4:C1:EA');
+});

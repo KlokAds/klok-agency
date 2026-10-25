@@ -85,6 +85,25 @@ patch(manifest, r'(\n(\s*)<activity)', r'''
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/finance_teal" />\1''')
 patch(manifest, r'android:label="[^"]*"', 'android:label="KlokOne"')
+# Links to billing.klokads.com (an email's button, a WhatsApp message) open in the app; the site's
+# /.well-known/assetlinks.json says this app may. The download page stays in the browser.
+patch(manifest, r'(<category android:name="android.intent.category.LAUNCHER"\s*/>\s*</intent-filter>)', r'''\1
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="billing.klokads.com" />
+                <data android:pathPrefix="/portal" />
+                <data android:pathPrefix="/i/" />
+                <data android:pathPrefix="/r/" />
+                <data android:pathPrefix="/notifications" />
+                <data android:pathPrefix="/dashboard" />
+                <data android:pathPrefix="/invoices" />
+                <data android:pathPrefix="/campaigns" />
+                <data android:pathPrefix="/renewals" />
+                <data android:pathPrefix="/clients" />
+                <data android:pathPrefix="/settings" />
+            </intent-filter>''')
 # Our Application: reports a crash to the server (see android-src/CrashReporter.kt).
 patch(manifest, r'android:name="\$\{applicationName\}"', 'android:name=".FinanceApplication"')
 # Other apps (browser, phone, WhatsApp) for outside links.

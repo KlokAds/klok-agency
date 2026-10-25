@@ -92,6 +92,16 @@ Route::middleware('throttle:12,1')->group(function () {
 });
 Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1')->name('invoice.public.claim');
 
+// Android: links to this site may open in the KlokOne app (an email's button, a shared link).
+Route::get('.well-known/assetlinks.json', fn () => response()->json([[
+    'relation' => ['delegate_permission/common.handle_all_urls'],
+    'target' => [
+        'namespace' => 'android_app',
+        'package_name' => config('agency.android_package'),
+        'sha256_cert_fingerprints' => array_values(array_filter(array_map('trim', explode(',', (string) config('agency.android_sha256'))))),
+    ],
+]]))->name('assetlinks');
+
 // The client portal: sign-up for anyone, the rest for a signed-in client's own person.
 Route::middleware('guest')->group(function () {
     Route::get('portal/register', [PortalController::class, 'register'])->name('portal.register');

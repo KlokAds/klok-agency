@@ -40,7 +40,7 @@ class ClientNotifier
 
     public const LINKED_TITLE = 'আপনার account Klok Ads-এর সাথে যুক্ত হয়েছে'; // i18n
 
-    public const DECLINED_TITLE = 'আপনি campaign চালু না রাখার কথা জানিয়েছেন'; // i18n
+    public const DECLINED_TITLE = 'Campaign বন্ধের নিশ্চয়তা'; // i18n
 
     public const REFUND_ASKED_TITLE = 'ফেরতের অনুরোধ পেয়েছি'; // i18n
 

@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BrandMark from '@/components/BrandMark.vue';
 import FeedbackModal from '@/components/FeedbackModal.vue';
+import OpenInApp from '@/components/OpenInApp.vue';
 import KFeedbackHost from '@/components/k/KFeedbackHost.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import { useAppearance } from '@/composables/useAppearance';
@@ -310,6 +311,7 @@ onMounted(() =>
             </div>
         </header>
 
+        <OpenInApp />
         <main class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
             <p
                 v-if="!offline.online"

@@ -169,6 +169,12 @@ class PublicInvoiceController extends Controller
         $reference = strtoupper(trim($data['reference']));
         $method = PaymentMethod::from($data['method']);
 
+        // Our own wallet number copied into "sent from": the money would never be found.
+        $ours = substr(preg_replace('/\D+/', '', (string) (PaySettings::methods()[$method->value]['number'] ?? '')) ?? '', -10);
+        if ($ours !== '' && substr(preg_replace('/\D+/', '', (string) $data['sender']) ?? '', -10) === $ours) {
+            throw ValidationException::withMessages(['sender' => __('এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।')]);
+        }
+
         $used = InvoicePayment::where('method', $method->value)->whereIn('status', ['pending', 'verified'])
             ->whereRaw('upper(trim(reference)) = ?', [$reference])->exists();
 

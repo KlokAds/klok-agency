@@ -31,6 +31,15 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private var credentialResult: MethodChannel.Result? = null
+    private var linkChannel: MethodChannel? = null
+    private var pendingLink: String? = null
+
+    /** A billing.klokads.com link opened while the app runs: shown in it. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val link = intent.dataString ?: return
+        linkChannel?.invokeMethod("open", link) ?: run { pendingLink = link }
+    }
 
     /** The phone's own PIN / pattern / password screen came back. */
     @Deprecated("startActivityForResult keeps the prompt simple here")
@@ -44,6 +53,19 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        pendingLink = intent?.dataString
+        linkChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "klok/link").apply {
+            setMethodCallHandler { call, result ->
+                when (call.method) {
+                    // The link the app was opened with, once.
+                    "initial" -> {
+                        result.success(pendingLink)
+                        pendingLink = null
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
         // The phone's PIN / pattern when the finger is not read (a dirty or broken sensor):
         // some phones' fingerprint prompt has no way to it.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "klok/lock").setMethodCallHandler { call, result ->

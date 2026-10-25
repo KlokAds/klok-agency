@@ -26,6 +26,7 @@ const paper = Color(0xFFF6F7F6);
 final notifications = FlutterLocalNotificationsPlugin();
 const smsChannel = MethodChannel('klok/sms');
 const updateChannel = MethodChannel('klok/update');
+const linkChannel = MethodChannel('klok/link');
 
 /// Two builds of one app: the plain one for everyone, and (built with --dart-define=SMS=true)
 /// the one that also forwards payment SMS, for the Owner's phone only. Play Protect blocks any
@@ -152,6 +153,19 @@ Future<void> main() async {
     if (launch?.didNotificationLaunchApp == true) {
       openFirst ??= launch!.notificationResponse?.payload;
     }
+  });
+
+  // Opened from a billing.klokads.com link (an email's button): that page, then any later ones.
+  await step('links', () async {
+    final link = await linkChannel.invokeMethod<String>('initial');
+    if (link != null && link.isNotEmpty) {
+      openFirst = link;
+    }
+    linkChannel.setMethodCallHandler((call) async {
+      if (call.method == 'open' && call.arguments is String) {
+        opened.add(call.arguments as String);
+      }
+    });
   });
 
   // Payment SMS that waited for internet go now.
