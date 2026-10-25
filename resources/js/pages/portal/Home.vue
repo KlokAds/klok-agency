@@ -86,6 +86,23 @@ const weekSpend = computed(() => props.week.reduce((a, d) => a + d.spend, 0));
 const weekResults = computed(() =>
     props.week.reduce((a, d) => a + d.results, 0),
 );
+// How long the money lasts, in plain words: today, tomorrow, or about so many days.
+const lasts = computed(() => {
+    const d = props.credit.days_left;
+    if (props.credit.left <= 0) {
+        return t('টাকা শেষ');
+    }
+    if (d === null) {
+        return t('চলছে');
+    }
+    if (d <= 0) {
+        return t('আজই শেষ হবে');
+    }
+    if (d === 1) {
+        return t('কাল শেষ হবে');
+    }
+    return t('আর প্রায় {n} দিন চলবে', { n: d });
+});
 const low = computed(
     () =>
         props.credit.paid > 0 &&
@@ -204,100 +221,132 @@ const low = computed(
         >
     </a>
 
-    <!-- Money for ads: paid, spent, left, and for how long -->
-    <section class="panel mt-5 p-5 sm:p-6">
-        <div class="flex flex-wrap items-end justify-between gap-3">
-            <div>
-                <p class="text-[13px] text-ink-3">
+    <!-- The money running the ads now: what is left, how long it lasts, and what keeps it going. -->
+    <section
+        class="mt-5 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#0f766e] via-[#0d5f59] to-[#11211e] p-5 text-white shadow-[0_10px_30px_-12px_rgb(15_118_110/0.55)] sm:p-6"
+    >
+        <div class="flex items-center gap-5">
+            <!-- How much of the paid money is used -->
+            <svg
+                viewBox="0 0 120 120"
+                class="size-[104px] shrink-0 -rotate-90"
+                aria-hidden="true"
+            >
+                <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="rgb(255 255 255 / 0.16)"
+                    stroke-width="12"
+                />
+                <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    :stroke="credit.left <= 0 || low ? '#fca5a5' : '#5eead4'"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                    :stroke-dasharray="`${(314.16 * (100 - usedShare)) / 100} 314.16`"
+                />
+            </svg>
+            <div class="min-w-0">
+                <p class="text-[13px] text-white/70">
                     {{ t('বিজ্ঞাপনের জন্য বাকি') }}
                 </p>
-                <p
-                    class="num mt-1 text-[34px] leading-none font-bold"
-                    :class="credit.left <= 0 ? 'text-out' : 'text-ink'"
-                >
+                <p class="num mt-0.5 text-[34px] leading-none font-bold">
                     {{ money(credit.left, 'usd') }}
                 </p>
+                <p
+                    v-if="credit.paid > 0"
+                    class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[12.5px] font-semibold"
+                    :class="
+                        low || credit.left <= 0
+                            ? 'bg-[#fca5a5]/20 text-[#fecaca]'
+                            : 'bg-white/15 text-white'
+                    "
+                >
+                    {{ lasts }}
+                </p>
             </div>
-            <p
-                v-if="credit.days_left !== null && credit.paid > 0"
-                class="rounded-full px-3 py-1 text-[13px] font-semibold"
-                :class="low ? 'bg-out-soft text-out' : 'bg-in-soft text-in'"
-            >
-                {{ t('আর প্রায় {n} দিন চলবে', { n: credit.days_left }) }}
-            </p>
         </div>
+
         <div
             v-if="credit.paid > 0"
-            class="mt-4 h-2.5 overflow-hidden rounded-full bg-sunken"
+            class="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-white/[0.08] p-3 text-center"
         >
-            <div
-                class="h-full rounded-full bg-brand"
-                :style="{ width: usedShare + '%' }"
-            />
+            <p>
+                <span class="block text-[11.5px] text-white/65">{{
+                    t('দেওয়া')
+                }}</span>
+                <b class="num text-[15px]">{{ money(credit.paid, 'usd') }}</b>
+            </p>
+            <p>
+                <span class="block text-[11.5px] text-white/65">{{
+                    t('খরচ')
+                }}</span>
+                <b class="num text-[15px]">{{ money(credit.spent, 'usd') }}</b>
+            </p>
+            <p>
+                <span class="block text-[11.5px] text-white/65">{{
+                    t('দিনে')
+                }}</span>
+                <b class="num text-[15px]">{{
+                    credit.daily > 0 ? money(credit.daily, 'usd') : '—'
+                }}</b>
+            </p>
         </div>
-        <div class="mt-3 grid grid-cols-1 gap-2 text-[13px] sm:grid-cols-3">
-            <p class="text-ink-3">
-                {{ t('দেওয়া হয়েছে') }}
-                <b class="num text-ink">{{ money(credit.paid, 'usd') }}</b>
-            </p>
-            <p class="text-ink-3">
-                {{ t('খরচ হয়েছে') }}
-                <b class="num text-ink">{{ money(credit.spent, 'usd') }}</b>
-            </p>
-            <p v-if="credit.daily > 0" class="text-ink-3">
-                {{ t('দিনে খরচ') }}
-                <b class="num text-ink">{{ money(credit.daily, 'usd') }}</b>
-            </p>
-        </div>
-        <p v-if="low" class="mt-3 text-[13px] font-medium text-out">
-            {{ t('টাকা শেষের দিকে — বিজ্ঞাপন না থামাতে চাইলে আগেই pay করুন।') }}
-        </p>
-    </section>
 
-    <!-- A bill to pay -->
-    <a
-        v-if="next_invoice"
-        :href="next_invoice.url"
-        class="panel mt-4 flex items-center gap-4 p-5 transition-colors hover:border-brand"
-    >
-        <span
-            class="grid size-11 shrink-0 place-items-center rounded-full"
-            :class="
-                next_invoice.overdue
-                    ? 'bg-out-soft text-out'
-                    : 'bg-wait-soft text-wait'
-            "
-            ><KIcon name="doc" :size="22"
-        /></span>
-        <span class="min-w-0 flex-1">
-            <span class="block text-[15px] font-semibold">
-                {{
+        <!-- What keeps it going: the bill to pay, right here. -->
+        <a
+            v-if="next_invoice"
+            :href="due.count > 1 ? '/portal/invoices' : next_invoice.url"
+            class="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3.5 text-ink transition-transform active:scale-[0.99]"
+        >
+            <span
+                class="grid size-10 shrink-0 place-items-center rounded-full"
+                :class="
+                    next_invoice.overdue
+                        ? 'bg-out-soft text-out'
+                        : 'bg-brand-soft text-brand'
+                "
+                ><KIcon name="doc" :size="20"
+            /></span>
+            <span class="min-w-0 flex-1">
+                <span class="block text-[14px] font-semibold">{{
                     due.count > 1
                         ? t('{n}টা invoice বাকি · মোট {amount}', {
                               n: due.count,
                               amount: money(due.amount, 'bdt'),
                           })
-                        : t('Invoice {number} · {amount} বাকি', {
-                              number: next_invoice.number,
+                        : t('চালু রাখতে {amount} pay করুন', {
                               amount: money(next_invoice.due, 'bdt'),
                           })
-                }}
-            </span>
-            <span class="block text-[13px] text-ink-3">
-                {{
+                }}</span>
+                <span class="block text-[12px] text-ink-3">{{
                     next_invoice.overdue
-                        ? t('শেষ তারিখ পার হয়ে গেছে')
-                        : t('শেষ তারিখ {date}', {
+                        ? t('Invoice {number} · শেষ তারিখ পার হয়ে গেছে', {
+                              number: next_invoice.number,
+                          })
+                        : t('Invoice {number} · শেষ তারিখ {date}', {
+                              number: next_invoice.number,
                               date: next_invoice.due_date ?? '—',
                           })
-                }}
+                }}</span>
             </span>
-        </span>
-        <span
-            class="shrink-0 rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white"
-            >{{ t('Pay করুন') }}</span
+            <span
+                class="shrink-0 rounded-xl bg-brand px-4 py-2 text-[13.5px] font-bold text-white"
+                >{{ t('Pay') }}</span
+            >
+        </a>
+        <p
+            v-else-if="low"
+            class="mt-4 rounded-xl bg-white/10 px-3.5 py-2.5 text-[13px] text-white/90"
         >
-    </a>
+            {{ t('টাকা শেষের দিকে — চালু রাখতে চাইলে আমাদের জানান।') }}
+        </p>
+    </section>
 
     <!-- Today and the week -->
     <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">

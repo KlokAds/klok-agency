@@ -211,5 +211,14 @@
     "Google ইত্যাদি — উপরের Meta campaign-এর বাইরে।": "Google and others — besides the Meta campaigns above.",
     "Invoice-এ নেওয়া অন্য কাজ — page, design, setup ইত্যাদি।": "Other work on your invoices — pages, design, setup and so on.",
     "অন্য platform-এ বিজ্ঞাপন": "Ads on other platforms",
-    "সেবা": "Services"
+    "সেবা": "Services",
+    "Invoice {number} · শেষ তারিখ {date}": "Invoice {number} · due {date}",
+    "Invoice {number} · শেষ তারিখ পার হয়ে গেছে": "Invoice {number} · past its due date",
+    "আজই শেষ হবে": "Ends today",
+    "কাল শেষ হবে": "Ends tomorrow",
+    "চালু রাখতে {amount} pay করুন": "Pay {amount} to keep it running",
+    "টাকা শেষের দিকে — চালু রাখতে চাইলে আমাদের জানান।": "Running low — tell us if you want to keep it going.",
+    "দেওয়া": "Paid",
+    "Meta campaign": "Meta campaigns",
+    "অন্য platform": "Other platforms"
 }

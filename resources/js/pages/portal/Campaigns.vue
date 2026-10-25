@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import RangePicker from '@/components/portal/RangePicker.vue';
 import CampaignState from '@/components/portal/CampaignState.vue';
 import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
@@ -61,6 +61,28 @@ const groups = computed(() => [
     }, // i18n
 ]);
 
+// Meta campaigns, other platforms (Google…), services: one tab each, the ones there are.
+const tabs = computed(() =>
+    [
+        {
+            key: 'meta',
+            label: t('Meta campaign'),
+            count: props.campaigns.length,
+        },
+        {
+            key: 'other',
+            label: t('অন্য platform'),
+            count: props.other_spend?.length ?? 0,
+        },
+        {
+            key: 'services',
+            label: t('সেবা'),
+            count: props.services?.length ?? 0,
+        },
+    ].filter((tab) => tab.key === 'meta' || tab.count > 0),
+);
+const tab = ref('meta');
+
 // All the same kind (all sales, all messages): say so; mixed is plain "Result".
 const totalName = computed(() => {
     const names = [...new Set(props.campaigns.map((c) => c.result_name))];
@@ -78,100 +100,145 @@ const totalName = computed(() => {
         }}
     </p>
 
-    <div class="mt-4">
-        <RangePicker url="/portal/campaigns" :range="range" />
+    <!-- What the client is billed for, a tab each: Meta, other platforms, services. -->
+    <div
+        v-if="tabs.length > 1"
+        role="tablist"
+        class="mt-4 flex gap-1 overflow-x-auto rounded-2xl bg-sunken p-1"
+    >
+        <button
+            v-for="x in tabs"
+            :key="x.key"
+            type="button"
+            role="tab"
+            :aria-selected="tab === x.key"
+            class="flex h-10 flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-[13px] font-semibold whitespace-nowrap transition-colors"
+            :class="
+                tab === x.key
+                    ? 'bg-surface text-ink shadow-[0_1px_3px_rgb(0_0_0/0.1)]'
+                    : 'text-ink-3 hover:text-ink'
+            "
+            @click="tab = x.key"
+        >
+            {{ x.label }}
+            <span
+                class="rounded-full px-1.5 text-[11px]"
+                :class="tab === x.key ? 'bg-brand-soft text-brand' : 'bg-line'"
+                >{{ x.count }}</span
+            >
+        </button>
     </div>
 
-    <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('খরচ') }}</p>
-            <p class="num mt-1 text-[22px] font-bold">
-                {{ money(totals.spend, 'usd') }}
-            </p>
+    <template v-if="tab === 'meta'">
+        <div class="mt-4">
+            <RangePicker url="/portal/campaigns" :range="range" />
         </div>
-        <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ totalName }}</p>
-            <p class="num mt-1 text-[22px] font-bold">{{ totals.results }}</p>
-        </div>
-        <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">{{ t('প্রতি result-এ') }}</p>
-            <p class="num mt-1 text-[22px] font-bold">
-                {{ totals.cpr !== null ? money(totals.cpr, 'usd') : '—' }}
-            </p>
-        </div>
-        <div class="panel p-4">
-            <p class="text-[12.5px] text-ink-3">Click</p>
-            <p class="num mt-1 text-[22px] font-bold">{{ totals.clicks }}</p>
-        </div>
-    </section>
 
-    <section v-if="series.length > 1" class="panel mt-4 p-5">
-        <SpendChart :series="series" />
-    </section>
+        <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="panel p-4">
+                <p class="text-[12.5px] text-ink-3">{{ t('খরচ') }}</p>
+                <p class="num mt-1 text-[22px] font-bold">
+                    {{ money(totals.spend, 'usd') }}
+                </p>
+            </div>
+            <div class="panel p-4">
+                <p class="text-[12.5px] text-ink-3">{{ totalName }}</p>
+                <p class="num mt-1 text-[22px] font-bold">
+                    {{ totals.results }}
+                </p>
+            </div>
+            <div class="panel p-4">
+                <p class="text-[12.5px] text-ink-3">
+                    {{ t('প্রতি result-এ') }}
+                </p>
+                <p class="num mt-1 text-[22px] font-bold">
+                    {{ totals.cpr !== null ? money(totals.cpr, 'usd') : '—' }}
+                </p>
+            </div>
+            <div class="panel p-4">
+                <p class="text-[12.5px] text-ink-3">Click</p>
+                <p class="num mt-1 text-[22px] font-bold">
+                    {{ totals.clicks }}
+                </p>
+            </div>
+        </section>
 
-    <section class="mt-6 grid grid-cols-1 gap-3">
-        <p v-if="!campaigns.length" class="panel p-5 text-[14px] text-ink-3">
-            {{ t('এখনো কোনো campaign নেই।') }}
-        </p>
-        <template v-for="g in groups" :key="g.key">
-            <h2
-                v-if="g.list.length"
-                class="mt-2 text-[14px] font-bold text-ink-2"
+        <section v-if="series.length > 1" class="panel mt-4 p-5">
+            <SpendChart :series="series" />
+        </section>
+
+        <section class="mt-6 grid grid-cols-1 gap-3">
+            <p
+                v-if="!campaigns.length"
+                class="panel p-5 text-[14px] text-ink-3"
             >
-                {{ t(g.title) }} · {{ g.list.length }}
-            </h2>
-            <Link
-                v-for="c in g.list"
-                :key="c.id"
-                :href="`/portal/campaigns/${c.id}?range=${range.key}${range.key === 'custom' ? `&from=${range.from}&to=${range.to}` : ''}`"
-                class="panel block p-4 transition-colors hover:border-brand sm:p-5"
-            >
-                <span class="flex flex-wrap items-center gap-2">
-                    <CampaignState :state="c.state" />
+                {{ t('এখনো কোনো campaign নেই।') }}
+            </p>
+            <template v-for="g in groups" :key="g.key">
+                <h2
+                    v-if="g.list.length"
+                    class="mt-2 text-[14px] font-bold text-ink-2"
+                >
+                    {{ t(g.title) }} · {{ g.list.length }}
+                </h2>
+                <Link
+                    v-for="c in g.list"
+                    :key="c.id"
+                    :href="`/portal/campaigns/${c.id}?range=${range.key}${range.key === 'custom' ? `&from=${range.from}&to=${range.to}` : ''}`"
+                    class="panel block p-4 transition-colors hover:border-brand sm:p-5"
+                >
+                    <span class="flex flex-wrap items-center gap-2">
+                        <CampaignState :state="c.state" />
+                        <span
+                            class="min-w-0 flex-1 truncate text-[15px] font-semibold"
+                            >{{ c.name }}</span
+                        >
+                    </span>
                     <span
-                        class="min-w-0 flex-1 truncate text-[15px] font-semibold"
-                        >{{ c.name }}</span
+                        v-if="c.stops"
+                        class="mt-1.5 block text-[12.5px] text-ink-3"
+                        >{{ c.stops }}</span
                     >
-                </span>
-                <span
-                    v-if="c.stops"
-                    class="mt-1.5 block text-[12.5px] text-ink-3"
-                    >{{ c.stops }}</span
-                >
-                <span
-                    class="mt-3 grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-4"
-                >
-                    <span class="text-ink-3"
-                        >{{ t('খরচ') }}
-                        <b class="num block text-[15px] text-ink">{{
-                            money(c.spend, cur(c.currency))
-                        }}</b></span
+                    <span
+                        class="mt-3 grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-4"
                     >
-                    <span class="text-ink-3"
-                        >{{ c.result_name }}
-                        <b class="num block text-[15px] text-ink">{{
-                            c.results
-                        }}</b></span
-                    >
-                    <span class="text-ink-3"
-                        >{{ t('প্রতি result-এ') }}
-                        <b class="num block text-[15px] text-ink">{{
-                            c.cpr !== null ? money(c.cpr, cur(c.currency)) : '—'
-                        }}</b></span
-                    >
-                    <span class="text-ink-3"
-                        >Click
-                        <b class="num block text-[15px] text-ink">{{
-                            c.clicks
-                        }}</b></span
-                    >
-                </span>
-            </Link>
-        </template>
-    </section>
+                        <span class="text-ink-3"
+                            >{{ t('খরচ') }}
+                            <b class="num block text-[15px] text-ink">{{
+                                money(c.spend, cur(c.currency))
+                            }}</b></span
+                        >
+                        <span class="text-ink-3"
+                            >{{ c.result_name }}
+                            <b class="num block text-[15px] text-ink">{{
+                                c.results
+                            }}</b></span
+                        >
+                        <span class="text-ink-3"
+                            >{{ t('প্রতি result-এ') }}
+                            <b class="num block text-[15px] text-ink">{{
+                                c.cpr !== null
+                                    ? money(c.cpr, cur(c.currency))
+                                    : '—'
+                            }}</b></span
+                        >
+                        <span class="text-ink-3"
+                            >Click
+                            <b class="num block text-[15px] text-ink">{{
+                                c.clicks
+                            }}</b></span
+                        >
+                    </span>
+                </Link>
+            </template>
+        </section>
+    </template>
 
     <!-- Besides the Meta campaigns: ad spend on other platforms, and services. -->
-    <section v-if="other_spend?.length" class="panel mt-6 p-5">
+    <section
+        v-if="tab === 'other' && other_spend?.length"
+        class="panel mt-4 p-5"
+    >
         <h2 class="text-[16px] font-bold">
             {{ t('অন্য platform-এ বিজ্ঞাপন') }}
         </h2>
@@ -202,7 +269,10 @@ const totalName = computed(() => {
         </ul>
     </section>
 
-    <section v-if="services?.length" class="panel mt-4 p-5">
+    <section
+        v-if="tab === 'services' && services?.length"
+        class="panel mt-4 p-5"
+    >
         <h2 class="text-[16px] font-bold">{{ t('সেবা') }}</h2>
         <p class="mt-0.5 text-[12.5px] text-ink-3">
             {{ t('Invoice-এ নেওয়া অন্য কাজ — page, design, setup ইত্যাদি।') }}
