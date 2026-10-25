@@ -9,12 +9,20 @@ it('sends every email in KlokOne\'s own design, not Laravel\'s', function () {
     $alert->id = 'a1b2c3d4-0000-4000-8000-000000000000';
     $html = (string) $alert->toMail($user)->render();
 
-    expect($html)->toContain('>K</td>')
+    // MAIL_PREVIEW=path writes the email out, to look at it.
+    if ($preview = getenv('MAIL_PREVIEW')) {
+        file_put_contents($preview, $html);
+    }
+
+    expect($html)->toContain('>K</a></td>')
         ->toContain('KlokOne')
         ->toContain('Klok Ads')
         ->toContain('#0f766e')
         ->toContain('Hind Siliguri')
-        ->toContain('Button কাজ না করলে')
+        ->toContain('Button না খুললে')
+        ->toContain('শুভেচ্ছান্তে')
+        ->toContain('প্রিয় ')
+        ->toContain('class="kicker"')
         ->not->toContain('laravel.com/img')
         ->not->toContain('Regards')
         ->not->toContain('All rights reserved');

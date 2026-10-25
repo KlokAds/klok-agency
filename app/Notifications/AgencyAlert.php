@@ -70,13 +70,37 @@ class AgencyAlert extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $app = $this->toApp($notifiable);
+        $locale = (string) ($notifiable->locale ?? 'bn');
+        $name = $notifiable instanceof User ? trim((string) $notifiable->name) : '';
 
+        // A letter, not a log line: what it is about, the title, a greeting, the news, one button.
         return (new MailMessage)
             ->subject($app['title'])
+            ->markdown('notifications::email', ['kicker' => $this->kicker($locale)])
             ->greeting($app['title'])
+            ->line($name !== '' ? __('প্রিয় :name,', ['name' => $name], $locale) : __('নমস্কার,', [], $locale))
             ->line((string) ($app['body'] ?? ''))
-            ->action(__('KlokOne-এ দেখুন', [], (string) ($notifiable->locale ?? 'bn')), url($app['url'] ?? '/notifications'))
-            ->salutation(__('— Klok Ads', [], (string) ($notifiable->locale ?? 'bn')));
+            ->action(__('KlokOne-এ দেখুন', [], $locale), url($app['url'] ?? '/notifications'))
+            ->salutation(__('শুভেচ্ছান্তে,', [], $locale));
+    }
+
+    /** The small line above an email's title: what the news is about. */
+    private function kicker(string $locale): string
+    {
+        $label = match (true) {
+            in_array($this->kind, ['client_invoice', 'client_paid', 'client_part_paid', 'client_overdue', 'client_refund'], true) => 'Invoice ও পেমেন্ট', // i18n
+            str_starts_with($this->kind, 'client_') => 'আপনার বিজ্ঞাপন', // i18n
+            default => match ($this->group()) {
+                'money' => 'টাকা ও পেমেন্ট', // i18n
+                'ads' => 'বিজ্ঞাপন', // i18n
+                'dollars' => 'Dollar ও card', // i18n
+                'activity' => 'কে কী করল', // i18n
+                'summary' => 'দিনের সারসংক্ষেপ', // i18n
+                default => 'KlokOne',
+            },
+        };
+
+        return __($label, [], $locale);
     }
 
     /** @return array<string, mixed> */

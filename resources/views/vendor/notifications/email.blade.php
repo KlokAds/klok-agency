@@ -1,9 +1,14 @@
 <x-mail::message>
-{{-- Greeting --}}
+{{-- What this is about, small, above the title --}}
+@isset($kicker)
+<p class="kicker">{{ $kicker }}</p>
+@endisset
+
+{{-- Title --}}
 @if (! empty($greeting))
 # {{ $greeting }}
 @else
-# {{ __('হ্যালো,') }}
+# {{ __('KlokOne থেকে খবর') }}
 @endif
 
 {{-- Intro Lines --}}
@@ -31,17 +36,13 @@
 
 @endforeach
 
-{{-- Salutation --}}
-@if (! empty($salutation))
-{{ $salutation }}
-@else
-— Klok Ads
-@endif
+{{-- Signature --}}
+<p class="signature">{{ ! empty($salutation) ? $salutation : __('শুভেচ্ছান্তে,') }}<br>{{ __('Klok Ads টিম') }}</p>
 
-{{-- Subcopy --}}
+{{-- A short way in when the button does not open --}}
 @isset($actionText)
 <x-slot:subcopy>
-{{ __('Button কাজ না করলে এই link খুলুন:') }} <span class="break-all">[{{ $displayableActionUrl }}]({{ $actionUrl }})</span>
+{{ __('Button না খুললে') }} <a href="{{ $actionUrl }}">{{ __('এখানে চাপুন') }}</a> — {{ parse_url($actionUrl, PHP_URL_HOST) }}
 </x-slot:subcopy>
 @endisset
 </x-mail::message>

@@ -308,3 +308,20 @@ img {
 .break-all {
     word-break: break-all;
 }
+
+/* The small line above the title, and the signature */
+
+.kicker {
+    color: #0f766e;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.signature {
+    color: #3c4a47;
+    font-size: 14.5px;
+    margin-top: 22px;
+}
