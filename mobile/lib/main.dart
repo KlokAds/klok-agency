@@ -228,6 +228,21 @@ class Lock {
 
   static Future<bool> hasPin() async => (await _p).getString('lock.pin') != null;
 
+  /// Before the fingerprint is switched on: it must really be there and really pass.
+  /// Unlike [finger], a phone with no fingerprint set up says no, with why.
+  static Future<String?> fingerOk(String reason) async {
+    final auth = LocalAuthentication();
+    try {
+      if (!await auth.isDeviceSupported() || !await auth.canCheckBiometrics || (await auth.getAvailableBiometrics()).isEmpty) {
+        return 'এই phone-এ আঙুলের ছাপ চালু নেই — phone-এর Settings থেকে আগে fingerprint যোগ করুন।';
+      }
+      final ok = await auth.authenticate(localizedReason: reason, options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true));
+      return ok ? null : 'আঙুলের ছাপ মেলেনি — চালু করা হয়নি।';
+    } on PlatformException {
+      return 'আঙুলের ছাপ নেওয়া গেল না — চালু করা হয়নি।';
+    }
+  }
+
   /// The fingerprint, or the phone's PIN/pattern. A phone with no screen lock passes.
   static Future<bool> finger(String reason) async {
     final auth = LocalAuthentication();
@@ -883,7 +898,7 @@ class _SitePageState extends State<SitePage> {
         ],
       ),
     );
-    if (yes == true && await Lock.finger('App lock চালু করতে আঙুলের ছাপ দিন')) {
+    if (yes == true && await Lock.fingerOk('App lock চালু করতে আঙুলের ছাপ দিন') == null) {
       await prefs.setString('lock.mode', 'bio');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('আঙুলের ছাপের lock চালু হয়েছে।')));
@@ -1207,6 +1222,10 @@ class _SettingsPageState extends State<SettingsPage> {
     if (value == mode || !await confirmIdentity(context, reason: 'App lock বদলাতে')) {
       return;
     }
+    // The fingerprint goes on only once the finger has passed here and now.
+    if (value == 'bio' && !await fingerAllowed()) {
+      return;
+    }
     if (value == 'pin' && mounted) {
       final made = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const NewPinPage()));
       if (made != true) {
@@ -1216,6 +1235,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('lock.mode', value);
     setState(() => mode = value);
+  }
+
+  /// Asks for the finger; says why when it did not pass.
+  Future<bool> fingerAllowed() async {
+    final why = await Lock.fingerOk('আঙুলের ছাপে KlokOne খোলা চালু করতে');
+    if (why != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(why)));
+    }
+    return why == null;
   }
 
   Future<void> changePin() async {
@@ -1292,6 +1320,10 @@ class _SettingsPageState extends State<SettingsPage> {
             SwitchListTile(
               value: pinFinger,
               onChanged: (v) async {
+                // On: the finger must pass. Off: the PIN, so no one else switches it.
+                if (v ? !await fingerAllowed() : !await confirmIdentity(context, reason: 'আঙুলের ছাপ বন্ধ করতে')) {
+                  return;
+                }
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('lock.pin_finger', v);
                 setState(() => pinFinger = v);
