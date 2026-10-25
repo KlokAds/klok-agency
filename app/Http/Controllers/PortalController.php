@@ -402,13 +402,13 @@ class PortalController extends Controller
     }
 
     /**
-     * The first day these campaigns ran: the earliest day with numbers, or the earliest start.
+     * The first day these campaigns ran: the earliest day they spent, or the earliest start.
      *
      * @param  array<int, int>  $campaignIds
      */
     private function firstDay(array $campaignIds): ?CarbonImmutable
     {
-        $day = CampaignDay::whereIn('campaign_id', $campaignIds)->min('day');
+        $day = CampaignDay::whereIn('campaign_id', $campaignIds)->where('spend', '>', 0)->min('day');
         $start = Campaign::whereKey($campaignIds)->min('start_at');
         $first = collect([$day, $start])->filter()->map(fn ($d) => CarbonImmutable::parse($d)->startOfDay())->min();
 
