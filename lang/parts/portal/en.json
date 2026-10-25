@@ -205,5 +205,7 @@
     "{client} portal-এ দেখবেন “Klok Ads থামিয়েছে”, আর খবর পাবেন।": "{client} will see “Paused by Klok Ads” on the portal and be told.",
     "এ সময় আপনার টাকা খরচ হচ্ছে না। কেন থামানো বা কবে চালু হবে জানতে আমাদের লিখুন।": "No money of yours is spent meanwhile. Write to us to know why, or when it runs again.",
     "এখন {amount}": "Now {amount}",
-    "দিনে কত খরচ হবে, Meta-তে বসবে। Client-এর টাকার বাইরে গেলে spend cap আগেই থামিয়ে দেবে।": "What it may spend a day, set on Meta. Beyond the client’s money, the spend cap stops it first."
+    "দিনে কত খরচ হবে, Meta-তে বসবে। Client-এর টাকার বাইরে গেলে spend cap আগেই থামিয়ে দেবে।": "What it may spend a day, set on Meta. Beyond the client’s money, the spend cap stops it first.",
+    "আগের": "Previous",
+    "পরের": "Next"
 }

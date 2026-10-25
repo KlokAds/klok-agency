@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import CampaignState from '@/components/portal/CampaignState.vue';
 import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
@@ -64,6 +64,19 @@ const usedShare = computed(() =>
           )
         : 0,
 );
+// Payment history, a few at a time, so the page stays short in the app.
+const PER_PAGE = 5;
+const payPage = ref(1);
+const payPages = computed(() =>
+    Math.max(1, Math.ceil((props.payments?.length ?? 0) / PER_PAGE)),
+);
+const shownPayments = computed(() =>
+    (props.payments ?? []).slice(
+        (payPage.value - 1) * PER_PAGE,
+        payPage.value * PER_PAGE,
+    ),
+);
+
 const today = computed(() => props.week[props.week.length - 1]);
 const weekSpend = computed(() => props.week.reduce((a, d) => a + d.spend, 0));
 const weekResults = computed(() =>
@@ -359,8 +372,8 @@ const low = computed(
         </p>
         <ul v-else class="mt-2 divide-y divide-line">
             <li
-                v-for="(p, i) in payments"
-                :key="i"
+                v-for="(p, i) in shownPayments"
+                :key="`${payPage}-${i}`"
                 class="flex items-center justify-between gap-3 py-2.5 text-[13.5px]"
             >
                 <span class="min-w-0">
@@ -378,5 +391,29 @@ const low = computed(
                 >
             </li>
         </ul>
+        <div
+            v-if="payPages > 1"
+            class="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3"
+        >
+            <button
+                type="button"
+                class="inline-flex h-9 items-center gap-1 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:border-brand hover:text-brand disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-2"
+                :disabled="payPage <= 1"
+                @click="payPage--"
+            >
+                ← {{ t('আগের') }}
+            </button>
+            <span class="num text-[12.5px] text-ink-3"
+                >{{ payPage }} / {{ payPages }}</span
+            >
+            <button
+                type="button"
+                class="inline-flex h-9 items-center gap-1 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-2 transition-colors hover:border-brand hover:text-brand disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-2"
+                :disabled="payPage >= payPages"
+                @click="payPage++"
+            >
+                {{ t('পরের') }} →
+            </button>
+        </div>
     </section>
 </template>

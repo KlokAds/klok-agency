@@ -131,7 +131,7 @@ class PortalController extends Controller
                 'paid_bdt' => (int) BdtEntry::where('client_id', $client->id)->whereIn('category', self::PAID)->sum('amount'),
             ],
             'payments' => BdtEntry::where('client_id', $client->id)->whereIn('category', self::PAID)
-                ->orderByDesc('entry_date')->orderByDesc('id')->limit(50)->get()
+                ->orderByDesc('entry_date')->orderByDesc('id')->limit(500)->get()
                 ->map(fn (BdtEntry $e) => [
                     'date' => $e->entry_date?->format('j M Y'),
                     'amount' => $e->amount,
