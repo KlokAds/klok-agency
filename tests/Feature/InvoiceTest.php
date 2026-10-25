@@ -653,3 +653,22 @@ it('tells the Owner when the money came in from another number than the client g
     expect($invoice->fresh()->status)->toBe('sent')
         ->and($this->owner->notifications()->where('data->kind', 'sms_check')->sole()->data['params']['number'])->toBe($invoice->number);
 });
+
+it('matches a payment from a number already known as the client\'s, though the client gave another', function () {
+    Setting::put('pay_charge_mfs', '0');
+    $this->client->update(['phone' => '01858823568']);
+    $invoice = sentInvoice($this->client);
+    $session = app(PaymentMatcher::class)->startSession($invoice, PaymentMethod::Bkash, '01707589304');
+
+    smsHook('bKash', 'You have received Tk '.number_format($session->amount / 100, 2).' from 01858823568. Fee Tk 0.00. Balance Tk 20,000.00. TrxID KNOWNNUM01 at '.now()->format('d/m/Y H:i'))
+        ->assertJson(['status' => 'matched']);
+
+    expect($invoice->fresh()->status)->toBe('paid');
+
+    // A stranger's number still is not taken on trust.
+    $next = sentInvoice($this->client);
+    $other = app(PaymentMatcher::class)->startSession($next, PaymentMethod::Bkash, '01707589304');
+    smsHook('bKash', 'You have received Tk '.number_format($other->amount / 100, 2).' from 01999999999. Fee Tk 0.00. Balance Tk 40,000.00. TrxID STRANGER01 at '.now()->format('d/m/Y H:i'))
+        ->assertJson(['status' => 'stored']);
+    expect($next->fresh()->status)->toBe('sent');
+});

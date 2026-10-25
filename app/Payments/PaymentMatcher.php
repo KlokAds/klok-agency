@@ -2,6 +2,7 @@
 
 namespace App\Payments;
 
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\PaymentSms;
@@ -106,7 +107,7 @@ class PaymentMatcher
             $candidates = $sms->whereBetween('amount', [$payment->amount - $this->shortBy($payment), $payment->amount])
                 ->where('received_at', '>=', $payment->created_at->subMinutes(self::SESSION_MINUTES))
                 ->get()
-                ->filter(fn (PaymentSms $candidate): bool => $this->samePayer($payment->sender, $candidate->payer_number));
+                ->filter(fn (PaymentSms $candidate): bool => $this->payerOk($payment, $candidate->payer_number));
             $exact = $candidates->where('amount', $payment->amount);
 
             $sms = $exact->count() === 1 ? $exact->first() : ($exact->isEmpty() && $candidates->count() === 1 ? $candidates->first() : null);
@@ -157,7 +158,7 @@ class PaymentMatcher
             ->where('expires_at', '>=', $sms->received_at->subMinutes(self::GRACE_MINUTES))
             ->get()
             ->filter(fn (InvoicePayment $payment): bool => $payment->amount - $sms->amount <= $this->shortBy($payment))
-            ->filter(fn (InvoicePayment $payment): bool => $this->samePayer($payment->sender, $sms->payer_number));
+            ->filter(fn (InvoicePayment $payment): bool => $this->payerOk($payment, $sms->payer_number));
 
         // Prefer the session on the exact wallet, then the exact amount; never guess between equals.
         $exact = $sessions->filter(fn (InvoicePayment $p) => $p->method->value === $sms->provider);
@@ -269,6 +270,44 @@ class PaymentMatcher
             ->where('method', $method->value)
             ->whereNull('reference')
             ->where('expires_at', '>', now());
+    }
+
+    /**
+     * The SMS came from someone who may pay this invoice: the number the client gave when paying,
+     * or any number already known as theirs — the client's phone, their portal people's phones,
+     * and the numbers their earlier payments came from.
+     */
+    protected function payerOk(InvoicePayment $payment, ?string $actual): bool
+    {
+        if ($this->samePayer($payment->sender, $actual)) {
+            return true;
+        }
+
+        return collect(self::knownNumbers($payment))->contains(fn (string $known) => $this->samePayer($known, $actual));
+    }
+
+    /**
+     * Numbers already known as the invoice's client's (the last ten digits of each).
+     *
+     * @return array<int, string>
+     */
+    public static function knownNumbers(InvoicePayment $payment): array
+    {
+        $clientId = $payment->invoice?->client_id;
+
+        if ($clientId === null) {
+            return [];
+        }
+
+        $invoiceIds = Invoice::where('client_id', $clientId)->pluck('id');
+
+        return collect([Client::whereKey($clientId)->value('phone')])
+            ->merge(User::where('client_id', $clientId)->pluck('phone'))
+            ->merge(InvoicePayment::whereIn('invoice_id', $invoiceIds)->where('status', 'verified')->pluck('sender'))
+            ->merge(PaymentSms::where('status', 'matched')->whereIn('invoice_payment_id', InvoicePayment::whereIn('invoice_id', $invoiceIds)->select('id'))->pluck('payer_number'))
+            ->map(fn ($n) => substr(preg_replace('/\D+/', '', (string) $n) ?? '', -10))
+            ->filter(fn (string $n) => strlen($n) === 10)
+            ->unique()->values()->all();
     }
 
     /**
