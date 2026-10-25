@@ -10,7 +10,7 @@ import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
-import { money } from '@/lib/format';
+import { money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
 type Campaign = {
@@ -271,14 +271,20 @@ const low = computed(
                     credit.meta &&
                     credit.meta.charged + credit.meta.uncharged > 0
                 "
-                class="num mt-1 text-[12.5px] text-ink-3"
+                class="num mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[12.5px] text-ink-3"
             >
-                {{ t('Meta কেটেছে') }}
-                <b class="text-ink">{{ money(credit.meta.charged, 'usd') }}</b>
-                · {{ t('এখনো কাটেনি') }}
-                <b class="text-ink">{{
-                    money(credit.meta.uncharged, 'usd')
-                }}</b>
+                <span
+                    >{{ t('Meta কেটেছে') }}
+                    <b class="text-ink">{{
+                        money(credit.meta.charged, 'usd')
+                    }}</b></span
+                >
+                <span
+                    >{{ t('এখনো কাটেনি') }}
+                    <b class="text-ink">{{
+                        money(credit.meta.uncharged, 'usd')
+                    }}</b></span
+                >
             </p>
             <KButton
                 v-if="credit.refund"
@@ -314,6 +320,35 @@ const low = computed(
                     >{{ t('{n}টা', { n: due.count }) }}</span
                 >
             </p>
+            <p v-if="next_invoice" class="num mt-1 text-[12.5px] text-ink-3">
+                {{ next_invoice.number
+                }}<template v-if="next_invoice.due_date">
+                    ·
+                    {{
+                        next_invoice.overdue
+                            ? t('{date}-এ শেষ হয়েছে', {
+                                  date: niceDate(next_invoice.due_date, false),
+                              })
+                            : t('{date}-এর মধ্যে', {
+                                  date: niceDate(next_invoice.due_date, false),
+                              })
+                    }}</template
+                >
+            </p>
+            <p
+                v-else
+                class="mt-1 flex items-center gap-1 text-[12.5px] text-in"
+            >
+                <KIcon name="check" :size="13" />{{
+                    t('সব invoice পরিশোধ হয়েছে')
+                }}
+            </p>
+            <Link
+                v-if="!next_invoice"
+                href="/portal/invoices"
+                class="mt-2 inline-flex h-8 items-center rounded-lg border border-line-2 px-2.5 text-[13px] font-semibold text-ink-2 hover:border-ink-3 hover:text-ink"
+                >{{ t('সব invoice') }}</Link
+            >
         </component>
     </section>
 

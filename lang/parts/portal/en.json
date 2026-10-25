@@ -261,5 +261,9 @@
     "সব": "All",
     "Meta কেটেছে": "Meta charged",
     "এখনো কাটেনি": "not yet charged",
-    "App lock (PIN / আঙুল)": "App lock (PIN / fingerprint)"
+    "App lock (PIN / আঙুল)": "App lock (PIN / fingerprint)",
+    "{date}-এ শেষ হয়েছে": "due {date}, overdue",
+    "{date}-এর মধ্যে": "by {date}",
+    "সব invoice পরিশোধ হয়েছে": "All invoices paid",
+    "আজকের হিসাব Meta থেকে এখনো আসেনি — Meta দিনের খরচ কিছুক্ষণ পর পর জানায়; গতকাল বা ৭ দিন দেখুন।": "Today's figures have not come from Meta yet; Meta reports the day's spend a little at a time. Look at yesterday or 7 days."
 }

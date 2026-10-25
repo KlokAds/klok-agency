@@ -230,5 +230,6 @@
     "এখনো নেই": "Not yet",
     "এই সময়ে": "This period",
     "Client নেই": "No client",
-    "{linked}/{total} টা যুক্ত": "{linked}/{total} linked"
+    "{linked}/{total} টা যুক্ত": "{linked}/{total} linked",
+    "আজকের হিসাব Meta থেকে এখনো আসেনি — Meta দিনের খরচ কিছুক্ষণ পর পর জানায়; গতকাল বা ৭ দিন দেখুন।": "Today's figures have not come from Meta yet; Meta reports the day's spend a little at a time. Look at yesterday or 7 days."
 }

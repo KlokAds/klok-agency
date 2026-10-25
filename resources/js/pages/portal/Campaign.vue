@@ -334,7 +334,13 @@ async function stopIt(): Promise<void> {
             {{ t('দিনে দিনে') }}
         </h2>
         <p v-if="!days.length" class="px-5 py-4 text-[14.5px] text-ink-3">
-            {{ t('এই সময়ে কোনো খরচ হয়নি।') }}
+            {{
+                range.key === 'today'
+                    ? t(
+                          'আজকের হিসাব Meta থেকে এখনো আসেনি — Meta দিনের খরচ কিছুক্ষণ পর পর জানায়; গতকাল বা ৭ দিন দেখুন।',
+                      )
+                    : t('এই সময়ে কোনো খরচ হয়নি।')
+            }}
         </p>
         <DayRows
             v-else
