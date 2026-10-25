@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import CampaignState from '@/components/portal/CampaignState.vue';
 import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
+import KButton from '@/components/k/KButton.vue';
+import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
+import KInput from '@/components/k/KInput.vue';
+import KModal from '@/components/k/KModal.vue';
+import KTextarea from '@/components/k/KTextarea.vue';
 import { money } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
@@ -74,6 +79,19 @@ const usedShare = computed(() =>
           )
         : 0,
 );
+// Asking for the money left back: where to send it, and a note.
+const refundOpen = ref(false);
+const refundForm = useForm({ to: '', note: '' });
+function askRefund(): void {
+    refundForm.post('/portal/refund-request', {
+        preserveScroll: true,
+        onSuccess: () => {
+            refundOpen.value = false;
+            refundForm.reset();
+        },
+    });
+}
+
 // The latest payment in, and how many there were (refunds aside).
 const lastPayment = computed(
     () => props.payments?.find((p) => !p.refund) ?? null,
@@ -245,6 +263,14 @@ const low = computed(
                     }}</span
                 >
             </p>
+            <button
+                v-if="credit.refund"
+                type="button"
+                class="mt-1.5 text-[11.5px] font-semibold text-brand hover:underline"
+                @click="refundOpen = true"
+            >
+                {{ t('বাকি টাকা ফেরত চান') }} →
+            </button>
         </div>
         <component
             :is="next_invoice ? 'a' : 'div'"
@@ -593,4 +619,52 @@ const low = computed(
             </button>
         </div>
     </section>
+
+    <KModal
+        v-model="refundOpen"
+        width="md"
+        :title="t('বাকি টাকা ফেরত চান')"
+        :subtitle="
+            credit.refund
+                ? `${money(credit.left, 'usd')} ≈ ${money(credit.refund, 'bdt')}`
+                : undefined
+        "
+    >
+        <p class="text-[13px] text-ink-3">
+            {{
+                t(
+                    'আমাদের ডলার রেটে, commission বাদে — চূড়ান্ত অঙ্ক Klok Ads নিশ্চিত করবে।',
+                )
+            }}
+        </p>
+        <div class="mt-4 flex flex-col gap-4">
+            <KField
+                :label="t('কোথায় পাঠাব? (যেমন bKash 01712345678)')"
+                :error="refundForm.errors.to"
+            >
+                <KInput
+                    v-model="refundForm.to"
+                    :invalid="!!refundForm.errors.to"
+                />
+            </KField>
+            <KField
+                :label="t('কিছু বলার থাকলে (ঐচ্ছিক)')"
+                :error="refundForm.errors.note"
+            >
+                <KTextarea v-model="refundForm.note" :rows="3" />
+            </KField>
+        </div>
+        <template #footer>
+            <KButton variant="quiet" @click="refundOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                variant="primary"
+                :loading="refundForm.processing"
+                :disabled="refundForm.to.trim().length < 5"
+                @click="askRefund"
+                >{{ t('অনুরোধ পাঠান') }}</KButton
+            >
+        </template>
+    </KModal>
 </template>

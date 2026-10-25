@@ -15,10 +15,12 @@ use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Services\Books;
 use App\Services\CampaignLimits;
+use App\Services\ClientNotifier;
 use App\Services\Invoices;
 use App\Services\Notifier;
 use App\Services\Renewals;
 use App\Support\Access;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,6 +47,8 @@ class PortalController extends Controller
 
     /** Money from the client (and back to them) in the BDT book: what they paid, in full. */
     public const PAID = ['client_payment', 'service_income', 'client_refund'];
+
+    public const REFUND_TITLE = 'Client বাকি টাকা ফেরত চেয়েছেন'; // i18n
 
     public function register(): Response
     {
@@ -76,6 +80,9 @@ class PortalController extends Controller
         $notifier->send(null, new AgencyAlert('portal_signup', self::SIGNUP_TITLE, '{name} · {company} · {phone}', [
             'name' => $user->name, 'company' => $user->company ?? '—', 'phone' => $user->phone,
         ], ['url' => '/clients']));
+
+        // Their own copy: the account is made, and what happens next.
+        rescue(fn () => $user->notify(new AgencyAlert('client_welcome', ClientNotifier::WELCOME_TITLE, 'আপনার account তৈরি হয়েছে। Klok Ads আপনার ব্যবসার সাথে account-টা যুক্ত করলেই আপনার বিজ্ঞাপন, invoice আর পেমেন্ট এখানে দেখতে পাবেন — হলে আপনাকে জানানো হবে।', [], ['url' => '/portal']))); // i18n
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -269,6 +276,32 @@ class PortalController extends Controller
                     'at' => $r->approved_at?->format('j M Y'),
                 ])->all(),
         ]);
+    }
+
+    /** The client asks for the ad credit not spent yet back: the Owners act on it. */
+    public function refundRequest(Request $request, Books $books, Notifier $notifier): RedirectResponse
+    {
+        $client = $this->client($request);
+        $figure = collect($books->clients())->firstWhere('id', $client->id) ?? [];
+        $left = (int) ($figure['credit_left'] ?? 0);
+        $data = $request->validate(['to' => ['required', 'string', 'max:120'], 'note' => ['nullable', 'string', 'max:500']], [], ['to' => __('কোথায় পাঠাব')]);
+
+        abort_if($left <= 0, 422);
+        $estimate = ($fx = Invoices::fxRate()) ? (int) floor($left * $fx / 100) * 100 : null;
+
+        $notifier->send(null, new AgencyAlert('refund_request', self::REFUND_TITLE, '{client} · {who} · {usd} (≈ {bdt}) → {to}{note}', [ // i18n
+            'client' => $client->name, 'who' => $request->user()->name, 'usd' => '$'.number_format($left / 100, 2), 'bdt' => $estimate ? Money::bdt($estimate) : '—',
+            'to' => $data['to'], 'note' => filled($data['note'] ?? null) ? ' · '.$data['note'] : '',
+        ], ['url' => '/clients/'.$client->id, 'important' => true]));
+        activity('Client')->performedOn($client)->causedBy($request->user())->withProperties(['usd' => $left, 'to' => $data['to']])->log('refund asked');
+
+        rescue(fn () => $request->user()->notify(new AgencyAlert('client_refund_asked', ClientNotifier::REFUND_ASKED_TITLE, '{usd} (আনুমানিক {bdt}) → {to}। Klok Ads ২ কর্মদিবসের মধ্যে অঙ্ক নিশ্চিত করবে, ৭ কর্মদিবসের মধ্যে পাঠাবে।', [ // i18n
+            'usd' => '$'.number_format($left / 100, 2), 'bdt' => $estimate ? Money::bdt($estimate) : '—', 'to' => $data['to'],
+        ], ['url' => '/portal'])));
+
+        $this->toast(__('ফেরতের অনুরোধ পাঠানো হয়েছে — Klok Ads জানাবে।'));
+
+        return back();
     }
 
     /** The client pauses their campaign. */

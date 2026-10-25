@@ -13,8 +13,10 @@ use App\Models\Task;
 use App\Models\UsdEntry;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Notifications\AgencyAlert;
 use App\Services\Books;
 use App\Services\CampaignBilling;
+use App\Services\ClientNotifier;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
 use App\Support\Access;
@@ -264,6 +266,9 @@ class ClientController extends Controller
         $user = User::role(Access::CLIENT)->whereNull('client_id')->whereKey($data['user_id'])->firstOrFail();
         $user->forceFill(['client_id' => $client->id])->save();
         activity('Client')->performedOn($client)->causedBy($request->user())->log("portal user {$user->email} linked");
+        rescue(fn () => $user->notify(new AgencyAlert('client_linked', ClientNotifier::LINKED_TITLE, 'এখন থেকে {client}-এর সব campaign, খরচ, invoice আর পেমেন্ট KlokOne-এ দেখতে পাবেন — phone-এ আর email-এও খবর পাবেন।', [ // i18n
+            'client' => $client->name,
+        ], ['url' => '/portal'])));
         $this->toast(__(':name এখন :client-এর portal দেখবেন।', ['name' => $user->name, 'client' => $client->name]));
 
         return back();

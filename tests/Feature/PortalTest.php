@@ -162,7 +162,7 @@ it('tells the client of a new invoice, its payment, the day\'s result and a camp
 
     // The portal's list, which reads them.
     $this->actingAs($user->fresh())->get('/portal/notifications')
-        ->assertInertia(fn ($page) => $page->component('portal/Notifications')->has('notifications', 4));
+        ->assertInertia(fn ($page) => $page->component('portal/Notifications')->has('notifications', 5)); // with the welcome
     expect($user->fresh()->unreadNotifications()->count())->toBe(0);
 });
 

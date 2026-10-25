@@ -304,6 +304,11 @@ class Renewals
         });
 
         $this->tell($renewal, 'declined', self::DECLINED_TITLE);
+
+        $renewal->loadMissing('campaign');
+        app(ClientNotifier::class)->send($renewal->client_id, new AgencyAlert('client_declined', ClientNotifier::DECLINED_TITLE, '{campaign} — {time}। মত বদলালে KlokOne থেকে আবার দিন বেছে নিন। বিজ্ঞাপনের টাকা বাকি থাকলে ফেরত চাইতে পারেন।', [ // i18n
+            'campaign' => $renewal->campaign?->name, 'time' => $renewal->campaign?->stopsText() ?? '',
+        ], ['url' => '/portal/campaigns/'.$renewal->campaign_id]));
     }
 
     /**

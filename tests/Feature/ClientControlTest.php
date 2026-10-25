@@ -181,3 +181,20 @@ it('lets the team pause, switch on and budget a campaign from KlokOne, and the c
     // A client cannot reach the team's controls.
     $this->actingAs($this->client)->post("/campaigns/{$this->campaign->id}/pause")->assertForbidden();
 });
+
+it('welcomes a new sign-up, tells them when they are linked, and takes a request for the money left back', function () {
+    $this->post('/portal/register', [
+        'name' => 'Karim', 'company' => 'GFFS', 'phone' => '01712345679', 'email' => 'karim@gffs.test',
+        'password' => 'secret-pass-1', 'password_confirmation' => 'secret-pass-1',
+    ])->assertRedirect('/portal');
+    $karim = User::where('email', 'karim@gffs.test')->sole();
+    expect($karim->notifications()->where('data->kind', 'client_welcome')->count())->toBe(1);
+
+    $this->actingAs($this->owner)->post("/clients/{$this->gffs->id}/portal-users", ['user_id' => $karim->id])->assertRedirect();
+    expect($karim->notifications()->where('data->kind', 'client_linked')->count())->toBe(1);
+
+    payAhead($this, '1500', '10');
+    $this->actingAs($karim->fresh())->post('/portal/refund-request', ['to' => 'bKash 01712345679'])->assertRedirect();
+    expect($this->owner->notifications()->where('data->kind', 'refund_request')->sole()->data['params']['to'])->toBe('bKash 01712345679')
+        ->and($karim->notifications()->where('data->kind', 'client_refund_asked')->count())->toBe(1);
+});

@@ -36,6 +36,14 @@ class ClientNotifier
 
     public const BACK_TITLE = 'Campaign আবার চলছে'; // i18n
 
+    public const WELCOME_TITLE = 'KlokOne-এ স্বাগতম'; // i18n
+
+    public const LINKED_TITLE = 'আপনার account Klok Ads-এর সাথে যুক্ত হয়েছে'; // i18n
+
+    public const DECLINED_TITLE = 'আপনি campaign চালু না রাখার কথা জানিয়েছেন'; // i18n
+
+    public const REFUND_ASKED_TITLE = 'ফেরতের অনুরোধ পেয়েছি'; // i18n
+
     public const TEAM_PAUSED_TITLE = 'Klok Ads campaign থামিয়েছে'; // i18n
 
     /** @return int how many people heard */

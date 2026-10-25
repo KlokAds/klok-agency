@@ -196,11 +196,16 @@ it('lets the client say no on the invoice: it is withdrawn and the campaign stop
     $this->gffs->update(['renew_days' => 7]);
     app(Renewals::class)->openDue();
     $invoice = Invoice::sole();
+    $person = User::factory()->create(['client_id' => $this->gffs->id]);
+    $person->assignRole(Access::CLIENT);
 
     $this->postJson("/i/{$invoice->public_token}/stop")->assertOk()->assertJsonPath('renewal.declined', true);
     expect(Renewal::sole()->status)->toBe('declined')
         ->and($invoice->fresh()->status)->toBe('void')
         ->and(collect($this->limits)->whereNotNull('new_end')->count())->toBe(0);
+
+    // The client's own people get it in writing too.
+    expect($person->notifications()->where('data->kind', 'client_declined')->count())->toBe(1);
 });
 
 it('makes an auto-renewal client\'s invoice by itself, and extends the campaign once it is paid', function () {
