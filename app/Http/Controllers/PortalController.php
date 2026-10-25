@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
@@ -130,8 +131,8 @@ class PortalController extends Controller
             'lifetime' => [
                 'spent_usd' => -(int) UsdEntry::where('client_id', $client->id)->where('category', 'client_spend')->sum('amount'),
                 // The same spend by platform (Meta, Google…), so the total adds up to what they see.
-                'by_platform' => UsdEntry::with('account:id,name')->where('client_id', $client->id)->where('category', 'client_spend')->get()
-                    ->groupBy(fn (UsdEntry $e) => $e->account->name)
+                'by_platform' => UsdEntry::with('account:id,code,name,kind')->where('client_id', $client->id)->where('category', 'client_spend')->get()
+                    ->groupBy(fn (UsdEntry $e) => self::platformName($e->account))
                     ->map(fn ($rows, $name) => ['name' => $name, 'usd' => -(int) $rows->sum('amount')])
                     ->sortByDesc('usd')->values()->all(),
                 'paid_bdt' => (int) BdtEntry::where('client_id', $client->id)->whereIn('category', self::PAID)->sum('amount'),
@@ -184,12 +185,13 @@ class PortalController extends Controller
     private function beyondMeta(Client $client): array
     {
         return [
-            'other_spend' => UsdEntry::with('account:id,code,name')->where('client_id', $client->id)->where('category', 'client_spend')
-                ->whereHas('account', fn ($q) => $q->where('code', '!=', 'meta'))
+            // Platforms other than Meta (Google…). Spend written on the card itself was Meta's.
+            'other_spend' => UsdEntry::with('account:id,code,name,kind')->where('client_id', $client->id)->where('category', 'client_spend')
+                ->whereHas('account', fn ($q) => $q->where('kind', 'platform')->where('code', '!=', 'meta'))
                 ->orderByDesc('entry_date')->orderByDesc('id')->limit(200)->get()
                 ->map(fn (UsdEntry $e) => [
                     'date' => $e->entry_date?->format('j M Y'),
-                    'platform' => $e->account?->name,
+                    'platform' => self::platformName($e->account),
                     'description' => $e->description,
                     'usd' => -$e->amount,
                     'due' => $e->status === 'pending',
@@ -479,6 +481,18 @@ class PortalController extends Controller
             'invoice_url' => $renewal?->invoice && $renewal->invoice->status !== 'void' ? $renewal->invoice->publicUrl() : null,
             'invoice_due' => $renewal?->invoice?->due(),
         ];
+    }
+
+    /**
+     * Where a client's ad money went, as they know it: Meta is "Facebook Ads", and spend written on
+     * our card itself (before the platform accounts existed) was Meta's too.
+     */
+    private static function platformName(?Account $account): string
+    {
+        return match (true) {
+            $account === null, $account->kind !== 'platform', $account->code === 'meta' => 'Facebook Ads',
+            default => $account->name,
+        };
     }
 
     /** @return array<string, mixed> */

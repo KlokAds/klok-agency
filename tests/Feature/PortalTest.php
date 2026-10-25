@@ -107,6 +107,10 @@ it('shows a linked client only their own campaigns, spend over a period, and inv
     $google = Account::firstOrCreate(['code' => 'google'], ['name' => 'Google', 'kind' => 'platform', 'is_active' => true]);
     UsdEntry::create(['entry_date' => now()->toDateString(), 'description' => 'GFFS - Google ad spend', 'category' => 'client_spend', 'account_id' => $google->id, 'client_id' => $this->gffs->id, 'amount' => -500, 'status' => 'pending']);
     UsdEntry::create(['entry_date' => now()->toDateString(), 'description' => 'Edge - Google ad spend', 'category' => 'client_spend', 'account_id' => $google->id, 'client_id' => $this->other->id, 'amount' => -900, 'status' => 'pending']);
+    // Spend written on the card itself (Meta's, before the platform accounts) is not "another platform".
+    UsdEntry::create(['entry_date' => now()->toDateString(), 'description' => 'GFFS - ad spend', 'category' => 'client_spend', 'account_id' => Account::where('kind', 'card')->value('id'), 'client_id' => $this->gffs->id, 'amount' => -1400, 'status' => 'settled']);
+    $this->actingAs($user->fresh())->get('/portal')
+        ->assertInertia(fn ($page) => $page->where('lifetime.by_platform.0.name', 'Facebook Ads')->where('lifetime.by_platform.1.name', 'Google Ads'));
     $this->actingAs($user->fresh())->get('/portal/campaigns')
         ->assertInertia(fn ($page) => $page->has('other_spend', 1)->where('other_spend.0.usd', 500)->where('other_spend.0.due', true)
             ->has('services', 1)->where('services.0.description', 'Page')->where('services.0.amount', 100000));

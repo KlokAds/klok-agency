@@ -68,7 +68,7 @@ withDefaults(
                 >
             </span>
             <span
-                class="mt-1 truncate font-semibold"
+                class="mt-0.5 truncate py-px leading-[1.45] font-semibold"
                 :class="[
                     compact
                         ? 'text-[9.5px] tracking-[0.1em]'
