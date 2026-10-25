@@ -169,6 +169,28 @@ class PaymentMatcher
     }
 
     /**
+     * An open payment on this wallet waiting for exactly this money (with or without its charge),
+     * that the SMS did not pay only because it came from another number than the client gave.
+     */
+    public function nearMatch(PaymentSms $sms): ?InvoicePayment
+    {
+        if ($sms->status !== 'unmatched' || $sms->amount === null) {
+            return null;
+        }
+
+        $open = InvoicePayment::with('invoice:id,number')
+            ->where('status', 'pending')
+            ->where('method', $sms->provider)
+            ->whereNull('reference')
+            ->where('created_at', '<=', $sms->received_at->addMinutes(5))
+            ->where('expires_at', '>=', $sms->received_at->subMinutes(self::GRACE_MINUTES))
+            ->get()
+            ->filter(fn (InvoicePayment $p) => in_array((int) $sms->amount, [(int) $p->amount, (int) $p->amount - (int) $p->charge], true));
+
+        return $open->count() === 1 ? $open->first() : null;
+    }
+
+    /**
      * A TrxID typed in by hand: is it taken already — by another payment, or by an SMS that
      * already paid something?
      */

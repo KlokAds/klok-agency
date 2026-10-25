@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\InvoicePayment;
 use App\Models\PaymentSms;
 use App\Models\Setting;
+use App\Notifications\AgencyAlert;
 use App\Payments\PaymentMatcher;
 use App\Payments\SmsParser;
 use App\Services\Invoices;
+use App\Services\Notifier;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +28,8 @@ use Illuminate\Support\Facades\Hash;
  */
 class SmsHookController extends Controller
 {
+    public const CHECK_TITLE = 'পেমেন্ট এসেছে, কিন্তু নম্বর মেলেনি — মিলিয়ে দিন'; // i18n
+
     /** How long a money SMS no invoice took stays on the server. */
     public const KEEP_UNMATCHED_HOURS = 24;
 
@@ -73,6 +78,15 @@ class SmsHookController extends Controller
         );
 
         $matched = $sms->wasRecentlyCreated && $matcher->forSms($sms);
+
+        // Not taken, but an open payment waits for exactly this amount (the client gave another
+        // number than the one they paid from): the Owner checks it and matches it by hand.
+        if ($sms->wasRecentlyCreated && ! $matched && ($near = $matcher->nearMatch($sms)) !== null) {
+            app(Notifier::class)->send(null, new AgencyAlert('sms_check', self::CHECK_TITLE, '{amount} · {from} · Invoice {number} — client অন্য নম্বর দিয়েছিলেন ({given})', [ // i18n
+                'amount' => Money::bdt((int) $sms->amount), 'from' => $sms->payer_number ?? '—',
+                'number' => $near->invoice->number, 'given' => $near->sender ?? '—',
+            ], ['url' => '/invoices', 'important' => true]));
+        }
         // The phone's list says which invoice it paid.
         $invoice = $matched ? InvoicePayment::with('invoice:id,number')->find($sms->fresh()?->invoice_payment_id)?->invoice?->number : null;
 

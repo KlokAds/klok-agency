@@ -640,3 +640,16 @@ it('pays an invoice with money already written by hand, without counting it twic
     $next = sentInvoice($this->client);
     $this->actingAs($this->owner)->get("/invoices/{$next->uid}")->assertInertia(fn ($page) => $page->has('earlier_payments', 0));
 });
+
+it('tells the Owner when the money came in from another number than the client gave', function () {
+    Setting::put('pay_charge_mfs', '0');
+    $invoice = sentInvoice($this->client); // ৳14,900
+    $session = app(PaymentMatcher::class)->startSession($invoice, PaymentMethod::Bkash, '01707589304');
+
+    smsHook('bKash', 'You have received Tk '.number_format($session->amount / 100, 2).' from 01858823568. Fee Tk 0.00. Balance Tk 20,000.00. TrxID OTHERNUM01 at '.now()->format('d/m/Y H:i'))
+        ->assertJson(['status' => 'stored']);
+
+    // Not taken on trust: the invoice is still due, and the Owner is asked to match it.
+    expect($invoice->fresh()->status)->toBe('sent')
+        ->and($this->owner->notifications()->where('data->kind', 'sms_check')->sole()->data['params']['number'])->toBe($invoice->number);
+});

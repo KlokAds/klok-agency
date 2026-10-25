@@ -179,5 +179,7 @@
     "এই client-এর আগে খাতায় লেখা পেমেন্ট — কোনো invoice-এ নেই": "This client’s payments already in the books — on no invoice",
     "এই invoice-এর টাকা আগেই খাতায় তুলে থাকলে সেটা বাছুন — দ্বিতীয়বার যোগ হবে না।": "If this invoice’s money is already in the books, pick it — it won’t be added twice.",
     "এই পেমেন্ট আর বাছা যায় না — অন্য invoice-এ জুড়ে গেছে বা মুছে গেছে।": "This payment can’t be picked any more — it is on another invoice or deleted.",
-    "না, এটা নতুন পেমেন্ট": "No, this is a new payment"
+    "না, এটা নতুন পেমেন্ট": "No, this is a new payment",
+    "পেমেন্ট এসেছে, কিন্তু নম্বর মেলেনি — মিলিয়ে দিন": "Money came in, but not from the number given — match it",
+    "{amount} · {from} · Invoice {number} — client অন্য নম্বর দিয়েছিলেন ({given})": "{amount} · {from} · Invoice {number} — the client gave another number ({given})"
 }
