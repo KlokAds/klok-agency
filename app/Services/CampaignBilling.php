@@ -228,10 +228,13 @@ class CampaignBilling
         return $start;
     }
 
-    /** Runs the sync at most once an hour (the reminder tick calls this). */
+    /** How often spend is read from Pilot: as often as Pilot reads today's numbers from Meta. */
+    public const SYNC_MINUTES = 15;
+
+    /** Runs the sync at most every SYNC_MINUTES (the reminder tick calls this). */
     public function syncIfDue(): bool
     {
-        if (! PilotClient::connected() || ! Cache::add('pilot:spend-sync', true, 3600)) {
+        if (! PilotClient::connected() || ! Cache::add('pilot:spend-sync', true, self::SYNC_MINUTES * 60)) {
             return false;
         }
 

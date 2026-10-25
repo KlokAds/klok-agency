@@ -68,6 +68,14 @@ const usedShare = computed(() =>
           )
         : 0,
 );
+// The latest payment in, and how many there were (refunds aside).
+const lastPayment = computed(
+    () => props.payments?.find((p) => !p.refund) ?? null,
+);
+const paidCount = computed(
+    () => props.payments?.filter((p) => !p.refund).length ?? 0,
+);
+
 // A platform's name short enough for the small card: FB Ads, GL Ads, TT Ads, else as it is.
 const shortPlatform = (name: string) =>
     /facebook|meta/i.test(name)
@@ -96,6 +104,26 @@ const weekSpend = computed(() => props.week.reduce((a, d) => a + d.spend, 0));
 const weekResults = computed(() =>
     props.week.reduce((a, d) => a + d.results, 0),
 );
+// What share of the paid money is still left, and the ring's colour for it.
+const leftShare = computed(() =>
+    props.credit.paid > 0
+        ? Math.max(
+              0,
+              Math.min(
+                  100,
+                  Math.round((props.credit.left / props.credit.paid) * 100),
+              ),
+          )
+        : 0,
+);
+const ringColor = computed(() =>
+    leftShare.value < 20
+        ? '#ef4444'
+        : leftShare.value < 50
+          ? '#f59e0b'
+          : '#5eead4',
+);
+
 // How long the money lasts, in plain words: today, tomorrow, or about so many days.
 const lasts = computed(() => {
     const d = props.credit.days_left;
@@ -162,6 +190,25 @@ const low = computed(
             <p class="num mt-0.5 text-[18px] font-bold">
                 {{ money(lifetime?.paid_bdt ?? 0, 'bdt') }}
             </p>
+            <ul
+                v-if="lastPayment"
+                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[11px] text-ink-3"
+            >
+                <li class="flex items-center justify-between gap-2">
+                    <span class="truncate">{{ t('শেষ পেমেন্ট') }}</span>
+                    <span class="num shrink-0 font-semibold text-ink-2">{{
+                        lastPayment.date
+                    }}</span>
+                </li>
+                <li class="flex items-center justify-between gap-2">
+                    <span class="truncate">{{
+                        t('{n}টা পেমেন্ট', { n: paidCount })
+                    }}</span>
+                    <span class="num shrink-0 font-semibold text-ink-2">{{
+                        money(lastPayment.amount, 'bdt')
+                    }}</span>
+                </li>
+            </ul>
         </div>
         <div class="panel p-3.5">
             <p class="text-[12px] text-ink-3">
@@ -243,31 +290,41 @@ const low = computed(
         class="mt-5 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#0f766e] via-[#0d5f59] to-[#11211e] p-5 text-white shadow-[0_10px_30px_-12px_rgb(15_118_110/0.55)] sm:p-6"
     >
         <div class="flex items-center gap-5">
-            <!-- How much of the paid money is used -->
-            <svg
-                viewBox="0 0 120 120"
-                class="size-[104px] shrink-0 -rotate-90"
-                aria-hidden="true"
+            <!-- How much of the paid money is left: teal, then amber, then red as it runs out -->
+            <span
+                class="relative grid size-[104px] shrink-0 place-items-center"
             >
-                <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    stroke="rgb(255 255 255 / 0.16)"
-                    stroke-width="12"
-                />
-                <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    :stroke="credit.left <= 0 || low ? '#fca5a5' : '#5eead4'"
-                    stroke-width="12"
-                    stroke-linecap="round"
-                    :stroke-dasharray="`${(314.16 * (100 - usedShare)) / 100} 314.16`"
-                />
-            </svg>
+                <svg
+                    viewBox="0 0 120 120"
+                    class="absolute inset-0 size-full -rotate-90"
+                    aria-hidden="true"
+                >
+                    <circle
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        fill="none"
+                        stroke="rgb(255 255 255 / 0.16)"
+                        stroke-width="12"
+                    />
+                    <circle
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        fill="none"
+                        :stroke="ringColor"
+                        stroke-width="12"
+                        stroke-linecap="round"
+                        :stroke-dasharray="`${(314.16 * leftShare) / 100} 314.16`"
+                    />
+                </svg>
+                <span class="relative text-center leading-tight">
+                    <b class="num block text-[20px]">{{ leftShare }}%</b>
+                    <span class="block text-[10.5px] text-white/70">{{
+                        t('বাকি')
+                    }}</span>
+                </span>
+            </span>
             <div class="min-w-0">
                 <p class="text-[13px] text-white/70">
                     {{ t('বিজ্ঞাপনের জন্য বাকি') }}
@@ -279,9 +336,11 @@ const low = computed(
                     v-if="credit.paid > 0"
                     class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[12.5px] font-semibold"
                     :class="
-                        low || credit.left <= 0
-                            ? 'bg-[#fca5a5]/20 text-[#fecaca]'
-                            : 'bg-white/15 text-white'
+                        leftShare < 20
+                            ? 'bg-[#ef4444] text-white'
+                            : leftShare < 50
+                              ? 'bg-[#f59e0b] text-[#1f1300]'
+                              : 'bg-white/15 text-white'
                     "
                 >
                     {{ lasts }}
@@ -319,19 +378,19 @@ const low = computed(
         <a
             v-if="next_invoice"
             :href="due.count > 1 ? '/portal/invoices' : next_invoice.url"
-            class="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3.5 text-ink transition-transform active:scale-[0.99]"
+            class="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3.5 text-[#14211f] transition-transform active:scale-[0.99]"
         >
             <span
                 class="grid size-10 shrink-0 place-items-center rounded-full"
                 :class="
                     next_invoice.overdue
-                        ? 'bg-out-soft text-out'
-                        : 'bg-brand-soft text-brand'
+                        ? 'bg-[#fee2e2] text-[#b91c1c]'
+                        : 'bg-[#ccfbf1] text-[#0f766e]'
                 "
                 ><KIcon name="doc" :size="20"
             /></span>
             <span class="min-w-0 flex-1">
-                <span class="block text-[14px] font-semibold">{{
+                <span class="block text-[14px] font-semibold text-[#14211f]">{{
                     due.count > 1
                         ? t('{n}টা invoice বাকি · মোট {amount}', {
                               n: due.count,
@@ -341,7 +400,7 @@ const low = computed(
                               amount: money(next_invoice.due, 'bdt'),
                           })
                 }}</span>
-                <span class="block text-[12px] text-ink-3">{{
+                <span class="block text-[12px] text-[#5b6b68]">{{
                     next_invoice.overdue
                         ? t('Invoice {number} · শেষ তারিখ পার হয়ে গেছে', {
                               number: next_invoice.number,
@@ -353,7 +412,7 @@ const low = computed(
                 }}</span>
             </span>
             <span
-                class="shrink-0 rounded-xl bg-brand px-4 py-2 text-[13.5px] font-bold text-white"
+                class="shrink-0 rounded-xl bg-[#0f766e] px-4 py-2 text-[13.5px] font-bold text-white"
                 >{{ t('Pay') }}</span
             >
         </a>
