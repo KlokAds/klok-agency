@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Invoices;
 
 use App\Http\Controllers\Controller;
 use App\Mail\InvoiceMail;
+use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -153,6 +154,11 @@ class InvoiceController extends Controller
                 'client_phone' => $invoice->client->phone,
                 'client_email' => $invoice->client->email,
             ],
+            // Money already written by hand and on no invoice: marking paid can use it.
+            'earlier_payments' => $invoice->status === 'paid' ? [] : Invoices::unlinkedPayments($invoice)->map(fn (BdtEntry $e) => [
+                'id' => $e->id, 'date' => $e->entry_date->toDateString(), 'amount' => $e->amount,
+                'usd' => $e->usd_credit, 'description' => $e->description, 'wallet' => $e->wallet,
+            ])->values(),
             'payments' => $invoice->payments->sortByDesc('id')
                 ->reject(fn (InvoicePayment $p) => $p->status === 'expired' && $p->expires_at !== null)
                 ->map(fn (InvoicePayment $p) => InvoiceView::payment($p))->values(),
@@ -203,7 +209,20 @@ class InvoiceController extends Controller
             'paid_on' => ['required', 'date', 'before_or_equal:'.now()->addDay()->toDateString()],
             'amount' => ['required', Money::RULE],
             'reference' => ['nullable', 'string', 'max:120'],
+            'existing_entry_id' => ['nullable', 'integer'],
         ], [], ['amount' => __('পরিমাণ'), 'paid_on' => __('তারিখ')]);
+
+        // Already in the book (written by hand before the invoice): that money, never a second entry.
+        $existing = null;
+        if (! empty($data['existing_entry_id'])) {
+            $existing = Invoices::unlinkedPayments($invoice)->firstWhere('id', (int) $data['existing_entry_id']);
+            if ($existing === null) {
+                throw ValidationException::withMessages(['existing_entry_id' => __('এই পেমেন্ট আর বাছা যায় না — অন্য invoice-এ জুড়ে গেছে বা মুছে গেছে।')]);
+            }
+            $data['amount'] = (string) ($existing->amount / 100);
+            $data['paid_on'] = $existing->entry_date->toDateString();
+            $data['wallet'] = $existing->wallet ?? $data['wallet'];
+        }
 
         $amount = Money::toMinor($data['amount']);
 
@@ -234,13 +253,15 @@ class InvoiceController extends Controller
             'expires_at' => null,
         ])->save();
 
-        $invoices->verify($payment, $amount, $request->user(), $data['paid_on'], $data['wallet'], __('হাতে লেখা'));
+        $invoices->verify($payment, $amount, $request->user(), $data['paid_on'], $data['wallet'], $existing ? __('আগে খাতায় লেখা পেমেন্ট') : __('হাতে লেখা'), $existing);
         $sms = $matcher->linkSms($payment);
-        $this->toast($sms !== null
+        $this->toast($existing !== null
+            ? __('আগে খাতায় থাকা :amount (:date) দিয়ে invoice পরিশোধ হলো — নতুন করে টাকা যোগ হয়নি।', ['amount' => Money::bdt($existing->amount), 'date' => $existing->entry_date->format('j M')])
+            : ($sms !== null
             ? __('পেমেন্ট লেখা হয়েছে — এই TrxID-এর SMS server-এ ছিল, মিলিয়ে রাখা হলো।')
             : ($reference !== null
                 ? __('পেমেন্ট লেখা হয়েছে। এই TrxID-এর SMS এখনো আসেনি — এলে নিজে থেকে এর সাথে জুড়বে।')
-                : __('পেমেন্ট লেখা হয়েছে — BDT খাতায় client পেমেন্ট হিসেবে গেছে।')));
+                : __('পেমেন্ট লেখা হয়েছে — BDT খাতায় client পেমেন্ট হিসেবে গেছে।'))));
 
         return back();
     }

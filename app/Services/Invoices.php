@@ -16,6 +16,7 @@ use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -139,9 +140,28 @@ class Invoices
      * (with its share of the ad budget as USD credit), the Bangla QR fee,
      * and the invoice's paid amount and status.
      */
-    public function verify(InvoicePayment $payment, int $received, ?User $by = null, ?string $date = null, ?string $wallet = null, ?string $note = null): bool
+    /**
+     * Client payments already in the BDT book but not on any invoice — money written by hand
+     * before its invoice was made. Marking the invoice paid can use one instead of booking the
+     * same money twice.
+     *
+     * @return Collection<int, BdtEntry>
+     */
+    public static function unlinkedPayments(Invoice $invoice): Collection
     {
-        $done = DB::transaction(function () use ($payment, $received, $by, $date, $wallet, $note) {
+        return BdtEntry::where('client_id', $invoice->client_id)->where('category', 'client_payment')
+            ->whereDate('entry_date', '>=', $invoice->issue_date->subDays(45)->toDateString())
+            ->whereNotIn('id', InvoicePayment::whereNotNull('bdt_entry_id')->pluck('bdt_entry_id'))
+            ->orderByDesc('entry_date')->orderByDesc('id')->limit(10)->get();
+    }
+
+    /**
+     * @param  BdtEntry|null  $existing  money already in the BDT book (see unlinkedPayments): it
+     *                                   pays the invoice instead of a new entry
+     */
+    public function verify(InvoicePayment $payment, int $received, ?User $by = null, ?string $date = null, ?string $wallet = null, ?string $note = null, ?BdtEntry $existing = null): bool
+    {
+        $done = DB::transaction(function () use ($payment, $received, $by, $date, $wallet, $note, $existing) {
             /** @var Invoice $invoice */
             $invoice = Invoice::with('client')->lockForUpdate()->findOrFail($payment->invoice_id);
             $fresh = InvoicePayment::lockForUpdate()->findOrFail($payment->id);
@@ -176,17 +196,26 @@ class Invoices
             $credit = $this->usdShare($invoice, $received, $paid);
             $reference = $fresh->reference ? ' · '.$fresh->reference : '';
 
-            $entry = $this->postings->clientPayment([
-                'entry_date' => $day,
-                'description' => "{$invoice->client->name} — Invoice {$invoice->number} ({$method->label()})",
-                'category' => 'client_payment',
-                'client_id' => $invoice->client_id,
-                'pay_via' => $method->payVia(),
-                'wallet' => $place,
-                'amount' => $received,
-                'usd_credit' => $credit,
-                'notes' => trim("Invoice {$invoice->number}{$reference}".($fresh->sender ? ' · '.$fresh->sender : '')),
-            ]);
+            if ($existing !== null) {
+                // Already in the book: that money pays the invoice; its credit is what the invoice gives.
+                $existing->forceFill([
+                    'notes' => trim(($existing->notes ? $existing->notes.' · ' : '')."Invoice {$invoice->number}"),
+                    'usd_credit' => $credit ?: $existing->usd_credit,
+                ])->save();
+                $entry = $existing;
+            } else {
+                $entry = $this->postings->clientPayment([
+                    'entry_date' => $day,
+                    'description' => "{$invoice->client->name} — Invoice {$invoice->number} ({$method->label()})",
+                    'category' => 'client_payment',
+                    'client_id' => $invoice->client_id,
+                    'pay_via' => $method->payVia(),
+                    'wallet' => $place,
+                    'amount' => $received,
+                    'usd_credit' => $credit,
+                    'notes' => trim("Invoice {$invoice->number}{$reference}".($fresh->sender ? ' · '.$fresh->sender : '')),
+                ]);
+            }
 
             $fee = null;
 

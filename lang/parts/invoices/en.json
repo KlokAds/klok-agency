@@ -173,5 +173,11 @@
     "যে account-এ client bank transfer বা NPSB-তে টাকা পাঠাবেন।": "The account clients pay into by bank transfer or NPSB.",
     "Client-এর dollar rate-এর উপর commission, আর QR-এর fee।": "The commission on top of the client's dollar rate, and the QR fee.",
     "Wallet-এ টাকা এলে তার SMS দেখে invoice-এর পেমেন্ট নিজে থেকে মিলে যায়।": "When money reaches a wallet, its SMS matches the invoice payment automatically.",
-    "Client-কে পাঠানোর আগ পর্যন্ত বদলানো যায়; পাঠানোর পর আর বদলাবে না।": "It can be changed until it is sent to the client; after that it stays as it is."
+    "Client-কে পাঠানোর আগ পর্যন্ত বদলানো যায়; পাঠানোর পর আর বদলাবে না।": "It can be changed until it is sent to the client; after that it stays as it is.",
+    "আগে খাতায় থাকা :amount (:date) দিয়ে invoice পরিশোধ হলো — নতুন করে টাকা যোগ হয়নি।": "The :amount already in the books (:date) pays the invoice — no money added again.",
+    "আগে খাতায় লেখা পেমেন্ট": "Payment already in the books",
+    "এই client-এর আগে খাতায় লেখা পেমেন্ট — কোনো invoice-এ নেই": "This client’s payments already in the books — on no invoice",
+    "এই invoice-এর টাকা আগেই খাতায় তুলে থাকলে সেটা বাছুন — দ্বিতীয়বার যোগ হবে না।": "If this invoice’s money is already in the books, pick it — it won’t be added twice.",
+    "এই পেমেন্ট আর বাছা যায় না — অন্য invoice-এ জুড়ে গেছে বা মুছে গেছে।": "This payment can’t be picked any more — it is on another invoice or deleted.",
+    "না, এটা নতুন পেমেন্ট": "No, this is a new payment"
 }

@@ -615,3 +615,28 @@ it('ties a TrxID written by hand to its SMS, before or after it comes, and never
     smsHook('bKash', 'You have received Tk 2,000.00 from 01712345678. TrxID LATER22222 at 20/10/2026 14:30')->assertJson(['status' => 'matched']);
     expect($invoice->fresh()->paid)->toBe(700000);
 });
+
+it('pays an invoice with money already written by hand, without counting it twice', function () {
+    $invoice = sentInvoice($this->client);
+    $byHand = BdtEntry::create(['entry_date' => now()->subDays(3)->toDateString(), 'description' => 'GFFS reimbursement received', 'category' => 'client_payment',
+        'client_id' => $this->client->id, 'pay_via' => 'bank', 'wallet' => 'bank', 'amount' => 1490000]);
+    $before = BdtEntry::where('category', 'client_payment')->count();
+
+    // The invoice page offers it.
+    $this->actingAs($this->owner)->get("/invoices/{$invoice->uid}")
+        ->assertInertia(fn ($page) => $page->where('earlier_payments.0.id', $byHand->id));
+
+    $this->actingAs($this->owner)->post("/invoices/{$invoice->uid}/pay", [
+        'method' => 'bank', 'wallet' => 'bank', 'paid_on' => now()->toDateString(), 'amount' => '1', 'existing_entry_id' => $byHand->id,
+    ])->assertSessionHasNoErrors();
+
+    expect($invoice->fresh()->status)->toBe('paid')
+        ->and(BdtEntry::where('category', 'client_payment')->count())->toBe($before)
+        ->and($byHand->fresh()->usd_credit)->toBe(10000)
+        ->and($byHand->fresh()->notes)->toContain($invoice->number)
+        ->and($invoice->payments()->where('status', 'verified')->sole()->bdt_entry_id)->toBe($byHand->id);
+
+    // Used once: the next invoice no longer offers it.
+    $next = sentInvoice($this->client);
+    $this->actingAs($this->owner)->get("/invoices/{$next->uid}")->assertInertia(fn ($page) => $page->has('earlier_payments', 0));
+});

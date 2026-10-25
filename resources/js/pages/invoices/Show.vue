@@ -61,6 +61,14 @@ const props = defineProps<{
         client_email: string | null;
     };
     payments: Payment[];
+    earlier_payments?: {
+        id: number;
+        date: string;
+        amount: number;
+        usd: number | null;
+        description: string;
+        wallet: string | null;
+    }[];
     share: { text: string; whatsapp: string; sms: string; mail: boolean };
     options: { methods: (Option & { wallet: string })[]; wallets: Option[] };
 }>();
@@ -105,6 +113,7 @@ const pay = useForm({
     paid_on: today() as string | null,
     amount: '',
     reference: '',
+    existing_entry_id: null as number | null,
 });
 
 watch(
@@ -126,6 +135,7 @@ function openPay(claim: Payment | null = null): void {
     pay.paid_on = today();
     pay.amount = toInput(claim?.amount ?? props.invoice.due);
     pay.reference = claim?.reference ?? '';
+    pay.existing_entry_id = null;
     payOpen.value = true;
 }
 
@@ -513,7 +523,73 @@ const PAY_STATUS: Record<
         :title="pay.payment_id ? t('দাবি মিলিয়ে নিন') : t('পেমেন্ট লিখুন')"
         :subtitle="invoice.number"
     >
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <!-- Already written by hand before this invoice: use it, so the money is not counted twice. -->
+        <div
+            v-if="!pay.payment_id && earlier_payments?.length"
+            class="mb-4 rounded-xl border border-wait/40 bg-wait/10 p-3"
+        >
+            <p class="text-[13px] font-semibold">
+                {{
+                    t(
+                        'এই client-এর আগে খাতায় লেখা পেমেন্ট — কোনো invoice-এ নেই',
+                    )
+                }}
+            </p>
+            <p class="mt-0.5 text-[12px] text-ink-3">
+                {{
+                    t(
+                        'এই invoice-এর টাকা আগেই খাতায় তুলে থাকলে সেটা বাছুন — দ্বিতীয়বার যোগ হবে না।',
+                    )
+                }}
+            </p>
+            <div class="mt-2 flex flex-col gap-1.5">
+                <label
+                    class="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
+                >
+                    <input
+                        v-model="pay.existing_entry_id"
+                        type="radio"
+                        :value="null"
+                        class="accent-brand"
+                    />
+                    <span class="font-medium">{{
+                        t('না, এটা নতুন পেমেন্ট')
+                    }}</span>
+                </label>
+                <label
+                    v-for="e in earlier_payments"
+                    :key="e.id"
+                    class="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface"
+                >
+                    <input
+                        v-model="pay.existing_entry_id"
+                        type="radio"
+                        :value="e.id"
+                        class="accent-brand"
+                    />
+                    <span class="min-w-0 flex-1 truncate"
+                        >{{ niceDate(e.date) }} ·
+                        <b class="num">{{ money(e.amount, 'bdt') }}</b>
+                        <template v-if="e.usd">
+                            · {{ money(e.usd, 'usd') }} credit</template
+                        >
+                        <span class="text-ink-3">
+                            · {{ e.description }}</span
+                        ></span
+                    >
+                </label>
+            </div>
+            <p
+                v-if="pay.errors.existing_entry_id"
+                class="mt-1 text-[12px] text-out"
+            >
+                {{ pay.errors.existing_entry_id }}
+            </p>
+        </div>
+        <div
+            v-if="!pay.existing_entry_id"
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+        >
             <KField :label="t('কীভাবে')" :error="pay.errors.method">
                 <KSelect v-model="pay.method" :options="options.methods" />
             </KField>
