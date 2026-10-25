@@ -39,7 +39,7 @@ class PortalController extends Controller
     public const SIGNUP_TITLE = 'নতুন client portal-এ register করেছেন — client-এর সাথে যুক্ত করুন'; // i18n
 
     /** The periods a client can look at; "custom" takes from and to. */
-    public const RANGES = ['today', 'yesterday', '7d', '15d', '30d', '90d', '180d', '365d', 'custom'];
+    public const RANGES = ['all', 'today', 'yesterday', '7d', '15d', '30d', '90d', '180d', '365d', 'custom'];
 
     /** Money from the client (and back to them) in the BDT book: what they paid, in full. */
     public const PAID = ['client_payment', 'service_income', 'client_refund'];
@@ -147,8 +147,8 @@ class PortalController extends Controller
     public function campaigns(Request $request): Response
     {
         $client = $this->client($request);
-        [$from, $to, $range] = $this->range($request);
         $campaigns = Campaign::with('account:id,platform,currency,problem')->where('client_id', $client->id)->get();
+        [$from, $to, $range] = $this->range($request, $this->firstDay($campaigns->pluck('id')->map(fn ($id) => (int) $id)->all()));
         $days = CampaignDay::whereIn('campaign_id', $campaigns->pluck('id'))->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->get();
 
         $rows = $campaigns->map(function (Campaign $c) use ($days) {
@@ -172,7 +172,7 @@ class PortalController extends Controller
     {
         $client = $this->client($request);
         abort_unless($campaign->client_id === $client->id, 404);
-        [$from, $to, $range] = $this->range($request);
+        [$from, $to, $range] = $this->range($request, $this->firstDay([$campaign->id]));
         $days = CampaignDay::where('campaign_id', $campaign->id)->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->orderBy('day')->get();
 
         return Inertia::render('portal/Campaign', [
@@ -341,10 +341,15 @@ class PortalController extends Controller
     }
 
     /** @return array{0: CarbonImmutable, 1: CarbonImmutable, 2: string} */
-    private function range(Request $request): array
+    private function range(Request $request, ?CarbonImmutable $first = null): array
     {
-        $key = in_array($request->query('range'), self::RANGES, true) ? (string) $request->query('range') : '7d';
+        // A campaign's whole life by default: every taka and result it made.
+        $key = in_array($request->query('range'), self::RANGES, true) ? (string) $request->query('range') : 'all';
         $today = CarbonImmutable::now()->startOfDay();
+
+        if ($key === 'all') {
+            return [($first ?? $today->subDays(6))->max($today->subDays(1095))->min($today), $today, 'all'];
+        }
 
         if ($key === 'custom') {
             $from = rescue(fn () => CarbonImmutable::parse((string) $request->query('from'))->startOfDay(), $today->subDays(6), false);
@@ -382,15 +387,32 @@ class PortalController extends Controller
      */
     private function series(Collection $days, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $byDay = $days->groupBy(fn (CampaignDay $d) => $d->day->toDateString());
+        // Longer than three months: a bar a week, so the chart stays readable on a phone.
+        $weekly = $from->diffInDays($to) > 92;
+        $key = fn (CarbonImmutable $d) => ($weekly ? $d->startOfWeek() : $d)->toDateString();
+        $byDay = $days->groupBy(fn (CampaignDay $d) => $key(CarbonImmutable::parse($d->day)));
         $out = [];
 
-        for ($day = $from; $day->lte($to); $day = $day->addDay()) {
+        for ($day = $weekly ? $from->startOfWeek() : $from; $day->lte($to); $day = $weekly ? $day->addWeek() : $day->addDay()) {
             $rows = $byDay->get($day->toDateString(), collect());
             $out[] = ['day' => $day->toDateString(), 'spend' => (int) $rows->sum('spend'), 'results' => (int) $rows->sum('results')];
         }
 
         return $out;
+    }
+
+    /**
+     * The first day these campaigns ran: the earliest day with numbers, or the earliest start.
+     *
+     * @param  array<int, int>  $campaignIds
+     */
+    private function firstDay(array $campaignIds): ?CarbonImmutable
+    {
+        $day = CampaignDay::whereIn('campaign_id', $campaignIds)->min('day');
+        $start = Campaign::whereKey($campaignIds)->min('start_at');
+        $first = collect([$day, $start])->filter()->map(fn ($d) => CarbonImmutable::parse($d)->startOfDay())->min();
+
+        return $first instanceof CarbonImmutable ? $first : null;
     }
 
     /**

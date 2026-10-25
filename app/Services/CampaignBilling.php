@@ -259,14 +259,15 @@ class CampaignBilling
             $account = $campaigns->first()->account;
             $this->refreshCampaigns($account);
 
-            // Recent days are read again (Meta adjusts them); a campaign seen for
-            // the first time is read in full from its bill-from day.
+            // Recent days are read again (Meta adjusts them); a campaign seen for the first
+            // time is read in full from its start, so its client sees its whole life (only
+            // days from bill_from on are billed).
             $from = $campaigns->map(function (Campaign $c) use ($today) {
-                $read = CampaignDay::where('campaign_id', $c->id)->exists()
-                    ? $today->subDays(self::LOOKBACK_DAYS)
-                    : CarbonImmutable::parse($c->bill_from);
+                $billFrom = CarbonImmutable::parse($c->bill_from);
 
-                return $read->max(CarbonImmutable::parse($c->bill_from));
+                return CampaignDay::where('campaign_id', $c->id)->exists()
+                    ? $today->subDays(self::LOOKBACK_DAYS)->max($billFrom)
+                    : self::lifeStart($c, $today);
             })->min();
             $days += $this->readDays($account, $campaigns, $from, $today);
         }
@@ -276,6 +277,36 @@ class CampaignBilling
         Setting::putQuietly('pilot_spend_synced_at', now()->toIso8601String());
 
         return ['campaigns' => $linked->count(), 'days' => $days, 'clients' => count($clients)];
+    }
+
+    /** Where a campaign's numbers begin: its start, or its bill-from day; at most three years back. */
+    public static function lifeStart(Campaign $campaign, CarbonImmutable $today): CarbonImmutable
+    {
+        $start = $campaign->start_at ? CarbonImmutable::parse($campaign->start_at)->startOfDay() : null;
+        $billFrom = CarbonImmutable::parse($campaign->bill_from);
+
+        return ($start !== null ? $start->min($billFrom) : $billFrom)->max($today->subDays(1095));
+    }
+
+    /**
+     * Reads every linked campaign's whole life again from its start, for the clients' view of
+     * their campaigns (billing still counts only from bill_from).
+     *
+     * @return int days stored
+     *
+     * @throws RuntimeException when Pilot cannot be reached
+     */
+    public function readHistory(): int
+    {
+        $today = CarbonImmutable::now()->startOfDay();
+        $days = 0;
+
+        foreach (Campaign::with('account')->whereNotNull('client_id')->whereNotNull('bill_from')->get()->groupBy('pilot_account_id') as $campaigns) {
+            $from = $campaigns->map(fn (Campaign $c) => self::lifeStart($c, $today))->min();
+            $days += $this->readDays($campaigns->first()->account, $campaigns, $from, $today);
+        }
+
+        return $days;
     }
 
     /**

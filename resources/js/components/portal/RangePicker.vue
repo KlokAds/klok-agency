@@ -3,13 +3,14 @@ import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { t } from '@/lib/i18n';
 
-/** The period a client looks at: today to a year, or any two dates. */
+/** The period a client looks at: all of it, today to a year, or any two dates. */
 const props = defineProps<{
     url: string;
     range: { key: string; from: string; to: string };
 }>();
 
 const ranges = [
+    { key: 'all', label: 'শুরু থেকে' }, // i18n
     { key: 'today', label: 'আজ' }, // i18n
     { key: 'yesterday', label: 'গতকাল' }, // i18n
     { key: '7d', label: '৭ দিন' }, // i18n
