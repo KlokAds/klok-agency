@@ -21,6 +21,7 @@ import { confirmAction } from '@/lib/feedback';
 import { t } from '@/lib/i18n';
 import {
     BN_MONTHS,
+    initials,
     money,
     monthLabel,
     niceDate,
@@ -75,6 +76,7 @@ const props = defineProps<{
 
 const can = computed(() => usePage().props.auth.can);
 const thisMonth = today().slice(0, 7);
+const TAKA = '\u{09F3}';
 
 const { filters } = useFilters('/payroll', {
     month: props.filters.month,
@@ -318,8 +320,113 @@ const shortMonth = (ym: string) =>
                 >{{ t('নতুন কর্মী') }}</KButton
             >
         </KEmpty>
-        <div v-else class="overflow-x-auto">
-            <table v-stack class="stack ledger">
+        <!-- Phone: a card per employee — who, the monthly pay, six months as chips, what is owed -->
+        <ul v-else class="divide-y divide-line md:hidden">
+            <li
+                v-for="e in employees"
+                :key="e.id"
+                class="p-4"
+                :class="e.status === 'left' && 'opacity-60'"
+            >
+                <div class="flex items-center gap-3">
+                    <span
+                        class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-[15px] font-bold text-brand-ink"
+                        >{{ initials(e.name) }}</span
+                    >
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate text-[15.5px] font-bold">{{
+                            e.name
+                        }}</span>
+                        <span class="block truncate text-[13px] text-ink-3"
+                            >{{ e.designation ?? t('কর্মী')
+                            }}<template v-if="e.status === 'left'">
+                                · {{ t('ছেড়ে গেছেন') }}</template
+                            >
+                            · {{ t('মাসিক') }}
+                            <b class="num font-semibold text-ink-2">{{
+                                money(e.monthly_salary, 'bdt')
+                            }}</b></span
+                        >
+                    </span>
+                    <span
+                        class="num shrink-0 rounded-lg px-2.5 py-1 text-[13px] font-semibold"
+                        :class="
+                            e.due > 0
+                                ? 'bg-out-soft text-out'
+                                : e.due < 0
+                                  ? 'bg-wait-soft text-wait'
+                                  : 'bg-in-soft text-in'
+                        "
+                        >{{
+                            e.due === 0
+                                ? t('✓ সব দেওয়া')
+                                : e.due < 0
+                                  ? t('{amount} advance', {
+                                        amount: money(-e.due, 'bdt'),
+                                    })
+                                  : t('{amount} বাকি', {
+                                        amount: money(e.due, 'bdt'),
+                                    })
+                        }}</span
+                    >
+                </div>
+                <div
+                    class="mt-3 grid gap-1"
+                    :style="{
+                        gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))`,
+                    }"
+                >
+                    <span
+                        v-for="m in months"
+                        :key="m"
+                        class="min-w-0 rounded-lg px-1 py-1.5 text-center"
+                        :class="
+                            e.months[m]
+                                ? 'bg-in-soft text-in'
+                                : 'bg-sunken text-ink-3'
+                        "
+                    >
+                        <span class="block font-bn text-[11.5px]">{{
+                            shortMonth(m)
+                        }}</span>
+                        <span
+                            class="num block truncate text-[12px] font-semibold"
+                            >{{
+                                e.months[m]
+                                    ? money(e.months[m], 'bdt').replace(
+                                          TAKA,
+                                          '',
+                                      )
+                                    : '–'
+                            }}</span
+                        >
+                    </span>
+                </div>
+                <div
+                    v-if="can['payroll.create'] || can['payroll.edit']"
+                    class="mt-3 flex justify-end gap-2"
+                >
+                    <KButton
+                        v-if="can['payroll.create'] && e.status === 'active'"
+                        size="sm"
+                        variant="primary"
+                        icon="wallet"
+                        @click="startPay(e)"
+                        >{{ t('বেতন দিন') }}</KButton
+                    >
+                    <KButton
+                        v-if="can['payroll.edit']"
+                        size="sm"
+                        variant="soft"
+                        icon="pen"
+                        @click="startEmployee(e)"
+                        >{{ t('বদলান') }}</KButton
+                    >
+                </div>
+            </li>
+        </ul>
+        <div v-if="employees.length" class="hidden overflow-x-auto md:block">
+            <table class="ledger">
                 <thead>
                     <tr>
                         <th>{{ t('কর্মী') }}</th>
@@ -415,14 +522,15 @@ const shortMonth = (ym: string) =>
             <h2 class="text-[16px] font-bold">
                 {{ t('বেতন দেওয়ার খাতা') }}
             </h2>
-            <div class="flex flex-wrap gap-2">
+            <!-- Phone: the two filters share one row under the title -->
+            <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
                 <KSelect
                     v-model="filters.month"
                     :options="monthOptions"
                     :placeholder="t('সব মাস')"
                     clearable
                     size="sm"
-                    class="w-40"
+                    class="min-w-0 sm:w-40"
                 />
                 <KSelect
                     v-model="filters.employee_id"
@@ -430,7 +538,7 @@ const shortMonth = (ym: string) =>
                     :placeholder="t('সব কর্মী')"
                     clearable
                     size="sm"
-                    class="w-44"
+                    class="min-w-0 sm:w-44"
                 />
             </div>
         </div>

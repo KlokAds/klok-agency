@@ -135,6 +135,17 @@ export function endsAt(iso: string | null | undefined): string {
     return `${parts.day} ${parts.month}, ${parts.hour}:${parts.minute} ${parts.dayPeriod}`;
 }
 
+/** Two letters for a badge: the first of the first two words, or the first two of one. */
+export function initials(name: string): string {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    const text =
+        words.length > 1
+            ? words[0].charAt(0) + words[1].charAt(0)
+            : (words[0] ?? '').slice(0, 2);
+
+    return text.toUpperCase();
+}
+
 export function niceDate(
     value: string | null | undefined,
     withYear = true,

@@ -7,7 +7,7 @@ defineProps<{ title: string; eyebrow?: string; lead?: string }>();
 
 <template>
     <Head :title="t(title)" />
-    <!-- Phone: the words take the whole width and the buttons go under them. -->
+    <!-- Phone: the words take the whole width and the buttons go under them, at the right. -->
     <div
         class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-6"
     >
@@ -24,7 +24,7 @@ defineProps<{ title: string; eyebrow?: string; lead?: string }>();
         </div>
         <div
             v-if="$slots.default"
-            class="no-print flex flex-wrap items-center gap-2"
+            class="no-print flex flex-wrap items-center justify-end gap-2"
         >
             <slot />
         </div>

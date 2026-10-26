@@ -2,6 +2,8 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatTiles from '@/components/StatTiles.vue';
+import type { StatTile } from '@/components/StatTiles.vue';
 import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
@@ -84,6 +86,41 @@ const statusLabel = (status: string) =>
     props.options.statuses.find((s) => s.value === status)?.label ?? status;
 const bdt = (poisha: number) => money(poisha, 'bdt');
 
+// The three totals over every invoice, each in the colour its figure means.
+const tiles = computed<StatTile[]>(() => [
+    {
+        key: 'unpaid',
+        label: t('পাওনা'),
+        value: bdt(props.totals.unpaid),
+        icon: 'doc',
+        badge: 'bg-brand-soft text-brand-ink',
+        text: props.totals.unpaid > 0 ? 'text-wait' : '',
+        sub: props.totals.claims
+            ? t('{n}টা পেমেন্ট যাচাই বাকি', { n: props.totals.claims })
+            : null,
+        subClass: 'font-medium text-wait',
+    },
+    {
+        key: 'overdue',
+        label: t('মেয়াদ পার'),
+        value: bdt(props.totals.overdue),
+        icon: 'warn',
+        badge: props.totals.overdue
+            ? 'bg-out-soft text-out'
+            : 'bg-sunken text-ink-3',
+        text: props.totals.overdue ? 'text-out' : '',
+        sub: t('{n}টা invoice', { n: props.totals.overdue_count }),
+    },
+    {
+        key: 'paid',
+        label: t('এই মাসে পাওয়া'),
+        value: bdt(props.totals.paid_month),
+        icon: 'check',
+        badge: 'bg-in-soft text-in',
+        text: 'text-in',
+    },
+]);
+
 // The Owner matches a wallet SMS that found no invoice by itself.
 const assigning = ref<Sms | null>(null);
 const assignOpen = ref(false);
@@ -131,58 +168,29 @@ function ignore(sms: Sms): void {
         >
     </PageHeader>
 
-    <section
-        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
-    >
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('পাওনা') }}</p>
-            <p class="num mt-2 text-[26px] leading-none font-medium">
-                {{ bdt(totals.unpaid) }}
-            </p>
-            <p v-if="totals.claims" class="mt-2 text-[13px] text-wait">
-                {{ t('{n}টা পেমেন্ট যাচাই বাকি', { n: totals.claims }) }}
-            </p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('মেয়াদ পার') }}</p>
-            <p
-                class="num mt-2 text-[26px] leading-none font-medium"
-                :class="totals.overdue ? 'text-out' : ''"
-            >
-                {{ bdt(totals.overdue) }}
-            </p>
-            <p class="mt-2 text-[13px] text-ink-3">
-                {{ t('{n}টা invoice', { n: totals.overdue_count }) }}
-            </p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('এই মাসে পাওয়া') }}</p>
-            <p class="num mt-2 text-[26px] leading-none font-medium text-in">
-                {{ bdt(totals.paid_month) }}
-            </p>
-        </div>
-    </section>
+    <StatTiles :tiles="tiles" class="mb-6" />
 
-    <section class="panel mb-4 p-4 sm:p-5">
-        <div
-            class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,280px)]"
-        >
-            <KInput
-                v-model="filters.q"
-                :placeholder="t('নম্বর বা client খুঁজুন…')"
-                icon="search"
-            />
-            <KSelect
-                v-model="filters.client"
-                :options="options.clients"
-                placeholder="Client"
-                clearable
-            />
-        </div>
-        <div class="mt-3 overflow-x-auto">
+    <!-- Search, client and status on one row; the status a dropdown on a phone -->
+    <div class="mb-4 flex items-center gap-2 sm:flex-wrap sm:gap-3">
+        <KInput
+            v-model="filters.q"
+            :placeholder="t('নম্বর বা client খুঁজুন…')"
+            icon="search"
+            size="sm"
+            class="min-w-0 flex-1 sm:max-w-xs"
+        />
+        <KSelect
+            v-model="filters.client"
+            :options="options.clients"
+            placeholder="Client"
+            size="sm"
+            clearable
+            class="w-[29%] shrink-0 sm:w-52"
+        />
+        <div class="w-[29%] shrink-0 sm:w-auto">
             <KSegment v-model="filters.status" :options="statuses" size="sm" />
         </div>
-    </section>
+    </div>
 
     <section class="panel overflow-hidden">
         <KEmpty

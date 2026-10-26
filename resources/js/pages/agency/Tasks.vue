@@ -80,6 +80,10 @@ const KIND: Record<string, { label: string; icon: string }> = {
     scale: { label: 'Scale / optimize', icon: 'rocket' },
 };
 
+// "প্রতি মাসে", as the form offers it: the word says how often, not just that it repeats.
+const repeatLabel = (repeat: string): string =>
+    props.options.repeats.find((r) => r.value === repeat)?.label ?? repeat;
+
 function when(task: Task): string {
     if (!task.due_at) {
         return t('তারিখ নেই');
@@ -146,28 +150,36 @@ onMounted(() => {
         >
     </PageHeader>
 
-    <section class="no-print mb-5 flex flex-wrap items-center gap-3">
-        <KSegment
-            v-model="view"
-            :options="views"
-            size="sm"
-            @update:model-value="reload"
-        />
-        <KSegment
-            v-model="who"
-            :options="whos"
-            size="sm"
-            @update:model-value="reload"
-        />
+    <!-- Phone: which tasks and which client on one row, whose on the next; one row on a computer -->
+    <section
+        class="no-print mb-5 flex flex-wrap items-center gap-x-3 gap-y-2.5"
+    >
+        <div class="shrink-0">
+            <KSegment
+                v-model="view"
+                :options="views"
+                size="sm"
+                select
+                @update:model-value="reload"
+            />
+        </div>
         <KSelect
             v-model="clientId"
             :options="options.clients"
             :placeholder="t('সব client')"
             clearable
             size="sm"
-            class="w-full sm:w-56"
+            class="min-w-0 flex-1 sm:order-last sm:max-w-56 sm:flex-none"
             @update:model-value="reload"
         />
+        <div class="w-full sm:w-auto">
+            <KSegment
+                v-model="who"
+                :options="whos"
+                size="sm"
+                @update:model-value="reload"
+            />
+        </div>
     </section>
 
     <section class="panel overflow-hidden">
@@ -229,9 +241,9 @@ onMounted(() => {
                         <span v-if="task.assignee">· {{ task.assignee }}</span>
                         <span
                             v-if="task.repeat !== 'none'"
-                            class="flex items-center gap-1"
-                            ><KIcon name="undo" :size="12" />{{
-                                t('বারবার')
+                            class="flex items-center gap-1 rounded-md bg-sunken px-1.5 py-0.5 text-[12.5px] font-medium text-ink-2"
+                            ><KIcon name="renew" :size="12" />{{
+                                repeatLabel(task.repeat)
                             }}</span
                         >
                         <Link
@@ -249,7 +261,7 @@ onMounted(() => {
                     t('জরুরি')
                 }}</KTag>
                 <!-- Always there: a phone has no hover to reveal them. -->
-                <div class="-mt-1 -mr-2 flex shrink-0">
+                <div class="-mt-1 -mr-1 flex shrink-0 gap-1.5">
                     <button
                         v-if="can['tasks.edit'] && !task.auto"
                         type="button"

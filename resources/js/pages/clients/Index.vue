@@ -2,10 +2,13 @@
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatTiles from '@/components/StatTiles.vue';
+import type { StatTile } from '@/components/StatTiles.vue';
 import KAmount from '@/components/k/KAmount.vue';
 import KButton from '@/components/k/KButton.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
 import KField from '@/components/k/KField.vue';
+import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KPager from '@/components/k/KPager.vue';
@@ -14,7 +17,7 @@ import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import { useFilters } from '@/composables/useFilters';
-import { money } from '@/lib/format';
+import { initials, money } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Option, Paginated } from '@/types';
 
@@ -74,6 +77,43 @@ const showOptions = computed<Option[]>(() => [
     ...props.options.statuses,
     { value: 'all', label: t('সব') },
 ]);
+
+// Margin as a share of what the client paid; nothing paid, nothing to show.
+function marginPct(c: Client): number | null {
+    const received = c.figures?.received ?? 0;
+
+    return received > 0
+        ? Math.round(((c.figures?.margin ?? 0) / received) * 100)
+        : null;
+}
+
+// The totals over every client, each tile in the colour its figure means.
+const tiles = computed<StatTile[]>(() => [
+    {
+        key: 'margin',
+        label: t('মোট margin'),
+        value: money(props.totals.margin, 'bdt', { sign: true }),
+        icon: 'taka',
+        badge: 'bg-in-soft text-in',
+        text: props.totals.margin < 0 ? 'text-out' : 'text-in',
+    },
+    {
+        key: 'spent',
+        label: t('Client-দের ad খরচ (settled)'),
+        value: money(props.totals.spent, 'usd'),
+        icon: 'dollar',
+        badge: 'bg-brand-soft text-brand-ink',
+        text: '',
+    },
+    {
+        key: 'pending',
+        label: t('এখনো পাওনা'),
+        value: money(props.totals.pending, 'usd'),
+        icon: 'clock',
+        badge: 'bg-wait-soft text-wait',
+        text: props.totals.pending > 0 ? 'text-wait' : '',
+    },
+]);
 </script>
 
 <template>
@@ -95,37 +135,26 @@ const showOptions = computed<Option[]>(() => [
         >
     </PageHeader>
 
-    <div
-        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
-    >
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('মোট margin') }}</p>
-            <p class="num mt-2 text-[24px]">
-                <KAmount :value="totals.margin" currency="bdt" />
-            </p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('Client-দের ad খরচ (settled)') }}</p>
-            <p class="num mt-2 text-[24px]">{{ money(totals.spent, 'usd') }}</p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('এখনো পাওনা') }}</p>
-            <p class="num mt-2 text-[24px] text-wait">
-                {{ money(totals.pending, 'usd') }}
-            </p>
-        </div>
-    </div>
+    <StatTiles :tiles="tiles" class="mb-6" />
 
-    <div class="mb-4 flex flex-wrap items-center gap-3">
+    <!-- Search and status on one row, the status a dropdown where the row is narrow -->
+    <div class="mb-4 flex items-center gap-2 sm:gap-3">
         <KInput
             v-model="filters.q"
             type="search"
             icon="search"
             :placeholder="t('Client খুঁজুন')"
             size="sm"
-            class="w-full sm:max-w-xs"
+            class="min-w-0 flex-1 sm:max-w-xs"
         />
-        <KSegment v-model="filters.status" :options="showOptions" size="sm" />
+        <div class="shrink-0">
+            <KSegment
+                v-model="filters.status"
+                :options="showOptions"
+                size="sm"
+                select
+            />
+        </div>
     </div>
 
     <KEmpty
@@ -144,46 +173,64 @@ const showOptions = computed<Option[]>(() => [
             v-for="c in clients.data"
             :key="c.id"
             :href="`/clients/${c.id}`"
-            class="panel group flex flex-col p-5 transition-colors hover:border-line-2"
+            class="panel group flex flex-col overflow-hidden transition-[border-color,box-shadow] hover:border-brand/40 hover:shadow-[0_10px_30px_-18px_var(--brand)]"
         >
-            <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                    <p
-                        class="truncate text-[17px] font-bold group-hover:text-brand-ink"
+            <div class="flex items-center gap-3 p-4 sm:p-5">
+                <span
+                    class="grid size-11 shrink-0 place-items-center rounded-xl text-[17px] font-bold"
+                    :class="
+                        c.status === 'active'
+                            ? 'bg-brand-soft text-brand-ink'
+                            : 'bg-sunken text-ink-3'
+                    "
+                    >{{ initials(c.name) }}</span
+                >
+                <span class="min-w-0 flex-1">
+                    <span
+                        class="block truncate text-[16.5px] font-bold group-hover:text-brand-ink"
+                        >{{ c.name }}</span
                     >
-                        {{ c.name }}
-                    </p>
-                    <p
-                        v-if="c.notes || c.company"
-                        class="truncate text-[13.5px] text-ink-3"
-                    >
-                        {{ c.notes ?? c.company }}
-                    </p>
-                </div>
-                <div class="flex shrink-0 gap-1">
-                    <KTag v-if="c.status === 'inactive'" tone="neutral"
-                        >Inactive</KTag
-                    >
-                </div>
+                    <span class="block truncate text-[13px] text-ink-3">{{
+                        c.company ?? c.notes ?? c.phone ?? t('বিস্তারিত নেই')
+                    }}</span>
+                </span>
+                <KTag
+                    v-if="c.status === 'inactive'"
+                    tone="neutral"
+                    class="shrink-0"
+                    >Inactive</KTag
+                >
+                <KIcon
+                    v-else
+                    name="arrow"
+                    :size="16"
+                    class="shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-ink"
+                />
             </div>
+
+            <!-- The three figures that matter, the margin the loudest -->
             <dl
-                class="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-[13px]"
+                class="grid grid-cols-3 divide-x divide-line border-t border-line bg-sunken/60 text-[12.5px]"
             >
-                <div>
-                    <dt class="text-ink-3">{{ t('ad খরচ') }}</dt>
-                    <dd class="num mt-0.5 text-[15px] text-ink">
+                <div class="min-w-0 px-4 py-3 sm:px-5">
+                    <dt class="truncate text-ink-3">{{ t('ad খরচ') }}</dt>
+                    <dd class="num mt-0.5 truncate text-[15px] font-semibold">
                         {{ money(c.figures?.usd_settled ?? 0, 'usd') }}
                     </dd>
                 </div>
-                <div>
-                    <dt class="text-ink-3">{{ t('দিয়েছে') }}</dt>
-                    <dd class="num mt-0.5 text-[15px] text-ink">
+                <div class="min-w-0 px-4 py-3 sm:px-5">
+                    <dt class="truncate text-ink-3">{{ t('দিয়েছে') }}</dt>
+                    <dd class="num mt-0.5 truncate text-[15px] font-semibold">
                         {{ money(c.figures?.received ?? 0, 'bdt') }}
                     </dd>
                 </div>
-                <div>
-                    <dt class="text-ink-3">Margin</dt>
-                    <dd class="mt-0.5 text-[15px] font-semibold">
+                <div class="min-w-0 px-4 py-3 sm:px-5">
+                    <dt class="truncate text-ink-3">
+                        Margin<template v-if="marginPct(c) !== null">
+                            · {{ marginPct(c) }}%</template
+                        >
+                    </dt>
+                    <dd class="mt-0.5 truncate text-[15px] font-bold">
                         <KAmount
                             :value="c.figures?.margin ?? 0"
                             currency="bdt"
@@ -191,16 +238,30 @@ const showOptions = computed<Option[]>(() => [
                     </dd>
                 </div>
             </dl>
+
+            <!-- Owed: a band at the foot; nothing owed: a quiet line -->
             <p
                 v-if="c.figures?.pending_count"
-                class="mt-3 rounded-lg bg-wait-soft px-3 py-1.5 text-[13.5px] font-medium text-wait"
+                class="flex items-center gap-2 border-t border-wait/30 bg-wait-soft px-4 py-2 text-[13px] font-semibold text-wait sm:px-5"
             >
+                <KIcon name="clock" :size="14" />
                 {{
                     t('{amount} পাওনা', {
                         amount: money(c.figures.usd_pending, 'usd'),
                     })
                 }}
-                · {{ t('{n}টা pending', { n: c.figures.pending_count }) }}
+                <span class="font-normal opacity-80"
+                    >·
+                    {{
+                        t('{n}টা pending', { n: c.figures.pending_count })
+                    }}</span
+                >
+            </p>
+            <p
+                v-else
+                class="flex items-center gap-2 border-t border-line px-4 py-2 text-[13px] text-in sm:px-5"
+            >
+                <KIcon name="check" :size="14" />{{ t('কিছু পাওনা নেই') }}
             </p>
         </Link>
     </div>

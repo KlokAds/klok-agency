@@ -9,9 +9,11 @@ const props = defineProps<{
     options: Option[];
     size?: 'md' | 'sm';
     empty?: string;
+    /** A dropdown on phones even with few options: for a row that has to share its width. */
+    select?: boolean;
 }>();
 const model = defineModel<string | number | null>();
-const many = () => props.options.length > 4;
+const many = () => props.options.length > 4 || !!props.select;
 </script>
 
 <template>

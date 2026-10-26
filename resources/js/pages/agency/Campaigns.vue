@@ -294,43 +294,45 @@ function sync(): void {
     />
 
     <template v-else>
-        <section class="panel mb-4 p-4 sm:p-5">
+        <!-- Three rows, each full width on a phone: who and what, when, which state -->
+        <section class="panel mb-4 space-y-2.5 p-4 sm:space-y-3 sm:p-5">
             <div
-                class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]"
+                class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2 sm:gap-3 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]"
             >
                 <KSelect
                     v-model="filters.account"
                     :options="accounts"
                     :placeholder="t('Ad account বাছুন')"
+                    size="sm"
                 />
                 <KInput
                     v-model="filters.q"
                     :placeholder="t('Campaign খুঁজুন…')"
                     icon="search"
-                />
-            </div>
-            <div class="mt-3 border-t border-line pt-3">
-                <RangePicker
-                    url="/campaigns"
-                    :range="range"
-                    :params="{
-                        account: filters.account,
-                        q: filters.q,
-                        status: filters.status,
-                    }"
-                    dense
-                />
-            </div>
-            <div
-                class="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-between"
-            >
-                <KSegment
-                    v-model="filters.status"
-                    :options="statuses"
                     size="sm"
                 />
+            </div>
+            <RangePicker
+                url="/campaigns"
+                :range="range"
+                :params="{
+                    account: filters.account,
+                    q: filters.q,
+                    status: filters.status,
+                }"
+                dense
+            />
+            <div class="flex items-center justify-between gap-3">
+                <div class="shrink-0">
+                    <KSegment
+                        v-model="filters.status"
+                        :options="statuses"
+                        size="sm"
+                        select
+                    />
+                </div>
                 <p
-                    class="num w-full text-center text-[13px] text-ink-3 sm:w-auto sm:text-left"
+                    class="num min-w-0 truncate text-right text-[13px] text-ink-3"
                 >
                     {{ covers }}
                     ·
@@ -347,7 +349,7 @@ function sync(): void {
             </div>
             <p
                 v-if="account && !usdAccount"
-                class="mt-3 rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait"
+                class="rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait"
             >
                 {{
                     t(
@@ -358,7 +360,7 @@ function sync(): void {
             </p>
             <div
                 v-if="suggestedCount && can['clients.edit']"
-                class="mt-3 flex items-center justify-between gap-3 rounded-lg bg-brand-soft px-3 py-2 text-[13.5px] text-brand-ink"
+                class="flex items-center justify-between gap-3 rounded-lg bg-brand-soft px-3 py-2 text-[13.5px] text-brand-ink"
             >
                 <span class="min-w-0">{{
                     t('{n}টা campaign-এর নামে client-এর নাম আছে।', {

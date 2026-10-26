@@ -113,5 +113,10 @@
     "Invoice :number তৈরি ও পাঠানো হয়েছে।": "Invoice :number made and sent.",
     "{payment} দিয়ে": "by {payment}",
     "মোট": "Total",
-    "পাওনা {usd} (cost {cost})": "owed {usd} (cost {cost})"
+    "পাওনা {usd} (cost {cost})": "owed {usd} (cost {cost})",
+    "বিস্তারিত নেই": "No details",
+    "কিছু পাওনা নেই": "Nothing owed",
+    "✓ সব দেওয়া": "✓ All paid",
+    "{amount} advance": "{amount} advance",
+    "{amount} বাকি": "{amount} owed"
 }

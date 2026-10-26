@@ -353,7 +353,9 @@ async function removeMove(move: Move): Promise<void> {
             )
         "
     >
-        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <div
+            class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap"
+        >
             <KButton
                 v-if="can['bdt.edit']"
                 variant="soft"
