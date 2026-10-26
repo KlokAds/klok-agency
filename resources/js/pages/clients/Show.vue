@@ -331,11 +331,14 @@ function print(): void {
         >
     </PageHeader>
 
-    <div
-        class="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4"
-    >
-        <div class="bg-surface p-4 sm:p-5">
-            <p class="eyebrow">{{ t('Ad খরচ (settled)') }}</p>
+    <!-- Four figures, two a row on a phone, each its own card with an icon -->
+    <div class="mb-6 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+        <div class="panel p-4 sm:p-5">
+            <p class="eyebrow flex items-center gap-1.5">
+                <KIcon name="dollar" :size="14" class="text-brand" />{{
+                    t('Ad খরচ (settled)')
+                }}
+            </p>
             <p class="num mt-2 text-[22px]">
                 {{ money(f.usd_settled, 'usd') }}
             </p>
@@ -343,37 +346,64 @@ function print(): void {
                 FIFO cost {{ money(f.cost_settled, 'bdt') }}
             </p>
             <p v-if="f.meta" class="num mt-1 text-[13px] text-ink-3">
-                {{ t('Meta কেটেছে') }}
-                <b class="text-in">{{ money(f.meta.charged, 'usd') }}</b>
-                · {{ t('এখনো কাটেনি') }}
-                <b class="text-wait">{{ money(f.meta.uncharged, 'usd') }}</b>
+                <span class="block"
+                    >{{ t('Meta কেটেছে') }}
+                    <b class="text-in">{{
+                        money(f.meta.charged, 'usd')
+                    }}</b></span
+                >
+                <span class="block"
+                    >{{ t('এখনো কাটেনি') }}
+                    <b class="text-wait">{{
+                        money(f.meta.uncharged, 'usd')
+                    }}</b></span
+                >
             </p>
         </div>
-        <div class="bg-surface p-4 sm:p-5">
-            <p class="eyebrow">{{ t('দিয়েছে') }}</p>
+        <div class="panel p-4 sm:p-5">
+            <p class="eyebrow flex items-center gap-1.5">
+                <KIcon name="taka" :size="14" class="text-in" />{{
+                    t('দিয়েছে')
+                }}
+            </p>
             <p class="num mt-2 text-[22px]">
                 {{ money(f.paid?.total ?? f.received, 'bdt') }}
             </p>
             <p v-if="f.paid?.last" class="num mt-1 text-[13px] text-ink-3">
-                {{ t('শেষ পেমেন্ট') }} {{ niceDate(f.paid.last.date, false) }} ·
-                <b class="text-ink">{{ money(f.paid.last.amount, 'bdt') }}</b>
-                · {{ t('{n}টা পেমেন্ট', { n: f.paid.count }) }}
+                <span class="block"
+                    >{{ t('শেষ পেমেন্ট') }}
+                    {{ niceDate(f.paid.last.date, false) }} ·
+                    <b class="text-ink">{{
+                        money(f.paid.last.amount, 'bdt')
+                    }}</b></span
+                >
+                <span class="block">{{
+                    t('{n}টা পেমেন্ট', { n: f.paid.count })
+                }}</span>
             </p>
             <p class="num mt-1 text-[13px] text-ink-3">
-                {{ t('আয় ধরা') }} {{ money(f.received, 'bdt')
-                }}<template v-if="rate">
-                    · {{ t('গড়') }} &#2547;{{ rate }} / USD</template
+                <span class="block"
+                    >{{ t('আয় ধরা') }} {{ money(f.received, 'bdt') }}</span
+                >
+                <span v-if="rate" class="block"
+                    >{{ t('গড়') }} &#2547;{{ rate }} / USD</span
                 >
             </p>
         </div>
-        <div class="bg-surface p-4 sm:p-5">
-            <p class="eyebrow">Margin</p>
+        <div class="panel p-4 sm:p-5">
+            <p class="eyebrow flex items-center gap-1.5">
+                <KIcon name="chart" :size="14" class="text-brand" />Margin
+            </p>
             <p class="mt-2 text-[22px]">
                 <KAmount :value="f.margin" currency="bdt" />
             </p>
         </div>
-        <div class="bg-surface p-4 sm:p-5">
-            <p class="eyebrow">{{ t('পাওনা') }}</p>
+        <div class="panel p-4 sm:p-5">
+            <p class="eyebrow flex items-center gap-1.5">
+                <KIcon name="clock" :size="14" class="text-wait" />{{
+                    t('পাওনা')
+                }}
+            </p>
             <p class="num mt-2 text-[22px] text-wait">
                 {{ money(f.usd_pending, 'usd') }}
             </p>

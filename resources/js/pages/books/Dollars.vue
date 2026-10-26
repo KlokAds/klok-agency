@@ -3,6 +3,8 @@ import SectionTabs from '@/components/SectionTabs.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatTiles from '@/components/StatTiles.vue';
+import type { StatTile } from '@/components/StatTiles.vue';
 import MetaCampaigns from '@/components/dollars/MetaCampaigns.vue';
 import type { ForecastClient } from '@/components/dollars/MetaCampaigns.vue';
 import KButton from '@/components/k/KButton.vue';
@@ -102,6 +104,51 @@ const kindLabel = (kind: string) =>
 const holdings = computed(() =>
     props.accounts.filter((a) => a.kind === 'holding' && a.is_active),
 );
+
+// The card in four figures: what is on it, what the platforms still take, what stays, and
+// what sits in other accounts.
+const tiles = computed<StatTile[]>(() => [
+    {
+        key: 'card',
+        label: t('Card-এ এখন'),
+        value: money(props.summary.card, 'usd'),
+        icon: 'wallet',
+        badge: 'bg-white/10 text-white',
+        dark: true,
+        action: { label: t('Card মেলান'), href: '/reconcile', icon: 'scale' },
+    },
+    {
+        key: 'due',
+        label: t('Platform এখনো কাটবে'),
+        value: money(props.summary.platform_due, 'usd'),
+        icon: 'clock',
+        badge: 'bg-wait-soft text-wait',
+        text: 'text-wait',
+        sub: t('খরচ হয়েছে, card থেকে এখনো কাটেনি'),
+    },
+    {
+        key: 'after',
+        label: t('কাটার পরে থাকবে'),
+        value: money(props.summary.card_after, 'usd'),
+        icon: 'check',
+        badge:
+            props.summary.card_after < 0
+                ? 'bg-out-soft text-out'
+                : 'bg-in-soft text-in',
+        text: props.summary.card_after < 0 ? 'text-out' : 'text-in',
+        sub: t('Card − Platform এখনো কাটবে'),
+    },
+    {
+        key: 'holding',
+        label: t('অন্য account-এ'),
+        value: money(props.summary.holding, 'usd'),
+        icon: 'dollar',
+        badge: 'bg-brand-soft text-brand-ink',
+        sub: holdings.value.length
+            ? holdings.value.map((h) => h.name).join(', ')
+            : t('কোনো account নেই'),
+    },
+]);
 const inUse = computed(() => props.batches.find((b) => b.left > 0) ?? null);
 const later = computed(() =>
     props.batches.filter((b) => b.left > 0 && b.id !== inUse.value?.id),
@@ -167,55 +214,7 @@ function saveAccount(): void {
     </PageHeader>
 
     <!-- The card -->
-    <section
-        class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
-    >
-        <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p class="text-[13.5px] font-medium text-rail-dim">
-                {{ t('Card-এ এখন') }}
-            </p>
-            <p class="num mt-3 text-[30px] leading-none font-medium text-white">
-                {{ money(summary.card, 'usd') }}
-            </p>
-            <KButton href="/reconcile" size="sm" icon="scale" class="mt-3">{{
-                t('Card মেলান')
-            }}</KButton>
-        </div>
-        <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('Platform এখনো কাটবে') }}</p>
-            <p class="num mt-3 text-[30px] leading-none font-medium text-wait">
-                {{ money(summary.platform_due, 'usd') }}
-            </p>
-            <p class="mt-3 text-[13.5px] text-ink-3">
-                {{ t('খরচ হয়েছে, card থেকে এখনো কাটেনি') }}
-            </p>
-        </div>
-        <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('কাটার পরে থাকবে') }}</p>
-            <p
-                class="num mt-3 text-[30px] leading-none font-medium"
-                :class="summary.card_after < 0 ? 'text-out' : ''"
-            >
-                {{ money(summary.card_after, 'usd') }}
-            </p>
-            <p class="mt-3 text-[13.5px] text-ink-3">
-                {{ t('Card − Platform এখনো কাটবে') }}
-            </p>
-        </div>
-        <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('অন্য account-এ') }}</p>
-            <p class="num mt-3 text-[30px] leading-none font-medium">
-                {{ money(summary.holding, 'usd') }}
-            </p>
-            <p class="mt-3 truncate text-[13.5px] text-ink-3">
-                {{
-                    holdings.length
-                        ? holdings.map((h) => h.name).join(', ')
-                        : t('কোনো account নেই')
-                }}
-            </p>
-        </div>
-    </section>
+    <StatTiles :tiles="tiles" :cols="4" />
 
     <!-- Check -->
     <div

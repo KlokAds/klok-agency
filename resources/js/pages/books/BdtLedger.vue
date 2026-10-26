@@ -208,8 +208,9 @@ const needsClient = computed(() =>
     >
     </PageHeader>
 
+    <!-- Phone: the search on its own line, the four dropdowns two a row, then the dates and the order -->
     <section
-        class="panel no-print mb-4 grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:p-4"
+        class="panel no-print mb-4 grid grid-cols-2 gap-2 p-3 sm:gap-3 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:p-4"
     >
         <KInput
             v-model="filters.q"
@@ -217,6 +218,7 @@ const needsClient = computed(() =>
             icon="search"
             :placeholder="t('খুঁজুন — বিবরণ, note, client')"
             size="sm"
+            class="col-span-2 lg:col-span-1"
         />
         <KSelect
             v-model="filters.category"
@@ -246,13 +248,13 @@ const needsClient = computed(() =>
             clearable
             size="sm"
         />
-        <div class="flex items-center gap-2 sm:col-span-2 lg:col-span-2">
+        <div class="col-span-2 flex items-center gap-2">
             <KDate
                 v-model="filters.from"
                 :placeholder="t('শুরু')"
                 clearable
                 size="sm"
-                class="flex-1"
+                class="min-w-0 flex-1"
             />
             <span class="text-ink-3">—</span>
             <KDate
@@ -260,10 +262,12 @@ const needsClient = computed(() =>
                 :placeholder="t('শেষ')"
                 clearable
                 size="sm"
-                class="flex-1"
+                class="min-w-0 flex-1"
             />
         </div>
-        <div class="flex items-center gap-3 sm:col-span-2 lg:justify-end">
+        <div
+            class="col-span-2 flex items-center justify-between gap-3 lg:col-span-3 lg:justify-end"
+        >
             <KSegment
                 v-model="filters.order"
                 :options="orderOptions"

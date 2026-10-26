@@ -3,6 +3,8 @@ import SectionTabs from '@/components/SectionTabs.vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatTiles from '@/components/StatTiles.vue';
+import type { StatTile } from '@/components/StatTiles.vue';
 import KButton from '@/components/k/KButton.vue';
 import KDate from '@/components/k/KDate.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
@@ -31,7 +33,7 @@ type Batch = {
     notes: string | null;
 };
 
-defineProps<{
+const props = defineProps<{
     batches: Paginated<Batch>;
     pool: Batch[];
     totals: {
@@ -45,6 +47,41 @@ defineProps<{
 }>();
 
 const can = computed(() => usePage().props.auth.can);
+
+// The pool in four figures: bought, what it cost, the average rate, what is left.
+const tiles = computed<StatTile[]>(() => [
+    {
+        key: 'usd',
+        label: t('মোট কেনা'),
+        value: money(props.totals.usd, 'usd'),
+        icon: 'dollar',
+        badge: 'bg-brand-soft text-brand-ink',
+    },
+    {
+        key: 'bdt',
+        label: t('মোট দাম'),
+        value: money(props.totals.bdt, 'bdt'),
+        icon: 'taka',
+        badge: 'bg-out-soft text-out',
+    },
+    {
+        key: 'rate',
+        label: t('গড় rate'),
+        value: `{09F3}${props.totals.avg_rate}`,
+        icon: 'swap',
+        badge: 'bg-wait-soft text-wait',
+    },
+    {
+        key: 'left',
+        label: t('এখনো বাকি'),
+        value: money(props.totals.left, 'usd'),
+        icon: 'wallet',
+        badge: props.totals.overdrawn
+            ? 'bg-out-soft text-out'
+            : 'bg-in-soft text-in',
+        text: props.totals.overdrawn ? 'text-out' : 'text-in',
+    },
+]);
 const editing = ref<Batch | null>(null);
 const form = useForm({
     entry_date: null as string | null,
@@ -111,31 +148,7 @@ async function remove(batch: Batch): Promise<void> {
         "
     />
 
-    <div
-        class="mb-6 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
-    >
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('মোট কেনা') }}</p>
-            <p class="num mt-2 text-[22px]">{{ money(totals.usd, 'usd') }}</p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('মোট দাম') }}</p>
-            <p class="num mt-2 text-[22px]">{{ money(totals.bdt, 'bdt') }}</p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('গড় rate') }}</p>
-            <p class="num mt-2 text-[22px]">&#2547;{{ totals.avg_rate }}</p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('এখনো বাকি') }}</p>
-            <p
-                class="num mt-2 text-[22px]"
-                :class="totals.overdrawn && 'text-out'"
-            >
-                {{ money(totals.left, 'usd') }}
-            </p>
-        </div>
-    </div>
+    <StatTiles :tiles="tiles" :cols="4" class="mb-6" />
 
     <p
         v-if="totals.overdrawn"

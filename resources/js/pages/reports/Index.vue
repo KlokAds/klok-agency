@@ -2,6 +2,8 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatTiles from '@/components/StatTiles.vue';
+import type { StatTile } from '@/components/StatTiles.vue';
 import TrendChart from '@/components/dashboard/TrendChart.vue';
 import type { TrendRow } from '@/components/dashboard/types';
 import KAmount from '@/components/k/KAmount.vue';
@@ -53,6 +55,42 @@ const props = defineProps<{
     outside: { unearned: number; owner_due: number };
     period: { from: string | null; to: string | null; preset: string };
 }>();
+
+// Money that is in the books but is not profit: a tile each, so nobody counts it as income.
+const outsideTiles = computed<StatTile[]>(() => [
+    {
+        key: 'unearned',
+        label: t('Client-দের আগাম টাকা'),
+        value: money(props.outside.unearned, 'bdt'),
+        icon: 'people',
+        badge: 'bg-brand-soft text-brand-ink',
+        sub: t(
+            'আগাম দিয়েছে, এখনো খরচ হয়নি — client-দের টাকা, আয় নয়। (আজ পর্যন্ত)',
+        ),
+    },
+    {
+        key: 'pending',
+        label: t('Client-দের কাছে পাওনা'),
+        value: money(props.pl.pending_cost, 'bdt'),
+        icon: 'clock',
+        badge: 'bg-wait-soft text-wait',
+        text: props.pl.pending_cost > 0 ? 'text-wait' : '',
+        sub: t(
+            '{amount} খরচ হয়েছে, টাকা আসেনি (কেনা দামে) — টাকা পেলে আয়ে ঢুকবে।',
+            {
+                amount: money(props.pl.pending_usd, 'usd'),
+            },
+        ),
+    },
+    {
+        key: 'owner',
+        label: t('Owner-এর কাছে পাওনা'),
+        value: money(props.outside.owner_due, 'bdt'),
+        icon: 'user',
+        badge: 'bg-sunken text-ink-2',
+        sub: t('Owner নিয়েছেন, ফেরত দেবেন — খরচও নয়, লাভও নয়।'),
+    },
+]);
 
 const can = computed(() => usePage().props.auth.can);
 
@@ -547,49 +585,7 @@ const clients = computed(() => {
 
         <!-- Not profit -->
         <h2 class="eyebrow mt-8 mb-2.5">{{ t('লাভ নয় — মনে রাখুন') }}</h2>
-        <section
-            class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
-        >
-            <div class="bg-surface p-5">
-                <p class="eyebrow">{{ t('Client-দের আগাম টাকা') }}</p>
-                <p class="num mt-2.5 text-[22px] leading-none font-medium">
-                    {{ money(outside.unearned, 'bdt') }}
-                </p>
-                <p class="mt-2 text-[13.5px] text-ink-3">
-                    {{
-                        t(
-                            'আগাম দিয়েছে, এখনো খরচ হয়নি — client-দের টাকা, আয় নয়। (আজ পর্যন্ত)',
-                        )
-                    }}
-                </p>
-            </div>
-            <div class="bg-surface p-5">
-                <p class="eyebrow">{{ t('Client-দের কাছে পাওনা') }}</p>
-                <p
-                    class="num mt-2.5 text-[22px] leading-none font-medium"
-                    :class="pl.pending_cost > 0 && 'text-wait'"
-                >
-                    {{ money(pl.pending_cost, 'bdt') }}
-                </p>
-                <p class="mt-2 text-[13.5px] text-ink-3">
-                    {{
-                        t(
-                            '{amount} খরচ হয়েছে, টাকা আসেনি (কেনা দামে) — টাকা পেলে আয়ে ঢুকবে।',
-                            { amount: money(pl.pending_usd, 'usd') },
-                        )
-                    }}
-                </p>
-            </div>
-            <div class="bg-surface p-5">
-                <p class="eyebrow">{{ t('Owner-এর কাছে পাওনা') }}</p>
-                <p class="num mt-2.5 text-[22px] leading-none font-medium">
-                    {{ money(outside.owner_due, 'bdt') }}
-                </p>
-                <p class="mt-2 text-[13.5px] text-ink-3">
-                    {{ t('Owner নিয়েছেন, ফেরত দেবেন — খরচও নয়, লাভও নয়।') }}
-                </p>
-            </div>
-        </section>
+        <StatTiles :tiles="outsideTiles" />
 
         <p class="mt-4 text-[13px] text-ink-3">
             {{

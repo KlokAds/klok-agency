@@ -2,6 +2,8 @@
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatTiles from '@/components/StatTiles.vue';
+import type { StatTile } from '@/components/StatTiles.vue';
 import KButton from '@/components/k/KButton.vue';
 import KDate from '@/components/k/KDate.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
@@ -74,6 +76,44 @@ const props = defineProps<{
 
 const can = computed(() => usePage().props.auth.can);
 const isIn = computed(() => props.mode === 'in');
+
+// The totals over what is shown: the sum in the book's colour, the count, and the third
+// figure the book cares about — bought credit for income, the biggest head for expenses.
+const tiles = computed<StatTile[]>(() => [
+    {
+        key: 'sum',
+        label: filtered.value ? t('এই filter-এ মোট') : t('মোট'),
+        value: money(Math.abs(props.totals.amount), 'bdt', { round: false }),
+        icon: 'taka',
+        badge: isIn.value ? 'bg-in-soft text-in' : 'bg-out-soft text-out',
+        text: isIn.value ? 'text-in' : 'text-out',
+    },
+    {
+        key: 'count',
+        label: t('কয়টা entry'),
+        value: String(props.totals.count),
+        icon: 'list',
+        badge: 'bg-brand-soft text-brand-ink',
+    },
+    isIn.value
+        ? {
+              key: 'credit',
+              label: t('কেনা ad credit'),
+              value: money(props.totals.credit_usd ?? 0, 'usd'),
+              icon: 'dollar',
+              badge: 'bg-wait-soft text-wait',
+          }
+        : {
+              key: 'top',
+              label: t('সবচেয়ে বেশি'),
+              value: breakdown.value[0]?.name ?? t('কোনো row নেই'),
+              icon: 'chart',
+              badge: 'bg-wait-soft text-wait',
+              text: breakdown.value.length
+                  ? 'text-[20px] sm:text-[22px]'
+                  : 'text-ink-3 text-[20px]',
+          },
+]);
 
 const { filters, clear } = useFilters(
     isIn.value ? '/payments' : '/expenses',
@@ -270,47 +310,11 @@ function saveRename(): void {
         >
     </PageHeader>
 
-    <!-- Totals -->
-    <section
-        class="mb-4 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3"
-    >
-        <div class="bg-surface p-5">
-            <p class="eyebrow">
-                {{ filtered ? t('এই filter-এ মোট') : t('মোট') }}
-            </p>
-            <p
-                class="num mt-2 text-[28px] leading-none font-medium"
-                :class="isIn ? 'text-in' : 'text-out'"
-            >
-                {{ money(Math.abs(totals.amount), 'bdt', { round: false }) }}
-            </p>
-        </div>
-        <div class="bg-surface p-5">
-            <p class="eyebrow">{{ t('কয়টা entry') }}</p>
-            <p class="num mt-2 text-[28px] leading-none font-medium">
-                {{ totals.count }}
-            </p>
-        </div>
-        <div v-if="isIn" class="bg-surface p-5">
-            <p class="eyebrow">{{ t('কেনা ad credit') }}</p>
-            <p class="num mt-2 text-[28px] leading-none font-medium">
-                {{ money(totals.credit_usd ?? 0, 'usd') }}
-            </p>
-        </div>
-        <div v-else class="bg-surface p-5">
-            <p class="eyebrow">{{ t('সবচেয়ে বেশি') }}</p>
-            <p
-                class="mt-2 truncate text-[18px] font-semibold"
-                :class="!breakdown.length && 'text-ink-3'"
-            >
-                {{ breakdown[0]?.name ?? t('কোনো row নেই') }}
-            </p>
-        </div>
-    </section>
+    <StatTiles :tiles="tiles" class="mb-4" />
 
-    <!-- Filters -->
+    <!-- Filters: the search on its own line on a phone, the dropdowns two a row -->
     <section
-        class="panel no-print mb-4 grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:p-4"
+        class="panel no-print mb-4 grid grid-cols-2 gap-2 p-3 sm:gap-3 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:p-4"
     >
         <KInput
             v-model="filters.q"
@@ -318,6 +322,7 @@ function saveRename(): void {
             icon="search"
             :placeholder="t('খুঁজুন — বিবরণ, note')"
             size="sm"
+            class="col-span-2 lg:col-span-1"
         />
         <template v-if="isIn">
             <KSelect
@@ -358,7 +363,7 @@ function saveRename(): void {
             clearable
             size="sm"
         />
-        <div class="flex items-center gap-2 sm:col-span-2">
+        <div class="col-span-2 flex items-center gap-2 lg:col-span-1">
             <KDate
                 v-model="filters.from"
                 :placeholder="t('শুরু')"
@@ -377,7 +382,7 @@ function saveRename(): void {
         </div>
         <div
             v-if="filtered"
-            class="flex items-center sm:col-span-2 lg:justify-end"
+            class="col-span-2 flex items-center lg:col-span-3 lg:justify-end"
         >
             <KButton size="sm" icon="close" @click="clear">{{
                 t('Filter মুছুন')
