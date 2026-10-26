@@ -47,6 +47,7 @@ const props = defineProps<{
 }>();
 
 const can = computed(() => usePage().props.auth.can);
+const TAKA = '\u{09F3}';
 
 // The pool in four figures: bought, what it cost, the average rate, what is left.
 const tiles = computed<StatTile[]>(() => [
@@ -67,7 +68,7 @@ const tiles = computed<StatTile[]>(() => [
     {
         key: 'rate',
         label: t('গড় rate'),
-        value: `{09F3}${props.totals.avg_rate}`,
+        value: TAKA + props.totals.avg_rate,
         icon: 'swap',
         badge: 'bg-wait-soft text-wait',
     },
