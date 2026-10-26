@@ -360,11 +360,14 @@ function appSettings(): void {
                 >
                     <KIcon name="menu" :size="20" />
                 </button>
+                <!-- The brand gives way first, so the buttons at the right always fit. -->
                 <Link href="/dashboard" class="shrink-0 lg:hidden"
                     ><BrandMark :size="28" compact :badge="roleBadge"
                 /></Link>
 
-                <span class="flex flex-1 justify-end md:justify-start">
+                <span
+                    class="ml-auto flex shrink-0 justify-end md:ml-0 md:flex-1 md:justify-start"
+                >
                     <GlobalSearch :pages="searchPages" />
                 </span>
 

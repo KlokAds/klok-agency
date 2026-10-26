@@ -12,7 +12,14 @@ defineProps<{ title: string; eyebrow?: string; lead?: string }>();
         class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-6"
     >
         <div class="min-w-0 sm:flex-1">
-            <p v-if="eyebrow" class="eyebrow mb-1.5">{{ t(eyebrow) }}</p>
+            <p
+                v-if="eyebrow"
+                class="mb-2 flex items-center gap-2 text-[12.5px] font-bold tracking-[0.12em] text-brand-ink uppercase"
+            >
+                <span class="h-[3px] w-5 rounded-full bg-brand" />{{
+                    t(eyebrow)
+                }}
+            </p>
             <h1
                 class="text-[26px] leading-tight font-semibold tracking-[-0.02em] sm:text-[30px]"
             >

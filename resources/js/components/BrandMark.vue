@@ -63,6 +63,7 @@ withDefaults(
                         light
                             ? 'bg-[#2dd4bf]/20 text-[#5eead4]'
                             : 'bg-brand-soft text-brand',
+                        compact && 'max-[419px]:hidden',
                     ]"
                     >{{ badge }}</span
                 >
@@ -71,7 +72,7 @@ withDefaults(
                 class="mt-0.5 truncate py-px leading-[1.45] font-semibold"
                 :class="[
                     compact
-                        ? 'text-[12.5px] tracking-[0.1em]'
+                        ? 'text-[12.5px] tracking-[0.1em] max-[419px]:hidden'
                         : 'text-[12.5px] tracking-[0.16em]',
                     light ? 'text-rail-dim' : 'text-ink-3',
                 ]"
