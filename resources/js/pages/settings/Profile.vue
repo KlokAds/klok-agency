@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { router, useForm, usePage } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
 import KField from '@/components/k/KField.vue';
 import KInput from '@/components/k/KInput.vue';
+import KModal from '@/components/k/KModal.vue';
 import KSwitch from '@/components/k/KSwitch.vue';
 import { t } from '@/lib/i18n';
 
@@ -21,12 +22,24 @@ type Group = {
 const props = defineProps<{
     notify: { owner: boolean; mail: boolean; groups: Group[] };
     details?: { email: string; phone: string | null; company: string | null };
+    pending_email?: string | null;
 }>();
 
 const user = usePage().props.auth.user;
-// The Owner changes any team email on the Users page — their own too.
-const canEditUsers = !!usePage().props.auth.can['users.edit'];
 const isClient = user.role === 'Client';
+
+// A new sign-in email: asked for here, made real by the link that reaches it.
+const emailOpen = ref(false);
+const emailForm = useForm({ email: '' });
+function sendEmailLink(): void {
+    emailForm.post('/settings/email', {
+        preserveScroll: true,
+        onSuccess: () => {
+            emailOpen.value = false;
+            emailForm.reset();
+        },
+    });
+}
 // A client keeps their own email, phone and company; the team's email is changed by an admin.
 const form = useForm({
     name: user.name,
@@ -35,8 +48,11 @@ const form = useForm({
     company: props.details?.company ?? '',
 });
 
-// Which notifications come, and how; saved as soon as a switch moves.
-const groups = reactive(props.notify.groups.map((g) => ({ ...g })));
+// Which notifications come, and how; saved as soon as a switch moves. A group this role can
+// never get is not shown at all.
+const groups = reactive(
+    props.notify.groups.filter((g) => g.reaches).map((g) => ({ ...g })),
+);
 
 function saveNotify(): void {
     router.put(
@@ -99,13 +115,19 @@ function saveNotify(): void {
                     <KInput v-model="form.company" />
                 </KField>
             </template>
+            <!-- The team's email is their sign-in name: it changes through a link to the new address. -->
             <KField
                 v-else
                 label="Email"
                 :hint="
-                    canEditUsers
-                        ? t('এটাই sign-in নাম — Settings → User পাতায় বদলান।')
-                        : t('Email বদলাতে Owner-কে বলুন — এটাই sign-in নাম।')
+                    pending_email
+                        ? t(
+                              '{email}-এ link গেছে — ওটা খুললেই বদলে যাবে (১ ঘণ্টা)।',
+                              { email: pending_email },
+                          )
+                        : t(
+                              'এটাই আপনার sign-in নাম। বদলাতে নতুন email-এ একটা link যাবে।',
+                          )
                 "
             >
                 <div class="flex items-center gap-2">
@@ -115,10 +137,9 @@ function saveNotify(): void {
                         {{ user.email }}
                     </div>
                     <KButton
-                        v-if="canEditUsers"
-                        href="/admin/users"
                         variant="soft"
                         icon="pen"
+                        @click="emailOpen = true"
                         >{{ t('বদলান') }}</KButton
                     >
                 </div>
@@ -234,19 +255,39 @@ function saveNotify(): void {
                 }}
             </p>
         </section>
-
-        <aside class="panel p-4 sm:p-6 lg:col-start-2 lg:row-start-1">
-            <p class="eyebrow">Role</p>
-            <p class="mt-1 text-[18px] font-bold">
-                {{ user.role ?? t('Role নেই') }}
-            </p>
-            <p class="mt-3 text-[14px] text-ink-3">
-                {{
-                    t(
-                        'কোন পাতায় কী করতে পারবেন, তা Role ঠিক করে। বদলাতে Owner-এর সাথে কথা বলুন।',
-                    )
-                }}
-            </p>
-        </aside>
     </div>
+
+    <KModal
+        v-model="emailOpen"
+        :title="t('Email বদলান')"
+        :subtitle="
+            t(
+                'নতুন email-এ একটা link যাবে; ওটা খুললে তবেই বদলাবে। পুরোনো email-ও খবর পাবে।',
+            )
+        "
+    >
+        <form id="email-form" @submit.prevent="sendEmailLink">
+            <KField :label="t('নতুন email')" :error="emailForm.errors.email">
+                <KInput
+                    v-model="emailForm.email"
+                    type="email"
+                    autocomplete="email"
+                    autofocus
+                    :invalid="!!emailForm.errors.email"
+                />
+            </KField>
+        </form>
+        <template #footer>
+            <KButton variant="quiet" @click="emailOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                type="submit"
+                form="email-form"
+                variant="primary"
+                :loading="emailForm.processing"
+                >{{ t('Link পাঠান') }}</KButton
+            >
+        </template>
+    </KModal>
 </template>

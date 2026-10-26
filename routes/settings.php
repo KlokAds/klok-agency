@@ -11,6 +11,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('settings/notifications', [ProfileController::class, 'notifications'])->name('profile.notifications');
+    // A new sign-in email: a link to the new address, opened while signed in.
+    Route::post('settings/email', [ProfileController::class, 'requestEmail'])->middleware('throttle:5,1')->name('profile.email.request');
+    Route::get('settings/email/verify/{hash}', [ProfileController::class, 'verifyEmail'])->middleware('signed')->name('profile.email.verify');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

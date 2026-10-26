@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '503')
+@section('title', 'একটু কাজ চলছে')
+@section('body', 'KlokOne কয়েক মিনিটের জন্য বন্ধ আছে। একটু পরে আবার খুলুন।')
+@section('foot', 'আপনার খাতার কিছু হারায়নি।')

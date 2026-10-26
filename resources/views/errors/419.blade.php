@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '419')
+@section('title', 'পাতাটা অনেকক্ষণ খোলা ছিল')
+@section('body', 'নিরাপত্তার জন্য form-টা মেয়াদ পার হয়ে গেছে। আবার খুলে লিখুন।')
+@section('foot', 'যা লিখেছিলেন তা জমা হয়নি।')

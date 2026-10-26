@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\User;
 use App\Notifications\AccountChanged;
 use App\Notifications\AgencyAlert;
+use App\Notifications\EmailChangeLink;
 use App\Services\Notifier;
 use App\Support\Access;
 use App\Support\MailSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -29,6 +33,8 @@ class ProfileController extends Controller
         return Inertia::render('settings/Profile', [
             'status' => $request->session()->get('status'),
             'details' => $user->only(['email', 'phone', 'company']),
+            // An email change waiting on its link: the new address, so the page can say so.
+            'pending_email' => Cache::get(self::pendingKey($user->id)),
             // Each group: whether it reaches this person at all (their role's permission, or an
             // Owner's choice), and how — phone, email — as they set it.
             'notify' => [
@@ -42,6 +48,85 @@ class ProfileController extends Controller
                 })->values(),
             ],
         ]);
+    }
+
+    /** How long a new address has to open its link. */
+    public const EMAIL_LINK_MINUTES = 60;
+
+    public static function pendingKey(int $userId): string
+    {
+        return 'email-change:'.$userId;
+    }
+
+    /**
+     * A team member asks for a new sign-in email: a link goes to that address, and nothing
+     * changes until it is opened. The old address is told at once, so a change the person
+     * did not ask for never goes unnoticed.
+     */
+    public function requestEmail(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+        ]);
+        $email = Str::lower($data['email']);
+
+        if ($email === Str::lower((string) $user->email)) {
+            return back()->withErrors(['email' => __('এটাই এখনকার email।')]);
+        }
+
+        if (! MailSettings::ready()) {
+            return back()->withErrors(['email' => __('Email পাঠানোর mailbox দেওয়া নেই — Owner-কে বলুন, Users পাতা থেকে বদলে দেবেন।')]);
+        }
+
+        Cache::put(self::pendingKey($user->id), $email, now()->addMinutes(self::EMAIL_LINK_MINUTES));
+
+        $url = URL::temporarySignedRoute('profile.email.verify', now()->addMinutes(self::EMAIL_LINK_MINUTES), [
+            'hash' => sha1($email),
+        ]);
+        rescue(fn () => Notification::route('mail', $email)->notify(new EmailChangeLink($url, $user->name, (string) ($user->locale ?? 'bn'))));
+        rescue(fn () => $user->notify(new AgencyAlert('account_changed', self::EMAIL_ASKED_TITLE, '{email}-এ একটা link গেছে। আপনি না চেয়ে থাকলে সাথে সাথে Klok Ads-কে জানান।', [ // i18n
+            'email' => $email,
+        ], ['url' => '/settings/profile', 'important' => true])));
+
+        $this->toast(__(':email-এ link পাঠানো হয়েছে — ওটা খুলে confirm করুন।', ['email' => $email]));
+
+        return to_route('profile.edit');
+    }
+
+    public const EMAIL_ASKED_TITLE = 'নতুন email-এর জন্য link পাঠানো হয়েছে'; // i18n
+
+    /** The link from the new address, opened while signed in: the email changes now. */
+    public function verifyEmail(Request $request, string $hash): RedirectResponse
+    {
+        $user = $request->user();
+        $email = Cache::get(self::pendingKey($user->id));
+
+        if (! is_string($email) || sha1($email) !== $hash) {
+            $this->toast(__('Link-টা পুরোনো বা অন্য কারও — আবার email বদলের link চান।'), 'error');
+
+            return to_route('profile.edit');
+        }
+
+        if (User::where('email', $email)->where('id', '!=', $user->id)->exists()) {
+            Cache::forget(self::pendingKey($user->id));
+            $this->toast(__('এই email এর মধ্যে অন্য কেউ নিয়ে নিয়েছে।'), 'error');
+
+            return to_route('profile.edit');
+        }
+
+        $old = (string) $user->email;
+        $user->forceFill(['email' => $email, 'email_verified_at' => now()])->save();
+        Cache::forget(self::pendingKey($user->id));
+
+        rescue(fn () => $user->notify(AccountChanged::alert($user, [__('Email')])));
+        if (filled($old) && MailSettings::ready()) {
+            rescue(fn () => Notification::route('mail', $old)->notify(new AccountChanged([__('Email')], (string) ($user->locale ?? 'bn'))));
+        }
+
+        $this->toast(__('Email বদলে গেছে — এখন থেকে :email দিয়ে sign in করবেন।', ['email' => $email]));
+
+        return to_route('profile.edit');
     }
 
     /** Which notification groups come, and how (phone, email). Your own tasks always come. */
