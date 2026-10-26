@@ -188,7 +188,9 @@ const meter = computed(() => {
                                     >
                                         ·
                                         {{
-                                            t('client-এর নিজের card')
+                                            a.card
+                                                ? t('client-এর নিজের card')
+                                                : t('card নেই')
                                         }}</template
                                     ></span
                                 >

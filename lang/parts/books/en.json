@@ -335,5 +335,6 @@
     "client-এর নিজের card": "client's own card",
     "Meta থেকে পড়া {ago}": "read from Meta {ago}",
     "Credit কাটা, card-এ আসেনি": "Credit taken, not yet on the card",
-    "Card-এ আসেনি": "Not yet on the card"
+    "Card-এ আসেনি": "Not yet on the card",
+    "card নেই": "no card"
 }

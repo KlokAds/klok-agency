@@ -107,6 +107,7 @@ class SystemController extends Controller
                 'tick' => app(Ticker::class)->run(),
                 'spend' => (function () {
                     Cache::forget('pilot:spend-sync');
+                    Cache::forget('meta:unbilled');
                     app(CampaignBilling::class)->sync();
                     app(CampaignLimits::class)->guard();
                 })(),
