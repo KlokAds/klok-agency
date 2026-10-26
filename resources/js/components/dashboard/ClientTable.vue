@@ -118,7 +118,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.credit_usd)
                                 }}<span
                                     v-if="c.credit_bdt"
-                                    class="block text-[12px] text-ink-3"
+                                    class="block text-[13px] text-ink-3"
                                     >{{ money(c.credit_bdt, 'bdt') }}</span
                                 >
                             </dd>
@@ -129,7 +129,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.spent_usd)
                                 }}<span
                                     v-if="c.spent_bdt"
-                                    class="block text-[12px] text-ink-3"
+                                    class="block text-[13px] text-ink-3"
                                     >{{ money(c.spent_bdt, 'bdt') }}</span
                                 >
                             </dd>
@@ -228,7 +228,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.credit_usd) }}
                                 <span
                                     v-if="c.credit_bdt"
-                                    class="block text-[12.5px] text-ink-3"
+                                    class="block text-[13px] text-ink-3"
                                     >{{ money(c.credit_bdt, 'bdt') }}</span
                                 >
                             </td>
@@ -236,7 +236,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(c.spent_usd) }}
                                 <span
                                     v-if="c.spent_bdt"
-                                    class="block text-[12.5px] text-ink-3"
+                                    class="block text-[13px] text-ink-3"
                                     >{{ money(c.spent_bdt, 'bdt') }}</span
                                 >
                             </td>
@@ -252,13 +252,13 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 }}</span>
                                 <span
                                     v-if="c.unearned > 0"
-                                    class="num block text-[12.5px] text-ink-3"
+                                    class="num block text-[13px] text-ink-3"
                                     >{{ money(c.unearned, 'bdt') }}
                                     {{ t('জমা') }}</span
                                 >
                                 <span
                                     v-else-if="c.pending_cost > 0"
-                                    class="num block text-[12.5px] text-ink-3"
+                                    class="num block text-[13px] text-ink-3"
                                     >{{
                                         t('কেনা দামে {amount}', {
                                             amount: money(
@@ -283,7 +283,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                             : t('Credit শেষ')
                                     }}
                                     <span
-                                        class="block text-[12.5px] font-normal text-ink-3"
+                                        class="block text-[13px] font-normal text-ink-3"
                                         >{{
                                             t('রোজ {amount}', {
                                                 amount: money(
@@ -316,7 +316,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(total.credit) }}
                                 <span
                                     v-if="total.creditBdt"
-                                    class="block text-[12.5px] text-ink-3"
+                                    class="block text-[13px] text-ink-3"
                                     >{{ money(total.creditBdt, 'bdt') }}</span
                                 >
                             </td>
@@ -326,7 +326,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(total.spent) }}
                                 <span
                                     v-if="total.spentBdt"
-                                    class="block text-[12.5px] text-ink-3"
+                                    class="block text-[13px] text-ink-3"
                                     >{{ money(total.spentBdt, 'bdt') }}</span
                                 >
                             </td>
@@ -336,7 +336,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                                 {{ usd(total.held) }}
                                 <span
                                     v-if="total.owed"
-                                    class="block text-[12.5px] text-out"
+                                    class="block text-[13px] text-out"
                                     >{{ t('পাওনা') }}
                                     {{ money(-total.owed, 'usd') }}</span
                                 >
@@ -346,7 +346,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                             >
                                 {{ usd(total.unbilled) }}
                                 <span
-                                    class="block text-[12.5px] font-normal text-ink-3"
+                                    class="block text-[13px] font-normal text-ink-3"
                                     >{{
                                         metaLive
                                             ? t('Meta-র হিসাবে')
@@ -386,7 +386,7 @@ const gap = computed(() => props.platformDue - total.value.unbilled);
                 <div class="flex justify-between py-1.5">
                     <dt class="text-ink-2">
                         {{ t('Card-এ আসেনি') }}
-                        <span class="block text-[12.5px] text-ink-3"
+                        <span class="block text-[13px] text-ink-3"
                             >{{ metaLive ? t('Meta-র হিসাবে') : t('খাতায়') }}
                             {{ usd(platformDue) }}</span
                         >

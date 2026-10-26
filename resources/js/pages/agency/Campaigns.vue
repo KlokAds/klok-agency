@@ -431,18 +431,18 @@ function sync(): void {
                         class="mt-3 grid grid-cols-3 divide-x divide-line rounded-xl bg-sunken py-2 text-center"
                     >
                         <p>
-                            <span class="block text-[12px] text-ink-3">{{
+                            <span class="block text-[13px] text-ink-3">{{
                                 t('এই সময়ে')
                             }}</span>
                             <b class="num text-[14.5px]">{{
                                 spend(c.period.spend)
                             }}</b>
-                            <span class="num block text-[12px] text-ink-3"
+                            <span class="num block text-[13px] text-ink-3"
                                 >{{ c.period.results }} result</span
                             >
                         </p>
                         <p>
-                            <span class="block text-[12px] text-ink-3">{{
+                            <span class="block text-[13px] text-ink-3">{{
                                 t('মোট খরচ')
                             }}</span>
                             <b class="num text-[14.5px]">{{
@@ -450,7 +450,7 @@ function sync(): void {
                             }}</b>
                         </p>
                         <p>
-                            <span class="block text-[12px] text-ink-3">{{
+                            <span class="block text-[13px] text-ink-3">{{
                                 t('শেষ খরচ')
                             }}</span>
                             <b class="num text-[14.5px]">{{
@@ -694,14 +694,14 @@ function sync(): void {
                                     >
                                     <span
                                         v-if="c.limits_error"
-                                        class="text-[12.5px] text-wait"
+                                        class="text-[13px] text-wait"
                                         >{{ c.limits_error }}</span
                                     >
                                 </p>
                             </td>
                             <td class="num px-3 py-3 text-right">
                                 {{ spend(c.period.spend) }}
-                                <span class="block text-[12.5px] text-ink-3"
+                                <span class="block text-[13px] text-ink-3"
                                     >{{ c.period.results }} result</span
                                 >
                             </td>
@@ -725,7 +725,7 @@ function sync(): void {
                                             c.client
                                         }}</span>
                                         <span
-                                            class="block text-[12.5px] whitespace-nowrap text-ink-3"
+                                            class="block text-[13px] whitespace-nowrap text-ink-3"
                                             >{{
                                                 t('{date} থেকে', {
                                                     date: niceDate(

@@ -98,7 +98,7 @@ const numbers = computed(() => {
                 :class="
                     prev?.url
                         ? 'border-line-2 bg-surface text-ink hover:border-brand hover:text-brand'
-                        : 'border-line text-ink-3/50'
+                        : 'border-line text-ink-3'
                 "
                 :aria-label="t('আগের পাতা')"
             >
@@ -120,7 +120,7 @@ const numbers = computed(() => {
                 >
                 <span
                     v-else
-                    class="num grid h-9 min-w-9 place-items-center px-2 text-ink-3/50"
+                    class="num grid h-9 min-w-9 place-items-center px-2 text-ink-3"
                     >{{ link.label }}</span
                 >
             </template>
@@ -133,7 +133,7 @@ const numbers = computed(() => {
                 :class="
                     next?.url
                         ? 'border-line-2 bg-surface text-ink hover:border-brand hover:text-brand'
-                        : 'border-line text-ink-3/50'
+                        : 'border-line text-ink-3'
                 "
                 :aria-label="t('পরের পাতা')"
             >

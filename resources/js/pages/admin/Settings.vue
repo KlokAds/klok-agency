@@ -527,7 +527,7 @@ onMounted(() => {
                     {{ niceDate(update.last_run.at.slice(0, 10)) }}
                 </summary>
                 <pre
-                    class="max-h-72 overflow-auto border-t border-line bg-sunken px-4 py-3 font-mono text-[12.5px] leading-relaxed whitespace-pre-wrap"
+                    class="max-h-72 overflow-auto border-t border-line bg-sunken px-4 py-3 font-mono text-[13px] leading-relaxed whitespace-pre-wrap"
                     >{{ update.last_run.log.join('\n\n') }}</pre>
             </details>
 

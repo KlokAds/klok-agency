@@ -394,11 +394,11 @@ const directions = computed<Option[]>(() => [
                             >{{ t(j.label)
                             }}<span
                                 v-if="'auto' in j"
-                                class="rounded bg-in-soft px-1.5 text-[11.5px] font-semibold text-in"
+                                class="rounded bg-in-soft px-1.5 text-[12.5px] font-semibold text-in"
                                 >Auto</span
                             ></span
                         >
-                        <span class="block text-[12.5px] text-ink-3">{{
+                        <span class="block text-[13px] text-ink-3">{{
                             t(j.note)
                         }}</span>
                     </span>

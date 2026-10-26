@@ -189,7 +189,7 @@ const allOk = computed(() => checks.value.every((c) => c.ok));
                         class="space-y-1.5 text-[14px]"
                     >
                         <p
-                            class="text-[12px] font-semibold tracking-[0.06em] text-ink-3 uppercase"
+                            class="text-[13px] font-semibold tracking-[0.06em] text-ink-3 uppercase"
                         >
                             {{ side.caption }}
                         </p>

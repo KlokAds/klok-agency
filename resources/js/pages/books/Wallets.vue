@@ -488,7 +488,7 @@ async function removeMove(move: Move): Promise<void> {
                             class="block truncate text-[15px] font-semibold"
                             >{{ p.label }}</span
                         >
-                        <span class="block truncate text-[12.5px] text-ink-3"
+                        <span class="block truncate text-[13px] text-ink-3"
                             >{{ typeLabel(p.type)
                             }}<template v-if="p.detail">
                                 · {{ p.detail }}</template
@@ -505,7 +505,7 @@ async function removeMove(move: Move): Promise<void> {
                     {{ money(p.balance, 'bdt', { round: false }) }}
                 </p>
                 <p
-                    class="mt-2.5 flex items-center gap-2 text-[12.5px] text-ink-3"
+                    class="mt-2.5 flex items-center gap-2 text-[13.5px] font-medium text-ink-2"
                 >
                     <span
                         class="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken"
@@ -567,7 +567,7 @@ async function removeMove(move: Move): Promise<void> {
                     />
                 </div>
                 <dl
-                    class="mt-2.5 grid grid-cols-2 gap-3 text-[12.5px] text-rail-dim"
+                    class="mt-2.5 grid grid-cols-2 gap-3 text-[13px] text-rail-dim"
                 >
                     <div>
                         <dt class="flex items-center gap-1.5">
@@ -725,9 +725,7 @@ async function removeMove(move: Move): Promise<void> {
                     >
                     <span class="num shrink-0 text-right"
                         >{{ money(m.amount, 'bdt', { round: false }) }}
-                        <span
-                            v-if="m.fee"
-                            class="block text-[12.5px] text-ink-3"
+                        <span v-if="m.fee" class="block text-[13px] text-ink-3"
                             >fee
                             {{ money(m.fee, 'bdt', { round: false }) }}</span
                         ></span

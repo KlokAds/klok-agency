@@ -327,7 +327,7 @@ const clients = computed(() => {
                 "
             >
                 <p
-                    class="text-[12.5px] font-semibold"
+                    class="text-[13px] font-semibold"
                     :class="
                         c.key === 'net'
                             ? 'text-rail-dim uppercase'

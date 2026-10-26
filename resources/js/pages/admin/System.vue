@@ -135,7 +135,7 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
             </p>
             <dl class="mt-4 grid grid-cols-2 gap-3 text-[14px]">
                 <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                    <dt class="text-[12.5px] text-ink-3">
+                    <dt class="text-[13px] text-ink-3">
                         {{ t('শেষ beat') }}
                     </dt>
                     <dd class="num mt-0.5 font-semibold">
@@ -143,7 +143,7 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
                     </dd>
                 </div>
                 <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                    <dt class="text-[12.5px] text-ink-3">
+                    <dt class="text-[13px] text-ink-3">
                         {{ t('শেষ tick') }}
                     </dt>
                     <dd class="num mt-0.5 font-semibold">
@@ -224,7 +224,7 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
                             : 'bg-sunken'
                     "
                 >
-                    <dt class="text-[12.5px] text-ink-3">
+                    <dt class="text-[13px] text-ink-3">
                         {{ t('খরচ মেলানো') }}
                     </dt>
                     <dd class="num mt-0.5 font-semibold">
@@ -232,7 +232,7 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
                     </dd>
                 </div>
                 <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                    <dt class="text-[12.5px] text-ink-3">Pilot</dt>
+                    <dt class="text-[13px] text-ink-3">Pilot</dt>
                     <dd class="mt-0.5 truncate font-semibold">
                         {{ pilot.url || '—' }}
                     </dd>
@@ -308,7 +308,7 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
                             : 'bg-sunken'
                     "
                 >
-                    <dt class="text-[12.5px] text-ink-3">
+                    <dt class="text-[13px] text-ink-3">
                         {{ t('শেষ দেখা') }}
                     </dt>
                     <dd class="num mt-0.5 font-semibold">
@@ -316,7 +316,7 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
                     </dd>
                 </div>
                 <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                    <dt class="text-[12.5px] text-ink-3">
+                    <dt class="text-[13px] text-ink-3">
                         {{ t('Charge ধরা হচ্ছে') }}
                     </dt>
                     <dd class="num mt-0.5 font-semibold">
@@ -391,20 +391,20 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
             </p>
             <dl class="mt-4 grid grid-cols-2 gap-3 text-[14px]">
                 <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                    <dt class="text-[12.5px] text-ink-3">
+                    <dt class="text-[13px] text-ink-3">
                         {{ t('শেষ heartbeat') }}
                     </dt>
                     <dd class="num mt-0.5 font-semibold">
                         {{ sms.phone ? when(sms.phone.seen) : '—'
                         }}<span
                             v-if="sms.phone"
-                            class="ml-1 text-[12.5px] font-normal text-ink-3"
+                            class="ml-1 text-[13px] font-normal text-ink-3"
                             >v{{ sms.phone.version }}</span
                         >
                     </dd>
                 </div>
                 <div class="rounded-xl bg-sunken px-3.5 py-2.5">
-                    <dt class="text-[12.5px] text-ink-3">
+                    <dt class="text-[13px] text-ink-3">
                         {{ t('শেষ payment SMS') }}
                     </dt>
                     <dd class="num mt-0.5 font-semibold">

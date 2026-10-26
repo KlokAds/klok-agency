@@ -43,7 +43,7 @@ defineProps<{
                         i.number
                     }}</span>
                     <span
-                        class="rounded-full px-2.5 py-0.5 text-[12.5px] font-bold"
+                        class="rounded-full px-2.5 py-0.5 text-[13px] font-bold"
                         :class="
                             i.status === 'paid'
                                 ? 'bg-in-soft text-in'

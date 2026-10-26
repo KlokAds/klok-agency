@@ -160,7 +160,7 @@ const rest = computed(() => cents(props.amount) - given.value);
             >
                 <span
                     v-if="byHand"
-                    class="grid size-6 shrink-0 place-items-center rounded-full border text-[12px] font-semibold"
+                    class="grid size-6 shrink-0 place-items-center rounded-full border text-[13px] font-semibold"
                     :class="
                         order.includes(r.key)
                             ? 'border-brand bg-brand text-white'

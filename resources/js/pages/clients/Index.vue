@@ -210,7 +210,7 @@ const tiles = computed<StatTile[]>(() => [
 
             <!-- The three figures that matter, the margin the loudest -->
             <dl
-                class="grid grid-cols-3 divide-x divide-line border-t border-line bg-sunken/60 text-[12.5px]"
+                class="grid grid-cols-3 divide-x divide-line border-t border-line bg-sunken/60 text-[13px]"
             >
                 <div class="min-w-0 px-4 py-3 sm:px-5">
                     <dt class="truncate text-ink-3">{{ t('ad খরচ') }}</dt>

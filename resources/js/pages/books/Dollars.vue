@@ -313,7 +313,7 @@ function saveAccount(): void {
                             }"
                         />
                     </div>
-                    <p v-if="b!.date" class="mt-1 text-[12.5px] text-ink-3">
+                    <p v-if="b!.date" class="mt-1 text-[13px] text-ink-3">
                         {{ niceDate(b!.date, false) }}
                     </p>
                 </li>
@@ -404,11 +404,11 @@ function saveAccount(): void {
                         <h3 class="font-bold">
                             {{ a.name }}
                             <span
-                                class="ml-1 text-[12.5px] font-medium text-ink-3"
+                                class="ml-1 text-[13px] font-medium text-ink-3"
                                 >{{ a.currency }}</span
                             >
                         </h3>
-                        <span class="num text-[12.5px] text-ink-3">{{
+                        <span class="num text-[13px] text-ink-3">{{
                             t('{date} থেকে', { date: niceDate(a.since) })
                         }}</span>
                     </div>
@@ -416,7 +416,7 @@ function saveAccount(): void {
                         class="mt-3 grid grid-cols-3 divide-x divide-line border-y border-line bg-sunken/60 py-2.5 text-center"
                     >
                         <p>
-                            <span class="block text-[12.5px] text-ink-3">{{
+                            <span class="block text-[13px] text-ink-3">{{
                                 t('Meta গুনেছে')
                             }}</span>
                             <b class="num text-[15px]">{{
@@ -424,7 +424,7 @@ function saveAccount(): void {
                             }}</b>
                         </p>
                         <p>
-                            <span class="block text-[12.5px] text-in">{{
+                            <span class="block text-[13px] text-in">{{
                                 t('Card থেকে কেটেছে')
                             }}</span>
                             <b class="num text-[15px] text-in">{{
@@ -432,7 +432,7 @@ function saveAccount(): void {
                             }}</b>
                         </p>
                         <p>
-                            <span class="block text-[12.5px] text-wait">{{
+                            <span class="block text-[13px] text-wait">{{
                                 t('এখনো কাটবে')
                             }}</span>
                             <b class="num text-[15px] text-wait">{{
@@ -454,7 +454,7 @@ function saveAccount(): void {
                                 >
                                 <span
                                     v-if="c.client"
-                                    class="block truncate text-[12.5px] text-ink-3"
+                                    class="block truncate text-[13px] text-ink-3"
                                     >{{ c.client }}</span
                                 >
                             </span>
@@ -501,7 +501,7 @@ function saveAccount(): void {
                                 </p>
                                 <p
                                     v-if="ch.by_campaign.length"
-                                    class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12.5px] text-ink-3"
+                                    class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[13px] text-ink-3"
                                 >
                                     <span
                                         v-for="(b, i) in ch.by_campaign"
@@ -512,10 +512,7 @@ function saveAccount(): void {
                                         }}</b></span
                                     >
                                 </p>
-                                <p
-                                    v-else
-                                    class="mt-0.5 text-[12.5px] text-ink-3"
-                                >
+                                <p v-else class="mt-0.5 text-[13px] text-ink-3">
                                     {{ t('ভাগ এখনো হয়নি') }}
                                 </p>
                             </li>

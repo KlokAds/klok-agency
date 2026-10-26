@@ -124,7 +124,7 @@ onMounted(() =>
                         <KIcon name="bell" :size="16" />
                         <span
                             v-if="unread > 0"
-                            class="absolute -top-1.5 -right-2.5 grid min-w-4 place-items-center rounded-full bg-out px-1 text-[11px] font-bold text-white"
+                            class="absolute -top-1.5 -right-2.5 grid min-w-4 place-items-center rounded-full bg-out px-1 text-[12.5px] font-bold text-white"
                             >{{ unread > 9 ? '9+' : unread }}</span
                         >
                     </span>
@@ -201,7 +201,7 @@ onMounted(() =>
                                 />Profile</Link
                             >
                             <p
-                                class="px-3 pt-2.5 pb-1 text-[12px] font-bold tracking-wide text-ink-3 uppercase"
+                                class="px-3 pt-2.5 pb-1 text-[13px] font-bold tracking-wide text-ink-3 uppercase"
                             >
                                 {{ t('নিরাপত্তা') }}
                             </p>
@@ -216,7 +216,7 @@ onMounted(() =>
                                     class="text-ink-3"
                                 />{{ t('Password ও 2FA') }}
                                 <span
-                                    class="ml-auto rounded-full px-2 py-0.5 text-[12px] font-semibold"
+                                    class="ml-auto rounded-full px-2 py-0.5 text-[13px] font-semibold"
                                     :class="
                                         twoFactorOff
                                             ? 'bg-wait-soft text-wait'
@@ -282,7 +282,7 @@ onMounted(() =>
                                 "
                             >
                                 <span
-                                    class="grid w-4 place-items-center text-[12px] font-bold text-ink-3"
+                                    class="grid w-4 place-items-center text-[13px] font-bold text-ink-3"
                                     >{{ otherLanguage }}</span
                                 >{{ switchLabel }}
                             </button>
@@ -345,7 +345,7 @@ onMounted(() =>
                 v-for="tab in tabs"
                 :key="tab.href"
                 :href="tab.href"
-                class="flex flex-col items-center gap-0.5 py-2.5 text-[12.5px] font-semibold"
+                class="flex flex-col items-center gap-0.5 py-2.5 text-[13px] font-semibold"
                 :class="active(tab.href) ? 'text-brand' : 'text-ink-3'"
                 ><KIcon :name="tab.icon" :size="21" />{{ t(tab.label) }}</Link
             >

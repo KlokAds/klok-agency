@@ -236,7 +236,7 @@ function tap(i: number): void {
                     :x="pad.left - 8"
                     :y="y(tk) + 4"
                     text-anchor="end"
-                    class="fill-ink-3 text-[11.5px]"
+                    class="fill-ink-3 text-[12.5px]"
                 >
                     {{ axis(tk) }}
                 </text>
@@ -275,7 +275,7 @@ function tap(i: number): void {
                     :x="cx(i)"
                     :y="HEIGHT - 8"
                     text-anchor="middle"
-                    class="text-[11.5px]"
+                    class="text-[12.5px]"
                     :class="
                         active === i ? 'fill-ink font-semibold' : 'fill-ink-3'
                     "

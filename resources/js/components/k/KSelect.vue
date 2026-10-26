@@ -311,12 +311,12 @@ function onKey(event: KeyboardEvent): void {
                         </span>
                         <span
                             v-if="statusOf(option)"
-                            class="shrink-0 rounded-full border border-line px-2 py-px text-[12px] font-medium text-ink-3"
+                            class="shrink-0 rounded-full border border-line px-2 py-px text-[13px] font-medium text-ink-3"
                             >{{ statusOf(option)?.label }}</span
                         >
                         <span
                             v-if="option.hint"
-                            class="shrink-0 text-[12.5px] text-ink-3"
+                            class="shrink-0 text-[13px] text-ink-3"
                             >{{ option.hint }}</span
                         >
                         <svg

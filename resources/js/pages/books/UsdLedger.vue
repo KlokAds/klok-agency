@@ -388,7 +388,7 @@ const needsDirection = computed(() =>
                                         money(row.fifo_cost, 'bdt')
                                     }}</span>
                                     <span
-                                        class="num block text-[12.5px] text-ink-3"
+                                        class="num block text-[13px] text-ink-3"
                                         >@ {{ row.fifo_rate }}</span
                                     >
                                 </template>

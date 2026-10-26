@@ -18,7 +18,7 @@ defineProps<{
             class="flex items-baseline gap-2 text-[14px] font-semibold text-ink-2"
         >
             {{ label }}
-            <span v-if="optional" class="text-[12px] font-normal text-ink-3"
+            <span v-if="optional" class="text-[13px] font-normal text-ink-3"
                 >({{ t('ঐচ্ছিক') }})</span
             >
         </label>

@@ -179,7 +179,7 @@ async function remove(batch: Batch): Promise<void> {
                     :style="{ width: `${(b.used / b.usd) * 100}%` }"
                 />
                 <span
-                    class="num absolute inset-0 grid place-items-center text-[12.5px] font-semibold"
+                    class="num absolute inset-0 grid place-items-center text-[13px] font-semibold"
                     :class="b.used / b.usd > 0.5 ? 'text-paper' : 'text-ink'"
                     >#{{ b.number }} · &#2547;{{ b.rate }}</span
                 >
@@ -235,7 +235,7 @@ async function remove(batch: Batch): Promise<void> {
                     <td class="r num font-semibold">{{ b.rate }}</td>
                     <td class="r">
                         <span class="num">{{ money(b.used, 'usd') }}</span>
-                        <span class="num block text-[12.5px] text-ink-3">{{
+                        <span class="num block text-[13px] text-ink-3">{{
                             t('{amount} বাকি', { amount: money(b.left, 'usd') })
                         }}</span>
                     </td>

@@ -169,7 +169,7 @@ const meter = computed(() => {
                             >
                                 <span class="flex min-w-0 items-center gap-2">
                                     <span
-                                        class="grid size-6 shrink-0 place-items-center rounded-md text-[11px] font-bold text-white"
+                                        class="grid size-6 shrink-0 place-items-center rounded-md text-[12.5px] font-bold text-white"
                                         :class="
                                             p.code === 'meta'
                                                 ? 'bg-[#1877f2]'
@@ -185,7 +185,7 @@ const meter = computed(() => {
                                     >
                                     <span
                                         v-if="p.isLive"
-                                        class="shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 text-[11.5px] font-semibold text-brand-ink"
+                                        class="shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 text-[12.5px] font-semibold text-brand-ink"
                                         >{{ t('Meta-র হিসাবে') }}</span
                                     >
                                 </span>
@@ -204,7 +204,7 @@ const meter = computed(() => {
                                             p.isLive &&
                                             Math.abs(p.book - p.due) >= 100
                                         "
-                                        class="block text-[11.5px] text-ink-3"
+                                        class="block text-[12.5px] text-ink-3"
                                         :title="
                                             t(
                                                 'খাতার নিজের হিসাব — পুরোনো entry বা charge-এর ভাগ না মিললে এটা আলাদা হয়',
@@ -228,7 +228,7 @@ const meter = computed(() => {
                             class="mt-3 rounded-xl border border-brand/30 bg-brand-soft/40 px-3.5 py-3"
                         >
                             <p
-                                class="flex items-center justify-between gap-2 text-[12.5px] font-semibold text-brand-ink"
+                                class="flex items-center justify-between gap-2 text-[13px] font-semibold text-brand-ink"
                             >
                                 <span class="inline-flex items-center gap-1.5"
                                     ><KIcon name="pulse" :size="14" />{{
@@ -256,14 +256,14 @@ const meter = computed(() => {
                                         >
                                         <span
                                             v-if="a.card"
-                                            class="num shrink-0 rounded-md bg-surface px-1.5 py-0.5 text-[12px] text-ink-2"
+                                            class="num shrink-0 rounded-md bg-surface px-1.5 py-0.5 text-[13px] text-ink-2"
                                             >{{ a.card }}</span
                                         >
                                         <span
                                             v-if="
                                                 a.unbilled !== null && !a.ours
                                             "
-                                            class="shrink-0 text-[12px] text-ink-3"
+                                            class="shrink-0 text-[13px] text-ink-3"
                                             >{{
                                                 a.card
                                                     ? t('client-এর নিজের card')
@@ -379,7 +379,7 @@ const meter = computed(() => {
                 <!-- The dollars in taka terms: what the ones left cost, how much of the bought has gone. -->
                 <dl class="mt-4 grid grid-cols-2 gap-3 text-[14px]">
                     <div class="min-w-0 rounded-xl bg-surface px-3.5 py-2.5">
-                        <dt class="text-[12.5px] text-ink-3">
+                        <dt class="text-[13px] text-ink-3">
                             {{ t('কেনা দামে') }}
                         </dt>
                         <dd class="num mt-0.5 font-semibold">
@@ -387,13 +387,13 @@ const meter = computed(() => {
                         </dd>
                     </div>
                     <div class="min-w-0 rounded-xl bg-surface px-3.5 py-2.5">
-                        <dt class="text-[12.5px] text-ink-3">
+                        <dt class="text-[13px] text-ink-3">
                             {{ t('মোট কেনা') }}
                         </dt>
                         <dd class="num mt-0.5 truncate font-semibold">
                             {{ money(s.usd_check.bought, 'usd') }}
                         </dd>
-                        <dd class="num truncate text-[12.5px] text-ink-3">
+                        <dd class="num truncate text-[13px] text-ink-3">
                             {{ t('খরচ') }}
                             {{ money(s.usd_check.consumed, 'usd') }}
                         </dd>

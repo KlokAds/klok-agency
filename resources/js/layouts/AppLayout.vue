@@ -332,7 +332,7 @@ function appSettings(): void {
             </div>
 
             <div
-                class="border-t border-rail-2 px-5 py-4 text-[12.5px] text-rail-dim"
+                class="border-t border-rail-2 px-5 py-4 text-[13px] text-rail-dim"
             >
                 <p class="flex items-center gap-1.5">
                     <KIcon name="shield" :size="14" />
@@ -435,7 +435,7 @@ function appSettings(): void {
                             >
                             <span
                                 v-if="user.role"
-                                class="block truncate text-[12px] text-ink-3"
+                                class="block truncate text-[13px] text-ink-3"
                                 >{{ user.role }}</span
                             >
                         </span>
@@ -520,7 +520,7 @@ function appSettings(): void {
                                 "
                             >
                                 <span
-                                    class="grid w-4 place-items-center text-[12px] font-bold text-ink-3"
+                                    class="grid w-4 place-items-center text-[13px] font-bold text-ink-3"
                                     >{{ otherLanguage }}</span
                                 >{{ switchLabel }}
                             </button>

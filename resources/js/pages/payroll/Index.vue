@@ -255,9 +255,7 @@ const shortMonth = (ym: string) =>
 
     <div class="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
         <div class="panel border-l-[3px] border-l-brand p-3 sm:p-5">
-            <p
-                class="text-[12.5px] font-medium text-brand-ink sm:text-[13.5px]"
-            >
+            <p class="text-[13px] font-medium text-brand-ink sm:text-[13.5px]">
                 {{ t('মাসিক বেতন') }}
             </p>
             <p class="num mt-1 text-[18px] font-bold sm:text-[24px]">
@@ -265,7 +263,7 @@ const shortMonth = (ym: string) =>
             </p>
         </div>
         <div class="panel border-l-[3px] border-l-in p-3 sm:p-5">
-            <p class="text-[12.5px] font-medium text-in sm:text-[13.5px]">
+            <p class="text-[13px] font-medium text-in sm:text-[13.5px]">
                 {{ t('এই মাসে দেওয়া') }}
             </p>
             <p class="num mt-1 text-[18px] font-bold sm:text-[24px]">
@@ -277,7 +275,7 @@ const shortMonth = (ym: string) =>
             :class="totals.due > 0 ? 'border-l-out' : 'border-l-line-2'"
         >
             <p
-                class="text-[12.5px] font-medium sm:text-[13.5px]"
+                class="text-[13px] font-medium sm:text-[13.5px]"
                 :class="totals.due > 0 ? 'text-out' : 'text-ink-3'"
             >
                 {{ t('মোট বাকি') }}
@@ -386,11 +384,11 @@ const shortMonth = (ym: string) =>
                                 : 'bg-sunken text-ink-3'
                         "
                     >
-                        <span class="block font-bn text-[11.5px]">{{
+                        <span class="block font-bn text-[12.5px]">{{
                             shortMonth(m)
                         }}</span>
                         <span
-                            class="num block truncate text-[12px] font-semibold"
+                            class="num block truncate text-[13px] font-semibold"
                             >{{
                                 e.months[m]
                                     ? money(e.months[m], 'bdt').replace(
@@ -465,7 +463,7 @@ const shortMonth = (ym: string) =>
                             v-for="m in months"
                             :key="m"
                             class="r num text-[13.5px]"
-                            :class="e.months[m] ? 'text-ink' : 'text-ink-3/50'"
+                            :class="e.months[m] ? 'text-ink' : 'text-ink-3'"
                         >
                             {{ e.months[m] ? money(e.months[m], 'bdt') : '·' }}
                         </td>

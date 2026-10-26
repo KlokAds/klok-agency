@@ -931,7 +931,7 @@ function print(): void {
                             {{ r.bdt !== null ? money(r.bdt, 'bdt') : '' }}
                             <span
                                 v-if="r.settled_by"
-                                class="block text-[12.5px] font-normal whitespace-nowrap text-ink-3"
+                                class="block text-[13px] font-normal whitespace-nowrap text-ink-3"
                                 >{{
                                     t('{payment} দিয়ে', {
                                         payment: r.settled_by,

@@ -134,7 +134,7 @@ const showTable = ref(false);
                         :x="b.cx"
                         :y="H - 8"
                         text-anchor="middle"
-                        class="fill-ink-3 text-[12px]"
+                        class="fill-ink-3 text-[13px]"
                         font-family="var(--font-sans)"
                     >
                         {{ b.label }}

@@ -364,7 +364,7 @@ const needsClient = computed(() =>
                                 }}
                                 <span
                                     v-if="row.wallet"
-                                    class="ml-1.5 rounded-md bg-sunken px-1.5 py-0.5 text-[12.5px] text-ink-3"
+                                    class="ml-1.5 rounded-md bg-sunken px-1.5 py-0.5 text-[13px] text-ink-3"
                                     >{{
                                         options.wallets.find(
                                             (w) => w.value === row.wallet,

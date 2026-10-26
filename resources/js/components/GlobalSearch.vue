@@ -145,7 +145,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
             t('খুঁজুন — client, campaign, entry…')
         }}</span>
         <kbd
-            class="rounded-md border border-line px-1.5 py-0.5 font-mono text-[12px]"
+            class="rounded-md border border-line px-1.5 py-0.5 font-mono text-[13px]"
             >Ctrl K</kbd
         >
     </button>
@@ -155,7 +155,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
         @click="show"
     >
         <KIcon name="search" :size="16" />
-        <span class="text-[12.5px] leading-none">{{ t('খুঁজুন') }}</span>
+        <span class="text-[13px] leading-none">{{ t('খুঁজুন') }}</span>
     </button>
 
     <Teleport to="body">
@@ -187,7 +187,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     />
                     <button
                         type="button"
-                        class="hidden rounded-md border border-line px-1.5 py-0.5 font-mono text-[12px] text-ink-3 hover:bg-sunken hover:text-ink sm:block"
+                        class="hidden rounded-md border border-line px-1.5 py-0.5 font-mono text-[13px] text-ink-3 hover:bg-sunken hover:text-ink sm:block"
                         :aria-label="t('বন্ধ করুন')"
                         @click="close"
                     >

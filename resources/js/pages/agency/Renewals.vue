@@ -128,7 +128,7 @@ const options = computed<Option[]>(() => [
                             {{ r.days ?? '—' }}
                             <span
                                 v-if="r.usd"
-                                class="block text-[12.5px] text-ink-3"
+                                class="block text-[13px] text-ink-3"
                                 >{{ money(r.usd, 'usd') }}</span
                             >
                         </td>
@@ -142,7 +142,7 @@ const options = computed<Option[]>(() => [
                             <span v-else>—</span>
                             <span
                                 v-if="r.invoice"
-                                class="block text-[12.5px] text-ink-3"
+                                class="block text-[13px] text-ink-3"
                                 >{{ r.invoice.total }}</span
                             >
                         </td>

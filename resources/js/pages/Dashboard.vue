@@ -273,7 +273,7 @@ const greeting =
                     >{{ niceDate(r.date, false) }}</span
                 >
                 <span
-                    class="grid size-7 shrink-0 place-items-center rounded-md text-[12.5px] font-bold"
+                    class="grid size-7 shrink-0 place-items-center rounded-md text-[13px] font-bold"
                     :class="
                         r.book === 'usd'
                             ? 'bg-brand-soft text-brand-ink'

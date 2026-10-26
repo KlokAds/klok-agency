@@ -134,7 +134,7 @@ const totalName = computed(() => {
         >
             {{ x.label }}
             <span
-                class="rounded-full px-1.5 text-[12px]"
+                class="rounded-full px-1.5 text-[13px]"
                 :class="tab === x.key ? 'bg-brand-soft text-brand' : 'bg-line'"
                 >{{ x.count }}</span
             >
@@ -199,7 +199,7 @@ const totalName = computed(() => {
                 >
                     {{ t(g.title) }}
                     <span
-                        class="num rounded-full bg-sunken px-2 py-0.5 text-[12.5px] font-semibold text-ink-2"
+                        class="num rounded-full bg-sunken px-2 py-0.5 text-[13px] font-semibold text-ink-2"
                         >{{ g.list.length }}</span
                     >
                 </h2>
@@ -375,7 +375,7 @@ const totalName = computed(() => {
                 <span class="shrink-0 text-right">
                     <b class="num block">{{ money(o.usd, 'usd') }}</b>
                     <span
-                        class="text-[12.5px] font-semibold"
+                        class="text-[13px] font-semibold"
                         :class="o.due ? 'text-wait' : 'text-in'"
                         >{{ o.due ? t('বাকি') : t('পরিশোধ') }}</span
                     >
@@ -409,7 +409,7 @@ const totalName = computed(() => {
                     <span class="shrink-0 text-right">
                         <b class="num block">{{ money(s.amount, 'bdt') }}</b>
                         <span
-                            class="text-[12.5px] font-semibold"
+                            class="text-[13px] font-semibold"
                             :class="s.paid ? 'text-in' : 'text-wait'"
                             >{{ s.paid ? t('পরিশোধ') : t('বাকি') }}</span
                         >

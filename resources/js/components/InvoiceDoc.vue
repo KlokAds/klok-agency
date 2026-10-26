@@ -360,7 +360,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
         </section>
 
         <footer
-            class="inv-foot flex flex-col gap-1 px-6 py-4 text-[12.5px] @xl:flex-row @xl:justify-between @xl:px-10"
+            class="inv-foot flex flex-col gap-1 px-6 py-4 text-[13px] @xl:flex-row @xl:justify-between @xl:px-10"
         >
             <span>{{
                 t('ধন্যবাদ — {name}-এর সাথে কাজ করার জন্য।', {

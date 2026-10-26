@@ -124,11 +124,11 @@ const shown = computed(() =>
                 <KIcon name="bell" :size="16" />
                 <span
                     v-if="unread > 0"
-                    class="num absolute -top-1.5 -right-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-out px-1 text-[11px] font-bold text-white"
+                    class="num absolute -top-1.5 -right-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-out px-1 text-[12.5px] font-bold text-white"
                     >{{ badge }}</span
                 >
             </span>
-            <span class="text-[12.5px] leading-none">{{
+            <span class="text-[13px] leading-none">{{
                 t('Notification')
             }}</span>
         </button>
@@ -147,7 +147,7 @@ const shown = computed(() =>
                         {{ t('Notification') }}
                         <span
                             v-if="unread > 0"
-                            class="num ml-1 rounded-md bg-out-soft px-1.5 py-0.5 text-[12.5px] font-semibold text-out"
+                            class="num ml-1 rounded-md bg-out-soft px-1.5 py-0.5 text-[13px] font-semibold text-out"
                             >{{ unread }}</span
                         >
                     </p>
@@ -176,7 +176,7 @@ const shown = computed(() =>
                         {{ label
                         }}<span
                             v-if="key === 'new' && unread > 0"
-                            class="num ml-1 text-[12px] opacity-80"
+                            class="num ml-1 text-[13px] opacity-80"
                             >{{ unread }}</span
                         >
                     </button>

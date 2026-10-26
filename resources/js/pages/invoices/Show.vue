@@ -397,7 +397,7 @@ const PAY_STATUS: Record<
                         </div>
                         <p
                             v-if="p.usd_credit"
-                            class="mt-0.5 text-[12.5px] text-ink-3"
+                            class="mt-0.5 text-[13px] text-ink-3"
                         >
                             {{
                                 t('Ad credit {usd}', {

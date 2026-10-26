@@ -232,7 +232,7 @@ const low = computed(
             <!-- Where it went, when more than one platform: FB Ads, GL Ads, others — a line each. -->
             <ul
                 v-if="(lifetime?.by_platform?.length ?? 0) > 1"
-                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[12px] text-ink-3"
+                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[13px] text-ink-3"
             >
                 <li
                     v-for="p in lifetime?.by_platform"
@@ -253,7 +253,7 @@ const low = computed(
             </p>
             <ul
                 v-if="lastPayment"
-                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[12px] text-ink-3"
+                class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[13px] text-ink-3"
             >
                 <li class="flex items-center justify-between gap-2">
                     <span class="truncate">{{ t('শেষ পেমেন্ট') }}</span>
@@ -284,7 +284,7 @@ const low = computed(
                 <!-- Asked back now: at our dollar rate; the commission stays. -->
                 <span
                     v-if="credit.refund"
-                    class="num text-[12.5px] text-ink-3"
+                    class="num text-[13px] text-ink-3"
                     :title="t('আমাদের ডলার রেটে; commission ফেরতযোগ্য নয়')"
                     >{{
                         t('ফেরত ≈ {amount}', {
@@ -299,7 +299,7 @@ const low = computed(
                     credit.meta &&
                     credit.meta.charged + credit.meta.uncharged > 0
                 "
-                class="num mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[12.5px] text-ink-3"
+                class="num mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[13px] text-ink-3"
             >
                 <span
                     >{{ t('Meta কেটেছে') }}
@@ -316,7 +316,7 @@ const low = computed(
             </p>
             <p
                 v-if="credit.left > 0 && credit.left < 100"
-                class="mt-1 text-[12.5px] text-ink-3"
+                class="mt-1 text-[13px] text-ink-3"
             >
                 {{
                     t('১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।')
@@ -386,11 +386,11 @@ const low = computed(
                 >
                 <span
                     v-if="due.count > 0"
-                    class="rounded-full bg-sunken px-1.5 py-0.5 text-[12px] font-semibold text-ink-2"
+                    class="rounded-full bg-sunken px-1.5 py-0.5 text-[13px] font-semibold text-ink-2"
                     >{{ t('{n}টা', { n: due.count }) }}</span
                 >
             </p>
-            <p v-if="next_invoice" class="num mt-1 text-[12.5px] text-ink-3">
+            <p v-if="next_invoice" class="num mt-1 text-[13px] text-ink-3">
                 {{ next_invoice.number
                 }}<template v-if="next_invoice.due_date">
                     ·
@@ -405,10 +405,7 @@ const low = computed(
                     }}</template
                 >
             </p>
-            <p
-                v-else
-                class="mt-1 flex items-center gap-1 text-[12.5px] text-in"
-            >
+            <p v-else class="mt-1 flex items-center gap-1 text-[13px] text-in">
                 <KIcon name="check" :size="13" />{{
                     t('সব invoice পরিশোধ হয়েছে')
                 }}
@@ -481,7 +478,7 @@ const low = computed(
                 </svg>
                 <span class="relative text-center leading-tight">
                     <b class="num block text-[20px]">{{ leftShare }}%</b>
-                    <span class="block text-[11.5px] text-white/70">{{
+                    <span class="block text-[12.5px] text-white/70">{{
                         t('বাকি')
                     }}</span>
                 </span>
@@ -516,27 +513,27 @@ const low = computed(
         >
             <p class="px-1">
                 <span
-                    class="block text-[12.5px] whitespace-nowrap text-white/65"
+                    class="block text-[13px] whitespace-nowrap text-white/65"
                     >{{ t('দেওয়া') }}</span
                 >
                 <b class="num mt-0.5 block text-[16px]">{{
                     money(credit.round?.paid ?? credit.paid, 'usd')
                 }}</b>
                 <span
-                    class="num mt-0.5 block text-[11.5px] whitespace-nowrap text-white/55"
+                    class="num mt-0.5 block text-[12.5px] whitespace-nowrap text-white/55"
                     >{{ credit.round?.since ?? t('এ পর্যন্ত') }}</span
                 >
             </p>
             <p class="px-1">
                 <span
-                    class="block text-[12.5px] whitespace-nowrap text-white/65"
+                    class="block text-[13px] whitespace-nowrap text-white/65"
                     >{{ t('খরচ') }}</span
                 >
                 <b class="num mt-0.5 block text-[16px]">{{
                     money(credit.round?.spent ?? credit.spent, 'usd')
                 }}</b>
                 <span
-                    class="mt-0.5 block text-[11.5px] whitespace-nowrap text-white/55"
+                    class="mt-0.5 block text-[12.5px] whitespace-nowrap text-white/55"
                     >{{
                         credit.round
                             ? t('{date} থেকে', { date: credit.round.since })
@@ -546,7 +543,7 @@ const low = computed(
             </p>
             <p class="px-1">
                 <span
-                    class="block text-[12.5px] whitespace-nowrap text-white/65"
+                    class="block text-[13px] whitespace-nowrap text-white/65"
                     >{{ t('দিনে') }}</span
                 >
                 <b class="num mt-0.5 block text-[16px]">{{
@@ -555,7 +552,7 @@ const low = computed(
                         : t('এখনো নেই')
                 }}</b>
                 <span
-                    class="mt-0.5 block text-[11.5px] whitespace-nowrap text-white/55"
+                    class="mt-0.5 block text-[12.5px] whitespace-nowrap text-white/55"
                     >{{ t('গড়ে') }}</span
                 >
             </p>

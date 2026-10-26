@@ -719,7 +719,7 @@ const errorAt = (index: number, field: string) =>
                         invoice ? t('সংরক্ষণ') : t('Invoice তৈরি করুন')
                     }}</KButton
                 >
-                <p class="mt-2 text-[12.5px] text-ink-3">
+                <p class="mt-2 text-[13px] text-ink-3">
                     {{
                         t(
                             'Client-কে পাঠানোর আগ পর্যন্ত বদলানো যায়; পাঠানোর পর আর বদলাবে না।',

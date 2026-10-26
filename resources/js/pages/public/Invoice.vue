@@ -528,7 +528,7 @@ const STATUS_WORD: Record<string, string> = {
                             {{ t('{n} দিন', { n: d }) }}
                             <span
                                 v-if="daysPrice(d)"
-                                class="num text-[12px] font-medium text-ink-3"
+                                class="num text-[13px] font-medium text-ink-3"
                                 >{{ bdt(daysPrice(d) ?? 0) }}</span
                             >
                         </button>
@@ -551,7 +551,7 @@ const STATUS_WORD: Record<string, string> = {
                                     ? t('{n} দিন', { n: state.renewal.days })
                                     : t('অন্য')
                             }}
-                            <span class="text-[12px] font-medium text-ink-3">{{
+                            <span class="text-[13px] font-medium text-ink-3">{{
                                 t('নিজে লিখুন')
                             }}</span>
                         </button>
@@ -844,7 +844,7 @@ const STATUS_WORD: Record<string, string> = {
                         <template v-if="state.session.method === 'qr'">
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[13px]"
                                     >1</span
                                 >
                                 {{
@@ -855,7 +855,7 @@ const STATUS_WORD: Record<string, string> = {
                             </li>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[13px]"
                                     >2</span
                                 >
                                 {{
@@ -868,7 +868,7 @@ const STATUS_WORD: Record<string, string> = {
                         <template v-else>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[13px]"
                                     >1</span
                                 >
                                 {{
@@ -880,7 +880,7 @@ const STATUS_WORD: Record<string, string> = {
                             </li>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[13px]"
                                     >2</span
                                 >
                                 {{
@@ -891,7 +891,7 @@ const STATUS_WORD: Record<string, string> = {
                             </li>
                             <li class="flex gap-2.5">
                                 <span
-                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[12px]"
+                                    class="num grid size-5 shrink-0 place-items-center rounded-full bg-sunken text-[13px]"
                                     >3</span
                                 >
                                 {{
@@ -1017,7 +1017,7 @@ const STATUS_WORD: Record<string, string> = {
                     </h2>
                     <ol
                         v-if="keys.length"
-                        class="mt-3 grid grid-cols-3 gap-2 text-center text-[12.5px] leading-tight text-ink-3"
+                        class="mt-3 grid grid-cols-3 gap-2 text-center text-[13px] leading-tight text-ink-3"
                     >
                         <li
                             v-for="(step, i) in [
@@ -1127,7 +1127,7 @@ const STATUS_WORD: Record<string, string> = {
                                 ></span
                             ><span
                                 v-if="state.charges?.[key]"
-                                class="shrink-0 rounded-full bg-wait-soft px-2 py-0.5 text-[12px] font-semibold text-wait"
+                                class="shrink-0 rounded-full bg-wait-soft px-2 py-0.5 text-[13px] font-semibold text-wait"
                                 >+{{ bdt(state.charges[key]) }}</span
                             >
                         </button>
@@ -1359,7 +1359,7 @@ const STATUS_WORD: Record<string, string> = {
                             <span class="min-w-0">
                                 <span class="font-medium">{{ p.method }}</span>
                                 <span
-                                    class="num block truncate text-[12.5px] text-ink-3"
+                                    class="num block truncate text-[13px] text-ink-3"
                                     >{{ niceDate(p.at.slice(0, 10))
                                     }}<template v-if="p.reference">
                                         · {{ p.reference }}</template
@@ -1371,7 +1371,7 @@ const STATUS_WORD: Record<string, string> = {
                                     bdt(p.amount)
                                 }}</span>
                                 <span
-                                    class="block text-[12.5px]"
+                                    class="block text-[13px]"
                                     :class="
                                         p.status === 'verified'
                                             ? 'text-in'
@@ -1389,7 +1389,7 @@ const STATUS_WORD: Record<string, string> = {
         </main>
 
         <footer
-            class="no-print mx-auto max-w-[1080px] px-4 pb-10 text-[12.5px] text-ink-3 sm:px-6"
+            class="no-print mx-auto max-w-[1080px] px-4 pb-10 text-[13px] text-ink-3 sm:px-6"
         >
             {{
                 t('প্রশ্ন থাকলে {name}-এর সাথে যোগাযোগ করুন', {

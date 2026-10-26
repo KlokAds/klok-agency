@@ -58,7 +58,7 @@ withDefaults(
                 >
                 <span
                     v-if="badge"
-                    class="shrink-0 rounded-[5px] px-1.5 py-[3px] text-[10px] font-bold tracking-[0.06em] uppercase"
+                    class="shrink-0 rounded-[5px] px-1.5 py-[3px] text-[12.5px] font-bold tracking-[0.06em] uppercase"
                     :class="[
                         light
                             ? 'bg-[#2dd4bf]/20 text-[#5eead4]'
@@ -71,8 +71,8 @@ withDefaults(
                 class="mt-0.5 truncate py-px leading-[1.45] font-semibold"
                 :class="[
                     compact
-                        ? 'text-[10.5px] tracking-[0.1em]'
-                        : 'text-[11.5px] tracking-[0.16em]',
+                        ? 'text-[12.5px] tracking-[0.1em]'
+                        : 'text-[12.5px] tracking-[0.16em]',
                     light ? 'text-rail-dim' : 'text-ink-3',
                 ]"
             >

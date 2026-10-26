@@ -182,7 +182,7 @@ const tone = computed(() =>
 
             <div class="mt-1.5 flex flex-wrap items-center gap-2">
                 <span
-                    class="flex items-center gap-1.5 text-[12.5px] whitespace-nowrap text-ink-3"
+                    class="flex items-center gap-1.5 text-[13px] whitespace-nowrap text-ink-3"
                 >
                     <span
                         v-if="!item.read"

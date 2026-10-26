@@ -241,7 +241,7 @@ onMounted(() => {
                         <span v-if="task.assignee">· {{ task.assignee }}</span>
                         <span
                             v-if="task.repeat !== 'none'"
-                            class="flex items-center gap-1 rounded-md bg-sunken px-1.5 py-0.5 text-[12.5px] font-medium text-ink-2"
+                            class="flex items-center gap-1 rounded-md bg-sunken px-1.5 py-0.5 text-[13px] font-medium text-ink-2"
                             ><KIcon name="renew" :size="12" />{{
                                 repeatLabel(task.repeat)
                             }}</span

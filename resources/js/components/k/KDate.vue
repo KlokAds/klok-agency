@@ -233,7 +233,7 @@ function onGridKey(event: KeyboardEvent): void {
                         <span
                             v-for="(w, i) in WEEK"
                             :key="w"
-                            class="py-1 text-center font-bn text-[12.5px] font-medium"
+                            class="py-1 text-center font-bn text-[13px] font-medium"
                             :class="i === 6 ? 'text-out' : 'text-ink-3'"
                             >{{ t(w) }}</span
                         >
@@ -253,7 +253,7 @@ function onGridKey(event: KeyboardEvent): void {
                                       ? d.friday
                                           ? 'text-out hover:bg-sunken'
                                           : 'text-ink hover:bg-sunken'
-                                      : 'text-ink-3/60 hover:bg-sunken',
+                                      : 'text-ink-3 hover:bg-sunken',
                                 d.iso === focusDay && d.iso !== model
                                     ? 'ring-1 ring-brand'
                                     : '',

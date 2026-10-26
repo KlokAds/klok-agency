@@ -278,7 +278,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                                             toggle(`${m.key}.${a}`, v)
                                     "
                                 />
-                                <span v-else class="text-ink-3/40">·</span>
+                                <span v-else class="text-ink-3">·</span>
                             </td>
                             <td class="px-2 py-2.5 text-center sm:px-3">
                                 <KCheck

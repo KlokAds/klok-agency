@@ -45,7 +45,7 @@ defineProps<{ tiles: StatTile[] }>();
                 >
                 <span
                     v-if="tile.sub"
-                    class="mt-0.5 block truncate text-[12.5px] sm:mt-1.5"
+                    class="mt-0.5 block truncate text-[13px] sm:mt-1.5"
                     :class="tile.subClass ?? 'text-ink-3'"
                     >{{ tile.sub }}</span
                 >

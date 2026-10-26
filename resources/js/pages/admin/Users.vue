@@ -214,7 +214,7 @@ async function remove(user: User): Promise<void> {
                         }}</span>
                         <span
                             v-if="u.last_login_ip"
-                            class="num block text-[12.5px] text-ink-3"
+                            class="num block text-[13px] text-ink-3"
                             >{{ u.last_login_ip }}</span
                         >
                     </td>

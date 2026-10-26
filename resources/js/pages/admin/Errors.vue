@@ -117,7 +117,7 @@ function plain(e: Entry): string | null {
             </button>
             <pre
                 v-if="opened === i && e.detail"
-                class="mx-4 mb-4 overflow-x-auto rounded-lg bg-sunken p-3 font-mono text-[12.5px] leading-relaxed break-all whitespace-pre-wrap text-ink-2 sm:mx-6"
+                class="mx-4 mb-4 overflow-x-auto rounded-lg bg-sunken p-3 font-mono text-[13px] leading-relaxed break-all whitespace-pre-wrap text-ink-2 sm:mx-6"
                 >{{ e.detail }}</pre>
         </li>
     </ul>
