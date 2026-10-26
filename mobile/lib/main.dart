@@ -19,9 +19,19 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// The agency's books, shown whole inside the app: every change on the site is in the app at once.
 const site = 'https://billing.klokads.com';
-const teal = Color(0xFF0D9488);
-const rail = Color(0xFF11211E);
-const paper = Color(0xFFF6F7F6);
+// The site's colours (resources/css/app.css): the purple brand, its light tint for dark
+// screens, the violet charcoal of the dark theme and the lavender paper of the light one.
+const brand = Color(0xFF6F4A97);
+const brandDeep = Color(0xFF5A3B82);
+const brandLight = Color(0xFFC2A3DF);
+const rail = Color(0xFF0C0B13);
+const paper = Color(0xFFF4F2F7);
+const inkDark = Color(0xFFEEF2F6);
+const lineDark = Color(0xFF27243A);
+const lineLight = Color(0xFFE3DFEA);
+const surfaceDark = Color(0xFF17151F);
+const good = Color(0xFF16A34A);
+const bad = Color(0xFFDC2626);
 
 final notifications = FlutterLocalNotificationsPlugin();
 const smsChannel = MethodChannel('klok/sms');
@@ -99,7 +109,7 @@ Future<void> showAlert(RemoteMessage message) async {
         importance: channel.importance,
         priority: loud ? Priority.max : Priority.high,
         icon: 'ic_notification',
-        color: teal,
+        color: brand,
         styleInformation: BigTextStyleInformation(body),
         category: AndroidNotificationCategory.message,
         visibility: NotificationVisibility.private,
@@ -499,12 +509,12 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.fingerprint, size: 76, color: Color(0xFF2DD4BF)),
+                            const Icon(Icons.fingerprint, size: 76, color: brandLight),
                             const SizedBox(height: 18),
                             const Text('KlokOne', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
                             const SizedBox(height: 28),
                             FilledButton.icon(
-                              style: FilledButton.styleFrom(backgroundColor: teal),
+                              style: FilledButton.styleFrom(backgroundColor: brand),
                               onPressed: unlock,
                               icon: const Icon(Icons.lock_open),
                               label: const Text('আঙুলের ছাপ দিয়ে খুলুন'),
@@ -663,7 +673,7 @@ class _PinPadState extends State<PinPad> {
         child: Column(
           children: [
             const Spacer(flex: 2),
-            const Icon(Icons.lock_outline, color: Color(0xFF2DD4BF), size: 38),
+            const Icon(Icons.lock_outline, color: brandLight, size: 38),
             const SizedBox(height: 14),
             Text(widget.title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w600)),
             if (widget.subtitle != null) ...[
@@ -682,8 +692,8 @@ class _PinPadState extends State<PinPad> {
                   height: 14,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: i < pin.length ? const Color(0xFF2DD4BF) : Colors.transparent,
-                    border: Border.all(color: i < pin.length ? const Color(0xFF2DD4BF) : Colors.white38, width: 1.5),
+                    color: i < pin.length ? brandLight : Colors.transparent,
+                    border: Border.all(color: i < pin.length ? brandLight : Colors.white38, width: 1.5),
                   ),
                 ),
               ),
@@ -843,7 +853,7 @@ class _SitePageState extends State<SitePage> {
   void initState() {
     super.initState();
     refresh = PullToRefreshController(
-      settings: PullToRefreshSettings(color: teal),
+      settings: PullToRefreshSettings(color: brand),
       onRefresh: () async => web?.reload(),
     );
     openSub = opened.stream.listen(open);
@@ -1000,7 +1010,7 @@ class _SitePageState extends State<SitePage> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        icon: const Icon(Icons.fingerprint, size: 40, color: teal),
+        icon: const Icon(Icons.fingerprint, size: 40, color: brand),
         title: const Text('আঙুলের ছাপ দিয়ে app lock?'),
         content: const Text('চালু করলে app খোলার সময় আঙুলের ছাপ চাইবে। Login থেকে যাবে — আবার sign in করতে হবে না। পরে app-এর Settings থেকে বদলানো যায়।'),
         actions: [
@@ -1231,7 +1241,7 @@ class _SitePageState extends State<SitePage> {
                   }
                 },
               ),
-              if (progress < 1) LinearProgressIndicator(value: progress, minHeight: 2, color: teal, backgroundColor: Colors.transparent),
+              if (progress < 1) LinearProgressIndicator(value: progress, minHeight: 2, color: brand, backgroundColor: Colors.transparent),
               if (failed)
                 Positioned.fill(
                   child: ColoredBox(
@@ -1242,7 +1252,7 @@ class _SitePageState extends State<SitePage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.wifi_off_rounded, size: 56, color: teal),
+                            const Icon(Icons.wifi_off_rounded, size: 56, color: brand),
                             const SizedBox(height: 14),
                             const Text('নেট নেই', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                             const SizedBox(height: 8),
@@ -1252,7 +1262,7 @@ class _SitePageState extends State<SitePage> {
                             ),
                             const SizedBox(height: 18),
                             FilledButton.icon(
-                              style: FilledButton.styleFrom(backgroundColor: teal),
+                              style: FilledButton.styleFrom(backgroundColor: brand),
                               onPressed: () {
                                 setState(() => failed = false);
                                 web?.reload();
@@ -1402,12 +1412,19 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   /// One thing the forwarding needs: ✓ when it is right, else a button that puts it right.
-  Widget health(bool ok, String title, String subtitle, Future<void> Function() onFix, {String fix = 'ঠিক করুন'}) {
-    return ListTile(
-      leading: Icon(ok ? Icons.check_circle : Icons.error_outline, color: ok ? teal : const Color(0xFFDC2626)),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: ok && fix == 'ঠিক করুন' ? null : TextButton(onPressed: onFix, child: Text(fix)),
+  Widget health(bool ok, IconData icon, String title, String subtitle, Future<void> Function() onFix, {String fix = 'ঠিক করুন'}) {
+    return SettingsRow(
+      icon: icon,
+      tint: ok ? good : bad,
+      title: title,
+      subtitle: subtitle,
+      trailing: ok && fix == 'ঠিক করুন'
+          ? statusPill(true, 'ঠিক আছে')
+          : FilledButton(
+              onPressed: onFix,
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14), minimumSize: const Size(0, 38)),
+              child: Text(fix),
+            ),
     );
   }
 
@@ -1419,132 +1436,198 @@ class _SettingsPageState extends State<SettingsPage> {
     return '${d.inDays} দিন আগে';
   }
 
+  static const _modeIcons = {'bio': Icons.fingerprint, 'pin': Icons.dialpad_rounded, 'off': Icons.lock_open_rounded};
+  static const _modeHints = {
+    'bio': 'আঙুল না চিনলে phone-এর PIN/pattern',
+    'pin': '৬ সংখ্যার, শুধু এই app-এর',
+    'off': 'যে phone হাতে পাবে সে-ই খুলতে পারবে',
+  };
+
   @override
   Widget build(BuildContext context) {
-    const head = TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: teal, letterSpacing: .3);
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(title: Text(smsBuild ? 'App lock ও SMS' : 'App lock')),
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.only(bottom: 28),
         children: [
-          const Padding(padding: EdgeInsets.fromLTRB(16, 16, 16, 4), child: Text('APP LOCK', style: head)),
-          for (final entry in Lock.modes.entries)
-            RadioListTile<String>(
-              value: entry.key,
-              groupValue: mode,
-              onChanged: (v) => setMode(v!),
-              title: Text(entry.value),
-              subtitle: entry.key == 'bio'
-                  ? const Text('আঙুল না চিনলে phone-এর PIN/pattern')
-                  : entry.key == 'off'
-                      ? const Text('যে phone হাতে পাবে সে-ই খুলতে পারবে')
-                      : null,
+          SettingsCard(
+            title: 'App lock',
+            icon: Icons.lock_outline,
+            children: [
+              for (final (i, entry) in Lock.modes.entries.indexed)
+                SettingsRow(
+                  first: i == 0,
+                  icon: _modeIcons[entry.key] ?? Icons.lock_outline,
+                  title: entry.value,
+                  subtitle: _modeHints[entry.key],
+                  selected: mode == entry.key,
+                  tint: entry.key == 'off' ? bad : null,
+                  onTap: () => setMode(entry.key),
+                  trailing: mode == entry.key
+                      ? Icon(Icons.check_circle_rounded, color: dark ? brandLight : brand)
+                      : Icon(Icons.circle_outlined, color: dark ? const Color(0xFF363251) : const Color(0xFFCDC5D9)),
+                ),
+            ],
+          ),
+          if (mode == 'pin')
+            SettingsCard(
+              title: 'PIN',
+              icon: Icons.password,
+              children: [
+                SettingsRow(
+                  first: true,
+                  icon: Icons.fingerprint,
+                  title: 'আঙুলের ছাপেও খুলবে',
+                  subtitle: 'PIN-এর বদলে আঙুল দিয়েও',
+                  trailing: Switch(
+                    value: pinFinger,
+                    onChanged: (v) async {
+                      // On: the finger must pass. Off: the PIN, so no one else switches it.
+                      if (v ? !await fingerAllowed() : !await confirmIdentity(context, reason: 'আঙুলের ছাপ বন্ধ করতে')) {
+                        return;
+                      }
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('lock.pin_finger', v);
+                      setState(() => pinFinger = v);
+                    },
+                  ),
+                ),
+                SettingsRow(
+                  icon: Icons.password,
+                  title: 'PIN বদলান',
+                  subtitle: 'আগে এখনকার PIN চাইবে',
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: changePin,
+                ),
+              ],
             ),
-          if (mode == 'pin') ...[
-            SwitchListTile(
-              value: pinFinger,
-              onChanged: (v) async {
-                // On: the finger must pass. Off: the PIN, so no one else switches it.
-                if (v ? !await fingerAllowed() : !await confirmIdentity(context, reason: 'আঙুলের ছাপ বন্ধ করতে')) {
-                  return;
-                }
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('lock.pin_finger', v);
-                setState(() => pinFinger = v);
-              },
-              title: const Text('আঙুলের ছাপেও খুলবে'),
-            ),
-            ListTile(leading: const Icon(Icons.password), title: const Text('PIN বদলান'), onTap: changePin),
-          ],
           if (mode != 'off')
-            ListTile(
-              leading: const Icon(Icons.timer_outlined),
-              title: const Text('কতক্ষণ পর আবার lock'),
-              trailing: DropdownButton<int>(
-                value: after,
-                underline: const SizedBox(),
-                items: Lock.afters.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
-                onChanged: (v) async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setInt('lock.after', v!);
-                  setState(() => after = v);
-                },
-              ),
+            SettingsCard(
+              title: 'আবার lock',
+              icon: Icons.timer_outlined,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'App থেকে বের হওয়ার কতক্ষণ পর আবার খুলতে lock লাগবে',
+                        style: TextStyle(fontSize: 13, color: dark ? const Color(0xFF9AA3B0) : const Color(0xFF5B6560)),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final e in Lock.afters.entries)
+                            ChoicePill(
+                              label: e.value,
+                              on: after == e.key,
+                              onTap: () async {
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.setInt('lock.after', e.key);
+                                setState(() => after = e.key);
+                              },
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           if (smsBuild) ...[
-          const Divider(height: 32),
-          const Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 4), child: Text('PAYMENT SMS', style: head)),
-          SwitchListTile(
-            value: smsOn,
-            onChanged: smsBusy ? null : toggleSms,
-            title: const Text('এই phone থেকে payment SMS পাঠাও'),
-            subtitle: const Text(
-              'Wallet-এর SIM যে phone-এ, শুধু সেখানে (Owner)। bKash, NAGAD, 16216 আর bank-এর SMS ছাড়া কিছুই phone থেকে যায় না।',
-            ),
-          ),
-          if (smsBusy) const LinearProgressIndicator(color: teal),
-          if (smsError != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              child: Text(smsError!, style: const TextStyle(color: Color(0xFFB91C1C))),
-            ),
-          if (smsOn) ...[
-            // The phone's own state: each thing that must be on, and a way to put it right.
-            health(
-              smsAllowed,
-              'SMS পড়ার অনুমতি',
-              smsAllowed ? 'দেওয়া আছে' : 'নেই — payment SMS ধরা যাবে না',
-              () async {
-                final status = await Permission.sms.request();
-                if (status.isPermanentlyDenied || status.isRestricted) {
-                  await openAppSettings();
-                }
-                await load();
-              },
-            ),
-            health(
-              batteryFree,
-              'Battery saver থেকে বাদ',
-              batteryFree ? 'হ্যাঁ — app বন্ধ থাকলেও SMS যাবে' : 'না — phone app থামিয়ে দিতে পারে',
-              () async {
-                await Permission.ignoreBatteryOptimizations.request();
-                await load();
-              },
-            ),
-            health(
-              pending == 0,
-              pending > 0 ? '$pending টা SMS নেট-এর অপেক্ষায়' : 'সব SMS পৌঁছেছে',
-              [
-                if (lastOk != null) 'শেষ SMS ${ago(lastOk!)}',
-                if (lastBeat != null) 'server-এ শেষ খবর ${ago(lastBeat!)}',
-                if (lastOk == null && lastBeat == null) 'এখনো কিছু যায়নি',
-              ].join(' · '),
-              () async {
-                await smsChannel.invokeMethod('flush');
-                await smsChannel.invokeMethod('beat').catchError((_) => false);
-                await Future<void>.delayed(const Duration(seconds: 2));
-                await load();
-              },
-              fix: 'এখনই পাঠাও',
-            ),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: teal, child: Icon(Icons.forum, color: Colors.white)),
-              title: const Text('SMS Center', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('সব payment SMS, কোন invoice-এ মিলেছে, sender, বাদ পড়া SMS খোঁজা'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SmsCenterPage(site: widget.site))).then((_) => load()),
+            SettingsCard(
+              title: 'Payment SMS',
+              icon: Icons.sms_outlined,
+              children: [
+                SettingsRow(
+                  first: true,
+                  icon: Icons.forward_to_inbox_rounded,
+                  title: 'এই phone থেকে payment SMS পাঠাও',
+                  subtitle: 'Wallet-এর SIM যে phone-এ, শুধু সেখানে (Owner)। bKash, NAGAD, 16216 আর bank-এর SMS ছাড়া কিছুই phone থেকে যায় না।',
+                  trailing: Switch(value: smsOn, onChanged: smsBusy ? null : toggleSms),
+                ),
+                if (smsBusy) const LinearProgressIndicator(color: brand, minHeight: 2),
+                if (smsError != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                    color: bad.withAlpha(24),
+                    child: Text(smsError!, style: const TextStyle(color: bad, fontSize: 13.5, fontWeight: FontWeight.w600)),
+                  ),
+                if (smsOn) ...[
+                  // The phone's own state: each thing that must be on, and a way to put it right.
+                  health(
+                    smsAllowed,
+                    Icons.sms_outlined,
+                    'SMS পড়ার অনুমতি',
+                    smsAllowed ? 'দেওয়া আছে' : 'নেই — payment SMS ধরা যাবে না',
+                    () async {
+                      final status = await Permission.sms.request();
+                      if (status.isPermanentlyDenied || status.isRestricted) {
+                        await openAppSettings();
+                      }
+                      await load();
+                    },
+                  ),
+                  health(
+                    batteryFree,
+                    Icons.battery_charging_full_rounded,
+                    'Battery saver থেকে বাদ',
+                    batteryFree ? 'হ্যাঁ — app বন্ধ থাকলেও SMS যাবে' : 'না — phone app থামিয়ে দিতে পারে',
+                    () async {
+                      await Permission.ignoreBatteryOptimizations.request();
+                      await load();
+                    },
+                  ),
+                  health(
+                    pending == 0,
+                    Icons.cloud_upload_outlined,
+                    pending > 0 ? '$pending টা SMS নেট-এর অপেক্ষায়' : 'সব SMS পৌঁছেছে',
+                    [
+                      if (lastOk != null) 'শেষ SMS ${ago(lastOk!)}',
+                      if (lastBeat != null) 'server-এ শেষ খবর ${ago(lastBeat!)}',
+                      if (lastOk == null && lastBeat == null) 'এখনো কিছু যায়নি',
+                    ].join(' · '),
+                    () async {
+                      await smsChannel.invokeMethod('flush');
+                      await smsChannel.invokeMethod('beat').catchError((_) => false);
+                      await Future<void>.delayed(const Duration(seconds: 2));
+                      await load();
+                    },
+                    fix: 'এখনই পাঠাও',
+                  ),
+                  SettingsRow(
+                    icon: Icons.forum_rounded,
+                    selected: true,
+                    title: 'SMS Center',
+                    subtitle: 'সব payment SMS, কোন invoice-এ মিলেছে, sender, বাদ পড়া SMS খোঁজা',
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SmsCenterPage(site: widget.site))).then((_) => load()),
+                  ),
+                ],
+              ],
             ),
           ],
-          ],
-          const Divider(height: 32),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Version'),
-            subtitle: Text(smsBuild ? '$version · SMS' : version),
-            onTap: () {
-              widget.site.checkedUpdate = null;
-              widget.site.checkUpdate();
-            },
+          SettingsCard(
+            title: 'App',
+            icon: Icons.info_outline,
+            children: [
+              SettingsRow(
+                first: true,
+                icon: Icons.system_update_rounded,
+                title: 'Version ${smsBuild ? '$version · SMS' : version}',
+                subtitle: 'চাপলে নতুন version আছে কিনা দেখবে',
+                trailing: const Icon(Icons.refresh_rounded),
+                onTap: () {
+                  widget.site.checkedUpdate = null;
+                  widget.site.checkUpdate();
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -1558,12 +1641,197 @@ class _SettingsPageState extends State<SettingsPage> {
 // ---------------------------------------------------------------------------
 
 /// The app's own pages follow the site: dark when the site is dark.
-ThemeData appTheme(bool dark) => ThemeData(
-      colorSchemeSeed: teal,
-      brightness: dark ? Brightness.dark : Brightness.light,
-      scaffoldBackgroundColor: dark ? rail : paper,
-      useMaterial3: true,
+ThemeData appTheme(bool dark) {
+  final scheme = ColorScheme.fromSeed(
+    seedColor: brand,
+    brightness: dark ? Brightness.dark : Brightness.light,
+    primary: dark ? brandLight : brand,
+    surface: dark ? surfaceDark : Colors.white,
+  );
+  return ThemeData(
+    colorScheme: scheme,
+    scaffoldBackgroundColor: dark ? rail : paper,
+    useMaterial3: true,
+    appBarTheme: AppBarTheme(
+      backgroundColor: dark ? rail : paper,
+      foregroundColor: dark ? inkDark : const Color(0xFF15211F),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: false,
+      titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: dark ? inkDark : const Color(0xFF15211F)),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? Colors.white : null),
+      trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? brand : null),
+      trackOutlineColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? brand : null),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: brand,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+    ),
+    snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
+    dividerTheme: DividerThemeData(color: dark ? lineDark : lineLight),
+  );
+}
+
+/// A settings group: a small purple heading over a rounded card, as the site's panels.
+class SettingsCard extends StatelessWidget {
+  const SettingsCard({super.key, required this.title, required this.icon, required this.children});
+
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 8),
+            child: Row(
+              children: [
+                Container(width: 18, height: 3, decoration: BoxDecoration(color: brand, borderRadius: BorderRadius.circular(3))),
+                const SizedBox(width: 8),
+                Text(
+                  title.toUpperCase(),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: dark ? brandLight : brandDeep),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: dark ? const [Color(0xFF1A1828), Color(0xFF14131E)] : const [Colors.white, Color(0xFFFCFBFE)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: dark ? lineDark : lineLight),
+              boxShadow: dark ? null : const [BoxShadow(color: Color(0x14000000), blurRadius: 24, offset: Offset(0, 10), spreadRadius: -16)],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(children: children),
+          ),
+        ],
+      ),
     );
+  }
+}
+
+/// One row in a settings card: an icon in a tinted square, the words, and what sits at the end.
+class SettingsRow extends StatelessWidget {
+  const SettingsRow({super.key, required this.icon, required this.title, this.subtitle, this.trailing, this.onTap, this.tint, this.selected = false, this.first = false});
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final Color? tint;
+  final bool selected;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final color = tint ?? (dark ? brandLight : brand);
+    return Material(
+      color: selected ? (dark ? const Color(0xFF2B1D3F) : const Color(0xFFEFE6F8)) : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(border: first ? null : Border(top: BorderSide(color: dark ? lineDark : lineLight))),
+          padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: selected ? brand : color.withAlpha(dark ? 40 : 28),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 20, color: selected ? Colors.white : color),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: dark ? inkDark : const Color(0xFF15211F))),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(subtitle!, style: TextStyle(fontSize: 13, height: 1.35, color: dark ? const Color(0xFF9AA3B0) : const Color(0xFF5B6560))),
+                    ],
+                  ],
+                ),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 10), trailing!],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small choice pill: the chosen one in the brand gradient, the others quiet.
+class ChoicePill extends StatelessWidget {
+  const ChoicePill({super.key, required this.label, required this.on, required this.onTap});
+
+  final String label;
+  final bool on;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          gradient: on ? const LinearGradient(colors: [Color(0xFF8D6BB3), brandDeep]) : null,
+          color: on ? null : (dark ? const Color(0xFF1B1927) : const Color(0xFFF7F5FA)),
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: on ? Colors.transparent : (dark ? const Color(0xFF363251) : const Color(0xFFCDC5D9))),
+          boxShadow: on ? const [BoxShadow(color: Color(0x667E5C9B), blurRadius: 14, offset: Offset(0, 6), spreadRadius: -6)] : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: on ? Colors.white : (dark ? const Color(0xFFB3BCC8) : const Color(0xFF4A5653))),
+        ),
+      ),
+    );
+  }
+}
+
+/// ✓ or ! at the end of a row, as a coloured pill.
+Widget statusPill(bool ok, String label) {
+  final color = ok ? good : bad;
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(color: color.withAlpha(30), borderRadius: BorderRadius.circular(999)),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(ok ? Icons.check_rounded : Icons.priority_high_rounded, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: color)),
+      ],
+    ),
+  );
+}
 
 /// One payment SMS as the SMS Center shows it: from the server (what it made of it) or from
 /// this phone's own log (still waiting, stuck, or kept on the phone).
@@ -1849,7 +2117,7 @@ class _SmsCenterPageState extends State<SmsCenterPage> {
           children: [
             Row(children: [
               const Expanded(child: Text('গত ৭ দিনে এসেছে', style: TextStyle(fontWeight: FontWeight.w700))),
-              Text(taka(total), style: const TextStyle(fontWeight: FontWeight.w700, color: teal)),
+              Text(taka(total), style: const TextStyle(fontWeight: FontWeight.w700, color: brand)),
             ]),
             const SizedBox(height: 14),
             SizedBox(
@@ -1871,12 +2139,12 @@ class _SmsCenterPageState extends State<SmsCenterPage> {
                                 height: max(4.0, 92 * (((d['amount'] as num?)?.toInt() ?? 0) / top)),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(6),
-                                  color: ((d['amount'] as num?)?.toInt() ?? 0) == 0 ? scheme.outlineVariant : teal.withAlpha(90),
+                                  color: ((d['amount'] as num?)?.toInt() ?? 0) == 0 ? scheme.outlineVariant : brand.withAlpha(90),
                                 ),
                                 alignment: Alignment.bottomCenter,
                                 child: FractionallySizedBox(
                                   heightFactor: ((d['amount'] as num?)?.toInt() ?? 0) == 0 ? 0.0 : (((d['matched'] as num?)?.toInt() ?? 0) / ((d['amount'] as num).toInt())).clamp(0.0, 1.0),
-                                  child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: teal)),
+                                  child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: brand)),
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -1894,9 +2162,9 @@ class _SmsCenterPageState extends State<SmsCenterPage> {
             ),
             const SizedBox(height: 8),
             Row(children: [
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: teal, borderRadius: BorderRadius.circular(3))),
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: brand, borderRadius: BorderRadius.circular(3))),
               Text('  invoice-এ মিলেছে    ', style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant)),
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: teal.withAlpha(90), borderRadius: BorderRadius.circular(3))),
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: brand.withAlpha(90), borderRadius: BorderRadius.circular(3))),
               Text('  বাকি', style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant)),
             ]),
           ],
@@ -2145,7 +2413,7 @@ class _SmsCenterPageState extends State<SmsCenterPage> {
             crossAxisSpacing: 10,
             childAspectRatio: 1.3,
             children: [
-              statTile('আজ এসেছে', taka(today.fold<int>(0, (s, i) => s + (i.amount ?? 0))), Icons.south_west, teal, sub: '${today.length} টা SMS'),
+              statTile('আজ এসেছে', taka(today.fold<int>(0, (s, i) => s + (i.amount ?? 0))), Icons.south_west, brand, sub: '${today.length} টা SMS'),
               statTile('আজ invoice-এ মিলেছে', '${today.where((i) => i.status == 'matched').length}', Icons.task_alt, const Color(0xFF16A34A),
                   onTap: () => setState(() => filter = 'matched')),
               statTile('অপেক্ষায়', '${all.where((i) => i.status == 'pending').length}', Icons.schedule_send, const Color(0xFFD97706),
@@ -2322,8 +2590,8 @@ class _SmsCenterPageState extends State<SmsCenterPage> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: teal.withAlpha(40),
-                  child: Icon(s['kind'] == 'bank' ? Icons.account_balance : Icons.account_balance_wallet, color: teal, size: 20),
+                  backgroundColor: brand.withAlpha(40),
+                  child: Icon(s['kind'] == 'bank' ? Icons.account_balance : Icons.account_balance_wallet, color: brand, size: 20),
                 ),
                 title: Text('${s['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: Text(
@@ -2380,7 +2648,7 @@ class _SmsCenterPageState extends State<SmsCenterPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(padding: const EdgeInsets.fromLTRB(4, 6, 4, 8), child: Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: teal, letterSpacing: .4))),
+          Padding(padding: const EdgeInsets.fromLTRB(4, 6, 4, 8), child: Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: brand, letterSpacing: .4))),
           Card(
             elevation: 0,
             margin: EdgeInsets.zero,
