@@ -119,6 +119,7 @@ Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->grou
     Route::post('campaigns/{campaign}/budget', [PortalController::class, 'budget'])->middleware('throttle:10,1')->name('campaign.budget');
     Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
     Route::post('refund-request', [PortalController::class, 'refundRequest'])->middleware('throttle:3,60')->name('refund-request');
+    Route::post('top-up', [PortalController::class, 'topUp'])->middleware('throttle:5,60')->name('top-up');
     Route::get('notifications', [PortalController::class, 'notifications'])->name('notifications');
 });
 

@@ -24,6 +24,8 @@ const props = defineProps<{
 }>();
 
 const user = usePage().props.auth.user;
+// The Owner changes any team email on the Users page — their own too.
+const canEditUsers = !!usePage().props.auth.can['users.edit'];
 const isClient = user.role === 'Client';
 // A client keeps their own email, phone and company; the team's email is changed by an admin.
 const form = useForm({
@@ -100,10 +102,25 @@ function saveNotify(): void {
             <KField
                 v-else
                 label="Email"
-                :hint="t('Email বদলাতে Owner-কে বলুন — এটাই sign-in নাম।')"
+                :hint="
+                    canEditUsers
+                        ? t('এটাই sign-in নাম — Settings → User পাতায় বদলান।')
+                        : t('Email বদলাতে Owner-কে বলুন — এটাই sign-in নাম।')
+                "
             >
-                <div class="field-box bg-sunken! text-[15.5px] text-ink-2">
-                    {{ user.email }}
+                <div class="flex items-center gap-2">
+                    <div
+                        class="field-box min-w-0 flex-1 bg-sunken! text-[15.5px] text-ink-2"
+                    >
+                        {{ user.email }}
+                    </div>
+                    <KButton
+                        v-if="canEditUsers"
+                        href="/admin/users"
+                        variant="soft"
+                        icon="pen"
+                        >{{ t('বদলান') }}</KButton
+                    >
                 </div>
             </KField>
             <div class="flex justify-end">

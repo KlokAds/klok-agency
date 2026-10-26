@@ -21,6 +21,7 @@ use App\Services\ClientNotifier;
 use App\Services\Invoices;
 use App\Services\Notifier;
 use App\Services\Renewals;
+use App\Services\TopUps;
 use App\Support\Access;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
@@ -126,6 +127,9 @@ class PortalController extends Controller
                 'refund' => ($left = (int) ($figure['credit_left'] ?? 0)) >= CampaignLimits::RUN_OUT_MIN && ($fx = Invoices::fxRate())
                     ? (int) floor($left * $fx / 10000) * 10000 : null,
                 'round' => $this->creditRound($client, (int) ($figure['credit_left'] ?? 0)),
+                // What a dollar costs them now, so the top-up form can say what their taka buys.
+                'rate' => Invoices::clientRate(),
+                'topup_min' => TopUps::MIN_BDT,
             ],
             'week' => collect(range(6, 0))->map(function (int $back) use ($today, $week) {
                 $rows = $week->get($today->subDays($back)->toDateString(), collect());
@@ -287,6 +291,21 @@ class PortalController extends Controller
     }
 
     /** The client asks for the ad credit not spent yet back: the Owners act on it. */
+    /** The client adds credit on their own: so much taka, an invoice at their rate, paid like any other. */
+    public function topUp(Request $request, TopUps $topUps): \Symfony\Component\HttpFoundation\Response
+    {
+        $client = $this->client($request);
+        $data = $request->validate(['amount' => ['required', 'numeric', 'min:'.(TopUps::MIN_BDT / 100), 'max:'.(TopUps::MAX_BDT / 100)]], [], ['amount' => __('টাকার অঙ্ক')]);
+
+        try {
+            $invoice = $topUps->invoice($client, (int) round((float) $data['amount'] * 100));
+        } catch (\RuntimeException $e) {
+            throw ValidationException::withMessages(['amount' => $e->getMessage()]);
+        }
+
+        return Inertia::location($invoice->publicUrl());
+    }
+
     public function refundRequest(Request $request, Books $books, Notifier $notifier): RedirectResponse
     {
         $client = $this->client($request);

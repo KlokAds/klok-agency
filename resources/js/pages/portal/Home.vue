@@ -42,6 +42,8 @@ const props = defineProps<{
         daily: number;
         days_left: number | null;
         refund?: number | null;
+        rate?: number | null;
+        topup_min?: number;
         round?: {
             paid: number;
             carried: number;
@@ -81,6 +83,19 @@ const usedShare = computed(() =>
           )
         : 0,
 );
+// Adding credit: so much taka, shown as the dollars it buys at the client's rate.
+const topUpOpen = ref(false);
+const topUpForm = useForm({ amount: '' });
+const topUpUsd = computed(() => {
+    const bdt = Number(topUpForm.amount);
+    return props.credit.rate && bdt > 0
+        ? Math.floor((bdt * 100) / props.credit.rate)
+        : 0;
+});
+function topUp(): void {
+    topUpForm.post('/portal/top-up', { preserveScroll: true });
+}
+
 // Asking for the money left back: where to send it, and a note.
 const refundOpen = ref(false);
 const refundForm = useForm({ to: '', note: '' });
@@ -294,14 +309,23 @@ const low = computed(
                     t('১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।')
                 }}
             </p>
-            <KButton
-                v-if="credit.refund"
-                size="sm"
-                variant="plain"
-                class="mt-2"
-                @click="refundOpen = true"
-                >{{ t('বাকি টাকা ফেরত চান') }}</KButton
-            >
+            <div class="mt-2 flex flex-wrap gap-2">
+                <KButton
+                    v-if="credit.rate"
+                    size="sm"
+                    variant="primary"
+                    icon="plus"
+                    @click="topUpOpen = true"
+                    >{{ t('Credit যোগ করুন') }}</KButton
+                >
+                <KButton
+                    v-if="credit.refund"
+                    size="sm"
+                    variant="plain"
+                    @click="refundOpen = true"
+                    >{{ t('বাকি টাকা ফেরত চান') }}</KButton
+                >
+            </div>
         </div>
         <component
             :is="next_invoice ? 'a' : 'div'"
@@ -680,6 +704,52 @@ const low = computed(
             /></KButton>
         </div>
     </section>
+
+    <KModal v-model="topUpOpen" width="md" :title="t('Credit যোগ করুন')">
+        <p class="text-[14px] text-ink-3">
+            {{
+                t(
+                    'যত টাকা দেবেন তার invoice হবে; pay করলে সাথে সাথে dollar credit যোগ হবে — campaign বা দিন বাছতে হবে না।',
+                )
+            }}
+        </p>
+        <div class="mt-4 flex flex-col gap-4">
+            <KField :label="t('কত টাকা')" :error="topUpForm.errors.amount">
+                <KInput
+                    v-model="topUpForm.amount"
+                    type="tel"
+                    inputmode="numeric"
+                    placeholder="5000"
+                    :invalid="!!topUpForm.errors.amount"
+                />
+            </KField>
+            <p class="num text-[14px] text-ink-2">
+                <template v-if="topUpUsd > 0">
+                    ≈ <b>{{ money(topUpUsd, 'usd') }}</b> credit
+                    <span class="text-ink-3">· ৳{{ credit.rate }} / USD</span>
+                </template>
+                <template v-else>{{
+                    t('কমপক্ষে ৳{min}', {
+                        min: Math.round((credit.topup_min ?? 50000) / 100),
+                    })
+                }}</template>
+            </p>
+        </div>
+        <template #footer>
+            <KButton variant="quiet" @click="topUpOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                variant="primary"
+                :loading="topUpForm.processing"
+                :disabled="
+                    Number(topUpForm.amount) * 100 < (credit.topup_min ?? 50000)
+                "
+                @click="topUp"
+                >{{ t('Invoice নিন ও pay করুন') }}</KButton
+            >
+        </template>
+    </KModal>
 
     <KModal
         v-model="refundOpen"

@@ -143,7 +143,7 @@ class AgencyAlert extends Notification
     public function group(): string
     {
         return match (true) {
-            in_array($this->kind, ['invoice_paid', 'invoice_claim', 'invoice_overdue', 'invoice_refund', 'sms_silent', 'sms_check', 'refund_request', 'refund_check'], true) => 'money',
+            in_array($this->kind, ['invoice_paid', 'invoice_claim', 'invoice_overdue', 'invoice_refund', 'sms_silent', 'sms_check', 'refund_request', 'refund_check', 'topup_invoiced'], true) => 'money',
             in_array($this->kind, ['credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_changed', 'campaign_ending', 'campaign_ended', 'campaign_spend', 'account_problem', 'client_campaign', 'credit_runout'], true), str_starts_with($this->kind, 'renewal') => 'ads',
             str_starts_with($this->kind, 'did_') => 'activity',
             in_array($this->kind, ['card_low', 'meta_receipt'], true) => 'dollars',

@@ -106,5 +106,7 @@
     "নতুন client যোগ করলে এখানে দেখা যাবে।": "New clients will show up here.",
     "শেষ পেমেন্ট": "Last payment",
     "{n}টা পেমেন্ট": "{n} payments",
-    "আয় ধরা": "Counted as revenue"
+    "আয় ধরা": "Counted as revenue",
+    "{date} থেকে এই client-এর হিসাবে": "billed to this client since {date}",
+    "হিসাবে মোট · ৭ দিনে {amount}": "billed in all · {amount} in 7 days"
 }

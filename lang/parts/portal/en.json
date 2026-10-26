@@ -277,5 +277,13 @@
     "{campaign} — {days} দিনে খরচ {spend} · {results}টা result। আবার চালাতে চাইলে invoice pay করুন।": "{campaign}: {spend} over {days} days · {results} results. Pay an invoice to run it again.",
     "{campaign} — দিনে {from} → {to}": "{campaign}: {from} → {to} a day",
     "{campaign} — আপনার বাকি {left} credit দিয়ে আরও প্রায় {days} দিন চলবে ({date} পর্যন্ত); credit শেষ হলে নিজে থামবে।": "{campaign}: your remaining {left} credit runs it about {days} more days (until {date}); it stops by itself when the credit ends.",
-    "১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।": "Under a dollar: not refundable, carried into the next payment."
+    "১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।": "Under a dollar: not refundable, carried into the next payment.",
+    "Credit যোগ করুন": "Add credit",
+    "যত টাকা দেবেন তার invoice হবে; pay করলে সাথে সাথে dollar credit যোগ হবে — campaign বা দিন বাছতে হবে না।": "An invoice for the amount you choose; paying it adds the dollars to your credit at once, with no campaign or days to pick.",
+    "কত টাকা": "How much (৳)",
+    "কমপক্ষে ৳{min}": "At least ৳{min}",
+    "Invoice নিন ও pay করুন": "Get the invoice and pay",
+    "টাকার অঙ্ক": "amount",
+    "৳:min থেকে ৳:max-এর মধ্যে দিন।": "Between ৳:min and ৳:max.",
+    "Ad credit — $:usd": "Ad credit — $:usd"
 }

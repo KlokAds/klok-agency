@@ -138,6 +138,8 @@ class ClientController extends Controller
                 ->map(fn (Campaign $c) => [
                     'id' => $c->id, 'name' => $c->name, 'live' => $c->isLive(), 'account' => $c->account?->name,
                     'spend_7d' => $c->spend_7d, 'bill_from' => $c->bill_from?->toDateString(),
+                    // What this client has been billed for: the spend from the day it was linked to them.
+                    'spend_billed' => $c->bill_from ? (int) CampaignDay::where('campaign_id', $c->id)->whereDate('day', '>=', $c->bill_from->toDateString())->sum('spend') : null,
                 ]),
             'credit' => collect($books->clients())->firstWhere('id', $client->id),
             'budget_days' => $this->budgetDays($client),

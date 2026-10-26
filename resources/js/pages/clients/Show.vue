@@ -85,6 +85,7 @@ const props = defineProps<{
         live: boolean;
         account: string | null;
         spend_7d: number;
+        spend_billed?: number | null;
         bill_from: string | null;
     }[];
     credit: {
@@ -518,7 +519,7 @@ function print(): void {
                             <template v-if="c.bill_from">
                                 ·
                                 {{
-                                    t('{date} থেকে', {
+                                    t('{date} থেকে এই client-এর হিসাবে', {
                                         date: niceDate(c.bill_from, false),
                                     })
                                 }}</template
@@ -526,9 +527,14 @@ function print(): void {
                         >
                     </span>
                     <span class="num shrink-0 text-right"
-                        >{{ money(c.spend_7d, 'usd') }}
+                        >{{ money(c.spend_billed ?? c.spend_7d, 'usd') }}
                         <span class="block text-[13px] text-ink-3">{{
-                            t('৭ দিনে')
+                            c.spend_billed !== null &&
+                            c.spend_billed !== undefined
+                                ? t('হিসাবে মোট · ৭ দিনে {amount}', {
+                                      amount: money(c.spend_7d, 'usd'),
+                                  })
+                                : t('৭ দিনে')
                         }}</span></span
                     >
                 </li>
