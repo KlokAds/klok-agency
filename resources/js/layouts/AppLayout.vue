@@ -461,7 +461,7 @@ function appSettings(): void {
                 <div ref="userAnchor">
                     <button
                         type="button"
-                        class="flex h-10 items-center rounded-[10px] px-1 hover:bg-sunken"
+                        class="flex h-10 items-center gap-2.5 rounded-[10px] pr-2 pl-1 hover:bg-sunken"
                         :aria-label="t('আমার account')"
                         :aria-expanded="userMenu.open.value"
                         @click="userMenu.toggle()"
@@ -470,6 +470,19 @@ function appSettings(): void {
                             class="grid size-8 place-items-center rounded-lg bg-ink text-[14px] font-bold text-paper"
                             >{{ user.name.slice(0, 1).toUpperCase() }}</span
                         >
+                        <span
+                            class="hidden max-w-[160px] text-left leading-tight md:block"
+                        >
+                            <span
+                                class="block truncate text-[14px] font-semibold"
+                                >{{ user.name }}</span
+                            >
+                            <span
+                                v-if="user.role"
+                                class="block truncate text-[13px] text-ink-3"
+                                >{{ user.role }}</span
+                            >
+                        </span>
                     </button>
                     <Teleport to="body">
                         <div
