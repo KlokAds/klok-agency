@@ -411,47 +411,53 @@ function appSettings(): void {
                     >
                 </span>
 
-                <NotificationBell />
-
-                <!-- On a phone these two sit in the user menu, so the name in the bar has room. -->
-                <button
-                    type="button"
-                    class="hidden h-10 rounded-lg px-2.5 text-[14px] font-bold text-ink-2 hover:bg-sunken hover:text-ink sm:block"
-                    :aria-label="
-                        locale === 'en' ? 'বাংলায় দেখুন' : 'Switch to English' // i18n
-                    "
-                    @click="switchLocale(locale === 'en' ? 'bn' : 'en')"
-                >
-                    {{ otherLanguage }}
-                </button>
-
-                <button
-                    type="button"
-                    class="hidden h-10 min-w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 text-ink-2 hover:bg-sunken hover:text-ink sm:flex"
-                    :aria-label="
-                        resolvedAppearance === 'dark'
-                            ? 'Light mode'
-                            : 'Dark mode'
-                    "
-                    @click="
-                        updateAppearance(
-                            resolvedAppearance === 'dark' ? 'light' : 'dark',
-                        )
-                    "
-                >
-                    <KIcon
-                        :name="resolvedAppearance === 'dark' ? 'sun' : 'moon'"
-                        :size="16"
-                    />
-                    <span class="text-[13px] leading-none">{{
-                        resolvedAppearance === 'dark' ? 'Light' : 'Dark'
-                    }}</span>
-                </button>
+                <!-- One group of alike chips: the bell, the language, the theme. On a phone the
+                     last two sit in the user menu, so the name in the bar has room. -->
+                <div class="flex items-center gap-1.5">
+                    <NotificationBell />
+                    <button
+                        type="button"
+                        class="k-chip hidden h-10 items-center rounded-[10px] px-3 text-[13.5px] font-bold sm:inline-flex"
+                        :aria-label="
+                            locale === 'en'
+                                ? 'বাংলায় দেখুন'
+                                : 'Switch to English' // i18n
+                        "
+                        @click="switchLocale(locale === 'en' ? 'bn' : 'en')"
+                    >
+                        {{ otherLanguage }}
+                    </button>
+                    <button
+                        type="button"
+                        class="k-chip hidden h-10 items-center gap-2 rounded-[10px] px-3 text-[13.5px] font-semibold sm:inline-flex"
+                        :aria-label="
+                            resolvedAppearance === 'dark'
+                                ? 'Light mode'
+                                : 'Dark mode'
+                        "
+                        @click="
+                            updateAppearance(
+                                resolvedAppearance === 'dark'
+                                    ? 'light'
+                                    : 'dark',
+                            )
+                        "
+                    >
+                        <KIcon
+                            :name="
+                                resolvedAppearance === 'dark' ? 'sun' : 'moon'
+                            "
+                            :size="16"
+                        />
+                        {{ resolvedAppearance === 'dark' ? 'Light' : 'Dark' }}
+                    </button>
+                </div>
+                <span class="mx-1 hidden h-6 w-px bg-line-2 sm:block" />
 
                 <div ref="userAnchor">
                     <button
                         type="button"
-                        class="flex h-10 items-center gap-2.5 rounded-[10px] pr-2 pl-1 hover:bg-sunken"
+                        class="flex h-10 items-center rounded-[10px] px-1 hover:bg-sunken"
                         :aria-label="t('আমার account')"
                         :aria-expanded="userMenu.open.value"
                         @click="userMenu.toggle()"
@@ -460,19 +466,6 @@ function appSettings(): void {
                             class="grid size-8 place-items-center rounded-lg bg-ink text-[14px] font-bold text-paper"
                             >{{ user.name.slice(0, 1).toUpperCase() }}</span
                         >
-                        <span
-                            class="hidden max-w-[160px] text-left leading-tight md:block"
-                        >
-                            <span
-                                class="block truncate text-[14px] font-semibold"
-                                >{{ user.name }}</span
-                            >
-                            <span
-                                v-if="user.role"
-                                class="block truncate text-[13px] text-ink-3"
-                                >{{ user.role }}</span
-                            >
-                        </span>
                     </button>
                     <Teleport to="body">
                         <div

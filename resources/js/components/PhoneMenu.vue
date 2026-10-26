@@ -46,16 +46,7 @@ watch(open, (on) => {
                     class="grid size-10 shrink-0 place-items-center rounded-xl bg-ink text-[15px] font-bold text-paper"
                     >{{ props.user.name.slice(0, 1).toUpperCase() }}</span
                 >
-                <span class="min-w-0 flex-1">
-                    <span class="block truncate text-[15.5px] font-bold">{{
-                        props.user.name
-                    }}</span>
-                    <span
-                        v-if="props.user.role"
-                        class="block truncate text-[13px] text-ink-3"
-                        >{{ props.user.role }}</span
-                    >
-                </span>
+                <span class="min-w-0 flex-1" />
                 <button
                     type="button"
                     class="grid size-10 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"

@@ -117,7 +117,7 @@ const shown = computed(() =>
     <div ref="anchor">
         <button
             type="button"
-            class="flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-ink-2 hover:bg-sunken hover:text-ink"
+            class="flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-ink-2 hover:bg-sunken hover:text-ink sm:hidden"
             @click="menu.toggle()"
         >
             <span class="relative">
@@ -128,12 +128,22 @@ const shown = computed(() =>
                     >{{ badge }}</span
                 >
             </span>
-            <span class="text-[13px] leading-none max-sm:hidden">{{
-                t('Notification')
-            }}</span>
-            <span class="text-[13px] leading-none sm:hidden">{{
-                t('Alert')
-            }}</span>
+            <span class="text-[13px] leading-none">{{ t('Alert') }}</span>
+        </button>
+        <button
+            type="button"
+            class="k-chip hidden h-10 shrink-0 items-center gap-2 rounded-[10px] px-3 text-[13.5px] font-semibold sm:inline-flex"
+            @click="menu.toggle()"
+        >
+            <span class="relative">
+                <KIcon name="bell" :size="16" />
+                <span
+                    v-if="unread > 0"
+                    class="num absolute -top-2 -right-2.5 grid h-4 min-w-4 place-items-center rounded-full bg-out px-1 text-[11.5px] font-bold text-white"
+                    >{{ badge }}</span
+                >
+            </span>
+            {{ t('Notification') }}
         </button>
 
         <Teleport to="body">
