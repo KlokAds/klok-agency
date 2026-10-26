@@ -25,6 +25,7 @@ use App\Http\Controllers\AppReleaseController;
 use App\Http\Controllers\AppSmsController;
 use App\Http\Controllers\Books\BdtEntryController;
 use App\Http\Controllers\Books\ClientController;
+use App\Http\Controllers\Books\ClientReportController;
 use App\Http\Controllers\Books\DashboardController;
 use App\Http\Controllers\Books\DollarController;
 use App\Http\Controllers\Books\FxBatchController;
@@ -195,6 +196,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('clients', [ClientController::class, 'index'])->middleware('can:clients.view')->name('clients.index');
     Route::get('clients/{client}', [ClientController::class, 'show'])->middleware('can:clients.view')->name('clients.show');
+    Route::get('clients/{client}/report', ClientReportController::class)->middleware('can:clients.view')->name('clients.report');
     Route::post('clients/{client}/invoice-due', [ClientController::class, 'invoiceDue'])->middleware(['can:clients.edit', 'throttle:10,1'])->name('clients.invoice-due');
     Route::post('clients', [ClientController::class, 'store'])->middleware('can:clients.create')->name('clients.store');
     Route::post('clients/{client}/portal-users', [ClientController::class, 'linkPortalUser'])->middleware('can:clients.edit')->name('clients.portal.link');

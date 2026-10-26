@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import MonthlyChart from '@/components/MonthlyChart.vue';
+import TrendChart from '@/components/dashboard/TrendChart.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import CardStrip from '@/components/dashboard/CardStrip.vue';
 import ChecksPanel from '@/components/dashboard/ChecksPanel.vue';
@@ -10,6 +10,7 @@ import type {
     ClientRow,
     Fx,
     Summary,
+    TrendRow,
     Wallets,
 } from '@/components/dashboard/types';
 import KAmount from '@/components/k/KAmount.vue';
@@ -49,6 +50,19 @@ const page = usePage();
 const user = page.props.auth.user;
 const can = computed(() => page.props.auth.can);
 const s = computed(() => props.summary);
+
+// The month rows in the trend chart's words: income, ad cost, office cost, profit.
+const trend = computed<TrendRow[]>(() =>
+    props.monthly.map((m) => ({
+        month: m.month,
+        label: m.label,
+        revenue: m.received,
+        ad_cost: m.cost,
+        office: m.expense,
+        net: m.result,
+        in_period: true,
+    })),
+);
 
 const hour = new Date().getHours();
 const greeting =
@@ -120,13 +134,22 @@ const greeting =
     <h2 class="dash-head mt-9">
         <span>{{ t('টাকা — কোথায় কত আছে') }}</span>
     </h2>
-    <section class="panel dash-tiles">
-        <div class="p-5 sm:p-6">
-            <p class="dash-label">{{ t('BDT কোথায়') }}</p>
-            <p class="dash-fig">
+    <!-- Four cards, each with its icon; the first lists where the taka sits -->
+    <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="panel flex flex-col p-4 sm:p-5">
+            <p
+                class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
+            >
+                <span
+                    class="grid size-9 place-items-center rounded-xl bg-brand-soft text-brand-ink"
+                    ><KIcon name="wallet" :size="17"
+                /></span>
+                {{ t('BDT কোথায়') }}
+            </p>
+            <p class="dash-fig mt-3">
                 {{ money(wallets.total, 'bdt') }}
             </p>
-            <ul class="mt-4 space-y-1.5 text-[13.5px]">
+            <ul class="mt-3 space-y-1.5 text-[13.5px]">
                 <li
                     v-for="p in wallets.places"
                     :key="p.key"
@@ -153,16 +176,24 @@ const greeting =
             </ul>
             <Link
                 href="/wallets"
-                class="no-print mt-3 inline-block text-[14px] font-medium text-brand-ink hover:underline"
+                class="no-print mt-auto inline-block pt-3 text-[14px] font-medium text-brand-ink hover:underline"
                 >{{ t('বিস্তারিত') }} →</Link
             >
         </div>
-        <div class="p-5 sm:p-6">
-            <p class="dash-label">{{ t('Client-দের আগাম টাকা') }}</p>
-            <p class="dash-fig">
+        <div class="panel p-4 sm:p-5">
+            <p
+                class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
+            >
+                <span
+                    class="grid size-9 place-items-center rounded-xl bg-done-soft text-done"
+                    ><KIcon name="people" :size="17"
+                /></span>
+                {{ t('Client-দের আগাম টাকা') }}
+            </p>
+            <p class="dash-fig mt-3">
                 {{ money(s.unearned, 'bdt') }}
             </p>
-            <p class="mt-4 text-[13.5px] text-ink-3">
+            <p class="mt-3 text-[13.5px] leading-snug text-ink-3">
                 {{
                     t(
                         'Client আগাম দিয়েছে কিন্তু campaign-এ এখনো খরচ হয়নি। এটা client-দের টাকা — লাভ নয়।',
@@ -170,13 +201,21 @@ const greeting =
                 }}
             </p>
         </div>
-        <div class="p-5 sm:p-6">
+        <div class="panel p-4 sm:p-5">
             <template v-if="s.owner_due > 0">
-                <p class="dash-label">{{ t('Owner-এর কাছে পাওনা') }}</p>
-                <p class="dash-fig">
+                <p
+                    class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
+                >
+                    <span
+                        class="grid size-9 place-items-center rounded-xl bg-sunken text-ink-2"
+                        ><KIcon name="user" :size="17"
+                    /></span>
+                    {{ t('Owner-এর কাছে পাওনা') }}
+                </p>
+                <p class="dash-fig mt-3">
                     {{ money(s.owner_due, 'bdt') }}
                 </p>
-                <p class="mt-4 text-[13.5px] text-ink-3">
+                <p class="mt-3 text-[13.5px] leading-snug text-ink-3">
                     {{
                         t(
                             'Owner কিছুদিনের জন্য নিয়েছেন, ফেরত দেবেন — এটা ব্যবসার টাকা।',
@@ -185,14 +224,22 @@ const greeting =
                 </p>
             </template>
             <template v-else>
-                <p class="dash-label">{{ t('Client দেবে') }}</p>
                 <p
-                    class="dash-fig"
+                    class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
+                >
+                    <span
+                        class="grid size-9 place-items-center rounded-xl bg-wait-soft text-wait"
+                        ><KIcon name="clock" :size="17"
+                    /></span>
+                    {{ t('Client দেবে') }}
+                </p>
+                <p
+                    class="dash-fig mt-3"
                     :class="s.receivable_cost > 0 && 'text-wait'"
                 >
                     {{ money(s.receivable_cost, 'bdt') }}
                 </p>
-                <p class="mt-4 text-[13.5px] text-ink-3">
+                <p class="mt-3 text-[13.5px] leading-snug text-ink-3">
                     {{
                         t(
                             '{amount} খরচ হয়েছে, client এখনো টাকা দেয়নি (কেনা দামে)।',
@@ -204,12 +251,25 @@ const greeting =
                 </p>
             </template>
         </div>
-        <div class="p-5 sm:p-6">
-            <p class="dash-label">{{ t('এই মাসের লাভ') }}</p>
-            <p class="dash-fig">
+        <div class="panel p-4 sm:p-5">
+            <p
+                class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
+            >
+                <span
+                    class="grid size-9 place-items-center rounded-xl"
+                    :class="
+                        month_net < 0
+                            ? 'bg-out-soft text-out'
+                            : 'bg-in-soft text-in'
+                    "
+                    ><KIcon name="chart" :size="17"
+                /></span>
+                {{ t('এই মাসের লাভ') }}
+            </p>
+            <p class="dash-fig mt-3">
                 <KAmount :value="month_net" currency="bdt" sign />
             </p>
-            <p class="mt-4 text-[13.5px] text-ink-3">
+            <p class="mt-3 text-[13.5px] text-ink-3">
                 {{ t('শুরু থেকে') }}
                 <KAmount
                     :value="s.net"
@@ -231,7 +291,7 @@ const greeting =
         <ChecksPanel :summary="summary" />
 
         <!-- Month by month -->
-        <section class="panel p-5 sm:p-6">
+        <section class="panel self-start p-5 sm:p-6">
             <div class="mb-4 flex items-baseline justify-between gap-4">
                 <div>
                     <h2 class="dash-title">
@@ -251,7 +311,7 @@ const greeting =
                     >P&L →</Link
                 >
             </div>
-            <MonthlyChart :rows="monthly" />
+            <TrendChart :rows="trend" />
         </section>
     </div>
 

@@ -315,6 +315,9 @@ function print(): void {
         :title="client.name"
         :lead="client.notes ?? undefined"
     >
+        <KButton icon="doc" :href="`/clients/${client.id}/report`">{{
+            t('Report')
+        }}</KButton>
         <KButton icon="print" @click="print">Statement</KButton>
         <KButton
             v-if="can['tasks.create']"

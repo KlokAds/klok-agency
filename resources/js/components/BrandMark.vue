@@ -60,9 +60,7 @@ withDefaults(
                     v-if="badge"
                     class="shrink-0 rounded-[5px] px-1.5 py-[3px] text-[12.5px] font-bold tracking-[0.06em] uppercase"
                     :class="[
-                        light
-                            ? 'bg-brand/20 text-brand-ink'
-                            : 'bg-brand-soft text-brand',
+                        light ? 'bg-brand text-white' : 'bg-brand text-white',
                     ]"
                     >{{ badge }}</span
                 >

@@ -269,10 +269,12 @@ function appSettings(): void {
 </script>
 
 <template>
-    <div class="min-h-dvh bg-paper text-ink lg:grid lg:grid-cols-[248px_1fr]">
+    <div
+        class="app-shell min-h-dvh bg-paper text-ink lg:grid lg:grid-cols-[248px_1fr]"
+    >
         <!-- Rail -->
         <aside
-            class="fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-rail text-rail-ink transition-transform lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0"
+            class="no-print fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-rail text-rail-ink transition-transform lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0"
             :class="drawer ? 'translate-x-0' : '-translate-x-full'"
         >
             <div class="flex h-[68px] items-center justify-between px-5">

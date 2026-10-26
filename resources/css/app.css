@@ -592,6 +592,16 @@
         background: #fff !important;
     }
 
+    /* Paper has no side rail and no gutters: the page is the document. */
+    .app-shell {
+        display: block !important;
+    }
+
+    .app-shell main {
+        max-width: none !important;
+        padding: 0 !important;
+    }
+
     .no-print {
         display: none !important;
     }
