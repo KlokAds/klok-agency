@@ -74,6 +74,10 @@ function opened(item: Notice): void {
     menu.close();
 
     if (!item.read) {
+        items.value = items.value.map((n) =>
+            n.id === item.id ? { ...n, read: true } : n,
+        );
+        unread.value = Math.max(0, unread.value - 1);
         void fetch(`/notifications/${item.id}/read`, {
             method: 'POST',
             headers: {
@@ -101,6 +105,12 @@ onBeforeUnmount(() => {
 });
 
 const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
+
+// Two tabs: what is new (unread), and everything recent. A read one leaves "new" at once.
+const tab = ref<'new' | 'all'>('new');
+const shown = computed(() =>
+    tab.value === 'new' ? items.value.filter((n) => !n.read) : items.value,
+);
 </script>
 
 <template>
@@ -150,19 +160,42 @@ const badge = computed(() => (unread.value > 9 ? '9+' : String(unread.value)));
                         >{{ t('সব পড়া হয়েছে') }}</KButton
                     >
                 </div>
+                <div class="flex gap-1 border-b border-line px-2 py-1.5">
+                    <button
+                        v-for="(label, key) in { new: t('নতুন'), all: t('সব') }"
+                        :key="key"
+                        type="button"
+                        class="h-8 rounded-lg px-3 text-[13.5px] font-semibold transition-colors"
+                        :class="
+                            tab === key
+                                ? 'bg-brand text-white'
+                                : 'text-ink-2 hover:bg-sunken hover:text-ink'
+                        "
+                        @click="tab = key as 'new' | 'all'"
+                    >
+                        {{ label
+                        }}<span
+                            v-if="key === 'new' && unread > 0"
+                            class="num ml-1 text-[12px] opacity-80"
+                            >{{ unread }}</span
+                        >
+                    </button>
+                </div>
                 <div class="min-h-0 flex-1 overflow-y-auto p-1.5">
                     <p
-                        v-if="!items.length"
+                        v-if="!shown.length"
                         class="px-4 py-10 text-center text-[14px] text-ink-3"
                     >
                         {{
                             loading
                                 ? t('লোড হচ্ছে…')
-                                : t('কোনো notification নেই')
+                                : tab === 'new'
+                                  ? t('নতুন কিছু নেই — সব পড়া হয়েছে')
+                                  : t('কোনো notification নেই')
                         }}
                     </p>
                     <NotificationItem
-                        v-for="n in items"
+                        v-for="n in shown"
                         :key="n.id"
                         :item="n"
                         @open="opened"

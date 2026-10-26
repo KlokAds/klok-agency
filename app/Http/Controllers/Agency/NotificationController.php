@@ -76,7 +76,10 @@ class NotificationController extends Controller
 
         return response()->json([
             'unread' => $user->unreadNotifications()->count(),
-            'items' => $user->notifications()->latest()->limit(12)->get()->map(fn ($n) => $this->present($n)),
+            // Every unread one (so "new" is complete) plus the latest few read ones for "all".
+            'items' => $user->unreadNotifications()->latest()->limit(40)->get()
+                ->concat($user->notifications()->latest()->limit(12)->get())
+                ->unique('id')->sortByDesc('created_at')->values()->map(fn ($n) => $this->present($n)),
         ]);
     }
 

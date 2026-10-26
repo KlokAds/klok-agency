@@ -196,5 +196,8 @@
     "কোড প্রতি ৩০ সেকেন্ডে বদলায়।": "The code changes every 30 seconds.",
     "{n} প্রতি পাতায়": "{n} per page",
     "আগের পাতা": "Previous page",
-    "পরের পাতা": "Next page"
+    "পরের পাতা": "Next page",
+    "নতুন": "New",
+    "সব": "All",
+    "নতুন কিছু নেই — সব পড়া হয়েছে": "Nothing new; everything is read"
 }
