@@ -12,6 +12,7 @@ use App\Services\Notifier;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -50,6 +51,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // hour, never a wrong page address or a form someone filled in wrong.
         $exceptions->report(function (Throwable $e): void {
             if ($e instanceof HttpExceptionInterface || ! app()->isProduction()) {
+                return;
+            }
+            // Pilot being slow or away has its own alert (pilot_down, after it repeats): not every timeout.
+            if ($e instanceof ConnectionException || str_starts_with($e->getMessage(), 'Klok Pilot:')) {
                 return;
             }
             if (! Cache::add('system-error:'.md5($e::class.$e->getFile().$e->getLine()), 1, now()->addHour())) {

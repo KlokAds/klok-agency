@@ -133,7 +133,8 @@ class PilotClient
             throw new RuntimeException(__('Klok Pilot-এর token দেওয়া নেই — Settings-এ দিন।'));
         }
 
-        $response = Http::timeout(30)
+        // A fresh read makes Pilot ask Meta first: give it a minute, the usual half of that.
+        $response = Http::timeout(! empty($arguments['fresh']) ? 60 : 30)
             ->withToken($token)
             ->accept('application/json, text/event-stream')
             ->post(self::url(), [
