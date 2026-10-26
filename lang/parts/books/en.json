@@ -331,5 +331,7 @@
     "Meta-র হিসাবে": "as Meta counts it",
     "খাতায়": "in the books",
     "Meta-র হিসাব আসেনি — খাতার সংখ্যা": "Meta did not answer; book figure",
-    "{ago} পড়া": "read {ago}"
+    "{ago} পড়া": "read {ago}",
+    "client-এর নিজের card": "client's own card",
+    "Meta থেকে পড়া {ago}": "read from Meta {ago}"
 }

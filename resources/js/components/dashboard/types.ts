@@ -19,8 +19,10 @@ export type Summary = {
         accounts: {
             id: number;
             name: string;
-            unbilled: number;
+            unbilled: number | null;
             card: string | null;
+            ours: boolean;
+            error: string | null;
         }[];
         read_at: string;
     } | null;

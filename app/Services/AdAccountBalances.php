@@ -188,7 +188,7 @@ class AdAccountBalances
      * What Meta itself says is still to charge, account by account (USD Meta accounts), read
      * live through Pilot and kept ten minutes; null when Pilot cannot be reached.
      *
-     * @return array{total: int, accounts: list<array{id: int, name: string, unbilled: int, card: string|null}>, read_at: string}|null
+     * @return array{total: int, accounts: list<array{id: int, name: string, unbilled: int|null, card: string|null, ours: bool, error: string|null}>, read_at: string}|null
      */
     public function liveUnbilled(): ?array
     {
@@ -198,16 +198,26 @@ class AdAccountBalances
 
         return Cache::remember('meta:unbilled', 600, function () {
             $rows = [];
+            $ours = array_map(fn ($c) => substr(preg_replace('/\D/', '', (string) $c), -4), MetaReceipts::ourCards());
+            // One account Meta will not answer for (no access, a closed account) does not hide the rest.
             foreach (PilotAccount::where('platform', 'meta')->where('currency', 'USD')->orderBy('name')->get() as $account) {
                 try {
                     $b = app(PilotClient::class)->billing($account->pilot_id);
-                } catch (\Throwable) {
-                    return null;
+                } catch (\Throwable $e) {
+                    $rows[] = ['id' => $account->id, 'name' => $account->name, 'unbilled' => null, 'card' => null, 'ours' => false, 'error' => mb_substr($e->getMessage(), 0, 120)];
+
+                    continue;
                 }
-                $rows[] = ['id' => $account->id, 'name' => $account->name, 'unbilled' => (int) ($b['unbilled'] ?? 0), 'card' => $b['card'] ?? null];
+                // Only an account that pays with one of our cards is our money to set aside.
+                $last4 = preg_match('/(\d{4})\s*$/', (string) ($b['card'] ?? ''), $m) ? $m[1] : null;
+                $rows[] = ['id' => $account->id, 'name' => $account->name, 'unbilled' => (int) ($b['unbilled'] ?? 0), 'card' => $b['card'] ?? null,
+                    'ours' => $last4 !== null && in_array($last4, $ours, true), 'error' => null];
+            }
+            if (collect($rows)->whereNotNull('unbilled')->isEmpty()) {
+                return null;
             }
 
-            return ['total' => array_sum(array_column($rows, 'unbilled')), 'accounts' => $rows, 'read_at' => now()->toIso8601String()];
+            return ['total' => (int) collect($rows)->where('ours', true)->sum('unbilled'), 'accounts' => $rows, 'read_at' => now()->toIso8601String()];
         });
     }
 

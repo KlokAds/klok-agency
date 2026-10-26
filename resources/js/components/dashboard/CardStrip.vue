@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import KButton from '@/components/k/KButton.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import type { Fx, Summary } from '@/components/dashboard/types';
-import { money } from '@/lib/format';
+import { ago, money } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{ summary: Summary; fx: Fx }>();
@@ -169,6 +169,47 @@ const meter = computed(() => {
                         <p v-else class="mt-1.5 text-[13.5px] text-ink-3">
                             {{ t('সব খরচ card থেকে কাটা হয়ে গেছে।') }}
                         </p>
+                        <!-- Meta's own figure, account by account: ours by card, the rest a client's own card. -->
+                        <ul
+                            v-if="live"
+                            class="mt-2 space-y-0.5 border-t border-line pt-2 text-[12.5px] text-ink-3"
+                        >
+                            <li
+                                v-for="a in live.accounts"
+                                :key="a.id"
+                                class="flex justify-between gap-3"
+                            >
+                                <span class="truncate"
+                                    >{{ a.name
+                                    }}<template v-if="a.card">
+                                        · {{ a.card }}</template
+                                    ><template
+                                        v-if="a.unbilled !== null && !a.ours"
+                                    >
+                                        ·
+                                        {{
+                                            t('client-এর নিজের card')
+                                        }}</template
+                                    ></span
+                                >
+                                <span
+                                    class="num shrink-0"
+                                    :class="a.ours ? 'text-ink-2' : ''"
+                                    >{{
+                                        a.unbilled === null
+                                            ? '—'
+                                            : money(a.unbilled, 'usd')
+                                    }}</span
+                                >
+                            </li>
+                            <li class="text-[12px]">
+                                {{
+                                    t('Meta থেকে পড়া {ago}', {
+                                        ago: ago(live.read_at),
+                                    })
+                                }}
+                            </li>
+                        </ul>
                     </div>
                     <div>
                         <dt
