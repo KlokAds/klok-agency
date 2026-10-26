@@ -165,48 +165,68 @@ const meter = computed(() => {
                             {{ t('সব খরচ card থেকে কাটা হয়ে গেছে।') }}
                         </p>
                         <!-- Meta's own figure, account by account: ours by card, the rest a client's own card. -->
-                        <ul
+                        <div
                             v-if="live"
-                            class="mt-2 space-y-0.5 border-t border-line pt-2 text-[12.5px] text-ink-3"
+                            class="mt-3 rounded-xl border border-brand/30 bg-brand-soft/40 px-3.5 py-3"
                         >
-                            <li
-                                v-for="a in live.accounts"
-                                :key="a.id"
-                                class="flex justify-between gap-3"
+                            <p
+                                class="flex items-center justify-between gap-2 text-[12.5px] font-semibold text-brand-ink"
                             >
-                                <span class="truncate"
-                                    >{{ a.name
-                                    }}<template v-if="a.card">
-                                        · {{ a.card }}</template
-                                    ><template
-                                        v-if="a.unbilled !== null && !a.ours"
-                                    >
-                                        ·
-                                        {{
-                                            a.card
-                                                ? t('client-এর নিজের card')
-                                                : t('card নেই')
-                                        }}</template
-                                    ></span
-                                >
-                                <span
-                                    class="num shrink-0"
-                                    :class="a.ours ? 'text-ink-2' : ''"
-                                    >{{
-                                        a.unbilled === null
-                                            ? '—'
-                                            : money(a.unbilled, 'usd')
+                                <span class="inline-flex items-center gap-1.5"
+                                    ><KIcon name="pulse" :size="14" />{{
+                                        t('Ad account ধরে — Meta-র হিসাব')
                                     }}</span
                                 >
-                            </li>
-                            <li class="text-[12px]">
-                                {{
+                                <span class="font-normal text-ink-3">{{
                                     t('Meta থেকে পড়া {ago}', {
                                         ago: ago(live.read_at),
                                     })
-                                }}
-                            </li>
-                        </ul>
+                                }}</span>
+                            </p>
+                            <ul class="mt-2 space-y-1.5 text-[13.5px]">
+                                <li
+                                    v-for="a in live.accounts"
+                                    :key="a.id"
+                                    class="flex items-center justify-between gap-3"
+                                >
+                                    <span
+                                        class="flex min-w-0 items-center gap-2"
+                                    >
+                                        <span
+                                            class="truncate font-medium text-ink"
+                                            >{{ a.name }}</span
+                                        >
+                                        <span
+                                            v-if="a.card"
+                                            class="num shrink-0 rounded-md bg-surface px-1.5 py-0.5 text-[12px] text-ink-2"
+                                            >{{ a.card }}</span
+                                        >
+                                        <span
+                                            v-if="
+                                                a.unbilled !== null && !a.ours
+                                            "
+                                            class="shrink-0 text-[12px] text-ink-3"
+                                            >{{
+                                                a.card
+                                                    ? t('client-এর নিজের card')
+                                                    : t('card নেই')
+                                            }}</span
+                                        >
+                                    </span>
+                                    <span
+                                        class="num shrink-0 text-[15px] font-bold"
+                                        :class="
+                                            a.ours ? 'text-wait' : 'text-ink-3'
+                                        "
+                                        >{{
+                                            a.unbilled === null
+                                                ? '—'
+                                                : money(a.unbilled, 'usd')
+                                        }}</span
+                                    >
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div>
                         <dt
