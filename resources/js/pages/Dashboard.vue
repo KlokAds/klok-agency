@@ -51,6 +51,22 @@ const user = page.props.auth.user;
 const can = computed(() => page.props.auth.can);
 const s = computed(() => props.summary);
 
+// The five clients with the most advance still unspent, and the five who owe the most.
+const advances = computed(() =>
+    [...props.clients]
+        .filter((c) => c.unearned > 0)
+        .sort((a, b) => b.unearned - a.unearned)
+        .slice(0, 5),
+);
+const owing = computed(() =>
+    [...props.clients]
+        .filter((c) => c.pending_cost > 0)
+        .sort((a, b) => b.pending_cost - a.pending_cost)
+        .slice(0, 5),
+);
+// The last five months, newest first.
+const lastMonths = computed(() => [...props.monthly].slice(-5).reverse());
+
 // The month rows in the trend chart's words: income, ad cost, office cost, profit.
 const trend = computed<TrendRow[]>(() =>
     props.monthly.map((m) => ({
@@ -180,7 +196,7 @@ const greeting =
                 >{{ t('বিস্তারিত') }} →</Link
             >
         </div>
-        <div class="panel p-4 sm:p-5">
+        <div class="panel flex flex-col p-4 sm:p-5">
             <p
                 class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
             >
@@ -193,15 +209,28 @@ const greeting =
             <p class="dash-fig mt-3">
                 {{ money(s.unearned, 'bdt') }}
             </p>
-            <p class="mt-3 text-[13.5px] leading-snug text-ink-3">
-                {{
-                    t(
-                        'Client আগাম দিয়েছে কিন্তু campaign-এ এখনো খরচ হয়নি। এটা client-দের টাকা — লাভ নয়।',
-                    )
-                }}
+            <ul v-if="advances.length" class="mt-3 space-y-1.5 text-[13.5px]">
+                <li
+                    v-for="c in advances"
+                    :key="c.id"
+                    class="flex justify-between gap-3 text-ink-3"
+                >
+                    <span class="truncate">{{ c.name }}</span>
+                    <span class="num font-medium text-ink-2">{{
+                        money(c.unearned, 'bdt')
+                    }}</span>
+                </li>
+            </ul>
+            <p v-else class="mt-3 text-[13.5px] leading-snug text-ink-3">
+                {{ t('কারও আগাম টাকা পড়ে নেই।') }}
             </p>
+            <Link
+                href="/clients"
+                class="no-print mt-auto inline-block pt-3 text-[14px] font-medium text-brand-ink hover:underline"
+                >{{ t('সব client') }} →</Link
+            >
         </div>
-        <div class="panel p-4 sm:p-5">
+        <div class="panel flex flex-col p-4 sm:p-5">
             <template v-if="s.owner_due > 0">
                 <p
                     class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
@@ -239,19 +268,29 @@ const greeting =
                 >
                     {{ money(s.receivable_cost, 'bdt') }}
                 </p>
-                <p class="mt-3 text-[13.5px] leading-snug text-ink-3">
-                    {{
-                        t(
-                            '{amount} খরচ হয়েছে, client এখনো টাকা দেয়নি (কেনা দামে)।',
-                            {
-                                amount: money(s.receivable_usd, 'usd'),
-                            },
-                        )
-                    }}
+                <ul v-if="owing.length" class="mt-3 space-y-1.5 text-[13.5px]">
+                    <li
+                        v-for="c in owing"
+                        :key="c.id"
+                        class="flex justify-between gap-3 text-ink-3"
+                    >
+                        <span class="truncate">{{ c.name }}</span>
+                        <span class="num font-medium text-wait">{{
+                            money(c.pending_cost, 'bdt')
+                        }}</span>
+                    </li>
+                </ul>
+                <p v-else class="mt-3 text-[13.5px] leading-snug text-ink-3">
+                    {{ t('কারও কাছে কিছু পাওনা নেই।') }}
                 </p>
+                <Link
+                    href="/clients"
+                    class="no-print mt-auto inline-block pt-3 text-[14px] font-medium text-brand-ink hover:underline"
+                    >{{ t('সব client') }} →</Link
+                >
             </template>
         </div>
-        <div class="panel p-4 sm:p-5">
+        <div class="panel flex flex-col p-4 sm:p-5">
             <p
                 class="flex items-center gap-2.5 text-[13px] font-medium text-ink-3"
             >
@@ -269,21 +308,37 @@ const greeting =
             <p class="dash-fig mt-3">
                 <KAmount :value="month_net" currency="bdt" sign />
             </p>
-            <p class="mt-3 text-[13.5px] text-ink-3">
-                {{ t('শুরু থেকে') }}
-                <KAmount
-                    :value="s.net"
-                    currency="bdt"
-                    sign
-                    class="font-medium"
-                />
-                ·
-                <Link
-                    href="/reports?preset=this_month"
-                    class="no-print font-medium text-brand-ink hover:underline"
-                    >P&amp;L →</Link
+            <ul class="mt-3 space-y-1.5 text-[13.5px]">
+                <li
+                    v-for="m in lastMonths"
+                    :key="m.month"
+                    class="flex justify-between gap-3 text-ink-3"
                 >
-            </p>
+                    <span>{{ m.label }}</span>
+                    <KAmount
+                        :value="m.result"
+                        currency="bdt"
+                        sign
+                        class="font-medium"
+                    />
+                </li>
+                <li
+                    class="flex justify-between gap-3 border-t border-line pt-1.5 text-ink-2"
+                >
+                    <span>{{ t('শুরু থেকে') }}</span>
+                    <KAmount
+                        :value="s.net"
+                        currency="bdt"
+                        sign
+                        class="font-semibold"
+                    />
+                </li>
+            </ul>
+            <Link
+                href="/reports?preset=this_month"
+                class="no-print mt-auto inline-block pt-3 text-[14px] font-medium text-brand-ink hover:underline"
+                >P&amp;L →</Link
+            >
         </div>
     </section>
 

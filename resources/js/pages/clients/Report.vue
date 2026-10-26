@@ -164,24 +164,25 @@ function print(): void {
 
     <div class="rep-page">
         <!-- On screen: the period and the print button; neither is on paper -->
-        <div
-            class="no-print mx-auto mb-5 flex max-w-[900px] flex-wrap items-center justify-between gap-3 px-4 pt-5 sm:px-0"
-        >
-            <Link
-                :href="`/clients/${client.id}`"
-                class="inline-flex items-center gap-1.5 text-[14px] font-medium text-brand-ink hover:underline"
-            >
-                <KIcon name="back" :size="15" />{{ client.name }}
-            </Link>
-            <div class="flex flex-wrap items-center gap-2">
+        <!-- On screen: back, the print button, and the period on its own line; none of it on paper -->
+        <div class="no-print mx-auto mb-5 max-w-[900px] px-4 pt-5 sm:px-0">
+            <div class="flex items-center justify-between gap-3">
+                <Link
+                    :href="`/clients/${client.id}`"
+                    class="inline-flex items-center gap-1.5 text-[14px] font-medium text-brand-ink hover:underline"
+                >
+                    <KIcon name="back" :size="15" />{{ client.name }}
+                </Link>
+                <KButton variant="primary" icon="print" @click="print">{{
+                    t('Print / PDF')
+                }}</KButton>
+            </div>
+            <div class="mt-3">
                 <RangePicker
                     :url="`/clients/${client.id}/report`"
                     :range="range"
                     dense
                 />
-                <KButton variant="primary" icon="print" @click="print">{{
-                    t('Print / PDF')
-                }}</KButton>
             </div>
         </div>
 

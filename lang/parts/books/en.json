@@ -362,5 +362,7 @@
     "পার্থক্য {amount}": "off by {amount}",
     "মোটের {pct}%": "{pct}% of the total",
     "কিছু নেই": "Nothing here",
-    "মূল পাতা": "Main pages"
+    "মূল পাতা": "Main pages",
+    "কারও আগাম টাকা পড়ে নেই।": "Nobody's advance is waiting.",
+    "কারও কাছে কিছু পাওনা নেই।": "Nobody owes anything."
 }
