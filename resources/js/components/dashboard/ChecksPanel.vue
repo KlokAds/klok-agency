@@ -140,7 +140,7 @@ const allOk = computed(() => checks.value.every((c) => c.ok));
             <article
                 v-for="c in checks"
                 :key="c.key"
-                class="overflow-hidden rounded-2xl border"
+                class="@container overflow-hidden rounded-2xl border"
                 :class="c.ok ? 'border-line' : 'border-out/40'"
             >
                 <!-- Head: what is being checked, and the verdict -->
@@ -177,10 +177,10 @@ const allOk = computed(() => checks.value.every((c) => c.ok));
 
                 <!-- Body: two columns with an = between -->
                 <div
-                    class="relative grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:gap-8"
+                    class="relative grid grid-cols-1 gap-4 p-4 @md:grid-cols-2 @md:gap-8"
                 >
                     <span
-                        class="num absolute top-1/2 left-1/2 z-10 hidden size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface text-[15px] font-bold text-ink-3 sm:grid"
+                        class="num absolute top-1/2 left-1/2 z-10 hidden size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface text-[15px] font-bold text-ink-3 @md:grid"
                         >=</span
                     >
                     <dl
@@ -196,7 +196,7 @@ const allOk = computed(() => checks.value.every((c) => c.ok));
                         <div
                             v-for="l in side.lines"
                             :key="l.label"
-                            class="flex items-baseline justify-between gap-3"
+                            class="flex min-w-0 items-baseline justify-between gap-3"
                             :class="
                                 l.total
                                     ? 'mt-1 rounded-lg bg-sunken px-2.5 py-1.5 font-bold'
