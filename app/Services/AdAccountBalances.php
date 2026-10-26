@@ -158,8 +158,11 @@ class AdAccountBalances
         return Cache::remember('meta:unbilled', 600, function () {
             $rows = [];
             $ours = array_map(fn ($c) => substr(preg_replace('/\D/', '', (string) $c), -4), MetaReceipts::ourCards());
+            // Only the accounts this book runs ads on: those with a campaign linked to a client here.
             // One account Meta will not answer for (no access, a closed account) does not hide the rest.
-            foreach (PilotAccount::where('platform', 'meta')->where('currency', 'USD')->orderBy('name')->get() as $account) {
+            $accounts = PilotAccount::where('platform', 'meta')->where('currency', 'USD')
+                ->whereHas('campaigns', fn ($q) => $q->whereNotNull('client_id'))->orderBy('name')->get();
+            foreach ($accounts as $account) {
                 try {
                     $b = app(PilotClient::class)->billing($account->pilot_id);
                 } catch (\Throwable $e) {

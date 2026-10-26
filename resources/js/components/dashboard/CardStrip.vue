@@ -285,7 +285,50 @@ const meter = computed(() => {
                     {{ t('কোনো batch-এ dollar বাকি নেই') }}
                 </p>
 
-                <dl class="mt-auto space-y-2.5 pt-6 text-[14px]">
+                <!-- The dollars in taka terms: what the ones left cost, how much of the bought has gone. -->
+                <dl class="mt-4 grid grid-cols-2 gap-3 text-[14px]">
+                    <div class="rounded-xl bg-surface px-3.5 py-2.5">
+                        <dt class="text-[12.5px] text-ink-3">
+                            {{ t('কেনা দামে') }}
+                        </dt>
+                        <dd class="num mt-0.5 font-semibold">
+                            {{ money(s.usd_at_cost, 'bdt') }}
+                        </dd>
+                    </div>
+                    <div class="rounded-xl bg-surface px-3.5 py-2.5">
+                        <dt class="text-[12.5px] text-ink-3">
+                            {{ t('মোট কেনা · খরচ') }}
+                        </dt>
+                        <dd class="num mt-0.5 font-semibold">
+                            {{ money(s.usd_check.bought, 'usd') }}
+                            <span class="text-ink-3"
+                                >·
+                                {{ money(s.usd_check.consumed, 'usd') }}</span
+                            >
+                        </dd>
+                    </div>
+                </dl>
+                <div
+                    class="mt-2 h-1.5 overflow-hidden rounded-full bg-sunken"
+                    :title="t('কেনা dollar-এর কতটা খরচ হয়েছে')"
+                >
+                    <div
+                        class="h-full rounded-full bg-brand"
+                        :style="{
+                            width:
+                                Math.min(
+                                    100,
+                                    Math.round(
+                                        (s.usd_check.consumed /
+                                            Math.max(1, s.usd_check.bought)) *
+                                            100,
+                                    ),
+                                ) + '%',
+                        }"
+                    />
+                </div>
+
+                <dl class="mt-auto space-y-2.5 pt-5 text-[14px]">
                     <div
                         v-if="fx.current"
                         class="flex justify-between gap-3 border-b border-line pb-2.5"
