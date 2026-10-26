@@ -282,9 +282,22 @@ const meter = computed(() => {
                         >
                             {{ money(cardAfter, 'usd') }}
                         </dd>
-                        <p class="num mt-1.5 text-[13.5px] text-ink-3">
-                            {{ money(s.card, 'usd') }} −
-                            {{ money(s.platform_due, 'usd') }}
+                        <p
+                            class="num mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-lg bg-sunken px-2.5 py-1.5 text-[13px] text-ink-3"
+                        >
+                            <span
+                                >{{ t('Card') }}
+                                <b class="text-ink">{{
+                                    money(s.card, 'usd')
+                                }}</b></span
+                            >
+                            <span>−</span>
+                            <span
+                                >{{ t('কাটবে') }}
+                                <b class="text-wait">{{
+                                    money(s.platform_due, 'usd')
+                                }}</b></span
+                            >
                         </p>
                     </div>
                 </dl>
@@ -340,7 +353,7 @@ const meter = computed(() => {
 
                 <!-- The dollars in taka terms: what the ones left cost, how much of the bought has gone. -->
                 <dl class="mt-4 grid grid-cols-2 gap-3 text-[14px]">
-                    <div class="rounded-xl bg-surface px-3.5 py-2.5">
+                    <div class="min-w-0 rounded-xl bg-surface px-3.5 py-2.5">
                         <dt class="text-[12.5px] text-ink-3">
                             {{ t('কেনা দামে') }}
                         </dt>
@@ -348,16 +361,16 @@ const meter = computed(() => {
                             {{ money(s.usd_at_cost, 'bdt') }}
                         </dd>
                     </div>
-                    <div class="rounded-xl bg-surface px-3.5 py-2.5">
+                    <div class="min-w-0 rounded-xl bg-surface px-3.5 py-2.5">
                         <dt class="text-[12.5px] text-ink-3">
-                            {{ t('মোট কেনা · খরচ') }}
+                            {{ t('মোট কেনা') }}
                         </dt>
-                        <dd class="num mt-0.5 font-semibold">
+                        <dd class="num mt-0.5 truncate font-semibold">
                             {{ money(s.usd_check.bought, 'usd') }}
-                            <span class="text-ink-3"
-                                >·
-                                {{ money(s.usd_check.consumed, 'usd') }}</span
-                            >
+                        </dd>
+                        <dd class="num truncate text-[12.5px] text-ink-3">
+                            {{ t('খরচ') }}
+                            {{ money(s.usd_check.consumed, 'usd') }}
                         </dd>
                     </div>
                 </dl>
