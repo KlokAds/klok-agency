@@ -345,5 +345,6 @@
     "খাতার হিসাবে {amount}": "in the books: {amount}",
     "খাতার নিজের হিসাব — পুরোনো entry বা charge-এর ভাগ না মিললে এটা আলাদা হয়": "The books' own figure; it differs when an old entry or a charge's split does not match",
     "কাটবে": "to charge",
-    "Card": "Card"
+    "Card": "Card",
+    "অন্যান্য": "Others"
 }

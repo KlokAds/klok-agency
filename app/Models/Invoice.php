@@ -164,8 +164,30 @@ class Invoice extends Model
         return (int) static::max('seq') + 1;
     }
 
-    public static function numberFor(int $seq): string
+    /**
+     * The number an invoice shows: the client's code and their own count — KA-GFFS-01, KA-GFFS-02 —
+     * so a client's invoices read in order; without a client, the plain running number.
+     */
+    public static function numberFor(int $seq, ?Client $client = null): string
     {
-        return self::PREFIX.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        if ($client === null) {
+            return self::PREFIX.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        }
+        $code = self::codeFor($client);
+        $n = (int) static::where('client_id', $client->id)->count() + 1;
+        do {
+            $number = self::PREFIX.$code.'-'.str_pad((string) $n, 2, '0', STR_PAD_LEFT);
+            $n++;
+        } while (static::where('number', $number)->exists());
+
+        return $number;
+    }
+
+    /** "GFFS" for GFFS, "MD-ZABED" for Md Zabed: letters and digits of the name, at most twelve. */
+    public static function codeFor(Client $client): string
+    {
+        $code = strtoupper(trim((string) preg_replace('/[^A-Za-z0-9]+/', '-', Str::ascii((string) $client->name)), '-'));
+
+        return $code !== '' ? Str::limit($code, 12, '') : 'C'.$client->id;
     }
 }

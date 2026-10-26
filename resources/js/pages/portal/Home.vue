@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import CampaignState from '@/components/portal/CampaignState.vue';
 import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
@@ -44,6 +44,8 @@ const props = defineProps<{
         refund?: number | null;
         rate?: number | null;
         topup_min?: number;
+        owed?: number;
+        owed_bdt?: number;
         round?: {
             paid: number;
             carried: number;
@@ -83,6 +85,17 @@ const usedShare = computed(() =>
           )
         : 0,
 );
+// Paying what is owed: the invoice is made on the server and the client lands on it.
+const payingDue = ref(false);
+function payDue(): void {
+    payingDue.value = true;
+    router.post(
+        '/portal/pay-due',
+        {},
+        { onFinish: () => (payingDue.value = false) },
+    );
+}
+
 // Adding credit: so much taka, shown as the dollars it buys at the client's rate.
 const topUpOpen = ref(false);
 const topUpForm = useForm({ amount: '' });
@@ -309,6 +322,31 @@ const low = computed(
                     t('১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।')
                 }}
             </p>
+            <!-- Ads already run past the credit: one tap makes the invoice and opens it to pay. -->
+            <div
+                v-if="credit.owed"
+                class="mt-2 rounded-xl border border-out/30 bg-out-soft px-3.5 py-3"
+            >
+                <p class="flex flex-wrap items-baseline justify-between gap-2">
+                    <span class="text-[13.5px] font-semibold text-out">{{
+                        t('পাওনা — বিজ্ঞাপন চলে গেছে, টাকা বাকি')
+                    }}</span>
+                    <span class="num font-bold text-out"
+                        >{{ money(credit.owed, 'usd')
+                        }}<template v-if="credit.owed_bdt">
+                            ≈ {{ money(credit.owed_bdt, 'bdt') }}</template
+                        ></span
+                    >
+                </p>
+                <KButton
+                    size="sm"
+                    variant="primary"
+                    class="mt-2"
+                    :loading="payingDue"
+                    @click="payDue"
+                    >{{ t('এখনই pay করুন') }}</KButton
+                >
+            </div>
             <div class="mt-2 flex flex-wrap gap-2">
                 <KButton
                     v-if="credit.rate"

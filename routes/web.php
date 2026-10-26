@@ -120,6 +120,7 @@ Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->grou
     Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
     Route::post('refund-request', [PortalController::class, 'refundRequest'])->middleware('throttle:3,60')->name('refund-request');
     Route::post('top-up', [PortalController::class, 'topUp'])->middleware('throttle:5,60')->name('top-up');
+    Route::post('pay-due', [PortalController::class, 'payDue'])->middleware('throttle:5,60')->name('pay-due');
     Route::get('notifications', [PortalController::class, 'notifications'])->name('notifications');
 });
 
@@ -194,6 +195,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('clients', [ClientController::class, 'index'])->middleware('can:clients.view')->name('clients.index');
     Route::get('clients/{client}', [ClientController::class, 'show'])->middleware('can:clients.view')->name('clients.show');
+    Route::post('clients/{client}/invoice-due', [ClientController::class, 'invoiceDue'])->middleware(['can:clients.edit', 'throttle:10,1'])->name('clients.invoice-due');
     Route::post('clients', [ClientController::class, 'store'])->middleware('can:clients.create')->name('clients.store');
     Route::post('clients/{client}/portal-users', [ClientController::class, 'linkPortalUser'])->middleware('can:clients.edit')->name('clients.portal.link');
     Route::delete('clients/{client}/portal-users/{user}', [ClientController::class, 'unlinkPortalUser'])->middleware('can:clients.edit')->name('clients.portal.unlink');

@@ -172,7 +172,7 @@ it('creates a numbered invoice with campaign, advance and service lines and thei
 
     $invoice = Invoice::with('items')->sole();
 
-    expect($invoice->number)->toBe('KA-0001')
+    expect($invoice->number)->toBe('KA-GFFS-01')
         ->and($invoice->status)->toBe('sent')
         ->and($invoice->usd)->toBe(14000)
         ->and($invoice->total)->toBe(550000 + 1375000 + 120000)

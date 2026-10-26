@@ -130,6 +130,9 @@ class PortalController extends Controller
                 // What a dollar costs them now, so the top-up form can say what their taka buys.
                 'rate' => Invoices::clientRate(),
                 'topup_min' => TopUps::MIN_BDT,
+                // Owed for ads already run (credit below zero), in dollars and at their rate in taka.
+                'owed' => max(0, (int) ($figure['usd_pending'] ?? 0)),
+                'owed_bdt' => (int) ($figure['pending_bdt'] ?? 0),
             ],
             'week' => collect(range(6, 0))->map(function (int $back) use ($today, $week) {
                 $rows = $week->get($today->subDays($back)->toDateString(), collect());
@@ -161,7 +164,7 @@ class PortalController extends Controller
                     'date' => $e->entry_date?->format('j M Y'),
                     'amount' => $e->amount,
                     'via' => BdtEntry::PAY_VIA[$e->pay_via ?? ''] ?? null,
-                    'invoice' => preg_match('/\bInvoice ([A-Z]+-\d+)/', (string) $e->notes.' '.$e->description, $m) ? $m[1] : null,
+                    'invoice' => preg_match('/\bInvoice ([A-Z]+-(?:[A-Z0-9]+-)*\d+)/', (string) $e->notes.' '.$e->description, $m) ? $m[1] : null,
                     'refund' => $e->category === 'client_refund',
                 ])->all(),
             // The KlokOne Android app, offered when the portal is open in a browser.
@@ -343,6 +346,20 @@ class PortalController extends Controller
     }
 
     /** The client asks for the ad credit not spent yet back: the Owners act on it. */
+    /** The client pays what they owe for ads already run: an invoice is made (or the open one reused) and they go to pay it. */
+    public function payDue(Request $request, Invoices $invoices): \Symfony\Component\HttpFoundation\Response
+    {
+        $client = $this->client($request);
+        $open = Invoice::where('client_id', $client->id)->where('notes', Invoices::DUE_NOTE)->where('status', 'sent')->where('paid', 0)->latest('id')->first();
+        try {
+            $invoice = $open ?? $invoices->invoiceDue($client);
+        } catch (\RuntimeException $e) {
+            throw ValidationException::withMessages(['due' => $e->getMessage()]);
+        }
+
+        return Inertia::location($invoice->publicUrl());
+    }
+
     /** The client adds credit on their own: so much taka, an invoice at their rate, paid like any other. */
     public function topUp(Request $request, TopUps $topUps): \Symfony\Component\HttpFoundation\Response
     {

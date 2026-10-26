@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\InvoiceMail;
 use App\Models\BdtEntry;
 use App\Models\Campaign;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
@@ -373,7 +374,7 @@ class InvoiceController extends Controller
                     'amount' => Money::toInput($i->amount),
                 ])->values()->all(),
             ] : null,
-            'next_number' => $invoice ? $invoice->number : Invoice::numberFor(Invoice::nextSeq()),
+            'next_number' => $invoice ? $invoice->number : Invoice::numberFor(Invoice::nextSeq(), $clientId ? Client::find($clientId) : null),
             'client_id' => $clientId,
             'pricing' => [
                 'fx_rate' => Invoices::fxRate(),

@@ -19,6 +19,7 @@ use App\Services\AdAccountBalances;
 use App\Services\Books;
 use App\Services\CampaignBilling;
 use App\Services\ClientNotifier;
+use App\Services\Invoices;
 use App\Services\PilotAccounts;
 use App\Services\PilotClient;
 use App\Support\Access;
@@ -79,6 +80,21 @@ class ClientController extends Controller
                 'statuses' => Lookups::options(Client::STATUSES),
             ],
         ]);
+    }
+
+    /** One click: everything the client owes for ads already run becomes a sent invoice. */
+    public function invoiceDue(Client $client, Invoices $invoices): RedirectResponse
+    {
+        try {
+            $invoice = $invoices->invoiceDue($client);
+        } catch (\RuntimeException $e) {
+            $this->toast($e->getMessage(), 'error');
+
+            return back();
+        }
+        $this->toast(__('Invoice :number তৈরি ও পাঠানো হয়েছে।', ['number' => $invoice->number]));
+
+        return redirect('/invoices/'.$invoice->id);
     }
 
     public function show(Request $request, Client $client, Books $books, AdAccountBalances $balances): Response

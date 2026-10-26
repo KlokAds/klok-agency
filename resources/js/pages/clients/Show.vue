@@ -251,6 +251,17 @@ const rate = computed(() =>
 const open = ref(false);
 // The client's own details; where they are empty, their portal person's, so there is something to start from.
 const person = props.portal.users[0];
+
+// One click: the owed spend becomes a sent invoice and the page moves to it.
+const invoicingDue = ref(false);
+function invoiceDue(): void {
+    invoicingDue.value = true;
+    router.post(
+        `/clients/${props.client.id}/invoice-due`,
+        {},
+        { onFinish: () => (invoicingDue.value = false) },
+    );
+}
 const form = useForm({
     ...props.client,
     phone: props.client.phone ?? person?.phone ?? '',
@@ -361,6 +372,15 @@ function print(): void {
             <p class="num mt-1 text-[13px] text-ink-3">
                 cost {{ money(f.cost_pending, 'bdt') }}
             </p>
+            <KButton
+                v-if="f.usd_pending > 0 && can['clients.edit']"
+                size="sm"
+                variant="primary"
+                class="mt-2"
+                :loading="invoicingDue"
+                @click="invoiceDue"
+                >{{ t('এক click-এ invoice') }}</KButton
+            >
         </div>
     </div>
 

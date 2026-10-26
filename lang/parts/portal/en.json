@@ -292,5 +292,7 @@
     "এরপর": "Next",
     "শেষ": "Used up",
     "বাকি": "left",
-    "পাওনা": "owed"
+    "পাওনা": "owed",
+    "পাওনা — বিজ্ঞাপন চলে গেছে, টাকা বাকি": "Owed: ads have run, payment pending",
+    "এখনই pay করুন": "Pay now"
 }

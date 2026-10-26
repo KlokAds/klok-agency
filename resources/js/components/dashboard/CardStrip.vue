@@ -18,11 +18,36 @@ const s = computed(() => props.summary);
 // The books already carry Meta's own figure where Pilot could read it (Books::summary), so
 // every page shows the same number; a row says when its due is Meta's word and what the book had.
 const live = computed(() => s.value.meta_live ?? null);
-const dueRows = computed(() =>
-    s.value.platforms
-        .filter((p) => p.due !== 0 || p.live)
-        .map((p) => ({ ...p, book: p.book_due ?? p.due, isLive: !!p.live })),
-);
+const dueRows = computed(() => {
+    const rows = s.value.platforms.map((p) => ({
+        ...p,
+        book: p.book_due ?? p.due,
+        isLive: !!p.live,
+    }));
+    const main = rows.filter(
+        (p) =>
+            (p.code === 'meta' || p.code === 'google') &&
+            (p.due !== 0 || p.isLive),
+    );
+    // Every other platform in one line, only while something is due there.
+    const rest = rows.filter((p) => p.code !== 'meta' && p.code !== 'google');
+    const restDue = rest.reduce((a, p) => a + p.due, 0);
+    return restDue !== 0
+        ? [
+              ...main,
+              {
+                  id: -1,
+                  code: 'other',
+                  name: t('অন্যান্য'),
+                  spent: 0,
+                  charged: 0,
+                  due: restDue,
+                  book: restDue,
+                  isLive: false,
+              },
+          ]
+        : main;
+});
 const platformDue = computed(() => s.value.platform_due);
 // What stays on the card once every platform has charged what it says it will.
 const cardAfter = computed(() => s.value.card - platformDue.value);

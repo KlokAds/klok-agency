@@ -193,5 +193,6 @@
     "উপর থেকে campaign আনুন বা line যোগ করুন।": "Bring in campaigns above or add a line.",
     "এই নম্বরটা অন্য একটা account-এর — আপনার নিজের নম্বর দিন।": "That number belongs to another account — enter your own.",
     "Wallet থেকে client-এর নম্বরে টাকা গেছে — ফেরত কি?": "Money went from the wallet to a client’s number — a refund?",
-    "{amount} → {to} · Invoice {number} — ফেরত হলে payment-এ \"Refund\" দিন": "{amount} → {to} · Invoice {number} — if it was a refund, press \"Refund\" on the payment"
+    "{amount} → {to} · Invoice {number} — ফেরত হলে payment-এ \"Refund\" দিন": "{amount} → {to} · Invoice {number} — if it was a refund, press \"Refund\" on the payment",
+    "এই client-এর কোনো পাওনা নেই।": "This client owes nothing."
 }

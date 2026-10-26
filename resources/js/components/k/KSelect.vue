@@ -156,6 +156,8 @@ function onKey(event: KeyboardEvent): void {
             :class="[
                 size === 'sm' ? 'min-h-9! text-[14px]' : 'text-[15.5px]',
                 disabled ? 'pointer-events-none opacity-55' : 'cursor-pointer',
+                // A choice with a note under it needs two lines of room.
+                selected?.note ? 'min-h-[56px]! py-2 leading-tight' : '',
             ]"
             :data-open="open"
             :data-invalid="invalid"

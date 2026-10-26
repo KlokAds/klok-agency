@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
@@ -19,6 +20,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Invoices from first draft to paid. When money against an invoice is
@@ -38,6 +40,45 @@ class Invoices
 
     public function __construct(private Postings $postings, private Notifier $notifier) {}
 
+    public const DUE_NOTE = 'Due';
+
+    /**
+     * Everything a client owes for ads already run, as one invoice at the rate those dollars
+     * cost: made and sent in one go, from the team's page or the client's own "pay" button. An
+     * unpaid due invoice from before is replaced, never doubled.
+     *
+     * @throws RuntimeException when nothing is owed or there is no rate
+     */
+    public function invoiceDue(Client $client): Invoice
+    {
+        $figure = collect(app(Books::class)->clients())->firstWhere('id', $client->id) ?? [];
+        $due = max(0, (int) ($figure['usd_pending'] ?? 0));
+        if ($due <= 0) {
+            throw new RuntimeException(__('এই client-এর কোনো পাওনা নেই।'));
+        }
+        $rows = UsdEntry::where('source', 'pilot')->where('client_id', $client->id)->where('status', 'pending')->get();
+        $rate = self::rateFor($rows) ?? self::clientRate() ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
+
+        return DB::transaction(function () use ($client, $due, $rate) {
+            foreach (Invoice::where('client_id', $client->id)->where('notes', self::DUE_NOTE)->where('status', '!=', 'void')->where('paid', 0)->get() as $old) {
+                $this->void($old);
+            }
+            $invoice = $this->save([
+                'client_id' => $client->id,
+                'issue_date' => now()->toDateString(),
+                'due_date' => now()->addDays(3)->toDateString(),
+                'notes' => self::DUE_NOTE,
+                'items' => [[
+                    'kind' => 'ad_budget', 'description' => Renewals::DUE_LINE, 'usd' => $due, 'rate' => $rate, 'amount' => null,
+                    'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null,
+                ]],
+            ]);
+            $this->markSent($invoice);
+
+            return $invoice;
+        });
+    }
+
     /**
      * Creates or rewrites an invoice with its lines.
      *
@@ -50,7 +91,7 @@ class Invoices
                 $seq = Invoice::nextSeq();
                 $invoice = new Invoice([
                     'seq' => $seq,
-                    'number' => Invoice::numberFor($seq),
+                    'number' => Invoice::numberFor($seq, Client::find((int) $data['client_id'])),
                     'status' => 'sent',
                     'public_token' => Str::random(40),
                 ]);
@@ -487,7 +528,7 @@ class Invoices
             foreach ($campaigns->groupBy('pilot_account_id') as $group) {
                 try {
                     $billing->readDays($group->first()->account, $group, $start, $end);
-                } catch (\RuntimeException $e) {
+                } catch (RuntimeException $e) {
                     report($e); // the days already stored still show
                 }
             }
