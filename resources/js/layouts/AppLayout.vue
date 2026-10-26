@@ -385,7 +385,7 @@ function appSettings(): void {
                     type="button"
                     class="-ml-1 grid size-10 place-items-center rounded-lg hover:bg-sunken lg:hidden"
                     :aria-label="t('মেনু')"
-                    @click="menuSheet = true"
+                    @click="inApp ? (menuSheet = true) : (drawer = true)"
                 >
                     <KIcon name="menu" :size="20" />
                 </button>
@@ -627,7 +627,9 @@ function appSettings(): void {
         </div>
 
         <!-- Phone: the four places a day's work happens, and the new entry raised in the middle -->
+        <!-- Inside the app only: the browser on a phone keeps the web layout -->
         <nav
+            v-if="inApp"
             class="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/92 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
             :aria-label="t('মূল পাতা')"
         >
@@ -674,6 +676,16 @@ function appSettings(): void {
                 </template>
             </div>
         </nav>
+
+        <!-- Phone browser: quick entry one thumb away, as on the web -->
+        <button
+            v-if="canQuick && !inApp"
+            type="button"
+            class="k-accent no-print fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-2xl px-5 text-[16px] font-bold sm:hidden"
+            @click="quick = true"
+        >
+            <KIcon name="plus" :size="20" /> {{ t('নতুন entry') }}
+        </button>
 
         <QuickEntry v-if="canQuick" v-model="quick" />
         <PhoneMenu
