@@ -132,7 +132,9 @@ const shown = computed(() =>
         </button>
         <button
             type="button"
-            class="k-chip hidden h-10 shrink-0 items-center gap-2 rounded-[10px] px-3 text-[13.5px] font-semibold sm:inline-flex"
+            class="k-chip hidden size-10 shrink-0 items-center justify-center rounded-[10px] sm:inline-flex"
+            :title="t('Notification')"
+            :aria-label="t('Notification')"
             @click="menu.toggle()"
         >
             <span class="relative">
@@ -143,7 +145,6 @@ const shown = computed(() =>
                     >{{ badge }}</span
                 >
             </span>
-            {{ t('Notification') }}
         </button>
 
         <Teleport to="body">

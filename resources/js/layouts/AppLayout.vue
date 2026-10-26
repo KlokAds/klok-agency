@@ -417,7 +417,7 @@ function appSettings(): void {
                     <NotificationBell />
                     <button
                         type="button"
-                        class="k-chip hidden h-10 items-center rounded-[10px] px-3 text-[13.5px] font-bold sm:inline-flex"
+                        class="k-chip hidden h-10 min-w-10 items-center justify-center rounded-[10px] px-2.5 text-[13.5px] font-bold sm:inline-flex"
                         :aria-label="
                             locale === 'en'
                                 ? 'বাংলায় দেখুন'
@@ -429,7 +429,12 @@ function appSettings(): void {
                     </button>
                     <button
                         type="button"
-                        class="k-chip hidden h-10 items-center gap-2 rounded-[10px] px-3 text-[13.5px] font-semibold sm:inline-flex"
+                        class="k-chip hidden size-10 items-center justify-center rounded-[10px] sm:inline-flex"
+                        :title="
+                            resolvedAppearance === 'dark'
+                                ? 'Light mode'
+                                : 'Dark mode'
+                        "
                         :aria-label="
                             resolvedAppearance === 'dark'
                                 ? 'Light mode'
@@ -449,7 +454,6 @@ function appSettings(): void {
                             "
                             :size="16"
                         />
-                        {{ resolvedAppearance === 'dark' ? 'Light' : 'Dark' }}
                     </button>
                 </div>
                 <span class="mx-1 hidden h-6 w-px bg-line-2 sm:block" />
