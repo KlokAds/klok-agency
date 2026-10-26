@@ -70,3 +70,16 @@ it('keeps the breakdown a receipt itself gives', function () {
     $byId = collect($balances->accounts()[0]['campaigns'])->keyBy('id');
     expect($byId[$this->b->id]['charged'])->toBe(300)->and($byId[$this->a->id]['charged'])->toBe(200);
 });
+
+it('matches a charge only to the days spent up to its own day, so later days stay uncharged', function () {
+    // The 3 Oct charge pays 2–3 Oct (A 600 + B 300 = 900 of 1000, 100 "other"); 4 Oct A 400 waits.
+    charge($this->account, '2026-10-03', 1000);
+    $balances = app(AdAccountBalances::class);
+    expect($balances->allocate())->toBe(1);
+
+    $accounts = $balances->accounts();
+    expect($accounts[0]['pending'])->toBe(400)
+        ->and(collect($accounts[0]['campaigns'])->keyBy('id')[$this->a->id]['pending'])->toBe(400)
+        ->and($balances->client($this->client->id))->toBe(['charged' => 600, 'uncharged' => 400])
+        ->and(collect($accounts[0]['charges'][0]['by_campaign'])->pluck('amount', 'name')->all())->toBe(['Sales A' => 600, 'Sales B' => 300, 'অন্য' => 100]);
+});

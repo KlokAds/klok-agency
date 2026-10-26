@@ -13,15 +13,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * What each ad account owes Meta and what Meta has taken from our card — and which campaign
- * each charge paid for.
+ * What each ad account owes Meta and what Meta has taken from our card — and which campaign's
+ * day each charge paid for.
  *
- * Meta charges the card in lumps (a billing threshold, or month end), not day by day. So an ad
- * account always has a running balance: spend Meta has counted but not yet charged. Every charge
- * that arrives (a receipt mail, or Pilot's charge list) is spread over the account's campaigns,
- * oldest spend first, unless the receipt itself says which campaign got what. From that, a
- * client's spend splits into what Meta has already charged (final) and what it has not (still
- * provisional against their credit).
+ * A client's credit is taken day by day as their campaigns spend; those takings pile up as money
+ * Meta has counted but not yet charged. Meta charges the card in lumps (a billing threshold, or a
+ * date). Each charge is matched to the days spent up to the day it was charged, oldest first —
+ * unless the receipt itself says which campaign got what — and the pile shrinks by exactly that.
+ * So every day of every campaign is either charged (final) or still waiting on the card.
  */
 class AdAccountBalances
 {
@@ -34,63 +33,16 @@ class AdAccountBalances
     }
 
     /**
-     * Spreads every charge that has no breakdown yet over the account's spend, oldest first.
+     * Spreads every charge that has no breakdown yet over the account's spend up to its day,
+     * oldest first, and keeps that breakdown on the charge.
      *
      * @return int how many charges were spread
      */
     public function allocate(): int
     {
         $done = 0;
-
         foreach (PilotAccount::all() as $account) {
-            $charges = $this->charges($account);
-            if ($charges->isEmpty()) {
-                continue;
-            }
-
-            // Spend not yet covered: a day of a campaign, oldest first, minus what earlier charges took.
-            $left = $this->days($account)->mapWithKeys(fn (CampaignDay $d) => [$d->campaign_id.':'.$d->day->toDateString() => (int) $d->spend]);
-            $takenByCampaign = [];
-            foreach ($charges as $entry) {
-                foreach ((array) ($entry->allocations ?? []) as $key => $cents) {
-                    if (str_starts_with((string) $key, 'c:')) {
-                        $takenByCampaign[(int) substr((string) $key, 2)] = ($takenByCampaign[(int) substr((string) $key, 2)] ?? 0) + (int) $cents;
-                    }
-                }
-            }
-            foreach ($left as $key => $spend) {
-                $campaignId = (int) strtok($key, ':');
-                $take = min($spend, $takenByCampaign[$campaignId] ?? 0);
-                $left[$key] = $spend - $take;
-                $takenByCampaign[$campaignId] = ($takenByCampaign[$campaignId] ?? 0) - $take;
-            }
-
-            foreach ($charges as $entry) {
-                if ($entry->allocations !== null) {
-                    continue;
-                }
-                $amount = -(int) $entry->amount;
-                $out = [];
-                foreach ($left as $key => $spend) {
-                    if ($amount <= 0) {
-                        break;
-                    }
-                    $take = min($spend, $amount);
-                    if ($take <= 0) {
-                        continue;
-                    }
-                    $campaignKey = 'c:'.strtok($key, ':');
-                    $out[$campaignKey] = ($out[$campaignKey] ?? 0) + $take;
-                    $left[$key] = $spend - $take;
-                    $amount -= $take;
-                }
-                // More than the spend we know of (an old balance, a campaign not synced): "other".
-                if ($amount > 0) {
-                    $out['o'] = $amount;
-                }
-                activity()->withoutLogging(fn () => $entry->forceFill(['allocations' => $out])->save());
-                $done++;
-            }
+            $done += $this->cover($account, save: true)['saved'];
         }
 
         return $done;
@@ -113,12 +65,12 @@ class AdAccountBalances
                 continue;
             }
 
+            $covered = $this->cover($account)['covered'];
             $spentBy = $days->groupBy('campaign_id')->map(fn (Collection $d) => (int) $d->sum('spend'));
-            $chargedBy = [];
-            foreach ($charges as $entry) {
-                foreach ((array) ($entry->allocations ?? []) as $key => $cents) {
-                    $chargedBy[$key] = ($chargedBy[$key] ?? 0) + (int) $cents;
-                }
+            $coveredBy = [];
+            foreach ($covered as $key => $cents) {
+                $id = (int) strtok($key, ':');
+                $coveredBy[$id] = ($coveredBy[$id] ?? 0) + $cents;
             }
             $campaigns = Campaign::whereKey($spentBy->keys()->all())->with('client:id,name')->get()->keyBy('id');
             $spent = (int) $spentBy->sum();
@@ -131,15 +83,15 @@ class AdAccountBalances
                 'since' => self::since()->toDateString(),
                 'spent' => $spent,
                 'charged' => $charged,
-                'pending' => max(0, $spent - $charged),
+                'pending' => max(0, $spent - (int) array_sum($coveredBy)),
                 'campaigns' => $spentBy->sortDesc()->map(fn (int $s, int $id) => [
                     'id' => $id,
                     'slug' => $campaigns->get($id)?->slug,
                     'name' => $campaigns->get($id)->name ?? '#'.$id,
                     'client' => $campaigns->get($id)?->client?->name,
                     'spent' => $s,
-                    'charged' => min($s, (int) ($chargedBy['c:'.$id] ?? 0)),
-                    'pending' => max(0, $s - (int) ($chargedBy['c:'.$id] ?? 0)),
+                    'charged' => (int) ($coveredBy[$id] ?? 0),
+                    'pending' => max(0, $s - (int) ($coveredBy[$id] ?? 0)),
                 ])->values()->all(),
                 'charges' => $charges->sortByDesc('entry_date')->take(12)->map(fn (UsdEntry $e) => [
                     'id' => $e->id,
@@ -159,26 +111,33 @@ class AdAccountBalances
 
     /**
      * A client's ad spend since charges are tracked: what Meta has charged our card for (final)
-     * and what it has not yet (counted against their credit day by day, settled when charged).
+     * and what it has not yet (taken from their credit day by day, settled when charged).
      *
      * @return array{charged: int, uncharged: int}
      */
     public function client(int $clientId): array
     {
-        $campaigns = Campaign::where('client_id', $clientId)->whereNotNull('bill_from')->get(['id', 'bill_from']);
+        $campaigns = Campaign::where('client_id', $clientId)->whereNotNull('bill_from')->get(['id', 'pilot_account_id', 'bill_from']);
         if ($campaigns->isEmpty()) {
             return ['charged' => 0, 'uncharged' => 0];
         }
         $since = self::since();
         $spent = 0;
-        foreach ($campaigns as $c) {
-            $from = $c->bill_from->greaterThan($since) ? $c->bill_from : $since;
-            $spent += (int) CampaignDay::where('campaign_id', $c->id)->whereDate('day', '>=', $from->toDateString())->sum('spend');
-        }
         $charged = 0;
-        $keys = $campaigns->map(fn ($c) => 'c:'.$c->id)->all();
-        foreach (UsdEntry::where('category', 'card_charge')->whereNotNull('allocations')->whereDate('entry_date', '>=', $since->toDateString())->get(['allocations']) as $entry) {
-            $charged += (int) array_sum(array_intersect_key((array) $entry->allocations, array_flip($keys)));
+
+        foreach ($campaigns->groupBy('pilot_account_id') as $accountId => $mine) {
+            $account = PilotAccount::find($accountId);
+            if ($account === null) {
+                continue;
+            }
+            $covered = $this->cover($account)['covered'];
+            foreach ($mine as $c) {
+                $from = $c->bill_from->greaterThan($since) ? $c->bill_from : $since;
+                foreach (CampaignDay::where('campaign_id', $c->id)->whereDate('day', '>=', $from->toDateString())->where('spend', '>', 0)->get(['day', 'spend']) as $day) {
+                    $spent += (int) $day->spend;
+                    $charged += (int) ($covered[$c->id.':'.$day->day->toDateString()] ?? 0);
+                }
+            }
         }
 
         return ['charged' => min($spent, $charged), 'uncharged' => max(0, $spent - $charged)];
@@ -219,6 +178,77 @@ class AdAccountBalances
 
             return ['total' => (int) collect($rows)->where('ours', true)->sum('unbilled'), 'accounts' => $rows, 'read_at' => now()->toIso8601String()];
         });
+    }
+
+    /**
+     * Matches the account's charges to its days: each charge, in date order, covers the days
+     * spent up to its own day — the campaigns its receipt names, else any, oldest first. A charge
+     * with no breakdown gets one written back when $save is set.
+     *
+     * @return array{covered: array<string, int>, saved: int} covered: "campaignId:day" => cents
+     */
+    private function cover(PilotAccount $account, bool $save = false): array
+    {
+        $left = $this->days($account)->mapWithKeys(fn (CampaignDay $d) => [$d->campaign_id.':'.$d->day->toDateString() => (int) $d->spend])->all();
+        $covered = [];
+        $saved = 0;
+
+        $take = function (string $key, int $cents) use (&$left, &$covered): int {
+            $got = min($cents, $left[$key]);
+            $left[$key] -= $got;
+            $covered[$key] = ($covered[$key] ?? 0) + $got;
+
+            return $got;
+        };
+
+        foreach ($this->charges($account) as $entry) {
+            $chargeDay = $entry->entry_date?->toDateString() ?? '9999-12-31';
+            $upTo = array_values(array_filter(array_keys($left), fn ($key) => substr($key, strpos($key, ':') + 1) <= $chargeDay && $left[$key] > 0));
+
+            if ($entry->allocations !== null) {
+                foreach ((array) $entry->allocations as $key => $cents) {
+                    if (! str_starts_with((string) $key, 'c:')) {
+                        continue;
+                    }
+                    $want = (int) $cents;
+                    $campaignId = (int) substr((string) $key, 2);
+                    foreach ($upTo as $dayKey) {
+                        if ($want <= 0) {
+                            break;
+                        }
+                        if ((int) strtok($dayKey, ':') === $campaignId) {
+                            $want -= $take($dayKey, $want);
+                        }
+                    }
+                }
+
+                continue;
+            }
+
+            $amount = -(int) $entry->amount;
+            $out = [];
+            foreach ($upTo as $dayKey) {
+                if ($amount <= 0) {
+                    break;
+                }
+                $got = $take($dayKey, $amount);
+                if ($got > 0) {
+                    $campaignKey = 'c:'.strtok($dayKey, ':');
+                    $out[$campaignKey] = ($out[$campaignKey] ?? 0) + $got;
+                    $amount -= $got;
+                }
+            }
+            // More than the spend we know of (an old balance, a campaign not synced): "other".
+            if ($amount > 0) {
+                $out['o'] = $amount;
+            }
+            if ($save) {
+                activity()->withoutLogging(fn () => $entry->forceFill(['allocations' => $out])->save());
+                $saved++;
+            }
+        }
+
+        return ['covered' => $covered, 'saved' => $saved];
     }
 
     /** @return Collection<int, CampaignDay> oldest first */
