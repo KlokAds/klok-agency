@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import SettingsNav from '@/components/SettingsNav.vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import KButton from '@/components/k/KButton.vue';
+import KDate from '@/components/k/KDate.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import { useLiveRefresh } from '@/composables/useLiveRefresh';
-import { ago } from '@/lib/format';
+import { ago, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
 // Every job that runs by itself, when it last ran, and a button to run it now.
@@ -81,6 +82,14 @@ watch([every, live], () =>
         { preserveScroll: true },
     ),
 );
+
+// From which day Meta's charges are matched to the campaigns' days.
+const since = ref<string | null>(props.receipts.charges_since);
+const sinceForm = useForm({ since: '' });
+function saveSince(): void {
+    sinceForm.since = since.value ?? '';
+    sinceForm.post('/admin/system/charges-since', { preserveScroll: true });
+}
 
 // Minutes since an ISO time; null when never.
 const minutesSince = (iso: string | null) =>
@@ -321,6 +330,20 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
                     </dd>
                 </div>
             </dl>
+            <div class="mt-4 flex flex-wrap items-end gap-2">
+                <label
+                    class="grid min-w-[160px] flex-1 gap-1 text-[13px] text-ink-3"
+                    >{{ t('Charge কোন দিন থেকে ধরব') }}
+                    <KDate v-model="since" :max="today()" />
+                </label>
+                <KButton
+                    variant="soft"
+                    :disabled="!since || since === receipts.charges_since"
+                    :loading="sinceForm.processing"
+                    @click="saveSince"
+                    >{{ t('এই দিন থেকে ধরো') }}</KButton
+                >
+            </div>
             <div class="mt-auto flex flex-wrap gap-2 pt-5">
                 <KButton
                     variant="primary"

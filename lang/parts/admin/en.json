@@ -218,5 +218,8 @@
     "Charge ধরা হচ্ছে": "Charges tracked",
     "{date} থেকে": "since {date}",
     "শেষ heartbeat": "Last heartbeat",
-    "Owner-এর phone-এর KlokOne SMS app bKash/Nagad/Rocket-এর SMS এখানে পাঠায়; {n} মিনিট খবর না এলে Owner-কে জানানো হয়।": "The KlokOne SMS app on the Owner's phone forwards bKash/Nagad/Rocket SMS here; {n} minutes of silence alerts the Owner."
+    "Owner-এর phone-এর KlokOne SMS app bKash/Nagad/Rocket-এর SMS এখানে পাঠায়; {n} মিনিট খবর না এলে Owner-কে জানানো হয়।": "The KlokOne SMS app on the Owner's phone forwards bKash/Nagad/Rocket SMS here; {n} minutes of silence alerts the Owner.",
+    "Charge কোন দিন থেকে ধরব": "Track charges from",
+    "এই দিন থেকে ধরো": "Track from this day",
+    ":date থেকে charge ধরা হলো — :nটা charge নতুন করে ভাগ হয়েছে।": "Charges tracked from :date; :n charges spread again."
 }

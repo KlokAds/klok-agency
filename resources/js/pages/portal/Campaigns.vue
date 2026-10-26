@@ -4,8 +4,9 @@ import { computed, ref } from 'vue';
 import RangePicker from '@/components/portal/RangePicker.vue';
 import CampaignState from '@/components/portal/CampaignState.vue';
 import type { CampaignStateKey } from '@/components/portal/CampaignState.vue';
+import KTag from '@/components/k/KTag.vue';
 import SpendChart from '@/components/portal/SpendChart.vue';
-import { money } from '@/lib/format';
+import { niceDate, money } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
 type Totals = {
@@ -33,6 +34,16 @@ const props = defineProps<{
     totals: Totals;
     series: { day: string; spend: number; results: number }[];
     campaigns: Row[];
+    rounds?: {
+        date: string;
+        bdt: number;
+        usd: number;
+        spent: number;
+        left: number;
+        from: string | null;
+        to: string | null;
+        state: 'running' | 'used' | 'waiting' | 'owed';
+    }[];
     other_spend?: {
         date: string | null;
         platform: string | null;
@@ -242,6 +253,99 @@ const totalName = computed(() => {
                     </span>
                 </Link>
             </template>
+        </section>
+
+        <!-- Each payment and what its dollars did: which one is being spent now, what is left. -->
+        <section v-if="rounds?.length" class="panel mt-6 overflow-hidden">
+            <h2 class="border-b border-line px-5 py-3.5 text-[16px] font-bold">
+                {{ t('Payment ধরে হিসাব') }}
+            </h2>
+            <ul class="divide-y divide-line">
+                <li
+                    v-for="r in rounds"
+                    :key="r.date + r.usd"
+                    class="px-5 py-3"
+                    :class="r.state === 'used' ? 'opacity-70' : ''"
+                >
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="min-w-0">
+                            <span class="num font-semibold">{{
+                                niceDate(r.date)
+                            }}</span>
+                            <span class="num ml-1.5 text-[13.5px] text-ink-3"
+                                >{{ money(r.bdt, 'bdt') }} →
+                                {{ money(r.usd, 'usd') }}</span
+                            >
+                        </p>
+                        <KTag
+                            :tone="
+                                r.state === 'running'
+                                    ? 'in'
+                                    : r.state === 'owed'
+                                      ? 'out'
+                                      : r.state === 'waiting'
+                                        ? 'brand'
+                                        : 'neutral'
+                            "
+                            >{{
+                                r.state === 'running'
+                                    ? t('এখন এটা থেকে কাটছে')
+                                    : r.state === 'owed'
+                                      ? t('বেশি খরচ')
+                                      : r.state === 'waiting'
+                                        ? t('এরপর')
+                                        : t('শেষ')
+                            }}</KTag
+                        >
+                    </div>
+                    <div
+                        class="mt-2 h-1.5 overflow-hidden rounded-full bg-sunken"
+                    >
+                        <div
+                            class="h-full rounded-full"
+                            :class="r.left < 0 ? 'bg-out' : 'bg-brand'"
+                            :style="{
+                                width:
+                                    Math.min(
+                                        100,
+                                        Math.round(
+                                            (r.spent / Math.max(1, r.usd)) *
+                                                100,
+                                        ),
+                                    ) + '%',
+                            }"
+                        />
+                    </div>
+                    <p
+                        class="num mt-1.5 flex flex-wrap gap-x-3 text-[13.5px] text-ink-3"
+                    >
+                        <span
+                            >{{ t('খরচ') }}
+                            <b class="text-ink">{{
+                                money(r.spent, 'usd')
+                            }}</b></span
+                        >
+                        <span v-if="r.left > 0"
+                            >{{ t('বাকি') }}
+                            <b class="text-in">{{
+                                money(r.left, 'usd')
+                            }}</b></span
+                        >
+                        <span v-else-if="r.left < 0"
+                            >{{ t('পাওনা') }}
+                            <b class="text-out">{{
+                                money(-r.left, 'usd')
+                            }}</b></span
+                        >
+                        <span v-if="r.from"
+                            >{{ niceDate(r.from, false)
+                            }}<template v-if="r.to && r.to !== r.from">
+                                – {{ niceDate(r.to, false) }}</template
+                            ></span
+                        >
+                    </p>
+                </li>
+            </ul>
         </section>
     </template>
 

@@ -285,5 +285,12 @@
     "Invoice নিন ও pay করুন": "Get the invoice and pay",
     "টাকার অঙ্ক": "amount",
     "৳:min থেকে ৳:max-এর মধ্যে দিন।": "Between ৳:min and ৳:max.",
-    "Ad credit — $:usd": "Ad credit — $:usd"
+    "Ad credit — $:usd": "Ad credit — $:usd",
+    "Payment ধরে হিসাব": "Payment by payment",
+    "এখন এটা থেকে কাটছে": "Being spent now",
+    "বেশি খরচ": "Overspent",
+    "এরপর": "Next",
+    "শেষ": "Used up",
+    "বাকি": "left",
+    "পাওনা": "owed"
 }

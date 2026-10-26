@@ -192,8 +192,60 @@ class PortalController extends Controller
             'totals' => $this->totals($days),
             'series' => $this->series($days, $from, $to),
             'campaigns' => $rows,
+            'rounds' => $this->paymentRounds($client),
             ...$this->beyondMeta($client),
         ]);
+    }
+
+    /**
+     * Each payment that bought ad credit, and what its dollars did: the days' spend is laid on the
+     * payments oldest first, so the client sees which payment is being spent now, what the earlier
+     * ones bought, and what is left of the latest. Newest first.
+     *
+     * @return list<array{date: string, bdt: int, usd: int, spent: int, left: int, from: string|null, to: string|null, state: string}>
+     */
+    private function paymentRounds(Client $client): array
+    {
+        $payments = BdtEntry::where('client_id', $client->id)->where('usd_credit', '>', 0)->orderBy('entry_date')->orderBy('id')->get();
+        if ($payments->isEmpty()) {
+            return [];
+        }
+        $campaigns = Campaign::where('client_id', $client->id)->whereNotNull('bill_from')->get(['id', 'bill_from']);
+        $days = CampaignDay::whereIn('campaign_id', $campaigns->pluck('id'))->where('spend', '>', 0)->orderBy('day')->get()
+            ->filter(fn (CampaignDay $d) => $d->day->gte($campaigns->firstWhere('id', $d->campaign_id)?->bill_from))
+            ->groupBy(fn (CampaignDay $d) => $d->day->toDateString())->map(fn ($g) => (int) $g->sum('spend'));
+
+        /** @var list<array{date: string, bdt: int, usd: int, spent: int, left: int, from: string|null, to: string|null, state: string}> $rounds */
+        $rounds = $payments->map(fn (BdtEntry $p) => [
+            'date' => $p->entry_date->toDateString(), 'bdt' => (int) $p->amount, 'usd' => (int) $p->usd_credit,
+            'spent' => 0, 'left' => (int) $p->usd_credit, 'from' => null, 'to' => null, 'state' => 'waiting',
+        ])->values()->all();
+        $last = count($rounds) - 1;
+        $i = 0;
+
+        foreach ($days as $day => $spend) {
+            $day = (string) $day;
+            while ($spend > 0) {
+                $r = $rounds[$i];
+                // The last payment takes whatever is left over, even past zero (owed).
+                $take = $i === $last ? $spend : min($spend, $r['left']);
+                $r['spent'] += $take;
+                $r['left'] -= $take;
+                $r['from'] ??= $day;
+                $r['to'] = $day;
+                $rounds[$i] = $r;
+                $spend -= $take;
+                if ($r['left'] <= 0 && $i < $last) {
+                    $i++;
+                }
+            }
+        }
+
+        foreach ($rounds as $n => $r) {
+            $rounds[$n]['state'] = $r['left'] < 0 ? 'owed' : ($r['left'] === 0 ? 'used' : ($r['spent'] > 0 ? 'running' : 'waiting'));
+        }
+
+        return array_reverse($rounds);
     }
 
     /**

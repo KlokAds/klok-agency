@@ -96,6 +96,32 @@ class SystemController extends Controller
         return back();
     }
 
+    /**
+     * From which day Meta's charges are matched to the campaigns' days. Moving it back reads the
+     * older charges from Pilot and spreads them again, so a charge that paid for part of a day
+     * leaves the rest of that day waiting, as Meta counts it.
+     */
+    public function chargesSince(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole(Access::OWNER), 403);
+        $data = $request->validate(['since' => ['required', 'date', 'after:2025-01-01', 'before_or_equal:today']]);
+
+        Setting::put('meta_charges_since', CarbonImmutable::parse($data['since'])->toDateString());
+        Cache::forget('meta-charges:pilot');
+        Cache::forget('meta:unbilled');
+        try {
+            app(MetaReceipts::class)->fromPilotIfDue();
+            $spread = app(AdAccountBalances::class)->allocate();
+        } catch (RuntimeException $e) {
+            $this->toast($e->getMessage(), 'error');
+
+            return back();
+        }
+        $this->toast(__(':date থেকে charge ধরা হলো — :nটা charge নতুন করে ভাগ হয়েছে।', ['date' => $data['since'], 'n' => $spread]));
+
+        return back();
+    }
+
     /** One job, now: the tick, the spend sync, the receipts, or the timer itself. */
     public function run(Request $request, string $job, KeepAlive $keepAlive): RedirectResponse
     {
