@@ -78,7 +78,15 @@ const props = defineProps<{
         cost: number | null;
         bdt: number | null;
         status: string | null;
+        settled_by: string | null;
     }>;
+    statement_totals: {
+        usd: number;
+        cost: number;
+        bdt: number;
+        pending_cost: number;
+        pending_usd: number;
+    };
     campaigns: {
         id: number;
         name: string;
@@ -921,6 +929,15 @@ function print(): void {
                         </td>
                         <td class="r num text-in">
                             {{ r.bdt !== null ? money(r.bdt, 'bdt') : '' }}
+                            <span
+                                v-if="r.settled_by"
+                                class="block text-[12.5px] font-normal whitespace-nowrap text-ink-3"
+                                >{{
+                                    t('{payment} দিয়ে', {
+                                        payment: r.settled_by,
+                                    })
+                                }}</span
+                            >
                         </td>
                         <td>
                             <KTag v-if="r.status === 'pending'" tone="wait"
@@ -932,6 +949,42 @@ function print(): void {
                         </td>
                     </tr>
                 </tbody>
+                <tfoot>
+                    <tr
+                        class="border-t-2 border-line-2 bg-surface-2 font-semibold"
+                    >
+                        <td class="text-[13px] text-ink-3" colspan="2">
+                            {{ t('মোট') }}
+                            <span
+                                v-if="statement_totals.pending_usd"
+                                class="ml-2 font-normal text-wait"
+                            >
+                                {{
+                                    t('পাওনা {usd} (cost {cost})', {
+                                        usd: money(
+                                            statement_totals.pending_usd,
+                                            'usd',
+                                        ),
+                                        cost: money(
+                                            statement_totals.pending_cost,
+                                            'bdt',
+                                        ),
+                                    })
+                                }}
+                            </span>
+                        </td>
+                        <td class="r num">
+                            {{ money(statement_totals.usd, 'usd') }}
+                        </td>
+                        <td class="r num text-ink-2">
+                            {{ money(statement_totals.cost, 'bdt') }}
+                        </td>
+                        <td class="r num text-in">
+                            {{ money(statement_totals.bdt, 'bdt') }}
+                        </td>
+                        <td />
+                    </tr>
+                </tfoot>
             </table>
             <KPager :page="statement" />
         </div>

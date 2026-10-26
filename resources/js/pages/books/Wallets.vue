@@ -81,6 +81,54 @@ const label = (key: string) =>
 const typeLabel = (type: string) =>
     props.options.types.find((o) => o.value === type)?.label ?? type;
 
+// Each kind of place has its own colour, on the badge and on the share bar.
+type Tone = 'brand' | 'wait' | 'in' | 'ink';
+const TONE: Record<Tone, { badge: string; bar: string }> = {
+    brand: { badge: 'bg-brand-soft text-brand-ink', bar: 'bg-brand' },
+    wait: { badge: 'bg-wait-soft text-wait', bar: 'bg-wait' },
+    in: { badge: 'bg-in-soft text-in', bar: 'bg-in' },
+    ink: { badge: 'bg-sunken text-ink-2', bar: 'bg-ink-3' },
+};
+const toneOf = (type: string): Tone =>
+    type === 'bank'
+        ? 'brand'
+        : type === 'mfs'
+          ? 'wait'
+          : type === 'cash'
+            ? 'in'
+            : 'ink';
+
+// Places with their share of the money that is there (negative balances hold no share).
+const places = computed(() => {
+    const positive = props.wallets.places.reduce(
+        (sum, p) => sum + Math.max(0, p.balance),
+        0,
+    );
+
+    return props.wallets.places.map((p) => ({
+        ...p,
+        tone: toneOf(p.type),
+        pct:
+            positive > 0
+                ? Math.round((Math.max(0, p.balance) / positive) * 100)
+                : 0,
+    }));
+});
+const shares = computed(() => places.value.filter((p) => p.pct > 0));
+
+// The USD card: what the platforms will still take, and what stays.
+const cardAfter = computed(() => props.card - props.platform_due);
+const cardMeter = computed(() => {
+    const card = Math.max(0, props.card);
+    const due = Math.max(0, props.platform_due);
+    const base = Math.max(card, due, 1);
+
+    return {
+        due: Math.min(100, (due / base) * 100),
+        left: Math.max(0, ((card - due) / base) * 100),
+    };
+});
+
 // Places: add, rename, switch off or delete (a place with history is only switched off).
 const placesOpen = ref(false);
 const editingPlace = ref<Place | null>(null);
@@ -333,94 +381,222 @@ async function removeMove(move: Move): Promise<void> {
         </div>
     </PageHeader>
 
-    <section
-        class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 xl:grid-cols-4"
-    >
+    <!-- Where the money is: one total, how it splits, a card per place, the USD card beside -->
+    <section class="panel overflow-hidden">
         <div
-            v-for="p in wallets.places"
-            :key="p.key"
-            class="bg-surface p-5 sm:p-6"
+            class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 px-5 pt-5 sm:px-6"
         >
-            <p class="eyebrow">{{ p.label }}</p>
-            <p
-                class="num mt-3 text-[30px] leading-none font-medium"
-                :class="p.balance < 0 ? 'text-out' : ''"
-            >
-                {{ money(p.balance, 'bdt', { round: false }) }}
-            </p>
-            <p class="mt-2 truncate text-[13px] text-ink-3">
-                {{ typeLabel(p.type)
-                }}<template v-if="p.detail"> · {{ p.detail }}</template
-                ><template v-if="!p.active"> · {{ t('বন্ধ') }}</template>
-            </p>
+            <div>
+                <p class="text-[13.5px] font-medium text-ink-3">
+                    {{ t('খাতায় মোট BDT')
+                    }}<template v-if="wallets.opening_on">
+                        ·
+                        {{
+                            t('{date} থেকে গোনা', {
+                                date: niceDate(wallets.opening_on, false),
+                            })
+                        }}</template
+                    >
+                </p>
+                <p
+                    class="num mt-1.5 text-[34px] leading-none font-semibold tracking-[-0.03em]"
+                    :class="wallets.total < 0 && 'text-out'"
+                >
+                    {{ money(wallets.total, 'bdt', { round: false }) }}
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-[13px]">
+                <span
+                    v-if="wallets.opening_on && wallets.unexplained"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-wait-soft py-1 pr-1 pl-3 font-semibold text-wait"
+                >
+                    <KIcon name="warn" :size="14" />
+                    {{
+                        t('খাতার সাথে অমিল {amount}', {
+                            amount: money(wallets.unexplained, 'bdt', {
+                                sign: true,
+                                round: false,
+                            }),
+                        })
+                    }}
+                    <KButton
+                        v-if="can['bdt.edit']"
+                        size="sm"
+                        class="ml-1"
+                        @click="adjust"
+                        >{{ t('খাতায় তুলুন') }}</KButton
+                    >
+                </span>
+                <span
+                    v-if="wallets.untagged_count"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-wait-soft px-3 py-1 font-semibold text-wait"
+                >
+                    <KIcon name="warn" :size="14" />
+                    {{
+                        t('{n}টা entry-র জায়গা বাছা হয়নি ({amount})', {
+                            n: wallets.untagged_count,
+                            amount: money(wallets.untagged, 'bdt', {
+                                round: false,
+                            }),
+                        })
+                    }}
+                </span>
+                <span
+                    v-else
+                    class="inline-flex items-center gap-1.5 rounded-full bg-in-soft px-3 py-1 font-semibold text-in"
+                >
+                    <KIcon name="check" :size="14" />
+                    {{ t('সব entry-র জায়গা বাছা আছে') }}
+                </span>
+            </div>
         </div>
-        <div class="bg-rail p-5 text-rail-ink sm:p-6">
-            <p class="text-[13.5px] font-medium text-rail-dim">
-                {{ t('Card-এ USD') }}
-            </p>
-            <p class="num mt-3 text-[30px] leading-none font-medium text-white">
-                {{ money(card, 'usd') }}
-            </p>
-            <p class="mt-3 text-[13.5px] text-rail-dim">
-                {{ t('Platform এখনো কাটবে') }}
-                <b class="num font-semibold text-rail-ink">{{
-                    money(platform_due, 'usd')
-                }}</b>
-            </p>
-            <KButton href="/reconcile" size="sm" icon="scale" class="mt-3">{{
-                t('Card মেলান')
-            }}</KButton>
+
+        <!-- How the total splits between the places -->
+        <div
+            v-if="shares.length"
+            class="mx-5 mt-4 flex h-2 gap-0.5 overflow-hidden rounded-full bg-sunken sm:mx-6"
+            role="presentation"
+        >
+            <span
+                v-for="sh in shares"
+                :key="sh.key"
+                class="h-full rounded-full"
+                :class="TONE[sh.tone].bar"
+                :style="{ width: `${sh.pct}%` }"
+            />
+        </div>
+
+        <div
+            class="mt-4 grid grid-cols-1 gap-3 px-5 pb-5 sm:grid-cols-2 sm:px-6 sm:pb-6 xl:grid-cols-4"
+        >
+            <article
+                v-for="p in places"
+                :key="p.key"
+                class="rounded-2xl border border-line bg-surface p-4 transition-colors"
+                :class="!p.active && 'opacity-60'"
+            >
+                <div class="flex items-center gap-2.5">
+                    <span
+                        class="grid size-9 shrink-0 place-items-center rounded-xl text-[15px] font-bold"
+                        :class="TONE[p.tone].badge"
+                        >{{ p.label.charAt(0) }}</span
+                    >
+                    <span class="min-w-0">
+                        <span
+                            class="block truncate text-[15px] font-semibold"
+                            >{{ p.label }}</span
+                        >
+                        <span class="block truncate text-[12.5px] text-ink-3"
+                            >{{ typeLabel(p.type)
+                            }}<template v-if="p.detail">
+                                · {{ p.detail }}</template
+                            ><template v-if="!p.active">
+                                · {{ t('বন্ধ') }}</template
+                            ></span
+                        >
+                    </span>
+                </div>
+                <p
+                    class="num mt-4 text-[28px] leading-none font-semibold tracking-[-0.02em]"
+                    :class="p.balance < 0 ? 'text-out' : ''"
+                >
+                    {{ money(p.balance, 'bdt', { round: false }) }}
+                </p>
+                <p
+                    class="mt-2.5 flex items-center gap-2 text-[12.5px] text-ink-3"
+                >
+                    <span
+                        class="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken"
+                    >
+                        <span
+                            class="block h-full rounded-full"
+                            :class="TONE[p.tone].bar"
+                            :style="{ width: `${p.pct}%` }"
+                        />
+                    </span>
+                    <span class="num shrink-0">{{
+                        p.pct > 0
+                            ? t('মোটের {pct}%', { pct: p.pct })
+                            : t('কিছু নেই')
+                    }}</span>
+                </p>
+            </article>
+
+            <article
+                class="rounded-2xl bg-rail p-4 text-rail-ink sm:col-span-2 xl:col-span-1"
+            >
+                <div class="flex items-center justify-between gap-3">
+                    <span class="flex items-center gap-2.5">
+                        <span
+                            class="grid size-9 place-items-center rounded-xl bg-white/10 text-white"
+                            ><KIcon name="dollar" :size="18"
+                        /></span>
+                        <span class="text-[15px] font-semibold text-white">{{
+                            t('Card-এ USD')
+                        }}</span>
+                    </span>
+                    <KButton
+                        href="/reconcile"
+                        size="sm"
+                        icon="scale"
+                        class="no-print shrink-0"
+                        >{{ t('Card মেলান') }}</KButton
+                    >
+                </div>
+                <p
+                    class="num mt-4 text-[28px] leading-none font-semibold tracking-[-0.02em] text-white"
+                >
+                    {{ money(card, 'usd') }}
+                </p>
+                <div
+                    class="mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-white/10"
+                    role="presentation"
+                >
+                    <span
+                        v-if="cardMeter.due"
+                        class="h-full rounded-full bg-wait"
+                        :style="{ width: `${cardMeter.due}%` }"
+                    />
+                    <span
+                        v-if="cardMeter.left"
+                        class="h-full rounded-full"
+                        :class="cardAfter < 0 ? 'bg-out' : 'bg-brand'"
+                        :style="{ width: `${cardMeter.left}%` }"
+                    />
+                </div>
+                <dl
+                    class="mt-2.5 grid grid-cols-2 gap-3 text-[12.5px] text-rail-dim"
+                >
+                    <div>
+                        <dt class="flex items-center gap-1.5">
+                            <span class="size-1.5 rounded-full bg-wait" />{{
+                                t('Platform এখনো কাটবে')
+                            }}
+                        </dt>
+                        <dd
+                            class="num mt-0.5 text-[15px] font-semibold text-white"
+                        >
+                            {{ money(platform_due, 'usd') }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="flex items-center gap-1.5">
+                            <span
+                                class="size-1.5 rounded-full"
+                                :class="cardAfter < 0 ? 'bg-out' : 'bg-brand'"
+                            />{{ t('কাটার পরে থাকবে') }}
+                        </dt>
+                        <dd
+                            class="num mt-0.5 text-[15px] font-semibold"
+                            :class="cardAfter < 0 ? 'text-out' : 'text-white'"
+                        >
+                            {{ money(cardAfter, 'usd') }}
+                        </dd>
+                    </div>
+                </dl>
+            </article>
         </div>
     </section>
-
-    <div
-        class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[14.5px]"
-    >
-        <span
-            >{{ t('খাতায় মোট BDT') }}
-            <b class="num">{{
-                money(wallets.total, 'bdt', { round: false })
-            }}</b></span
-        >
-        <span v-if="wallets.opening_on" class="text-ink-3">{{
-            t('{date} থেকে গোনা', {
-                date: niceDate(wallets.opening_on, false),
-            })
-        }}</span>
-        <span
-            v-if="wallets.opening_on && wallets.unexplained"
-            class="flex flex-wrap items-center gap-2 text-wait"
-        >
-            <KIcon name="warn" :size="14" />
-            {{
-                t('খাতার সাথে অমিল {amount}', {
-                    amount: money(wallets.unexplained, 'bdt', {
-                        sign: true,
-                        round: false,
-                    }),
-                })
-            }}
-            <KButton v-if="can['bdt.edit']" size="sm" @click="adjust">{{
-                t('খাতায় তুলুন')
-            }}</KButton>
-        </span>
-        <span
-            v-if="wallets.untagged_count"
-            class="flex items-center gap-1.5 text-wait"
-        >
-            <KIcon name="warn" :size="14" />
-            {{
-                t('{n}টা entry-র জায়গা বাছা হয়নি ({amount})', {
-                    n: wallets.untagged_count,
-                    amount: money(wallets.untagged, 'bdt', { round: false }),
-                })
-            }}
-        </span>
-        <span v-else class="flex items-center gap-1.5 text-in">
-            <KIcon name="check" :size="14" />
-            {{ t('সব entry-র জায়গা বাছা আছে') }}
-        </span>
-    </div>
 
     <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
         <section class="panel overflow-hidden">

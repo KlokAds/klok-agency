@@ -171,13 +171,36 @@ async function remove(row: Row): Promise<void> {
 
 // Expense heads, kept with the expenses they sort.
 const headForm = useForm({ name: '' });
+// Renaming happens in a modal, so a long name never squeezes the row.
 const renaming = ref<Head | null>(null);
 const renameTo = ref('');
+const renameError = ref('');
+const renameOpen = computed({
+    get: () => renaming.value !== null,
+    set: (on: boolean) => {
+        if (!on) renaming.value = null;
+    },
+});
+function startRename(h: Head): void {
+    renaming.value = h;
+    renameTo.value = h.name;
+    renameError.value = '';
+}
+
+const addOpen = ref(false);
+function startAdd(): void {
+    headForm.reset();
+    headForm.clearErrors();
+    addOpen.value = true;
+}
 
 function addHead(): void {
     headForm.post('/expenses/heads', {
         preserveScroll: true,
-        onSuccess: () => headForm.reset(),
+        onSuccess: () => {
+            headForm.reset();
+            addOpen.value = false;
+        },
     });
 }
 
@@ -211,10 +234,15 @@ function saveRename(): void {
         return;
     }
 
+    renameError.value = '';
     router.put(
         `/expenses/heads/${renaming.value.id}`,
         { name: renameTo.value, is_active: renaming.value.is_active },
-        { preserveScroll: true, onSuccess: () => (renaming.value = null) },
+        {
+            preserveScroll: true,
+            onSuccess: () => (renaming.value = null),
+            onError: (errors) => (renameError.value = errors.name ?? ''),
+        },
     );
 }
 </script>
@@ -499,11 +527,24 @@ function saveRename(): void {
 
             <!-- Expense heads -->
             <section v-if="!isIn && heads" class="panel p-5">
-                <h2 class="text-[16px] font-bold">{{ t('খরচের খাত') }}</h2>
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="text-[16px] font-bold">
+                        {{ t('খরচের খাত') }}
+                    </h2>
+                    <KButton
+                        v-if="can['bdt.edit']"
+                        size="sm"
+                        variant="primary"
+                        icon="plus"
+                        class="shrink-0"
+                        @click="startAdd"
+                        >{{ t('যোগ করুন') }}</KButton
+                    >
+                </div>
                 <p class="mt-1 text-[13.5px] text-ink-3">
                     {{
                         t(
-                            'খরচ লেখার সময় এগুলো থেকে বাছা যায়। Switch বন্ধ করলে নতুন entry-তে দেখাবে না, পুরনো খরচ যেমন আছে থাকবে। ✎ দিয়ে নাম বদলান।',
+                            'খরচ লেখার সময় এগুলো থেকে বাছা যায়। Switch বন্ধ করলে নতুন entry-তে দেখাবে না, পুরনো খরচ যেমন আছে থাকবে।',
                         )
                     }}
                 </p>
@@ -513,105 +554,103 @@ function saveRename(): void {
                         :key="h.id"
                         class="flex items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
                     >
-                        <template v-if="renaming?.id === h.id">
-                            <KInput
-                                v-model="renameTo"
+                        <span class="min-w-0 flex-1">
+                            <span
+                                class="block truncate text-[14.5px] font-medium"
+                                :class="h.is_active ? '' : 'text-ink-3'"
+                                >{{ h.name }}</span
+                            >
+                            <span
+                                class="block text-[13px]"
+                                :class="
+                                    h.is_active ? 'text-ink-3' : 'text-wait'
+                                "
+                                >{{
+                                    h.is_active
+                                        ? t('নতুন খরচে বাছা যায়')
+                                        : t('বন্ধ — নতুন খরচে দেখাবে না')
+                                }}</span
+                            >
+                        </span>
+                        <template v-if="can['bdt.edit']">
+                            <KButton
                                 size="sm"
-                                class="flex-1"
+                                variant="soft"
+                                icon="pen"
+                                class="shrink-0"
+                                @click="startRename(h)"
+                                >{{ t('নাম বদলান') }}</KButton
+                            >
+                            <KSwitch
+                                :model-value="h.is_active"
+                                :aria-label="
+                                    h.is_active
+                                        ? t('খাত বন্ধ করুন')
+                                        : t('খাত চালু করুন')
+                                "
+                                :class="
+                                    savingHead === h.id &&
+                                    'pointer-events-none opacity-60'
+                                "
+                                @update:model-value="
+                                    (on: boolean) => toggleHead(h, on)
+                                "
                             />
-                            <KButton
-                                size="sm"
-                                variant="primary"
-                                @click="saveRename"
-                                >{{ t('সংরক্ষণ') }}</KButton
-                            >
-                            <KButton
-                                size="sm"
-                                variant="quiet"
-                                @click="renaming = null"
-                                >{{ t('বাতিল') }}</KButton
-                            >
-                        </template>
-                        <template v-else>
-                            <span class="min-w-0 flex-1">
-                                <span
-                                    class="block truncate text-[14.5px] font-medium"
-                                    :class="h.is_active ? '' : 'text-ink-3'"
-                                    >{{ h.name }}</span
-                                >
-                                <span
-                                    class="block text-[13px]"
-                                    :class="
-                                        h.is_active ? 'text-ink-3' : 'text-wait'
-                                    "
-                                    >{{
-                                        h.is_active
-                                            ? t('নতুন খরচে বাছা যায়')
-                                            : t('বন্ধ — নতুন খরচে দেখাবে না')
-                                    }}</span
-                                >
-                            </span>
-                            <template v-if="can['bdt.edit']">
-                                <button
-                                    type="button"
-                                    class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-line px-2.5 text-[13px] font-semibold whitespace-nowrap text-ink-2 hover:border-ink-3 hover:text-ink"
-                                    @click="
-                                        renaming = h;
-                                        renameTo = h.name;
-                                    "
-                                >
-                                    <KIcon name="pen" :size="14" />{{
-                                        t('নাম বদলান')
-                                    }}
-                                </button>
-                                <KSwitch
-                                    :model-value="h.is_active"
-                                    :aria-label="
-                                        h.is_active
-                                            ? t('খাত বন্ধ করুন')
-                                            : t('খাত চালু করুন')
-                                    "
-                                    :class="
-                                        savingHead === h.id &&
-                                        'pointer-events-none opacity-60'
-                                    "
-                                    @update:model-value="
-                                        (on: boolean) => toggleHead(h, on)
-                                    "
-                                />
-                            </template>
                         </template>
                     </li>
                 </ul>
-                <form
-                    v-if="can['bdt.edit']"
-                    class="mt-3 flex gap-2"
-                    @submit.prevent="addHead"
-                >
-                    <KInput
-                        v-model="headForm.name"
-                        :placeholder="t('নতুন খাত, যেমন Office rent')"
-                        size="sm"
-                        class="min-w-0 flex-1"
-                        :invalid="!!headForm.errors.name"
-                    />
-                    <KButton
-                        type="submit"
-                        size="sm"
-                        icon="plus"
-                        :loading="headForm.processing"
-                        >{{ t('যোগ') }}</KButton
-                    >
-                </form>
-                <p
-                    v-if="headForm.errors.name"
-                    class="mt-1.5 text-[13.5px] text-out"
-                >
-                    {{ headForm.errors.name }}
-                </p>
             </section>
         </aside>
     </div>
+
+    <KModal v-model="addOpen" :title="t('নতুন খরচের খাত')">
+        <form id="head-form" @submit.prevent="addHead">
+            <KField
+                :label="t('খাতের নাম')"
+                :error="headForm.errors.name"
+                :hint="t('খরচ লেখার সময় এই নামে বাছা যাবে।')"
+            >
+                <KInput
+                    v-model="headForm.name"
+                    autofocus
+                    :placeholder="t('নতুন খাত, যেমন Office rent')"
+                    :invalid="!!headForm.errors.name"
+                />
+            </KField>
+        </form>
+        <template #footer>
+            <KButton variant="quiet" @click="addOpen = false">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                type="submit"
+                form="head-form"
+                variant="primary"
+                :loading="headForm.processing"
+                >{{ t('যোগ করুন') }}</KButton
+            >
+        </template>
+    </KModal>
+
+    <KModal v-model="renameOpen" :title="t('খাতের নাম বদলান')">
+        <form id="rename-form" @submit.prevent="saveRename">
+            <KField
+                :label="t('নতুন নাম')"
+                :error="renameError"
+                :hint="t('পুরনো খরচগুলোও এই নামে দেখাবে।')"
+            >
+                <KInput v-model="renameTo" autofocus :invalid="!!renameError" />
+            </KField>
+        </form>
+        <template #footer>
+            <KButton variant="quiet" @click="renaming = null">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton type="submit" form="rename-form" variant="primary">{{
+                t('সংরক্ষণ')
+            }}</KButton>
+        </template>
+    </KModal>
 
     <KModal v-model="open" :title="t('Entry বদলান')">
         <form

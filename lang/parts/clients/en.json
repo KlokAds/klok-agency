@@ -110,5 +110,8 @@
     "{date} থেকে এই client-এর হিসাবে": "billed to this client since {date}",
     "হিসাবে মোট · ৭ দিনে {amount}": "billed in all · {amount} in 7 days",
     "এক click-এ invoice": "Invoice in one click",
-    "Invoice :number তৈরি ও পাঠানো হয়েছে।": "Invoice :number made and sent."
+    "Invoice :number তৈরি ও পাঠানো হয়েছে।": "Invoice :number made and sent.",
+    "{payment} দিয়ে": "by {payment}",
+    "মোট": "Total",
+    "পাওনা {usd} (cost {cost})": "owed {usd} (cost {cost})"
 }

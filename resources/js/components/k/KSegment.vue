@@ -22,7 +22,7 @@ const many = () => props.options.length > 4;
     >
         {{ empty ?? t('এখনো কোনো option নেই') }}
     </p>
-    <div v-else-if="many()" class="sm:hidden">
+    <div v-else-if="many()" class="w-40 max-w-full sm:hidden">
         <KSelect v-model="model" :options="options" size="sm" />
     </div>
     <div

@@ -113,12 +113,25 @@ class ClientController extends Controller
         ]] : null;
 
         // One statement: spend in USD and payments in BDT, in date order.
+        // Which payment settled a spend row: the one it was settled against, else (an advance) the
+        // payment that bought the credit it ran on — the latest with credit on or before its day.
+        $credits = $books->bdtEntries()->where('client_id', $client->id)->filter(fn ($e) => (int) $e->usd_credit > 0)->sortBy('entry_date')->values();
+        $byId = $books->bdtEntries()->keyBy('id');
+        $settledBy = function ($e) use ($credits, $byId): ?string {
+            $p = $e->settled_by_id ? $byId->get($e->settled_by_id) : null;
+            if ($p === null && $e->status === 'settled' && $e->entry_date) {
+                $p = $credits->filter(fn ($c) => $c->entry_date->lte($e->entry_date->endOfWeek()))->last() ?? $credits->first();
+            }
+
+            return $p ? $p->entry_date->format('j M').' · ৳'.number_format($p->amount / 100) : null;
+        };
         $spend = $books->usdEntries()->where('client_id', $client->id)->where('category', 'client_spend')
             ->map(fn ($e) => [
                 'key' => 'u'.$e->id, 'id' => $e->id, 'book' => 'usd', 'date' => $e->entry_date?->toDateString(),
                 'sort' => [$e->entry_date->timestamp ?? 0, 0, $e->sequence],
                 'description' => $e->description, 'account' => $e->account?->name,
                 'usd' => -$e->amount, 'cost' => $books->costOf($e), 'bdt' => null, 'status' => $e->status,
+                'settled_by' => $e->status === 'settled' ? $settledBy($e) : null,
             ]);
 
         $payments = $books->bdtEntries()->where('client_id', $client->id)->whereIn('category', BdtEntry::REVENUE)
@@ -126,7 +139,7 @@ class ClientController extends Controller
                 'key' => 'b'.$e->id, 'id' => $e->id, 'book' => 'bdt', 'date' => $e->entry_date?->toDateString(),
                 'sort' => [$e->entry_date->timestamp ?? 0, 1, $e->sequence],
                 'description' => $e->description, 'account' => BdtEntry::categoryLabel($e->category),
-                'usd' => null, 'cost' => null, 'bdt' => $e->amount, 'status' => null,
+                'usd' => null, 'cost' => null, 'bdt' => $e->amount, 'status' => null, 'settled_by' => null,
             ]);
 
         $rows = $spend->concat($payments)->sortBy('sort')->values()->map(function ($row) {
@@ -137,6 +150,11 @@ class ClientController extends Controller
         // Five a page, so a long history stays readable on a phone.
         $page = max(1, $request->integer('page', 1));
         $statement = new LengthAwarePaginator($rows->forPage($page, 5)->values(), $rows->count(), 5, $page, ['path' => $request->url(), 'query' => $request->query()]);
+        // Under the table: everything, not just this page.
+        $statementTotals = [
+            'usd' => (int) $spend->sum('usd'), 'cost' => (int) $spend->sum('cost'), 'bdt' => (int) $payments->sum('bdt'),
+            'pending_cost' => (int) $spend->where('status', 'pending')->sum('cost'), 'pending_usd' => (int) $spend->where('status', 'pending')->sum('usd'),
+        ];
 
         $person = fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'phone' => $u->phone, 'company' => $u->company, 'since' => $u->created_at?->format('j M Y')];
 
@@ -149,6 +167,7 @@ class ClientController extends Controller
             ],
             'figures' => $figures,
             'statement' => $statement,
+            'statement_totals' => $statementTotals,
             'campaigns' => Campaign::with('account:id,name')->where('client_id', $client->id)
                 ->orderByRaw('case when last_spend_day is null then 1 else 0 end')->orderByDesc('last_spend_day')->limit(10)->get()
                 ->map(fn (Campaign $c) => [

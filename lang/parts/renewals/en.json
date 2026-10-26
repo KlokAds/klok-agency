@@ -236,7 +236,6 @@
     "কোনো চালু campaign নেই।": "No running campaign.",
     "কোনো সমস্যা নেই": "No problems",
     "খবর যাবে এই email-এ": "Send news to this email",
-    "খরচ লেখার সময় এগুলো থেকে বাছা যায়। Switch বন্ধ করলে নতুন entry-তে দেখাবে না, পুরনো খরচ যেমন আছে থাকবে। ✎ দিয়ে নাম বদলান।": "Expenses are sorted into these. Switch one off and it no longer shows in new entries; earlier expenses stay as they are. Rename with ✎.",
     "খরচের পরে বিল": "Billed after spend",
     "খাত চালু করুন": "Turn this head on",
     "খাত বন্ধ করুন": "Turn this head off",
@@ -373,5 +372,13 @@
     "✓ Sender বিশ্বাসযোগ্য ({provider})": "✓ Trusted sender ({provider})",
     "✓ টাকা আসার SMS: {amount}": "✓ Money received: {amount}",
     "✗ এই sender list-এ নেই — এর SMS বিশ্বাস করা হবে না": "✗ This sender is not in the list — its SMS will not be trusted",
-    "✗ টাকা আসার SMS হিসেবে বোঝা যায়নি (খরচ, OTP, বা অন্য রকম লেখা)": "✗ Not read as money received (a debit, an OTP, or worded differently)"
+    "✗ টাকা আসার SMS হিসেবে বোঝা যায়নি (খরচ, OTP, বা অন্য রকম লেখা)": "✗ Not read as money received (a debit, an OTP, or worded differently)",
+    "খাতের নাম বদলান": "Rename the head",
+    "নতুন নাম": "New name",
+    "পুরনো খরচগুলোও এই নামে দেখাবে।": "Earlier expenses show this name too.",
+    "খরচ লেখার সময় এগুলো থেকে বাছা যায়। Switch বন্ধ করলে নতুন entry-তে দেখাবে না, পুরনো খরচ যেমন আছে থাকবে।": "Expenses are sorted into these. Switch one off and it no longer shows in new entries; earlier expenses stay as they are.",
+    "নতুন খরচের খাত": "New expense head",
+    "খাতের নাম": "Head name",
+    "খরচ লেখার সময় এই নামে বাছা যাবে।": "It can be picked by this name when an expense is written.",
+    "যোগ করুন": "Add"
 }

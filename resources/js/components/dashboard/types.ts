@@ -16,6 +16,7 @@ export type Summary = {
     holding: number;
     platforms: Platform[];
     platform_due: number;
+    platform_due_book: number;
     meta_live?: {
         total: number;
         accounts: {

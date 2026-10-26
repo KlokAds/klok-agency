@@ -347,5 +347,19 @@
     "কাটবে": "to charge",
     "Card": "Card",
     "অন্যান্য": "Others",
-    "এই সময়ে কোনো আয়-খরচ নেই।": "No income or spend in this period."
+    "এই সময়ে কোনো আয়-খরচ নেই।": "No income or spend in this period.",
+    "Dollar": "Dollars",
+    "কেনা − খরচ": "Bought − spent",
+    "হাতে যা আছে": "What is there",
+    "কোনো USD entry বাদ পড়েছে বা ভুল লেখা।": "A USD entry is missing or wrong.",
+    "ব্যবসার সম্পদ": "What the business holds",
+    "যা আছে": "What there is",
+    "যেখান থেকে এসেছে": "Where it came from",
+    "কোনো BDT entry বা FX batch ভুল আছে।": "A BDT entry or FX batch is wrong.",
+    "দুটো হিসাবই মিলেছে": "Both agree",
+    "একটা মেলেনি": "One does not agree",
+    "মিলেছে": "Agrees",
+    "পার্থক্য {amount}": "off by {amount}",
+    "মোটের {pct}%": "{pct}% of the total",
+    "কিছু নেই": "Nothing here"
 }
