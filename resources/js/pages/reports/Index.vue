@@ -123,6 +123,14 @@ type Card = {
     upIsGood: boolean;
 };
 
+// A colour a figure: money in green, ad cost gold, margin teal, office cost red.
+const TONES: Record<string, { edge: string; text: string }> = {
+    revenue: { edge: 'border-l-in', text: 'text-in' },
+    ad_cost: { edge: 'border-l-wait', text: 'text-wait' },
+    gross: { edge: 'border-l-brand', text: 'text-brand-ink' },
+    office: { edge: 'border-l-out', text: 'text-out' },
+};
+
 const cards = computed<Card[]>(() => [
     {
         key: 'revenue',
@@ -259,20 +267,27 @@ const clients = computed(() => {
             )
         "
     >
-        <KButton icon="print" @click="printPage">Print / PDF</KButton>
-        <KButton
-            v-if="can['reports.export']"
-            :href="exportUrl"
-            external
-            icon="down"
-            >CSV / Excel</KButton
-        >
+        <div class="no-print flex flex-wrap items-center gap-2">
+            <KButton size="sm" icon="print" @click="printPage"
+                >Print / PDF</KButton
+            >
+            <KButton
+                v-if="can['reports.export']"
+                :href="exportUrl"
+                external
+                size="sm"
+                icon="down"
+                >CSV / Excel</KButton
+            >
+            <KSegment v-model="preset" :options="presets" size="sm" />
+        </div>
     </PageHeader>
 
-    <section class="no-print mb-6 flex flex-wrap items-center gap-3">
-        <KSegment v-model="preset" :options="presets" size="sm" />
-        <!-- The dates sit right under "নিজে বাছুন" (on a phone the row breaks after it). -->
-        <div v-if="preset === 'custom'" class="flex items-center gap-2">
+    <section
+        v-if="preset === 'custom'"
+        class="no-print mb-6 flex flex-wrap items-center gap-3"
+    >
+        <div class="flex items-center gap-2">
             <KDate
                 v-model="from"
                 :placeholder="t('শুরু')"
@@ -307,15 +322,16 @@ const clients = computed(() => {
                 class="min-w-0 p-4 sm:p-5"
                 :class="
                     c.key === 'net'
-                        ? 'col-span-2 bg-rail text-rail-ink lg:col-span-1'
-                        : 'bg-surface'
+                        ? `col-span-2 border-l-[3px] bg-rail text-rail-ink lg:col-span-1 ${kpi.net < 0 ? 'border-l-[#f0875e]' : 'border-l-[#2dd4bf]'}`
+                        : `border-l-[3px] bg-surface ${TONES[c.key]?.edge ?? ''}`
                 "
             >
                 <p
+                    class="text-[12.5px] font-semibold"
                     :class="
                         c.key === 'net'
-                            ? 'text-[12px] font-bold text-rail-dim uppercase'
-                            : 'eyebrow'
+                            ? 'text-rail-dim uppercase'
+                            : (TONES[c.key]?.text ?? 'text-ink-3')
                     "
                 >
                     {{ c.label }}

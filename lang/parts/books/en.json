@@ -346,5 +346,6 @@
     "খাতার নিজের হিসাব — পুরোনো entry বা charge-এর ভাগ না মিললে এটা আলাদা হয়": "The books' own figure; it differs when an old entry or a charge's split does not match",
     "কাটবে": "to charge",
     "Card": "Card",
-    "অন্যান্য": "Others"
+    "অন্যান্য": "Others",
+    "এই সময়ে কোনো আয়-খরচ নেই।": "No income or spend in this period."
 }
