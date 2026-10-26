@@ -33,7 +33,7 @@ class Notifier
     ];
 
     /** A campaign stopping, about to stop or its day's spend: every Owner hears of it, whatever they switched off. */
-    public const OWNERS_ALWAYS = ['portal_signup', 'portal_profile', 'sms_silent', 'invoice_refund', 'renewal_open', 'renewal_invoiced', 'renewal_extended', 'credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_ending', 'campaign_ended', 'campaign_spend', 'account_problem', 'client_campaign', 'app_update', 'feedback', 'meta_receipt', 'sms_check', 'account_changed', 'refund_request', 'refund_check', 'system_error'];
+    public const OWNERS_ALWAYS = ['portal_signup', 'portal_profile', 'sms_silent', 'invoice_refund', 'renewal_open', 'renewal_invoiced', 'renewal_extended', 'credit_out', 'credit_low', 'ended', 'pilot_down', 'campaign_ending', 'campaign_ended', 'campaign_spend', 'credit_runout', 'account_problem', 'client_campaign', 'app_update', 'feedback', 'meta_receipt', 'sms_check', 'account_changed', 'refund_request', 'refund_check', 'system_error'];
 
     /**
      * How one person gets one group: on at all, on the phone, by email.

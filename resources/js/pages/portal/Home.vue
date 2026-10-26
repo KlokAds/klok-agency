@@ -286,6 +286,14 @@ const low = computed(
                     }}</b></span
                 >
             </p>
+            <p
+                v-if="credit.left > 0 && credit.left < 100"
+                class="mt-1 text-[12.5px] text-ink-3"
+            >
+                {{
+                    t('১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।')
+                }}
+            </p>
             <KButton
                 v-if="credit.refund"
                 size="sm"

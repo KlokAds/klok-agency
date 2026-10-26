@@ -239,5 +239,7 @@
     "{client} · {campaign} — আজ শেষ দিন: {time}": "{client} · {campaign}: last day today, {time}",
     "{client} · {campaign} — {days} দিনে খরচ {spend} · {results}টা result": "{client} · {campaign}: {spend} over {days} days · {results} results",
     "{lines}মোট খরচ {spend} · {results}টা result{cpr}": "{lines}Total {spend} · {results} results{cpr}",
-    "{lines}খরচ {spend} · {results}টা result{cpr}": "{lines}spend {spend} · {results} results{cpr}"
+    "{lines}খরচ {spend} · {results}টা result{cpr}": "{lines}spend {spend} · {results} results{cpr}",
+    "বাকি credit দিয়ে campaign বাড়ানো হলো": "Campaign extended on remaining credit",
+    "{client} · {campaign} — বাকি {left} দিয়ে {days} দিন, {date} পর্যন্ত": "{client} · {campaign}: {days} days on the remaining {left}, until {date}"
 }

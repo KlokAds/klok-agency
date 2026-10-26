@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\Campaign;
 use App\Models\CampaignDay;
+use App\Models\Client;
+use App\Models\Renewal;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
@@ -94,6 +97,8 @@ class CampaignLimits
                     $billed = (int) CampaignDay::where('campaign_id', $campaign->id)->where('day', '>=', $campaign->bill_from->toDateString())->sum('spend');
                     $done['capped'] += $this->cap($campaign, (int) ($campaign->spent_before ?? 0) + $billed + $share) ? 1 : 0;
                 }
+
+                $done['extended'] = ($done['extended'] ?? 0) + $this->runOut($campaigns, $client, $left);
             } catch (RuntimeException $e) {
                 if (str_contains($e->getMessage(), 'write:campaigns')) {
                     // The Pilot token may only read: say so once a day, not every tick.
@@ -170,6 +175,60 @@ class CampaignLimits
             ->log('extended');
 
         return $newEnd;
+    }
+
+    /** Credit under this is neither run on nor refunded: a dollar. */
+    public const RUN_OUT_MIN = 100;
+
+    public const RUN_OUT_TITLE = 'বাকি credit দিয়ে campaign বাড়ানো হলো'; // i18n
+
+    /**
+     * A client's credit is spent to the last dollar: when a paid campaign reaches its end with a
+     * dollar or more still unspent, the end moves on by as many days as that credit buys and the
+     * spend cap stops it exactly where the credit ends. Not for a campaign the client or the
+     * team paused, nor one whose renewal the client declined; under a dollar nothing moves.
+     *
+     * @param  Collection<int, Campaign>  $campaigns  the client's guarded campaigns
+     * @param  array<string, mixed>  $client  the client's figures
+     * @return int how many were moved on
+     */
+    private function runOut(Collection $campaigns, array $client, int $left): int
+    {
+        if ($left < self::RUN_OUT_MIN) {
+            return 0;
+        }
+        $today = CarbonImmutable::now()->startOfDay();
+        $ending = $campaigns->filter(function (Campaign $c) use ($today) {
+            $last = $c->lastDay();
+
+            return $last !== null && $last->lte($today) && $last->gte($today->subDay())
+                && $c->paused_by_client_at === null && $c->paused_by_team_at === null && ! $c->hasEnded()
+                && ! Renewal::where('campaign_id', $c->id)->where('status', 'declined')->whereDate('ends_on', $last->toDateString())->exists();
+        })->values();
+        if ($ending->isEmpty()) {
+            return 0;
+        }
+
+        $daily = max(1, (int) $ending->sum(fn (Campaign $c) => max(0, (int) $c->dailyBudget())) ?: $left);
+        $days = max(1, min(30, (int) ceil($left / $daily)));
+        $moved = 0;
+
+        foreach ($ending as $campaign) {
+            $stop = CarbonImmutable::parse($campaign->stop_at);
+            if (! Cache::add("credit-runout:{$campaign->id}:{$stop->timestamp}", true, now()->addDays(3))) {
+                continue;
+            }
+            $newEnd = $this->extend($campaign, $days, null, 'credit left');
+            $moved++;
+
+            $params = ['campaign' => $campaign->name, 'client' => (string) $client['name'], 'left' => CampaignAlerts::money($left, $campaign->account?->currency), 'days' => $days, 'date' => $newEnd->format('j M')];
+            app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_extended', ClientNotifier::EXTENDED_TITLE, '{campaign} — আপনার বাকি {left} credit দিয়ে আরও প্রায় {days} দিন চলবে ({date} পর্যন্ত); credit শেষ হলে নিজে থামবে।', $params, // i18n
+                ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]));
+            $this->notifier->send(Client::whereKey($campaign->client_id)->value('manager_id'), new AgencyAlert('credit_runout', self::RUN_OUT_TITLE, '{client} · {campaign} — বাকি {left} দিয়ে {days} দিন, {date} পর্যন্ত', $params, // i18n
+                ['url' => '/campaigns/'.($campaign->slug ?? $campaign->id)]));
+        }
+
+        return $moved;
     }
 
     /** The fewest and most dollars a day a client may set on the portal. */

@@ -123,7 +123,7 @@ class PortalController extends Controller
                 // Asked back now: the dollars not spent yet at the agency's own dollar rate — the
                 // commission is not refunded (an estimate, whole taka; the agency confirms).
                 // Rounded to ৳100, so the agency's own rate cannot be read back from it.
-                'refund' => ($left = (int) ($figure['credit_left'] ?? 0)) > 0 && ($fx = Invoices::fxRate())
+                'refund' => ($left = (int) ($figure['credit_left'] ?? 0)) >= CampaignLimits::RUN_OUT_MIN && ($fx = Invoices::fxRate())
                     ? (int) floor($left * $fx / 10000) * 10000 : null,
                 'round' => $this->creditRound($client, (int) ($figure['credit_left'] ?? 0)),
             ],

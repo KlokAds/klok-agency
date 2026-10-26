@@ -275,5 +275,7 @@
     "{campaign} — কাল শেষ: {time}। চালু রাখতে চাইলে invoice pay করুন।": "{campaign}: ends tomorrow, {time}. Pay the invoice to keep it running.",
     "{campaign} — পরশু শেষ: {time}। চালু রাখতে চাইলে invoice pay করুন।": "{campaign}: ends the day after tomorrow, {time}. Pay the invoice to keep it running.",
     "{campaign} — {days} দিনে খরচ {spend} · {results}টা result। আবার চালাতে চাইলে invoice pay করুন।": "{campaign}: {spend} over {days} days · {results} results. Pay an invoice to run it again.",
-    "{campaign} — দিনে {from} → {to}": "{campaign}: {from} → {to} a day"
+    "{campaign} — দিনে {from} → {to}": "{campaign}: {from} → {to} a day",
+    "{campaign} — আপনার বাকি {left} credit দিয়ে আরও প্রায় {days} দিন চলবে ({date} পর্যন্ত); credit শেষ হলে নিজে থামবে।": "{campaign}: your remaining {left} credit runs it about {days} more days (until {date}); it stops by itself when the credit ends.",
+    "১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।": "Under a dollar: not refundable, carried into the next payment."
 }
