@@ -17,18 +17,18 @@
  * figures so columns line up like a ruled book.
  */
 :root {
-    --paper: #f3f1ea;
+    --paper: #f4f2f7;
     --surface: #ffffff;
-    --surface-2: #f9f8f4;
-    --sunken: #ece9e0;
+    --surface-2: #faf9fc;
+    --sunken: #ece8f2;
     --ink: #15211f;
     --ink-2: #4a5653;
     --ink-3: #6b7874;
-    --line: #e2dfd5;
-    --line-2: #cdc8ba;
-    --brand: #0d9488;
-    --brand-ink: #0b5e56;
-    --brand-soft: #dff2ee;
+    --line: #e3dfea;
+    --line-2: #cdc5d9;
+    --brand: #6f4a97;
+    --brand-ink: #4b2367;
+    --brand-soft: #efe6f8;
     --in: #0f7a50;
     --in-soft: #e1f3ea;
     --out: #be123c;
@@ -52,22 +52,22 @@
     --panel-bg: linear-gradient(180deg, #ffffff 0%, #fcfbf8 100%);
     --field-bg: #ffffff;
     --field-shadow: inset 0 1px 2px rgb(21 33 31 / 0.04);
-    --glow: rgb(13 148 136 / 0.06);
+    --glow: rgb(111 74 151 / 0.08);
 }
 
 .dark {
-    --paper: #0b1014;
-    --surface: #141a21;
-    --surface-2: #19212a;
-    --sunken: #0e1318;
+    --paper: #0c0b13;
+    --surface: #15141f;
+    --surface-2: #1b1927;
+    --sunken: #0f0e17;
     --ink: #eef2f6;
     --ink-2: #b3bcc8;
     --ink-3: #87919e;
-    --line: #232c37;
-    --line-2: #313d4b;
-    --brand: #2dd4bf;
-    --brand-ink: #7ee8da;
-    --brand-soft: #12302f;
+    --line: #27243a;
+    --line-2: #363251;
+    --brand: #a07fbd;
+    --brand-ink: #c9afe6;
+    --brand-soft: #2b1d3f;
     --in: #34d399;
     --in-soft: #0f2d23;
     --out: #fb7185;
@@ -76,18 +76,18 @@
     --wait-soft: #332a10;
     --done: #a5b4fc;
     --done-soft: #1e2545;
-    --rail: #0a0e13;
-    --rail-2: #151b23;
+    --rail: #0a0911;
+    --rail-2: #171527;
     --pos: #2a9f8f;
     --neg: #e0704a;
     --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -8px rgb(0 0 0 / 0.6);
     --shadow-card:
         inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.35),
         0 12px 32px -14px rgb(0 0 0 / 0.7);
-    --panel-bg: linear-gradient(180deg, #182029 0%, #131920 100%);
-    --field-bg: #0d1217;
+    --panel-bg: linear-gradient(180deg, #1a1828 0%, #14131e 100%);
+    --field-bg: #0e0d16;
     --field-shadow: inset 0 1px 2px rgb(0 0 0 / 0.35);
-    --glow: rgb(45 212 191 / 0.08);
+    --glow: rgb(160 127 189 / 0.1);
 }
 
 @theme inline {
@@ -259,12 +259,12 @@
 
     /* The chosen pill, the main button: a brand gradient with a soft glow under it. */
     .k-accent {
-        background: linear-gradient(135deg, #2fe0c9 0%, #0f9f94 100%);
-        color: #04201d;
+        background: linear-gradient(135deg, #c2a3df 0%, #7e5c9b 100%);
+        color: #22103a;
         border-color: transparent;
         box-shadow:
             inset 0 1px 0 rgb(255 255 255 / 0.25),
-            0 6px 16px -6px rgb(45 212 191 / 0.55);
+            0 6px 16px -6px rgb(160 127 189 / 0.55);
     }
 
     .k-accent:hover {
@@ -356,10 +356,21 @@
     }
 
     .popover {
-        background: var(--surface);
-        border: 1px solid var(--line);
+        background: var(--panel-bg);
+        border: 1px solid var(--line-2);
         border-radius: 12px;
         box-shadow: var(--shadow-pop);
+    }
+
+    .k-panel-bg {
+        background: var(--panel-bg);
+    }
+
+    /* A headline amount: the cents a step quieter, so the whole number reads first. */
+    .figure-cents {
+        font-size: 0.62em;
+        font-weight: 500;
+        color: var(--ink-3);
     }
 
     /* A ruled ledger table. */
@@ -374,12 +385,14 @@
         position: sticky;
         top: 0;
         z-index: 1;
-        background: var(--surface-2);
+        background: var(--sunken);
         border-bottom: 1px solid var(--line);
-        padding: 9px 14px;
+        padding: 10px 14px;
         text-align: left;
-        font-size: 13.5px;
-        font-weight: 500;
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
         color: var(--ink-3);
         white-space: nowrap;
     }

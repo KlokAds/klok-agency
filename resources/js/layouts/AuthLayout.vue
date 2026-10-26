@@ -48,7 +48,7 @@ defineProps<{ title?: string; description?: string }>();
                     <path d="M92 0V400M300 0V400" stroke-dasharray="4 6" />
                 </g>
                 <g
-                    class="text-[#2dd4bf]"
+                    class="text-brand"
                     stroke="currentColor"
                     stroke-width="3"
                     stroke-linecap="round"

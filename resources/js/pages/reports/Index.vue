@@ -351,17 +351,15 @@ const clients = computed(() => {
         </div>
 
         <!-- KPIs -->
-        <section
-            class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-5"
-        >
+        <section class="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-5">
             <div
                 v-for="c in tiles"
                 :key="c.key"
-                class="min-w-0 p-4 sm:p-5"
+                class="min-w-0 rounded-[16px] border-l-[3px] p-4 sm:p-5"
                 :class="
                     c.key === 'net'
-                        ? `col-span-2 border-l-[3px] bg-rail text-rail-ink lg:col-span-1 ${kpi.net < 0 ? 'border-l-[#f0875e]' : 'border-l-[#2dd4bf]'}`
-                        : `border-l-[3px] bg-surface ${TONES[c.key]?.edge ?? ''}`
+                        ? `col-span-2 bg-rail text-rail-ink lg:col-span-1 ${kpi.net < 0 ? 'border-l-out' : 'border-l-brand'}`
+                        : `panel ${TONES[c.key]?.edge ?? ''}`
                 "
             >
                 <p
@@ -379,7 +377,7 @@ const clients = computed(() => {
                     :class="
                         c.key === 'net'
                             ? kpi.net < 0
-                                ? 'text-[#f0875e]'
+                                ? 'text-out'
                                 : 'text-white'
                             : ''
                     "
@@ -401,9 +399,9 @@ const clients = computed(() => {
                         :class="
                             c.key === 'net'
                                 ? c.change.tone === 'text-out'
-                                    ? 'text-[#f0875e]'
+                                    ? 'text-out'
                                     : c.change.tone === 'text-in'
-                                      ? 'text-[#2dd4bf]'
+                                      ? 'text-brand-ink'
                                       : 'text-rail-dim'
                                 : c.change.tone
                         "

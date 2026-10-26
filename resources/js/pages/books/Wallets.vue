@@ -619,7 +619,7 @@ async function removeMove(move: Move): Promise<void> {
                                 v-for="w in options.wallets"
                                 :key="String(w.value)"
                                 type="button"
-                                class="h-9 rounded-lg border border-line-2 bg-surface px-3 text-[13.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
+                                class="k-chip h-9 rounded-lg px-3 text-[13.5px] font-semibold disabled:cursor-default sm:h-8"
                                 :class="
                                     busy === `rest:${w.value}` && 'opacity-60'
                                 "
@@ -678,7 +678,7 @@ async function removeMove(move: Move): Promise<void> {
                             v-for="w in options.wallets"
                             :key="String(w.value)"
                             type="button"
-                            class="h-9 rounded-lg border border-line-2 bg-surface px-2.5 text-[13.5px] font-semibold hover:bg-sunken disabled:cursor-default sm:h-8"
+                            class="k-chip h-9 rounded-lg px-2.5 text-[13.5px] font-semibold disabled:cursor-default sm:h-8"
                             :class="
                                 busy === `${e.id}:${w.value}` && 'opacity-60'
                             "

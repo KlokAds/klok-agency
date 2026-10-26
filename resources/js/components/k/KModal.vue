@@ -123,7 +123,7 @@ void props;
                 role="dialog"
                 aria-modal="true"
                 :aria-label="title"
-                class="k-rise relative flex max-h-[calc(100dvh-24px)] w-full min-w-0 flex-col rounded-[16px] border border-line bg-surface shadow-pop sm:max-h-[88vh]"
+                class="k-rise k-panel-bg relative flex max-h-[calc(100dvh-24px)] w-full min-w-0 flex-col rounded-[16px] border border-line-2 shadow-pop sm:max-h-[88vh]"
                 :class="widths[width]"
             >
                 <header

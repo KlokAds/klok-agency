@@ -226,7 +226,7 @@ const wallets = [
                     />
                     <!-- The file picker looks like a button; the browser's own control stays hidden. -->
                     <label
-                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
+                        class="k-chip inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] px-3 text-[13.5px] font-semibold select-none focus-within:border-brand"
                     >
                         <KIcon name="doc" :size="15" class="text-ink-3" />
                         {{ images.logo ? t('বদলান') : t('ছবি বাছুন') }}
@@ -321,7 +321,7 @@ const wallets = [
                         class="size-24 rounded-lg border border-line bg-white p-1"
                     />
                     <label
-                        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold select-none focus-within:border-brand hover:border-ink-3 hover:bg-surface-2"
+                        class="k-chip inline-flex h-9 cursor-pointer items-center gap-2 rounded-[10px] px-3 text-[13.5px] font-semibold select-none focus-within:border-brand"
                     >
                         <KIcon name="doc" :size="15" class="text-ink-3" />
                         {{ images.qr ? t('বদলান') : t('QR-এর ছবি বাছুন') }}

@@ -218,7 +218,7 @@ function saveAccount(): void {
 
     <!-- Check -->
     <div
-        class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[14.5px]"
+        class="panel mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 text-[14.5px]"
     >
         <span
             class="flex items-center gap-1.5"

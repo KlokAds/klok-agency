@@ -28,7 +28,7 @@ const classes = computed(() => [
     {
         primary: 'k-accent',
         ink: 'bg-ink text-paper hover:bg-ink-2',
-        plain: 'border border-line-2 bg-surface text-ink hover:border-ink-3 hover:bg-surface-2',
+        plain: 'border border-line-2 bg-surface-2 text-ink hover:border-ink-3 hover:bg-sunken',
         // An edit or change: tinted so it reads as an action, never a grey box.
         soft: 'border border-brand/30 bg-brand-soft text-brand-ink hover:border-brand',
         // Soft but plainly a button: a light fill, never bare text.

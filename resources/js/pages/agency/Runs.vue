@@ -438,7 +438,7 @@ onMounted(() => {
                     <a
                         v-if="run.sms"
                         :href="run.sms"
-                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                        class="k-chip inline-flex h-9 items-center justify-center gap-1.5 rounded-[10px] px-3 text-[13.5px] font-semibold whitespace-nowrap"
                         ><KIcon name="mail" :size="15" />SMS</a
                     >
                     <KButton

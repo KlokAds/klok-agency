@@ -23,6 +23,13 @@ export type StatTile = {
 };
 
 withDefaults(defineProps<{ tiles: StatTile[]; cols?: 3 | 4 }>(), { cols: 3 });
+
+// "$1,234.56" → the whole and the cents, the cents set a step quieter; words stay whole.
+function split(value: string): { whole: string; cents: string } {
+    const m = /^(.*\d)(\.\d{1,2})$/.exec(value);
+
+    return m ? { whole: m[1], cents: m[2] } : { whole: value, cents: '' };
+}
 </script>
 
 <template>
@@ -52,7 +59,12 @@ withDefaults(defineProps<{ tiles: StatTile[]; cols?: 3 | 4 }>(), { cols: 3 });
                 <span
                     class="num mt-0.5 block truncate text-[24px] leading-tight font-semibold tracking-[-0.02em] sm:mt-1.5 sm:text-[28px]"
                     :class="tile.text ?? (tile.dark ? 'text-white' : '')"
-                    >{{ tile.value }}</span
+                    >{{ split(tile.value).whole
+                    }}<span
+                        v-if="split(tile.value).cents"
+                        class="figure-cents"
+                        >{{ split(tile.value).cents }}</span
+                    ></span
                 >
                 <span
                     v-if="tile.sub"

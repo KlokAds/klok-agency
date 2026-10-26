@@ -137,7 +137,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
     <!-- Desktop: a search field look-alike; phone: an icon -->
     <button
         type="button"
-        class="hidden h-10 w-full max-w-[360px] items-center gap-2 rounded-xl border border-line bg-surface px-3 text-left text-[14.5px] text-ink-3 transition-colors hover:border-line-2 md:flex"
+        class="hidden h-10 w-full max-w-[360px] items-center gap-2 rounded-xl border border-line-2 bg-[var(--field-bg)] px-3 text-left text-[14.5px] text-ink-3 transition-colors hover:border-line-2 md:flex"
         @click="show"
     >
         <KIcon name="search" :size="16" />

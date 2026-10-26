@@ -31,7 +31,7 @@ withDefaults(
             <path
                 d="M20 16v32M20 34l14-18M26 27l12 21"
                 fill="none"
-                stroke="#2dd4bf"
+                stroke="#c2a3df"
                 stroke-width="6"
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -61,9 +61,8 @@ withDefaults(
                     class="shrink-0 rounded-[5px] px-1.5 py-[3px] text-[12.5px] font-bold tracking-[0.06em] uppercase"
                     :class="[
                         light
-                            ? 'bg-[#2dd4bf]/20 text-[#5eead4]'
+                            ? 'bg-brand/20 text-brand-ink'
                             : 'bg-brand-soft text-brand',
-                        compact && 'max-[419px]:hidden',
                     ]"
                     >{{ badge }}</span
                 >
@@ -72,7 +71,7 @@ withDefaults(
                 class="mt-0.5 truncate py-px leading-[1.45] font-semibold"
                 :class="[
                     compact
-                        ? 'text-[12.5px] tracking-[0.1em] max-[419px]:hidden'
+                        ? 'text-[12.5px] tracking-[0.04em]'
                         : 'text-[12.5px] tracking-[0.16em]',
                     light ? 'text-rail-dim' : 'text-ink-3',
                 ]"

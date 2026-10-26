@@ -145,6 +145,32 @@ const canQuick = computed(() =>
     ['usd.create', 'bdt.create', 'fx.create'].some((p) => can.value[p]),
 );
 
+// The phone's bottom bar: desk, clients, (new entry), the book, and the full menu. A place
+// this person may not see falls away; the slot in the middle is the new-entry button.
+const tabs = computed(() => {
+    const want = [
+        {
+            label: 'ডেস্ক',
+            href: '/dashboard',
+            icon: 'desk',
+            perm: 'dashboard.view',
+        }, // i18n
+        {
+            label: 'Client',
+            href: '/clients',
+            icon: 'people',
+            perm: 'clients.view',
+        },
+        { label: 'নতুন', href: null, icon: 'plus', perm: '' }, // i18n
+        { label: 'খাতা', href: '/bdt', icon: 'taka', perm: 'bdt.view' }, // i18n
+        { label: 'মেনু', href: null, icon: 'menu', perm: '' }, // i18n
+    ];
+
+    return want.filter((tab, i) =>
+        i === 2 ? canQuick.value : !tab.perm || can.value[tab.perm],
+    );
+});
+
 const path = computed(() => page.url.split('?')[0]);
 const isActive = (href: string) =>
     path.value === href ||
@@ -288,14 +314,14 @@ function appSettings(): void {
                     >
                         <span
                             v-if="isActive(item.href)"
-                            class="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r bg-[#2dd4bf]"
+                            class="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r bg-brand"
                         />
                         <KIcon
                             :name="item.icon"
                             :size="18"
                             :class="
                                 isActive(item.href)
-                                    ? 'text-[#2dd4bf]'
+                                    ? 'text-brand'
                                     : 'text-rail-dim group-hover:text-rail-ink'
                             "
                         />
@@ -316,14 +342,14 @@ function appSettings(): void {
                 >
                     <span
                         v-if="isActive(settingsHref)"
-                        class="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r bg-[#2dd4bf]"
+                        class="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r bg-brand"
                     />
                     <KIcon
                         name="gear"
                         :size="18"
                         :class="
                             isActive(settingsHref)
-                                ? 'text-[#2dd4bf]'
+                                ? 'text-brand'
                                 : 'text-rail-dim group-hover:text-rail-ink'
                         "
                     />
@@ -597,15 +623,54 @@ function appSettings(): void {
             </main>
         </div>
 
-        <!-- Phone: quick entry always one thumb away -->
-        <button
-            v-if="canQuick"
-            type="button"
-            class="no-print fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-2xl bg-brand px-5 text-[16px] font-bold text-white shadow-pop sm:hidden dark:text-rail"
-            @click="quick = true"
+        <!-- Phone: the four places a day's work happens, and the new entry raised in the middle -->
+        <nav
+            class="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/92 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+            :aria-label="t('মূল পাতা')"
         >
-            <KIcon name="plus" :size="20" /> {{ t('নতুন entry') }}
-        </button>
+            <div
+                class="mx-auto grid h-[64px] max-w-[560px] grid-cols-5 items-end"
+            >
+                <template v-for="(tab, i) in tabs" :key="tab.href ?? tab.label">
+                    <button
+                        v-if="i === 2 && canQuick"
+                        type="button"
+                        class="k-accent mx-auto mb-2.5 flex h-13 w-13 flex-col items-center justify-center rounded-2xl"
+                        :aria-label="t('নতুন entry')"
+                        @click="quick = true"
+                    >
+                        <KIcon name="plus" :size="22" />
+                        <span class="text-[11.5px] leading-none font-bold">{{
+                            t('নতুন')
+                        }}</span>
+                    </button>
+                    <component
+                        :is="tab.href ? Link : 'button'"
+                        v-else
+                        :href="tab.href"
+                        type="button"
+                        class="flex h-full flex-col items-center justify-center gap-1 pb-1.5 text-[12.5px] font-semibold"
+                        :class="
+                            tab.href && isActive(tab.href)
+                                ? 'text-brand-ink'
+                                : 'text-ink-3'
+                        "
+                        @click="tab.href ? undefined : (drawer = true)"
+                    >
+                        <span
+                            class="grid h-7 w-11 place-items-center rounded-full transition-colors"
+                            :class="
+                                tab.href &&
+                                isActive(tab.href) &&
+                                'bg-brand-soft'
+                            "
+                            ><KIcon :name="tab.icon" :size="18"
+                        /></span>
+                        {{ t(tab.label) }}
+                    </component>
+                </template>
+            </div>
+        </nav>
 
         <QuickEntry v-if="canQuick" v-model="quick" />
 

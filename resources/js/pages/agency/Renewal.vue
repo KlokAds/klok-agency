@@ -189,7 +189,7 @@ const willEnd = computed(() => {
                             :href="r.url"
                             target="_blank"
                             rel="noopener"
-                            class="inline-flex h-8 items-center justify-center gap-2 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                            class="k-chip inline-flex h-8 items-center justify-center gap-2 rounded-[10px] px-3 text-[13.5px] font-semibold whitespace-nowrap"
                             ><KIcon name="eye" :size="15" />{{ t('খুলুন') }}</a
                         >
                     </div>
@@ -206,7 +206,7 @@ const willEnd = computed(() => {
                     <a
                         v-if="r.message.sms"
                         :href="r.message.sms"
-                        class="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-line-2 bg-surface px-4 text-[14.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                        class="k-chip inline-flex h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-[14.5px] font-semibold whitespace-nowrap"
                         ><KIcon name="mail" :size="16" />SMS</a
                     >
                     <KButton icon="list" @click="copy(r.message.text)">{{

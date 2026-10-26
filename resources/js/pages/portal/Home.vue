@@ -182,7 +182,7 @@ const ringColor = computed(() =>
         ? '#ef4444'
         : leftShare.value < 50
           ? '#f59e0b'
-          : '#5eead4',
+          : '#c9afe6',
 );
 
 // How long the money lasts, in plain words: today, tomorrow, or about so many days.

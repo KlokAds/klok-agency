@@ -203,7 +203,7 @@ const tone = computed(() =>
                 <a
                     v-if="item.sms"
                     :href="item.sms"
-                    class="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-line-2 bg-surface px-3 text-[13.5px] font-semibold whitespace-nowrap text-ink hover:border-ink-3 hover:bg-surface-2"
+                    class="k-chip inline-flex h-8 items-center gap-1.5 rounded-[10px] px-3 text-[13.5px] font-semibold whitespace-nowrap"
                     :class="item.whatsapp ? '' : 'ml-auto'"
                     ><KIcon name="mail" :size="14" />SMS</a
                 >

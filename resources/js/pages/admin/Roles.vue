@@ -193,11 +193,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
 
             <!-- On a phone: one card a page, its permissions as chips that fit the width. -->
             <ul class="space-y-2 sm:hidden">
-                <li
-                    v-for="m in modules"
-                    :key="m.key"
-                    class="rounded-xl border border-line bg-surface px-3 py-2.5"
-                >
+                <li v-for="m in modules" :key="m.key" class="panel px-3 py-2.5">
                     <div class="flex items-center justify-between gap-3">
                         <p class="font-semibold">{{ m.label }}</p>
                         <KCheck

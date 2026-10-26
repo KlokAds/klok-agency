@@ -128,8 +128,11 @@ const shown = computed(() =>
                     >{{ badge }}</span
                 >
             </span>
-            <span class="text-[13px] leading-none">{{
+            <span class="text-[13px] leading-none max-sm:hidden">{{
                 t('Notification')
+            }}</span>
+            <span class="text-[13px] leading-none sm:hidden">{{
+                t('Alert')
             }}</span>
         </button>
 
