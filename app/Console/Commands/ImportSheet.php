@@ -196,7 +196,7 @@ class ImportSheet extends Command
         $checks = [
             ['Card balance (USD)', $expected['card_balance_usd'], $summary['card']],
             ['Business USD', $expected['business_usd'], $summary['business_usd']],
-            ['Platform due (USD)', $expected['platform_due_usd'], $summary['platform_due']],
+            ['Platform due (USD)', $expected['platform_due_usd'], $summary['platform_due_book']],
             ['Pending from clients (USD)', $expected['pending_usd'], $summary['receivable_usd']],
             ['BDT balance', $expected['bdt_balance'], $summary['bdt']],
             ['Client margin (BDT)', $expected['client_margin_bdt'], $summary['margin']],

@@ -362,7 +362,7 @@ async function removeMove(move: Move): Promise<void> {
                 {{ money(card, 'usd') }}
             </p>
             <p class="mt-3 text-[13.5px] text-rail-dim">
-                {{ t('Platform আরো কাটবে') }}
+                {{ t('Platform এখনো কাটবে') }}
                 <b class="num font-semibold text-rail-ink">{{
                     money(platform_due, 'usd')
                 }}</b>

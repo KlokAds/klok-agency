@@ -63,8 +63,7 @@ class DollarController extends Controller
                 'usd_check' => $summary['usd_check'],
                 'usd_at_cost' => $summary['usd_at_cost'],
                 'platforms' => $summary['platforms'],
-                // Meta's own word on what it still will charge, live through Pilot.
-                'meta_live' => $balances->liveUnbilled(),
+                'meta_live' => $summary['meta_live'],
             ],
             'platforms' => $summary['platforms'],
             'ad_accounts' => $balances->accounts(),

@@ -212,5 +212,11 @@
     "Sync-এর সময় রাখা হলো।": "Sync pace saved.",
     "এই সপ্তাহ": "This week",
     "এই মাস": "This month",
-    "এটাই sign-in নাম — Settings → User পাতায় বদলান।": "This is the sign-in name; change it on Settings → Users."
+    "এটাই sign-in নাম — Settings → User পাতায় বদলান।": "This is the sign-in name; change it on Settings → Users.",
+    "শেষ beat": "Last beat",
+    "শেষ দেখা": "Last checked",
+    "Charge ধরা হচ্ছে": "Charges tracked",
+    "{date} থেকে": "since {date}",
+    "শেষ heartbeat": "Last heartbeat",
+    "Owner-এর phone-এর KlokOne SMS app bKash/Nagad/Rocket-এর SMS এখানে পাঠায়; {n} মিনিট খবর না এলে Owner-কে জানানো হয়।": "The KlokOne SMS app on the Owner's phone forwards bKash/Nagad/Rocket SMS here; {n} minutes of silence alerts the Owner."
 }

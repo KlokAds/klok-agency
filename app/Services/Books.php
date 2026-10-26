@@ -216,6 +216,48 @@ class Books
     }
 
     /**
+     * Meta's own "still to charge", read live through Pilot (cached); null when it cannot be read.
+     *
+     * @var array{total: int, accounts: list<array<string, mixed>>, read_at: string}|null
+     */
+    private ?array $metaLive = null;
+
+    private bool $metaLiveRead = false;
+
+    /** @return array{total: int, accounts: list<array<string, mixed>>, read_at: string}|null */
+    public function metaLive(): ?array
+    {
+        if (! $this->metaLiveRead) {
+            try {
+                $this->metaLive = app(AdAccountBalances::class)->liveUnbilled();
+            } catch (\Throwable) {
+                $this->metaLive = null;
+            }
+            $this->metaLiveRead = true;
+        }
+
+        return $this->metaLive;
+    }
+
+    /**
+     * The platform rows as every page shows them: Meta's due is Meta's own word where Pilot
+     * could read it (the book's figure kept beside it), the others the book's.
+     *
+     * @return list<array{id: int, code: string, name: string, spent: int|float, charged: int|float, due: int|float, book_due: int|float, live: bool}>
+     */
+    public function platformsShown(): array
+    {
+        $live = $this->metaLive();
+        $rows = [];
+        foreach ($this->platforms() as $row) {
+            $isLive = $live !== null && $row['code'] === 'meta';
+            $rows[] = [...$row, 'book_due' => $row['due'], 'live' => $isLive, 'due' => $isLive ? (int) $live['total'] : $row['due']];
+        }
+
+        return $rows;
+    }
+
+    /**
      * Per-client margin, pending and totals.
      *
      * @return list<array<string, mixed>>
@@ -490,9 +532,13 @@ class Books
 
         $card = (int) $entries->filter(fn ($e) => self::hitsCard($e))->sum('amount');
         $holding = (int) $entries->filter(fn ($e) => $e->account?->kind === 'holding')->sum('amount');
-        $platforms = $this->platforms();
+        $platformDueBook = array_sum(array_column($this->platforms(), 'due'));
+        // The books balance on their own figure; what is shown as "still to charge" is Meta's
+        // own word where Pilot could read it, so every page says the same number.
+        $live = $this->metaLive();
+        $platforms = $this->platformsShown();
         $platformDue = array_sum(array_column($platforms, 'due'));
-        $businessUsd = $card + $holding - $platformDue;
+        $businessUsd = $card + $holding - $platformDueBook;
         $remainingUsd = $fifo['bought'] - $fifo['consumed'];
 
         $segments = $fifo['segments'];
@@ -515,6 +561,8 @@ class Books
             'holding' => $holding,
             'platforms' => $platforms,
             'platform_due' => $platformDue,
+            'platform_due_book' => $platformDueBook,
+            'meta_live' => $live,
             'business_usd' => $businessUsd,
             'usd_check' => [
                 'bought' => $fifo['bought'],
@@ -532,6 +580,7 @@ class Books
             'owner_due' => $ownerDue,
             'unearned' => $unearned,
             'card_after' => $card - $platformDue,
+            'card_after_book' => $card - $platformDueBook,
             'assets' => $assets,
             'equity' => $equity,
             // FIFO costs are rounded per row, so allow up to ৳1 of drift.

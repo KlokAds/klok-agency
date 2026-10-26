@@ -7,6 +7,8 @@ export type Platform = {
     spent: number;
     charged: number;
     due: number;
+    book_due?: number;
+    live?: boolean;
 };
 
 export type Summary = {

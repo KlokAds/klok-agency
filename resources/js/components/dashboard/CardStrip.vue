@@ -15,20 +15,15 @@ const TAKA = '\u{09F3}';
 const s = computed(() => props.summary);
 // Meta's own figure replaces the book's Meta line when Pilot could read it; other platforms
 // stay as the books have them.
+// The books already carry Meta's own figure where Pilot could read it (Books::summary), so
+// every page shows the same number; a row says when its due is Meta's word and what the book had.
 const live = computed(() => s.value.meta_live ?? null);
 const dueRows = computed(() =>
     s.value.platforms
-        .filter((p) => p.due !== 0 || (p.code === 'meta' && live.value))
-        .map((p) => ({
-            ...p,
-            due: p.code === 'meta' && live.value ? live.value.total : p.due,
-            book: p.due,
-            isLive: p.code === 'meta' && !!live.value,
-        })),
+        .filter((p) => p.due !== 0 || p.live)
+        .map((p) => ({ ...p, book: p.book_due ?? p.due, isLive: !!p.live })),
 );
-const platformDue = computed(() =>
-    dueRows.value.reduce((a, p) => a + p.due, 0),
-);
+const platformDue = computed(() => s.value.platform_due);
 // What stays on the card once every platform has charged what it says it will.
 const cardAfter = computed(() => s.value.card - platformDue.value);
 const afterTone = computed(() =>

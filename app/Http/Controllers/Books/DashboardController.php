@@ -38,7 +38,7 @@ class DashboardController extends Controller
         $month = $books->profitAndLoss(now()->startOfMonth(), now()->endOfMonth());
 
         return Inertia::render('Dashboard', [
-            'summary' => [...$books->summary(), 'meta_live' => app(AdAccountBalances::class)->liveUnbilled()],
+            'summary' => $books->summary(),
             'wallets' => $books->wallets(),
             'monthly' => $books->monthly(6),
             'clients' => $this->clientRows($books),

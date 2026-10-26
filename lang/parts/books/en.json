@@ -336,5 +336,7 @@
     "Meta থেকে পড়া {ago}": "read from Meta {ago}",
     "Credit কাটা, card-এ আসেনি": "Credit taken, not yet on the card",
     "Card-এ আসেনি": "Not yet on the card",
-    "card নেই": "no card"
+    "card নেই": "no card",
+    "বাদ: Platform এখনো কাটবে": "Less: platforms still to charge",
+    "Card − Platform এখনো কাটবে": "Card − platforms still to charge"
 }

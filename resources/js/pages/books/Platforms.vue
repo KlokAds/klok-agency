@@ -58,7 +58,7 @@ defineProps<{
                         </dd>
                     </div>
                     <div>
-                        <dt class="eyebrow">{{ t('আরো কাটবে') }}</dt>
+                        <dt class="eyebrow">{{ t('এখনো কাটবে') }}</dt>
                         <dd
                             class="num mt-1 text-[17px] font-semibold"
                             :class="p.due > 0 ? 'text-out' : ''"

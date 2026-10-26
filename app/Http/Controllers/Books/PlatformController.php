@@ -11,7 +11,9 @@ class PlatformController extends Controller
 {
     public function __invoke(Books $books): Response
     {
-        $platforms = collect($books->platforms())->map(function ($platform) use ($books) {
+        // The summary's rows: Meta's own "still to charge" where Pilot could read it, the book's elsewhere.
+        $summary = $books->summary();
+        $platforms = collect($books->platformsShown())->map(function ($platform) use ($books) {
             $platform['charges'] = $books->usdEntries()
                 ->where('account_id', $platform['id'])
                 ->where('category', 'card_charge')
@@ -26,7 +28,7 @@ class PlatformController extends Controller
 
         return Inertia::render('books/Platforms', [
             'platforms' => $platforms,
-            'card' => $books->summary()['card'],
+            'card' => $summary['card'],
         ]);
     }
 }

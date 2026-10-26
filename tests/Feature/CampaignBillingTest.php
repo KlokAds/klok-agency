@@ -122,7 +122,7 @@ it('counts spend the card has not been charged for yet, oldest first', function 
     $after = $books->unbilledByClient()[$this->gffs->id] ?? 0;
 
     expect($before - $after)->toBeLessThanOrEqual(500)
-        ->and(array_sum($books->unbilledByClient()))->toBe($books->summary()['platform_due']);
+        ->and(array_sum($books->unbilledByClient()))->toBe($books->summary()['platform_due_book']);
 });
 
 it('links every campaign whose name names one client', function () {

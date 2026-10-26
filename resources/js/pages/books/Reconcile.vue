@@ -67,7 +67,7 @@ const diff = computed(() =>
                     </dd>
                 </div>
                 <div>
-                    <dt class="eyebrow">{{ t('Platform আরো কাটবে') }}</dt>
+                    <dt class="eyebrow">{{ t('Platform এখনো কাটবে') }}</dt>
                     <dd class="num mt-1.5 text-[28px] font-medium text-out">
                         {{ money(platform_due, 'usd') }}
                     </dd>

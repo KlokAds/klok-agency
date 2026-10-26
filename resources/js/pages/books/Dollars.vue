@@ -182,7 +182,7 @@ function saveAccount(): void {
             }}</KButton>
         </div>
         <div class="bg-surface p-5 sm:p-6">
-            <p class="eyebrow">{{ t('Meta এখনো কাটবে') }}</p>
+            <p class="eyebrow">{{ t('Platform এখনো কাটবে') }}</p>
             <p class="num mt-3 text-[30px] leading-none font-medium text-wait">
                 {{ money(summary.platform_due, 'usd') }}
             </p>
@@ -199,7 +199,7 @@ function saveAccount(): void {
                 {{ money(summary.card_after, 'usd') }}
             </p>
             <p class="mt-3 text-[13.5px] text-ink-3">
-                {{ t('Card − Meta এখনো কাটবে') }}
+                {{ t('Card − Platform এখনো কাটবে') }}
             </p>
         </div>
         <div class="bg-surface p-5 sm:p-6">

@@ -73,7 +73,7 @@ const bdtGap = computed(() => s.value.assets - s.value.equity);
                     </div>
                     <div class="flex justify-between gap-3">
                         <dt class="text-ink-2">
-                            {{ t('বাদ: Meta এখনো কাটবে') }}
+                            {{ t('বাদ: Platform এখনো কাটবে') }}
                         </dt>
                         <dd class="num">{{ money(-s.platform_due, 'usd') }}</dd>
                     </div>
