@@ -2,6 +2,8 @@
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatTiles from '@/components/StatTiles.vue';
+import type { StatTile } from '@/components/StatTiles.vue';
 import KButton from '@/components/k/KButton.vue';
 import KDate from '@/components/k/KDate.vue';
 import KEmpty from '@/components/k/KEmpty.vue';
@@ -76,7 +78,6 @@ const props = defineProps<{
 
 const can = computed(() => usePage().props.auth.can);
 const thisMonth = today().slice(0, 7);
-const TAKA = '\u{09F3}';
 
 const { filters } = useFilters('/payroll', {
     month: props.filters.month,
@@ -226,6 +227,36 @@ async function removePayment(p: Payment): Promise<void> {
 
 const shortMonth = (ym: string) =>
     BN_MONTHS[Number(ym.slice(5, 7)) - 1].slice(0, 3);
+
+// The three totals: what a month costs, what this month has had, what is still owed.
+const tiles = computed<StatTile[]>(() => [
+    {
+        key: 'monthly',
+        label: t('মাসিক বেতন'),
+        value: money(props.totals.monthly, 'bdt'),
+        icon: 'wallet',
+        badge: 'bg-brand-soft text-brand-ink',
+    },
+    {
+        key: 'paid',
+        label: t('এই মাসে দেওয়া'),
+        value: money(props.totals.paid_this_month, 'bdt'),
+        icon: 'check',
+        badge: 'bg-in-soft text-in',
+        text: props.totals.paid_this_month > 0 ? 'text-in' : '',
+    },
+    {
+        key: 'due',
+        label: t('মোট বাকি'),
+        value: money(props.totals.due, 'bdt'),
+        icon: 'clock',
+        badge:
+            props.totals.due > 0
+                ? 'bg-out-soft text-out'
+                : 'bg-sunken text-ink-3',
+        text: props.totals.due > 0 ? 'text-out' : '',
+    },
+]);
 </script>
 
 <template>
@@ -253,41 +284,7 @@ const shortMonth = (ym: string) =>
         >
     </PageHeader>
 
-    <div class="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
-        <div class="panel border-l-[3px] border-l-brand p-3 sm:p-5">
-            <p class="text-[13px] font-medium text-brand-ink sm:text-[13.5px]">
-                {{ t('মাসিক বেতন') }}
-            </p>
-            <p class="num mt-1 text-[18px] font-bold sm:text-[24px]">
-                {{ money(totals.monthly, 'bdt') }}
-            </p>
-        </div>
-        <div class="panel border-l-[3px] border-l-in p-3 sm:p-5">
-            <p class="text-[13px] font-medium text-in sm:text-[13.5px]">
-                {{ t('এই মাসে দেওয়া') }}
-            </p>
-            <p class="num mt-1 text-[18px] font-bold sm:text-[24px]">
-                {{ money(totals.paid_this_month, 'bdt') }}
-            </p>
-        </div>
-        <div
-            class="panel border-l-[3px] p-3 sm:p-5"
-            :class="totals.due > 0 ? 'border-l-out' : 'border-l-line-2'"
-        >
-            <p
-                class="text-[13px] font-medium sm:text-[13.5px]"
-                :class="totals.due > 0 ? 'text-out' : 'text-ink-3'"
-            >
-                {{ t('মোট বাকি') }}
-            </p>
-            <p
-                class="num mt-1 text-[18px] font-bold sm:text-[24px]"
-                :class="totals.due > 0 && 'text-out'"
-            >
-                {{ money(totals.due, 'bdt') }}
-            </p>
-        </div>
-    </div>
+    <StatTiles :tiles="tiles" class="mb-6" />
 
     <div
         v-if="totals.unassigned"
@@ -336,14 +333,14 @@ const shortMonth = (ym: string) =>
                             e.name
                         }}</span>
                         <span class="block truncate text-[13px] text-ink-3"
-                            >{{ e.designation ?? t('কর্মী')
-                            }}<template v-if="e.status === 'left'">
-                                · {{ t('ছেড়ে গেছেন') }}</template
-                            >
-                            · {{ t('মাসিক') }}
+                            >{{ t('মাসিক') }}
                             <b class="num font-semibold text-ink-2">{{
                                 money(e.monthly_salary, 'bdt')
-                            }}</b></span
+                            }}</b>
+                            · {{ e.designation ?? t('কর্মী')
+                            }}<template v-if="e.status === 'left'">
+                                · {{ t('ছেড়ে গেছেন') }}</template
+                            ></span
                         >
                     </span>
                     <span
@@ -368,16 +365,12 @@ const shortMonth = (ym: string) =>
                         }}</span
                     >
                 </div>
-                <div
-                    class="mt-3 grid gap-1"
-                    :style="{
-                        gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))`,
-                    }"
-                >
+                <!-- Three months a row, so a full amount fits in each chip -->
+                <div class="mt-3 grid grid-cols-3 gap-1.5">
                     <span
                         v-for="m in months"
                         :key="m"
-                        class="min-w-0 rounded-lg px-1 py-1.5 text-center"
+                        class="min-w-0 rounded-lg px-2 py-1.5 text-center"
                         :class="
                             e.months[m]
                                 ? 'bg-in-soft text-in'
@@ -388,14 +381,11 @@ const shortMonth = (ym: string) =>
                             shortMonth(m)
                         }}</span>
                         <span
-                            class="num block truncate text-[13px] font-semibold"
+                            class="num block truncate text-[13.5px] font-semibold"
                             >{{
                                 e.months[m]
-                                    ? money(e.months[m], 'bdt').replace(
-                                          TAKA,
-                                          '',
-                                      )
-                                    : '–'
+                                    ? money(e.months[m], 'bdt')
+                                    : t('দেওয়া হয়নি')
                             }}</span
                         >
                     </span>

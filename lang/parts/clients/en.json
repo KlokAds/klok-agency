@@ -118,5 +118,6 @@
     "কিছু পাওনা নেই": "Nothing owed",
     "✓ সব দেওয়া": "✓ All paid",
     "{amount} advance": "{amount} advance",
-    "{amount} বাকি": "{amount} owed"
+    "{amount} বাকি": "{amount} owed",
+    "দেওয়া হয়নি": "Not paid"
 }
