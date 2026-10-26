@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import BrandMark from '@/components/BrandMark.vue';
 import GlobalSearch from '@/components/GlobalSearch.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
+import PhoneMenu from '@/components/PhoneMenu.vue';
 import QuickEntry from '@/components/QuickEntry.vue';
 import KButton from '@/components/k/KButton.vue';
 import FeedbackModal from '@/components/FeedbackModal.vue';
@@ -185,7 +186,9 @@ const switchLabel = computed(
 );
 
 const drawer = ref(false);
-watch(path, () => (drawer.value = false));
+// Phones get the sheet of tiles; the side drawer stays for a tablet in portrait.
+const menuSheet = ref(false);
+watch(path, () => ((drawer.value = false), (menuSheet.value = false)));
 
 const quick = quickOpen;
 
@@ -382,7 +385,7 @@ function appSettings(): void {
                     type="button"
                     class="-ml-1 grid size-10 place-items-center rounded-lg hover:bg-sunken lg:hidden"
                     :aria-label="t('মেনু')"
-                    @click="drawer = true"
+                    @click="menuSheet = true"
                 >
                     <KIcon name="menu" :size="20" />
                 </button>
@@ -655,7 +658,7 @@ function appSettings(): void {
                                 ? 'text-brand-ink'
                                 : 'text-ink-3'
                         "
-                        @click="tab.href ? undefined : (drawer = true)"
+                        @click="tab.href ? undefined : (menuSheet = true)"
                     >
                         <span
                             class="grid h-7 w-11 place-items-center rounded-full transition-colors"
@@ -673,6 +676,13 @@ function appSettings(): void {
         </nav>
 
         <QuickEntry v-if="canQuick" v-model="quick" />
+        <PhoneMenu
+            v-model="menuSheet"
+            :groups="visible"
+            :settings-href="settingsHref"
+            :is-active="isActive"
+            :user="user"
+        />
 
         <KModal
             v-model="showWaiting"

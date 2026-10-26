@@ -544,6 +544,22 @@
     animation: k-rise 0.16s ease-out;
 }
 
+/* The phone menu rises from the bottom edge. */
+@keyframes k-sheet {
+    from {
+        transform: translateY(24px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.k-sheet {
+    animation: k-sheet 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 .k-fade {
     animation: k-fade 0.14s ease-out;
 }
