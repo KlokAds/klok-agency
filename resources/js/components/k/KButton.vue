@@ -26,7 +26,7 @@ const classes = computed(() => [
         lg: 'h-12 px-5 text-[16px]',
     }[props.size],
     {
-        primary: 'bg-brand text-white hover:bg-brand-ink dark:text-rail',
+        primary: 'k-accent',
         ink: 'bg-ink text-paper hover:bg-ink-2',
         plain: 'border border-line-2 bg-surface text-ink hover:border-ink-3 hover:bg-surface-2',
         // An edit or change: tinted so it reads as an action, never a grey box.

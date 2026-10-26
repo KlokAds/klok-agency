@@ -86,9 +86,8 @@ function apply(): void {
 
 const pick =
     'h-9 rounded-[10px] border px-2.5 text-[14px] font-semibold whitespace-nowrap transition-colors sm:px-4';
-const on = 'border-brand bg-brand-soft text-brand-ink';
-const off =
-    'border-line-2 bg-surface text-ink-2 hover:border-ink-3 hover:text-ink';
+const on = 'k-accent';
+const off = 'k-chip';
 </script>
 
 <template>

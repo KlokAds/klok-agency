@@ -112,9 +112,7 @@ const numbers = computed(() => {
                     preserve-state
                     class="num grid h-9 min-w-9 place-items-center rounded-lg px-2 font-semibold"
                     :class="
-                        link.active
-                            ? 'bg-brand text-white'
-                            : 'text-ink-2 hover:bg-sunken'
+                        link.active ? 'k-accent' : 'text-ink-2 hover:bg-sunken'
                     "
                     >{{ link.label }}</Link
                 >

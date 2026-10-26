@@ -69,11 +69,7 @@ function when(day: string): string {
                 :key="s.key"
                 type="button"
                 class="h-8 rounded-lg border px-2.5 text-[13.5px] font-semibold transition-colors"
-                :class="
-                    span === s.key
-                        ? 'border-brand bg-brand text-white'
-                        : 'border-line-2 text-ink-2 hover:border-ink-3 hover:text-ink'
-                "
+                :class="span === s.key ? 'k-accent' : 'k-chip'"
                 :disabled="
                     s.key !== 0 && days.length <= s.key && span !== s.key
                 "

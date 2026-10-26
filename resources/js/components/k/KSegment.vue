@@ -42,9 +42,7 @@ const many = () => props.options.length > 4 || !!props.select;
             class="rounded-[10px] border px-3.5 font-semibold transition-colors"
             :class="[
                 size === 'sm' ? 'h-8 text-[13.5px]' : 'h-10 text-[14px]',
-                model === o.value
-                    ? 'border-brand bg-brand text-white shadow-[0_6px_14px_-8px_var(--brand)]'
-                    : 'border-line-2 bg-surface text-ink-2 hover:border-ink-3 hover:text-ink',
+                model === o.value ? 'k-accent' : 'k-chip',
             ]"
             @click="model = o.value"
         >
