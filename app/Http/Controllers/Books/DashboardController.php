@@ -71,7 +71,10 @@ class DashboardController extends Controller
             $credit = (int) $c['credit_usd'];
             $campaign = (int) $c['campaign_usd'];
             $pending = $oldPending[$id] ?? 0;
-            $unbilled = (int) $c['unbilled_usd'];
+            // Credit taken day by day that Meta has not charged the card for yet (from the
+            // campaigns' own days); a client with no Pilot days keeps the book's figure.
+            $split = app(AdAccountBalances::class)->client((int) $c['id']);
+            $unbilled = $split['charged'] + $split['uncharged'] > 0 ? $split['uncharged'] : (int) $c['unbilled_usd'];
             $balance = $credit - $campaign - $pending;
             $days = $c['days_left'] === null ? null : (int) $c['days_left'];
 

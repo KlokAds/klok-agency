@@ -8,7 +8,11 @@ import type { ClientRow } from '@/components/dashboard/types';
 import { money } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
-const props = defineProps<{ clients: ClientRow[]; platformDue: number }>();
+const props = defineProps<{
+    clients: ClientRow[];
+    platformDue: number;
+    metaLive?: boolean;
+}>();
 
 type Tone = 'neutral' | 'in' | 'out' | 'wait';
 
@@ -55,8 +59,10 @@ const total = computed(() => {
     };
 });
 
-// Spend Meta will still charge that is not tied to a client (our own ads).
-const own = computed(() => props.platformDue - total.value.unbilled);
+// Credit taken from clients day by day that Meta has not charged yet, against what Meta
+// itself says it will charge: the two should agree; a gap is spend outside any client's
+// campaign or Meta's own timing, never a separate "Klok Ads" due.
+const gap = computed(() => props.platformDue - total.value.unbilled);
 </script>
 
 <template>
@@ -144,7 +150,7 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                             </dd>
                         </div>
                         <div class="flex justify-between gap-2">
-                            <dt class="text-ink-3">{{ t('Meta কাটবে') }}</dt>
+                            <dt class="text-ink-3">{{ t('Card-এ আসেনি') }}</dt>
                             <dd class="num">{{ usd(c.unbilled_usd) }}</dd>
                         </div>
                         <div
@@ -194,7 +200,9 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                             <th class="r">{{ t('আগাম credit') }}</th>
                             <th class="r">{{ t('খরচ হয়েছে') }}</th>
                             <th class="r">{{ t('বাকি credit') }}</th>
-                            <th class="r">{{ t('Meta এখনো কাটবে') }}</th>
+                            <th class="r">
+                                {{ t('Credit কাটা, card-এ আসেনি') }}
+                            </th>
                             <th class="r">{{ t('দিন বাকি') }}</th>
                             <th>{{ t('অবস্থা') }}</th>
                         </tr>
@@ -294,17 +302,6 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                                 }}</KTag>
                             </td>
                         </tr>
-                        <tr v-if="own !== 0">
-                            <td class="pl-[52px] text-ink-3">
-                                {{ t('Klok Ads নিজের / অন্যান্য') }}
-                            </td>
-                            <td />
-                            <td />
-                            <td />
-                            <td class="r num text-wait">{{ usd(own) }}</td>
-                            <td />
-                            <td />
-                        </tr>
                     </tbody>
                     <tfoot>
                         <tr class="font-semibold [&_td:first-child]:pl-[52px]">
@@ -347,7 +344,20 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                             <td
                                 class="r num border-t border-line-2 bg-surface-2 px-3.5 py-3 text-wait"
                             >
-                                {{ usd(platformDue) }}
+                                {{ usd(total.unbilled) }}
+                                <span
+                                    class="block text-[12.5px] font-normal text-ink-3"
+                                    >{{
+                                        metaLive
+                                            ? t('Meta-র হিসাবে')
+                                            : t('খাতায়')
+                                    }}
+                                    {{ usd(platformDue)
+                                    }}<template v-if="gap !== 0">
+                                        · {{ t('পার্থক্য') }}
+                                        {{ usd(gap) }}</template
+                                    ></span
+                                >
                             </td>
                             <td class="border-t border-line-2 bg-surface-2" />
                             <td class="border-t border-line-2 bg-surface-2" />
@@ -375,15 +385,14 @@ const own = computed(() => props.platformDue - total.value.unbilled);
                 </div>
                 <div class="flex justify-between py-1.5">
                     <dt class="text-ink-2">
-                        {{ t('Meta এখনো কাটবে') }}
-                        <span v-if="own !== 0" class="text-ink-3">{{
-                            t('(নিজের {amount} সহ)', {
-                                amount: money(own, 'usd'),
-                            })
-                        }}</span>
+                        {{ t('Card-এ আসেনি') }}
+                        <span class="block text-[12.5px] text-ink-3"
+                            >{{ metaLive ? t('Meta-র হিসাবে') : t('খাতায়') }}
+                            {{ usd(platformDue) }}</span
+                        >
                     </dt>
                     <dd class="num font-semibold text-wait">
-                        {{ usd(platformDue) }}
+                        {{ usd(total.unbilled) }}
                     </dd>
                 </div>
             </dl>

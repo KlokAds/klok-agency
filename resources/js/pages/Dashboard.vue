@@ -109,7 +109,11 @@ const greeting =
     <CardStrip :summary="summary" :fx="fx" />
 
     <div class="mt-5">
-        <ClientTable :clients="clients" :platform-due="s.platform_due" />
+        <ClientTable
+            :clients="clients"
+            :platform-due="s.meta_live?.total ?? s.platform_due"
+            :meta-live="!!s.meta_live"
+        />
     </div>
 
     <!-- BDT -->
