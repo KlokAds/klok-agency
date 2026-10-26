@@ -286,8 +286,9 @@ const tiles = computed<StatTile[]>(() => [
 
     <StatTiles :tiles="tiles" class="mb-6" />
 
+    <!-- Only for someone who can act on it: no hint about a button they do not have -->
     <div
-        v-if="totals.unassigned"
+        v-if="totals.unassigned && can['payroll.edit']"
         class="mb-6 flex items-center gap-3 rounded-xl border border-dashed border-wait/50 bg-wait-soft px-4 py-3 text-[14.5px] text-wait"
     >
         <KIcon name="warn" :size="16" />
