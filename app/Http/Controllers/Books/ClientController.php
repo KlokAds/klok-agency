@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Books;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PortalController;
 use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
@@ -85,6 +86,15 @@ class ClientController extends Controller
         $figures = collect($books->clients())->firstWhere('id', $client->id);
         // Of the ad spend: what Meta has charged our card (final) and what it has not yet.
         $figures = $figures ? [...$figures, 'meta' => $balances->client($client->id)] : null;
+        // What the client actually paid in, as the portal shows it — "received" above counts an
+        // advance only as it is spent.
+        $paid = BdtEntry::where('client_id', $client->id)->whereIn('category', PortalController::PAID);
+        $last = (clone $paid)->orderByDesc('entry_date')->orderByDesc('id')->first();
+        $figures = $figures ? [...$figures, 'paid' => [
+            'total' => (int) (clone $paid)->sum('amount'),
+            'count' => (clone $paid)->count(),
+            'last' => $last ? ['date' => $last->entry_date?->toDateString(), 'amount' => (int) $last->amount] : null,
+        ]] : null;
 
         // One statement: spend in USD and payments in BDT, in date order.
         $spend = $books->usdEntries()->where('client_id', $client->id)->where('category', 'client_spend')

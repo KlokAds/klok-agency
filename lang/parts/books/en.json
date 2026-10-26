@@ -326,5 +326,10 @@
     "এখনো কাটবে": "Still to charge",
     "{n}টা charge — কোন campaign-এর": "{n} charges, by campaign",
     "ভাগ এখনো হয়নি": "Not split yet",
-    "অন্য": "Other"
+    "অন্য": "Other",
+    "Platform এখনো কাটবে": "Platforms still to charge",
+    "Meta-র হিসাবে": "as Meta counts it",
+    "খাতায়": "in the books",
+    "Meta-র হিসাব আসেনি — খাতার সংখ্যা": "Meta did not answer; book figure",
+    "{ago} পড়া": "read {ago}"
 }

@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\UsdEntry;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * What each ad account owes Meta and what Meta has taken from our card — and which campaign
@@ -181,6 +182,33 @@ class AdAccountBalances
         }
 
         return ['charged' => min($spent, $charged), 'uncharged' => max(0, $spent - $charged)];
+    }
+
+    /**
+     * What Meta itself says is still to charge, account by account (USD Meta accounts), read
+     * live through Pilot and kept ten minutes; null when Pilot cannot be reached.
+     *
+     * @return array{total: int, accounts: list<array{id: int, name: string, unbilled: int, card: string|null}>, read_at: string}|null
+     */
+    public function liveUnbilled(): ?array
+    {
+        if (! PilotClient::connected()) {
+            return null;
+        }
+
+        return Cache::remember('meta:unbilled', 600, function () {
+            $rows = [];
+            foreach (PilotAccount::where('platform', 'meta')->where('currency', 'USD')->orderBy('name')->get() as $account) {
+                try {
+                    $b = app(PilotClient::class)->billing($account->pilot_id);
+                } catch (\Throwable) {
+                    return null;
+                }
+                $rows[] = ['id' => $account->id, 'name' => $account->name, 'unbilled' => (int) ($b['unbilled'] ?? 0), 'card' => $b['card'] ?? null];
+            }
+
+            return ['total' => array_sum(array_column($rows, 'unbilled')), 'accounts' => $rows, 'read_at' => now()->toIso8601String()];
+        });
     }
 
     /** @return Collection<int, CampaignDay> oldest first */

@@ -13,13 +13,26 @@ const BUFFER = 1000;
 const TAKA = '\u{09F3}';
 
 const s = computed(() => props.summary);
-const dueRows = computed(() => s.value.platforms.filter((p) => p.due !== 0));
+// Meta's own figure replaces the book's Meta line when Pilot could read it; other platforms
+// stay as the books have them.
+const live = computed(() => s.value.meta_live ?? null);
+const dueRows = computed(() =>
+    s.value.platforms
+        .filter((p) => p.due !== 0 || (p.code === 'meta' && live.value))
+        .map((p) => ({
+            ...p,
+            due: p.code === 'meta' && live.value ? live.value.total : p.due,
+            book: p.due,
+            isLive: p.code === 'meta' && !!live.value,
+        })),
+);
+const platformDue = computed(() =>
+    dueRows.value.reduce((a, p) => a + p.due, 0),
+);
+// What stays on the card once every platform has charged what it says it will.
+const cardAfter = computed(() => s.value.card - platformDue.value);
 const afterTone = computed(() =>
-    s.value.card_after < 0
-        ? 'out'
-        : s.value.card_after < BUFFER
-          ? 'wait'
-          : 'ok',
+    cardAfter.value < 0 ? 'out' : cardAfter.value < BUFFER ? 'wait' : 'ok',
 );
 
 // The hero figure, with the cents set a step quieter.
@@ -117,13 +130,13 @@ const meter = computed(() => {
                             class="flex items-center gap-2 text-[14px] text-ink-2"
                         >
                             <span class="size-2 rounded-full bg-wait" />
-                            {{ t('Meta এখনো কাটবে') }}
+                            {{ t('Platform এখনো কাটবে') }}
                         </dt>
                         <dd
                             class="num mt-1 text-[22px] leading-tight font-semibold"
-                            :class="s.platform_due > 0 && 'text-wait'"
+                            :class="platformDue > 0 && 'text-wait'"
                         >
-                            {{ money(s.platform_due, 'usd') }}
+                            {{ money(platformDue, 'usd') }}
                         </dd>
                         <ul
                             v-if="dueRows.length"
@@ -134,10 +147,23 @@ const meter = computed(() => {
                                 :key="p.id"
                                 class="flex justify-between gap-3 text-ink-3"
                             >
-                                <span class="truncate">{{ p.name }}</span>
-                                <span class="num text-ink-2">{{
-                                    money(p.due, 'usd')
-                                }}</span>
+                                <span class="truncate"
+                                    >{{ p.name
+                                    }}<span
+                                        v-if="p.isLive"
+                                        class="ml-1 text-[12px]"
+                                        >{{ t('Meta-র হিসাবে') }}</span
+                                    ></span
+                                >
+                                <span class="num text-ink-2">
+                                    {{ money(p.due, 'usd') }}
+                                    <span
+                                        v-if="p.isLive && p.book !== p.due"
+                                        class="ml-1 text-[12px] text-ink-3"
+                                        >{{ t('খাতায়') }}
+                                        {{ money(p.book, 'usd') }}</span
+                                    >
+                                </span>
                             </li>
                         </ul>
                         <p v-else class="mt-1.5 text-[13.5px] text-ink-3">
@@ -163,7 +189,7 @@ const meter = computed(() => {
                                 'text-wait': afterTone === 'wait',
                             }"
                         >
-                            {{ money(s.card_after, 'usd') }}
+                            {{ money(cardAfter, 'usd') }}
                         </dd>
                         <p class="num mt-1.5 text-[13.5px] text-ink-3">
                             {{ money(s.card, 'usd') }} −

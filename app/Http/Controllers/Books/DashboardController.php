@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BdtEntry;
 use App\Models\FxBatch;
 use App\Models\UsdEntry;
+use App\Services\AdAccountBalances;
 use App\Services\Books;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,7 +38,7 @@ class DashboardController extends Controller
         $month = $books->profitAndLoss(now()->startOfMonth(), now()->endOfMonth());
 
         return Inertia::render('Dashboard', [
-            'summary' => $books->summary(),
+            'summary' => [...$books->summary(), 'meta_live' => app(AdAccountBalances::class)->liveUnbilled()],
             'wallets' => $books->wallets(),
             'monthly' => $books->monthly(6),
             'clients' => $this->clientRows($books),

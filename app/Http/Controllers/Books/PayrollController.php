@@ -30,6 +30,7 @@ class PayrollController extends Controller
         $months = collect(range(5, 0))->map(fn ($i) => now()->startOfMonth()->subMonths($i)->format('Y-m'));
         $payments = BdtEntry::where('category', 'salary')->with('employee')->ledgerOrder()->get();
 
+        Employee::syncTeam();
         $employees = Employee::orderBy('status')->orderBy('name')->get()->map(function ($employee) use ($payments, $months) {
             $mine = $payments->where('employee_id', $employee->id);
             $paid = -$mine->whereIn('salary_kind', ['salary', 'advance'])->sum('amount');

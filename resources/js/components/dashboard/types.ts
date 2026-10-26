@@ -2,6 +2,7 @@
 
 export type Platform = {
     id: number;
+    code: string;
     name: string;
     spent: number;
     charged: number;
@@ -13,6 +14,16 @@ export type Summary = {
     holding: number;
     platforms: Platform[];
     platform_due: number;
+    meta_live?: {
+        total: number;
+        accounts: {
+            id: number;
+            name: string;
+            unbilled: number;
+            card: string | null;
+        }[];
+        read_at: string;
+    } | null;
     card_after: number;
     business_usd: number;
     usd_check: {

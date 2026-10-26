@@ -98,6 +98,17 @@ class PilotClient
     }
 
     /**
+     * Meta's own billing figures for an ad account, live: unbilled balance and all-time spend in
+     * minor units, and the card it pays with.
+     *
+     * @return array{currency?: string, unbilled?: int, amount_spent?: int, card?: string|null, read_at?: string}
+     */
+    public function billing(int $adAccountId): array
+    {
+        return $this->call('ad_account_billing', ['ad_account_id' => $adAccountId]);
+    }
+
+    /**
      * A Meta campaign's end, daily budget, spend cap and on/off; with
      * new_end, spend_cap or active it changes them (needs the token's
      * write:campaigns permission).

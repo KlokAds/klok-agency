@@ -61,6 +61,11 @@ const props = defineProps<{
         usd_pending: number;
         cost_pending: number;
         meta?: { charged: number; uncharged: number };
+        paid?: {
+            total: number;
+            count: number;
+            last: { date: string | null; amount: number } | null;
+        };
     } | null;
     statement: Paginated<{
         key: string;
@@ -326,9 +331,19 @@ function print(): void {
         </div>
         <div class="bg-surface p-4 sm:p-5">
             <p class="eyebrow">{{ t('দিয়েছে') }}</p>
-            <p class="num mt-2 text-[22px]">{{ money(f.received, 'bdt') }}</p>
-            <p v-if="rate" class="num mt-1 text-[13px] text-ink-3">
-                {{ t('গড়') }} &#2547;{{ rate }} / USD
+            <p class="num mt-2 text-[22px]">
+                {{ money(f.paid?.total ?? f.received, 'bdt') }}
+            </p>
+            <p v-if="f.paid?.last" class="num mt-1 text-[13px] text-ink-3">
+                {{ t('শেষ পেমেন্ট') }} {{ niceDate(f.paid.last.date, false) }} ·
+                <b class="text-ink">{{ money(f.paid.last.amount, 'bdt') }}</b>
+                · {{ t('{n}টা পেমেন্ট', { n: f.paid.count }) }}
+            </p>
+            <p class="num mt-1 text-[13px] text-ink-3">
+                {{ t('আয় ধরা') }} {{ money(f.received, 'bdt')
+                }}<template v-if="rate">
+                    · {{ t('গড়') }} &#2547;{{ rate }} / USD</template
+                >
             </p>
         </div>
         <div class="bg-surface p-4 sm:p-5">
