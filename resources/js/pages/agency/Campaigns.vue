@@ -294,10 +294,10 @@ function sync(): void {
     />
 
     <template v-else>
-        <!-- Three rows, each full width on a phone: who and what, when, which state -->
+        <!-- Phone: three rows; a computer: account, search and the period on one row, the state under -->
         <section class="panel mb-4 space-y-2.5 p-4 sm:space-y-3 sm:p-5">
             <div
-                class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2 sm:gap-3 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]"
+                class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2 sm:gap-3 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)] lg:grid-cols-[260px_minmax(0,1fr)_auto]"
             >
                 <KSelect
                     v-model="filters.account"
@@ -311,17 +311,19 @@ function sync(): void {
                     icon="search"
                     size="sm"
                 />
+                <div class="col-span-2 lg:col-span-1">
+                    <RangePicker
+                        url="/campaigns"
+                        :range="range"
+                        :params="{
+                            account: filters.account,
+                            q: filters.q,
+                            status: filters.status,
+                        }"
+                        dense
+                    />
+                </div>
             </div>
-            <RangePicker
-                url="/campaigns"
-                :range="range"
-                :params="{
-                    account: filters.account,
-                    q: filters.q,
-                    status: filters.status,
-                }"
-                dense
-            />
             <div class="flex items-center justify-between gap-3">
                 <div class="shrink-0">
                     <KSegment
