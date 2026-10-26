@@ -135,28 +135,61 @@ const meter = computed(() => {
                         </dd>
                         <ul
                             v-if="dueRows.length"
-                            class="mt-1.5 space-y-0.5 text-[13.5px]"
+                            class="mt-2 space-y-1.5 text-[13.5px]"
                         >
                             <li
                                 v-for="p in dueRows"
                                 :key="p.id"
-                                class="flex justify-between gap-3 text-ink-3"
+                                class="flex items-center justify-between gap-3 rounded-lg bg-sunken px-3 py-2"
                             >
-                                <span class="truncate"
-                                    >{{ p.name
-                                    }}<span
-                                        v-if="p.isLive"
-                                        class="ml-1 text-[12px]"
-                                        >{{ t('Meta-র হিসাবে') }}</span
-                                    ></span
-                                >
-                                <span class="num text-ink-2">
-                                    {{ money(p.due, 'usd') }}
+                                <span class="flex min-w-0 items-center gap-2">
                                     <span
-                                        v-if="p.isLive && p.book !== p.due"
-                                        class="ml-1 text-[12px] text-ink-3"
-                                        >{{ t('খাতায়') }}
-                                        {{ money(p.book, 'usd') }}</span
+                                        class="grid size-6 shrink-0 place-items-center rounded-md text-[11px] font-bold text-white"
+                                        :class="
+                                            p.code === 'meta'
+                                                ? 'bg-[#1877f2]'
+                                                : p.code === 'google'
+                                                  ? 'bg-[#ea4335]'
+                                                  : 'bg-ink-3'
+                                        "
+                                        >{{ p.name.charAt(0) }}</span
+                                    >
+                                    <span
+                                        class="truncate font-medium text-ink"
+                                        >{{ p.name }}</span
+                                    >
+                                    <span
+                                        v-if="p.isLive"
+                                        class="shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 text-[11.5px] font-semibold text-brand-ink"
+                                        >{{ t('Meta-র হিসাবে') }}</span
+                                    >
+                                </span>
+                                <span class="num shrink-0 text-right">
+                                    <b
+                                        class="text-[15px]"
+                                        :class="
+                                            p.due > 0
+                                                ? 'text-wait'
+                                                : 'text-ink-2'
+                                        "
+                                        >{{ money(p.due, 'usd') }}</b
+                                    >
+                                    <span
+                                        v-if="
+                                            p.isLive &&
+                                            Math.abs(p.book - p.due) >= 100
+                                        "
+                                        class="block text-[11.5px] text-ink-3"
+                                        :title="
+                                            t(
+                                                'খাতার নিজের হিসাব — পুরোনো entry বা charge-এর ভাগ না মিললে এটা আলাদা হয়',
+                                            )
+                                        "
+                                        >{{
+                                            t('খাতার হিসাবে {amount}', {
+                                                amount: money(p.book, 'usd'),
+                                            })
+                                        }}</span
                                     >
                                 </span>
                             </li>

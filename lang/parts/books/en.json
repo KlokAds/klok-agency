@@ -341,5 +341,7 @@
     "Card − Platform এখনো কাটবে": "Card − platforms still to charge",
     "মোট কেনা · খরচ": "Bought · spent",
     "কেনা dollar-এর কতটা খরচ হয়েছে": "How much of the bought dollars is spent",
-    "Ad account ধরে — Meta-র হিসাব": "By ad account, as Meta counts it"
+    "Ad account ধরে — Meta-র হিসাব": "By ad account, as Meta counts it",
+    "খাতার হিসাবে {amount}": "in the books: {amount}",
+    "খাতার নিজের হিসাব — পুরোনো entry বা charge-এর ভাগ না মিললে এটা আলাদা হয়": "The books' own figure; it differs when an old entry or a charge's split does not match"
 }
