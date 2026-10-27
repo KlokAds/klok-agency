@@ -30,6 +30,7 @@ use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -163,7 +164,9 @@ class ClientController extends Controller
             // The client's own people on the portal, and sign-ups still waiting for a client.
             'portal' => [
                 'users' => User::where('client_id', $client->id)->orderBy('name')->get()->map($person)->all(),
-                'waiting' => User::role(Access::CLIENT)->whereNull('client_id')->latest()->limit(50)->get()->map($person)->all(),
+                // What they typed is their own word; only a confirmed email may be linked.
+                'waiting' => User::role(Access::CLIENT)->whereNull('client_id')->latest()->limit(50)->get()
+                    ->map(fn (User $u) => [...$person($u), 'verified' => $u->email_verified_at !== null])->all(),
             ],
             'figures' => $figures,
             'statement' => $statement,
@@ -189,7 +192,9 @@ class ClientController extends Controller
                 ->map(fn (Invoice $i) => InvoiceView::row($i)),
             'pilot' => $this->pilotReports($client, $request->integer('pilot_days', 7)),
             'options' => [
-                'users' => User::visible()->where('is_active', true)->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
+                // The team only: a client's own person (linked or still waiting) is never a Manager.
+                'users' => User::visible()->where('is_active', true)->whereDoesntHave('roles', fn ($q) => $q->where('name', Access::CLIENT))
+                    ->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
                 'wallets' => Lookups::wallets(),
             ],
         ]);
@@ -262,25 +267,31 @@ class ClientController extends Controller
             'wallet' => ['required', Rule::in(Wallet::keys())],
             'note' => ['nullable', 'string', 'max:300'],
         ]);
-        $figure = collect($books->clients())->firstWhere('id', $client->id);
-        $left = (int) ($figure['credit_left'] ?? 0);
-        $bdt = (int) ($figure['unearned'] ?? 0);
+        // One refund at a time per client: a double click waits, then finds the credit already at 0
+        // instead of writing the same refund twice.
+        $bdt = Cache::lock('client-refund:'.$client->id, 30)->block(10, function () use ($client, $books, $billing, $data) {
+            $figure = collect($books->clients())->firstWhere('id', $client->id);
+            $left = (int) ($figure['credit_left'] ?? 0);
+            $bdt = (int) ($figure['unearned'] ?? 0);
 
-        if ($left <= 0 || $bdt <= 0) {
-            throw ValidationException::withMessages(['refund' => __('ফেরত দেওয়ার মতো credit বাকি নেই।')]);
-        }
+            if ($left <= 0 || $bdt <= 0) {
+                throw ValidationException::withMessages(['refund' => __('ফেরত দেওয়ার মতো credit বাকি নেই।')]);
+            }
 
-        BdtEntry::create([
-            'entry_date' => $data['entry_date'],
-            'description' => $client->name.' — unspent ad credit refunded',
-            'category' => 'client_refund',
-            'client_id' => $client->id,
-            'wallet' => $data['wallet'],
-            'amount' => -$bdt,
-            'usd_credit' => -$left,
-            'notes' => $data['note'] ?? null,
-        ]);
-        $billing->fund($client->id);
+            BdtEntry::create([
+                'entry_date' => $data['entry_date'],
+                'description' => $client->name.' — unspent ad credit refunded',
+                'category' => 'client_refund',
+                'client_id' => $client->id,
+                'wallet' => $data['wallet'],
+                'amount' => -$bdt,
+                'usd_credit' => -$left,
+                'notes' => $data['note'] ?? null,
+            ]);
+            $billing->fund($client->id);
+
+            return $bdt;
+        });
 
         $this->toast(__(':client-কে :amount ফেরত লেখা হয়েছে — credit এখন ০।', ['client' => $client->name, 'amount' => Money::bdt($bdt)]));
 
@@ -320,6 +331,12 @@ class ClientController extends Controller
     {
         $data = $request->validate(['user_id' => ['required', 'integer']]);
         $user = User::role(Access::CLIENT)->whereNull('client_id')->whereKey($data['user_id'])->firstOrFail();
+
+        // Anyone can sign up with a client's email: until they open the link sent to it, it is not theirs.
+        if ($user->email_verified_at === null) {
+            throw ValidationException::withMessages(['user_id' => __('ওঁর email এখনো confirm হয়নি — email-এ যাওয়া link খুলতে বলুন, তারপর যুক্ত করুন।')]);
+        }
+
         $user->forceFill(['client_id' => $client->id])->save();
         activity('Client')->performedOn($client)->causedBy($request->user())->log("portal user {$user->email} linked");
         rescue(fn () => $user->notify(new AgencyAlert('client_linked', ClientNotifier::LINKED_TITLE, 'এখন থেকে {client}-এর সব campaign, খরচ, invoice আর পেমেন্ট KlokOne-এ দেখতে পাবেন — phone-এ আর email-এও খবর পাবেন।', [ // i18n
@@ -350,7 +367,9 @@ class ClientController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'manager_id' => ['nullable', Rule::exists('users', 'id')->whereNull('client_id')],
+            // A team member: not a portal person, nor a sign-up still waiting to be linked.
+            'manager_id' => ['nullable', Rule::exists('users', 'id')->whereNull('client_id')
+                ->where(fn ($q) => $q->whereNotIn('id', User::whereHas('roles', fn ($r) => $r->where('name', Access::CLIENT))->select('id')))],
             'renew_days' => ['nullable', 'integer', 'min:1', 'max:90'],
         ], [], ['name' => __('নাম')]);
     }

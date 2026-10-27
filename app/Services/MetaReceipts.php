@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
 use Webklex\PHPIMAP\ClientManager;
+use Webklex\PHPIMAP\Message;
 
 /**
  * Meta's payment receipts, read from the receipts mailbox (Gmail forwards
@@ -44,6 +45,12 @@ class MetaReceipts
     public const UNREAD_TITLE = 'Meta receipt পড়া যায়নি — দেখে নিন'; // i18n
 
     public const OTHER_TITLE = 'অচেনা ad account-এর Meta receipt — খাতায় তোলা হয়নি'; // i18n
+
+    /** The first line of a mailbox mail's stored text: who sent it. */
+    public const SENDER_PREFIX = 'From: ';
+
+    /** Meta's own mail domains (their subdomains count too). */
+    public const META_DOMAINS = ['facebookmail.com', 'facebook.com', 'meta.com', 'metamail.com', 'fb.com'];
 
     public function __construct(private Postings $postings, private Notifier $notifier) {}
 
@@ -95,8 +102,9 @@ class MetaReceipts
             $receipt = $this->take(
                 $id !== '' ? $id : 'uid-'.$message->getUid(),
                 (string) $message->getSubject(),
-                // The HTML part keeps the campaign table; plain text is the fallback.
-                $html !== '' ? self::textOf($html) : $text,
+                // Who sent it goes on the first line, so it is kept with the text and read
+                // again on a retry. The HTML part keeps the campaign table; plain text is the fallback.
+                self::senderLine($message).($html !== '' ? self::textOf($html) : $text),
                 $date !== '' ? CarbonImmutable::parse($date) : CarbonImmutable::now(),
             );
             $count++;
@@ -143,6 +151,13 @@ class MetaReceipts
 
         $receipt = new MetaReceipt(['message_id' => $messageId, 'subject' => mb_substr($subject, 0, 255), 'body' => mb_substr($body, 0, 60000)]);
 
+        // Mail from the mailbox starts with its sender (check() writes that line); the rest is the mail.
+        $sender = null;
+        if (preg_match('/^'.preg_quote(self::SENDER_PREFIX, '/').'([^\n]*)\n/', $body, $line)) {
+            $sender = $line[1];
+            $body = substr($body, strlen($line[0]));
+        }
+
         if (! self::looksLikeReceipt($subject, $body)) {
             $receipt->fill(['status' => 'ignored'])->save();
 
@@ -167,6 +182,15 @@ class MetaReceipts
             'card_last4' => $parsed['card_last4'],
             'campaigns' => $parsed['campaigns'],
         ]);
+
+        // Anyone can mail the mailbox: only mail from Meta itself is booked (or adds a split to a
+        // charge). Anything else that looks like a receipt is kept for a person, never booked.
+        if ($sender !== null && ! self::fromMeta($sender)) {
+            $receipt->fill(['status' => 'unread', 'problem' => __('পাঠিয়েছে :from — Meta না, তাই খাতায় তোলা হয়নি। আসল receipt হলে হাতে লিখুন।', ['from' => $sender !== '' ? $sender : '—'])])->save();
+            $this->tell($receipt, self::UNREAD_TITLE);
+
+            return $receipt;
+        }
 
         // Only our own ad accounts' receipts are ours: one from an account Pilot does
         // not know (someone else's, forwarded by the same filter) is kept, never booked.
@@ -274,6 +298,37 @@ class MetaReceipts
         $receipt->delete();
 
         return $this->take($messageId, $subject, $body, $sentAt);
+    }
+
+    /**
+     * The sender line for a mail: its From address, marked when the receiving
+     * server found that From forged (DMARC fail). Meta's domains ask servers to
+     * reject forged mail, so a made-up Meta sender is caught there.
+     */
+    private static function senderLine(Message $message): string
+    {
+        $from = (string) ($message->getFrom()->first()->mail ?? '');
+        $from = mb_substr(strtolower(preg_replace('/\s+/', '', $from) ?? ''), 0, 150);
+        $headers = str_replace("\r", '', (string) $message->getHeader()?->raw);
+        $forged = (bool) preg_match('/^Authentication-Results:[^\n]*(?:\n[ \t][^\n]*)*\bdmarc=fail\b/mi', $headers);
+
+        return self::SENDER_PREFIX.$from.($forged ? ' (DMARC fail)' : '')."\n";
+    }
+
+    /** Mail sent by Meta itself: a Meta address, not marked as forged. */
+    public static function fromMeta(string $sender): bool
+    {
+        if (! preg_match('/^[^@\s]+@([a-z0-9.-]+)$/', $sender, $m)) {
+            return false;
+        }
+
+        foreach (self::META_DOMAINS as $domain) {
+            if ($m[1] === $domain || str_ends_with($m[1], '.'.$domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** A Meta receipt, not some other mail that reached the mailbox. */

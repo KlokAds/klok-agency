@@ -1,8 +1,13 @@
 <x-mail::message>
+@php
+    // Names are typed in (sign-up, Meta): shown as text, never a link or image.
+    $client = \App\Notifications\MailText::plain($renewal->client?->name);
+    $campaign = \App\Notifications\MailText::plain($renewal->campaign?->name);
+@endphp
 @if ($event === 'paid')
 # Renewal paid: approve the extension
 
-**{{ $renewal->client?->name }}** paid for **{{ $renewal->days }} more days** of **{{ $renewal->campaign?->name }}**.
+**{{ $client }}** paid for **{{ $renewal->days }} more days** of **{{ $campaign }}**.
 
 <x-mail::table>
 | | |
@@ -21,7 +26,7 @@ Review & approve
 @elseif ($event === 'extended')
 # Renewal paid: campaign extended
 
-**{{ $renewal->client?->name }}** paid for **{{ $renewal->days }} more days** of **{{ $renewal->campaign?->name }}**, and it now runs to **{{ $renewal->new_end?->format('d M Y') }}** on Meta.
+**{{ $client }}** paid for **{{ $renewal->days }} more days** of **{{ $campaign }}**, and it now runs to **{{ $renewal->new_end?->format('d M Y') }}** on Meta.
 
 <x-mail::table>
 | | |
@@ -37,7 +42,7 @@ Open in KlokOne
 @else
 # Contract ended: no extension
 
-**{{ $renewal->client?->name }}** ended the contract for **{{ $renewal->campaign?->name }}**. It stops on {{ $renewal->ends_on->format('d M Y') }} as planned; nothing needs extending.
+**{{ $client }}** ended the contract for **{{ $campaign }}**. It stops on {{ $renewal->ends_on->format('d M Y') }} as planned; nothing needs extending.
 
 <x-mail::button :url="$url">
 Open in KlokOne

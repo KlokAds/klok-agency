@@ -1,7 +1,8 @@
 <x-mail::message>
 # Invoice {{ $invoice->number }}
 
-{{ $invoice->client?->name }},
+{{-- Names are typed in (sign-up, Meta): shown as text, never a link or image. --}}
+{{ \App\Notifications\MailText::plain($invoice->client?->name) }},
 
 {{ $business['name'] }} — invoice {{ $invoice->number }}, {{ $invoice->issue_date->format('d M Y') }}.
 

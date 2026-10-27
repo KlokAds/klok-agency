@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\AccountChanged;
 use App\Support\Access;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,6 +56,7 @@ class UserController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $data['password'],
+                // Made by the Owner, who vouches for the address: never held at the email-confirm page.
                 'email_verified_at' => now(),
                 'must_change_password' => true,
             ]);
@@ -112,6 +114,7 @@ class UserController extends Controller
     public function resetTwoFactor(Request $request, User $user): RedirectResponse
     {
         $this->guardHidden($request, $user);
+        $this->guardOwnerAccount($request, $user);
 
         $user->forceFill([
             'two_factor_secret' => null,
@@ -120,6 +123,8 @@ class UserController extends Controller
         ])->save();
 
         activity('User')->performedOn($user)->causedBy($request->user())->log('2FA reset');
+        // Tell them, so a reset they did not ask for never goes unnoticed.
+        rescue(fn () => $user->notify(AccountChanged::alert($user, ['2FA'])));
         $this->toast(__(':name-এর 2FA বন্ধ করা হলো — আবার চালু করতে হবে।', ['name' => $user->name]));
 
         return back();
@@ -128,6 +133,7 @@ class UserController extends Controller
     public function destroy(Request $request, User $user): RedirectResponse
     {
         $this->guardHidden($request, $user);
+        $this->guardOwnerAccount($request, $user);
 
         if ($user->is($request->user())) {
             throw ValidationException::withMessages(['user' => __('নিজের account নিজে মোছা যায় না।')]);
@@ -155,6 +161,14 @@ class UserController extends Controller
 
         if ($touchesOwner && ! $request->user()->hasRole(Access::OWNER)) {
             throw ValidationException::withMessages(['role' => __('Owner role শুধু Owner দিতে বা বদলাতে পারে।')]);
+        }
+    }
+
+    /** Only an Owner can reset an Owner's 2FA or remove an Owner's account. */
+    private function guardOwnerAccount(Request $request, User $user): void
+    {
+        if ($user->hasRole(Access::OWNER) && ! $request->user()->hasRole(Access::OWNER)) {
+            throw ValidationException::withMessages(['user' => __('Owner-এর account শুধু Owner বদলাতে পারে।')]);
         }
     }
 

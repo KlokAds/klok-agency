@@ -155,7 +155,8 @@ class ReportController extends Controller
     public function export(Request $request, string $book, Books $books): StreamedResponse
     {
         abort_unless(in_array($book, ['usd', 'bdt', 'pl'], true), 404);
-        abort_unless($request->user()->can("{$book}.view") || $book === 'pl', 403);
+        // Every export needs the Reports page itself (where the P&L is shown); a book also needs that book.
+        abort_unless($request->user()->can('reports.view') && ($book === 'pl' || $request->user()->can("{$book}.view")), 403);
 
         $name = 'klok-finance-'.$book.'-'.now()->format('Y-m-d').'.csv';
 
@@ -188,10 +189,10 @@ class ReportController extends Controller
 
         foreach ($books->usdEntries() as $e) {
             fputcsv($out, [
-                $e->entry_date?->toDateString(), $e->description, UsdEntry::categoryLabel($e->category),
-                $e->account?->name, $e->client?->name, $this->num($e->amount), UsdEntry::STATUSES[$e->status] ?? $e->status,
+                $e->entry_date?->toDateString(), $this->text($e->description), UsdEntry::categoryLabel($e->category),
+                $this->text($e->account?->name), $this->text($e->client?->name), $this->num($e->amount), UsdEntry::STATUSES[$e->status] ?? $e->status,
                 isset($card[$e->id]) ? $this->num($card[$e->id]) : '', isset($fifo[$e->id]) ? $this->num($fifo[$e->id]['cost']) : '',
-                $e->notes,
+                $this->text($e->notes),
             ]);
         }
     }
@@ -205,9 +206,9 @@ class ReportController extends Controller
 
         foreach ($books->bdtEntries() as $e) {
             fputcsv($out, [
-                $e->entry_date?->toDateString(), $e->description, BdtEntry::categoryLabel($e->category),
-                $e->client->name ?? $e->employee?->name, $e->head?->name, $this->num($e->amount),
-                $this->num($running[$e->id]), $e->notes,
+                $e->entry_date?->toDateString(), $this->text($e->description), BdtEntry::categoryLabel($e->category),
+                $this->text($e->client->name ?? $e->employee?->name), $this->text($e->head?->name), $this->num($e->amount),
+                $this->num($running[$e->id]), $this->text($e->notes),
             ]);
         }
     }
@@ -222,7 +223,7 @@ class ReportController extends Controller
         fputcsv($out, ['Client', 'USD spent (settled)', 'FIFO cost (BDT)', 'BDT received', 'Margin (BDT)', 'Pending USD']);
 
         foreach ($pl['clients'] as $c) {
-            fputcsv($out, [$c['name'], $this->num($c['usd_settled']), $this->num($c['cost_settled']), $this->num($c['received']), $this->num($c['margin']), $this->num($c['usd_pending'])]);
+            fputcsv($out, [$this->text($c['name']), $this->num($c['usd_settled']), $this->num($c['cost_settled']), $this->num($c['received']), $this->num($c['margin']), $this->num($c['usd_pending'])]);
         }
 
         fputcsv($out, ['Total margin', '', '', '', $this->num($pl['margin'])]);
@@ -231,7 +232,7 @@ class ReportController extends Controller
         fputcsv($out, ['Own USD spend (FIFO cost)', $this->num($pl['own_cost'])]);
 
         foreach ($pl['expenses'] as $x) {
-            fputcsv($out, [$x['name'], $this->num($x['amount'])]);
+            fputcsv($out, [$this->text($x['name']), $this->num($x['amount'])]);
         }
 
         fputcsv($out, ['Total expenses', $this->num($pl['total_expense'])]);
@@ -242,5 +243,11 @@ class ReportController extends Controller
     private function num(int $minor): string
     {
         return number_format($minor / 100, 2, '.', '');
+    }
+
+    /** Typed text (and Meta's campaign names): a leading ' so Excel or Sheets never runs it as a formula. */
+    private function text(?string $value): ?string
+    {
+        return $value !== null && preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }
 }

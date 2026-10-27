@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Access;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class SessionController extends Controller
 
     public function index(Request $request): Response
     {
-        $users = User::query()->unless($request->user()->is_hidden, fn ($q) => $q->visible())->get(['id', 'name', 'email'])->keyBy('id');
+        $users = User::query()->with('roles:id,name')->unless($request->user()->is_hidden, fn ($q) => $q->visible())->get(['id', 'name', 'email'])->keyBy('id');
 
         $sessions = DB::table((string) config('session.table', 'sessions'))
             ->whereNotNull('user_id')
@@ -32,8 +33,10 @@ class SessionController extends Controller
             ->get(['id', 'user_id', 'ip_address', 'user_agent', 'last_activity'])
             ->filter(fn ($s) => $users->has($s->user_id))
             ->map(fn ($s) => [
-                'id' => $s->id,
+                // Never the real session id: it is a sign-in secret the page does not need.
+                'id' => self::key((string) $s->id),
                 'user' => $users[$s->user_id]->name,
+                'owner' => $users[$s->user_id]->hasRole(Access::OWNER),
                 'email' => $users[$s->user_id]->email,
                 'device' => self::device((string) $s->user_agent),
                 'app' => str_contains((string) $s->user_agent, 'KlokFinanceApp'),
@@ -49,21 +52,31 @@ class SessionController extends Controller
     /** Ends that session; the device is at the sign-in page on its next click. */
     public function destroy(Request $request, string $session): RedirectResponse
     {
-        abort_if($session === $request->session()->getId(), 422, __('নিজের এই session শেষ করতে Sign out করুন।'));
+        abort_if(hash_equals(self::key($request->session()->getId()), $session), 422, __('নিজের এই session শেষ করতে Sign out করুন।'));
 
-        $row = DB::table((string) config('session.table', 'sessions'))->where('id', $session)->first(['user_id']);
+        // The page only has the keyed hash, so find the row whose id hashes to it.
+        $row = DB::table((string) config('session.table', 'sessions'))->whereNotNull('user_id')->get(['id', 'user_id'])
+            ->first(fn ($s) => hash_equals(self::key((string) $s->id), $session));
         abort_if($row === null, 404);
 
         $user = User::query()->whereKey((int) $row->user_id)->first();
         abort_if($user === null || ($user->is_hidden && ! $request->user()->is_hidden), 404);
+        // Only an Owner can sign an Owner out.
+        abort_if($user->hasRole(Access::OWNER) && ! $request->user()->hasRole(Access::OWNER), 403, __('Owner-এর account শুধু Owner বদলাতে পারে।'));
 
-        DB::table((string) config('session.table', 'sessions'))->where('id', $session)->delete();
+        DB::table((string) config('session.table', 'sessions'))->where('id', $row->id)->delete();
         // Its "remember this device" cookie stops working too.
         $user->forceFill(['remember_token' => Str::random(60)])->saveQuietly();
         activity('Auth')->causedBy($request->user())->performedOn($user)->log('session ended by hand');
         $this->toast(__(':name-এর session শেষ করা হয়েছে।', ['name' => $user->name]));
 
         return back();
+    }
+
+    /** The id the page sees for a session: a keyed hash of the real one, so the real one never leaves the server. */
+    public static function key(string $id): string
+    {
+        return hash_hmac('sha256', $id, (string) config('app.key'));
     }
 
     /** "Android app", "Chrome · Windows", "Safari · iPhone"… from the browser's own name. */

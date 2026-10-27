@@ -21,6 +21,8 @@ class RoleController extends Controller
                 'id' => $r->id,
                 'name' => $r->name,
                 'is_owner' => $r->name === Access::OWNER,
+                // Client is fixed too: the portal confinement keys off its exact name.
+                'is_client' => $r->name === Access::CLIENT,
                 'users' => $r->users_count,
                 'permissions' => $r->permissions->pluck('name'),
             ]),
@@ -41,7 +43,7 @@ class RoleController extends Controller
 
     public function update(Request $request, Role $role): RedirectResponse
     {
-        $this->guardOwner($role);
+        $this->guardFixedRole($role);
         $data = $this->validated($request, $role);
 
         $role->update(['name' => $data['name']]);
@@ -56,7 +58,7 @@ class RoleController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
-        $this->guardOwner($role);
+        $this->guardFixedRole($role);
 
         if ($role->users()->exists()) {
             throw ValidationException::withMessages(['role' => __('এই role-এ user আছে — আগে তাদের অন্য role দিন।')]);
@@ -68,10 +70,15 @@ class RoleController extends Controller
         return back();
     }
 
-    private function guardOwner(Role $role): void
+    private function guardFixedRole(Role $role): void
     {
         if ($role->name === Access::OWNER) {
             throw ValidationException::withMessages(['role' => __('Owner role বদলানো বা মোছা যায় না।')]);
+        }
+
+        // Renaming Client, or giving it permissions, would let portal users out of the portal.
+        if ($role->name === Access::CLIENT) {
+            throw ValidationException::withMessages(['role' => __('Client role বদলানো বা মোছা যায় না।')]);
         }
     }
 
@@ -79,7 +86,7 @@ class RoleController extends Controller
     private function validated(Request $request, ?Role $role = null): array
     {
         return $request->validate([
-            'name' => ['required', 'string', 'max:60', Rule::notIn([Access::OWNER]), Rule::unique('roles', 'name')->ignore($role?->id)],
+            'name' => ['required', 'string', 'max:60', Rule::notIn([Access::OWNER, Access::CLIENT]), Rule::unique('roles', 'name')->ignore($role?->id)],
             'permissions' => ['array'],
             'permissions.*' => [Rule::in(Access::all())],
         ], [], ['name' => __('Role-এর নাম')]);

@@ -234,7 +234,9 @@ class Lock {
 
   static Future<SharedPreferences> get _p => SharedPreferences.getInstance();
 
-  static Future<String> mode() async => (await _p).getString('lock.mode') ?? 'off';
+  /// On unless turned off by hand: the site skips its idle sign-out inside the app, so a phone
+  /// left unlocked would stay in the books for good. 'bio' lets a phone with no lock straight in.
+  static Future<String> mode() async => (await _p).getString('lock.mode') ?? 'bio';
   static Future<int> after() async => (await _p).getInt('lock.after') ?? 1;
   static Future<bool> pinWithFinger() async => (await _p).getBool('lock.pin_finger') ?? false;
 
@@ -272,6 +274,7 @@ class Lock {
     await p.setInt('lock.pin_v', 2);
     await p.remove('lock.wrong');
     await p.remove('lock.wait_until');
+    await p.remove('lock.wait_rounds');
   }
 
   /// Wrong PINs are counted on disk: five in a row and the pad waits, twice as long each round.
@@ -293,8 +296,10 @@ class Lock {
     final stretched = (p.getInt('lock.pin_v') ?? 1) >= 2;
     final ok = stretched ? _stretch(salt, pin) == hash : _hash(salt, pin) == hash;
     if (ok) {
+      // The right PIN starts the waits from 30 seconds again.
       await p.remove('lock.wrong');
       await p.remove('lock.wait_until');
+      await p.remove('lock.wait_rounds');
       if (!stretched) {
         await setPin(pin); // the old hash is replaced by the stretched one
       }
@@ -313,6 +318,14 @@ class Lock {
   }
 
   static Future<bool> hasPin() async => (await _p).getString('lock.pin') != null;
+
+  /// With the lock on, Recents shows no picture of the last page (the lock only covers the app).
+  /// The app sets it as it opens; this follows a change made in the settings.
+  static Future<void> hideRecents(bool on) async {
+    try {
+      await const MethodChannel('klok/lock').invokeMethod('hideRecents', {'on': on});
+    } catch (_) {}
+  }
 
   /// The phone's own PIN / pattern screen, for when the finger is not read.
   static Future<bool> phonePin(String reason) async {
@@ -338,17 +351,38 @@ class Lock {
     }
   }
 
-  /// The fingerprint, or the phone's PIN/pattern. A phone with no screen lock passes.
+  /// Whether the phone has a screen lock (PIN, pattern, password). Not known counts as yes, so a
+  /// failed channel keeps the app shut rather than open.
+  static Future<bool> phoneLocked() async {
+    try {
+      return await const MethodChannel('klok/lock').invokeMethod<bool>('deviceSecure') ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Whether the app really asks before it opens: 'bio' on a phone with no screen lock lets anyone in.
+  /// The site asks this (the 'appLock' handler) before it skips its idle sign-out.
+  static Future<bool> isOn() async {
+    final current = await mode();
+    return current == 'pin' || (current == 'bio' && await phoneLocked());
+  }
+
+  /// The fingerprint, or the phone's PIN/pattern. Only a phone with no screen lock at all passes
+  /// without either: local_auth's 'NotAvailable' also means a busy or missing sensor
+  /// (ERROR_HW_UNAVAILABLE), so then the phone's own PIN screen is asked instead.
   static Future<bool> finger(String reason) async {
     final auth = LocalAuthentication();
     try {
-      if (!await auth.isDeviceSupported()) {
-        return true;
+      if (await auth.isDeviceSupported()) {
+        return await auth.authenticate(localizedReason: reason, options: const AuthenticationOptions(stickyAuth: true));
       }
-      return await auth.authenticate(localizedReason: reason, options: const AuthenticationOptions(stickyAuth: true));
     } on PlatformException catch (e) {
-      return e.code == 'NotAvailable' || e.code == 'PasscodeNotSet' || e.code == 'NotEnrolled';
+      if (e.code != 'NotAvailable' && e.code != 'PasscodeNotSet' && e.code != 'NotEnrolled') {
+        return false;
+      }
     }
+    return !await phoneLocked() || await phonePin(reason);
   }
 }
 
@@ -988,45 +1022,6 @@ class _SitePageState extends State<SitePage> {
     return null;
   }
 
-  /// Once, after the first sign-in: would they like the fingerprint lock? Yes (and a finger to
-  /// prove it) turns it on; the sign-in stays either way, the lock only hides the app.
-  Future<void> askLock() async {
-    if (!await signedIn()) {
-      return;
-    }
-    final prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool('lock.asked') == true || await Lock.mode() != 'off') {
-      return;
-    }
-    await prefs.setBool('lock.asked', true);
-    var can = false;
-    try {
-      final auth = LocalAuthentication();
-      can = await auth.isDeviceSupported() && await auth.canCheckBiometrics;
-    } catch (_) {}
-    if (!can || !mounted) {
-      return;
-    }
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.fingerprint, size: 40, color: brand),
-        title: const Text('আঙুলের ছাপ দিয়ে app lock?'),
-        content: const Text('চালু করলে app খোলার সময় আঙুলের ছাপ চাইবে। Login থেকে যাবে — আবার sign in করতে হবে না। পরে app-এর Settings থেকে বদলানো যায়।'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('এখন না')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('চালু করুন')),
-        ],
-      ),
-    );
-    if (yes == true && await Lock.fingerOk('App lock চালু করতে আঙুলের ছাপ দিন') == null) {
-      await prefs.setString('lock.mode', 'bio');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('আঙুলের ছাপের lock চালু হয়েছে।')));
-      }
-    }
-  }
-
   /// The SMS app on the Owner's phone: forwarding turns itself on at sign-in, once (unless it
   /// was turned off by hand). Anyone else signing in on it is left alone.
   Future<void> autoSms() async {
@@ -1193,6 +1188,10 @@ class _SitePageState extends State<SitePage> {
                       setBars(args);
                     }
                   });
+                  // Whether the app locks itself: the site skips its idle sign-out only then.
+                  controller.addJavaScriptHandler(handlerName: 'appLock', callback: (_) async {
+                    return await ours() && await Lock.isOn();
+                  });
                   controller.addJavaScriptHandler(handlerName: 'signingOut', callback: (_) async {
                     if (!await ours()) {
                       return false;
@@ -1230,7 +1229,6 @@ class _SitePageState extends State<SitePage> {
                   }
                   await handOver();
                   await autoSms();
-                  await askLock();
                   await checkUpdate();
                 },
                 onReceivedError: (controller, request, error) {
@@ -1368,6 +1366,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('lock.mode', value);
+    await Lock.hideRecents(value != 'off');
     setState(() => mode = value);
   }
 

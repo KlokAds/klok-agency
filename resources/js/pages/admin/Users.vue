@@ -33,6 +33,9 @@ defineProps<{ users: User[]; roles: Option[] }>();
 const page = usePage();
 const me = computed(() => page.props.auth.user);
 const can = computed(() => page.props.auth.can);
+// An Owner's 2FA and account are only for another Owner to reset or remove.
+const mayTouch = (u: User): boolean =>
+    u.role !== 'Owner' || me.value.role === 'Owner';
 
 const open = ref(false);
 const editing = ref<User | null>(null);
@@ -224,7 +227,11 @@ async function remove(user: User): Promise<void> {
                             class="flex justify-end gap-1.5"
                         >
                             <KButton
-                                v-if="u.two_factor && u.id !== me.id"
+                                v-if="
+                                    u.two_factor &&
+                                    u.id !== me.id &&
+                                    mayTouch(u)
+                                "
                                 size="sm"
                                 variant="plain"
                                 icon="key"
@@ -322,7 +329,12 @@ async function remove(user: User): Promise<void> {
         </form>
         <template #footer>
             <KButton
-                v-if="editing && can['users.delete'] && editing.id !== me.id"
+                v-if="
+                    editing &&
+                    can['users.delete'] &&
+                    editing.id !== me.id &&
+                    mayTouch(editing)
+                "
                 variant="danger"
                 icon="bin"
                 class="mr-auto"

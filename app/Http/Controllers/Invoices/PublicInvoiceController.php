@@ -72,13 +72,9 @@ class PublicInvoiceController extends Controller
             throw ValidationException::withMessages(['payer' => __('এটা Klok Ads-এর নম্বর — এখানে আপনার নিজের নম্বর দিন, যেটা থেকে টাকা পাঠাবেন।')]);
         }
 
-        // A number known as another client's: their money must not land on this invoice.
-        if (filled($data['payer'] ?? null)) {
-            $owner = PaymentMatcher::clientOfNumber(substr(preg_replace('/\D+/', '', (string) $data['payer']) ?? '', -10));
-            if ($owner !== null && $owner !== (int) $invoice->client_id) {
-                throw ValidationException::withMessages(['payer' => __('এই নম্বরটা অন্য একটা account-এর — আপনার নিজের নম্বর দিন।')]);
-            }
-        }
+        // A number known as another client's is not refused here: that answer would tell anyone with
+        // an invoice link who our clients are. The matcher never takes that number's money for this
+        // invoice anyway (PaymentMatcher::payerOk); it waits for the Owner instead.
 
         $wanted = $invoice->allow_partial && isset($data['amount']) ? (int) round((float) $data['amount'] * 100) : null;
         $matcher->startSession($invoice, $method, $data['payer'] ?? null, $wanted);

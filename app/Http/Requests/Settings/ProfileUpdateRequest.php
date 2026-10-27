@@ -19,7 +19,8 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         // The team's email is their sign-in name, changed only on the Users page. A client keeps
-        // their own: name, email, phone and company.
+        // their own: name, email, phone and company. A new email is not saved straight away: it
+        // goes out as a link (ProfileController::update).
         if (! $this->user()?->isClient()) {
             return ['name' => ['required', 'string', 'max:120']];
         }

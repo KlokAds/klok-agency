@@ -91,7 +91,9 @@ class DailySummary
         $managers = Client::whereNotNull('manager_id')->pluck('manager_id');
         $people = User::where('is_active', true)
             ->where(fn ($q) => $q->whereIn('id', $managers)->orWhereHas('roles', fn ($r) => $r->where('name', Access::OWNER)))
-            ->get();
+            ->get()
+            // The summary covers every client: never to a portal user, even one set as a Manager.
+            ->reject(fn (User $u) => $u->isClient() || $u->client_id !== null);
 
         $alert = new AgencyAlert('summary', $late ? 'গতকালের ads আর কাজের সারসংক্ষেপ' : 'আজকের ads আর কাজের সারসংক্ষেপ', $late ? 'গতকাল {count}টা campaign-এ খরচ ${spent} · {ending}টা campaign শেষ হচ্ছে · {tasks}টা কাজ বাকি' : 'আজ {count}টা campaign-এ খরচ ${spent} · {ending}টা campaign কাল শেষ · {tasks}টা কাজ বাকি', [ // i18n
             'count' => $summary['campaigns'],

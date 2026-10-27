@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -19,6 +20,9 @@ class MainActivity : FlutterFragmentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         }
+        // The app lock as the app keeps it ('bio' when never chosen; see Lock.mode in main.dart).
+        val lock = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE).getString("flutter.lock.mode", "bio")
+        hideRecents(lock != "off")
     }
 
     /**
@@ -83,6 +87,17 @@ class MainActivity : FlutterFragmentActivity() {
                         startActivityForResult(intent, CREDENTIAL)
                     }
                 }
+                // Whether the phone has a screen lock at all: only without one may the app open
+                // with no fingerprint or PIN (a busy sensor must not count as "no lock").
+                "deviceSecure" -> {
+                    val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+                    result.success(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) keyguard.isDeviceSecure else keyguard.isKeyguardSecure)
+                }
+                // Set from the app's lock: on, and Recents shows no picture of the books.
+                "hideRecents" -> {
+                    hideRecents(call.argument<Boolean>("on") ?: true)
+                    result.success(null)
+                }
                 else -> result.notImplemented()
             }
         }
@@ -130,6 +145,21 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    /**
+     * The app lock covers only the app itself; the Recents screen kept a picture of the last page
+     * (figures, clients, margins). Android 13+ can drop just that picture, so screenshots still
+     * work; older phones need FLAG_SECURE, which also blocks screenshots while the lock is on.
+     */
+    private fun hideRecents(on: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            setRecentsScreenshotEnabled(!on)
+        } else if (on) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
     }
 

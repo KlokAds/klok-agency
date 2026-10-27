@@ -79,24 +79,40 @@ class SettingController extends Controller
             'receipts_password' => ['nullable', 'string', 'max:190'],
         ]);
 
+        // A saved password goes to whatever server is set here (the test mail, the receipts
+        // check), so a new host or port drops it unless a new one is typed with it: whoever
+        // changes the server cannot have the old password sent to theirs.
+        $before = MailSettings::form();
+        $receiptsHost = ($data['receipts_host'] ?? null) ?: 'imap.hostinger.com';
+        $smtpMoved = $before['has_password'] && blank($data['password'] ?? null)
+            && (strcasecmp($data['host'], $before['host']) !== 0 || (int) $data['port'] !== $before['port']);
+        $receiptsMoved = $before['receipts_has_password'] && blank($data['receipts_password'] ?? null)
+            && strcasecmp($receiptsHost, $before['receipts_host']) !== 0;
+
         Setting::put('smtp_host', $data['host']);
         Setting::put('smtp_port', (string) $data['port']);
         Setting::put('smtp_username', $data['username']);
         Setting::put('smtp_from_name', $data['from_name']);
         Setting::put('notify_email', $data['notify_email']);
         // Where Meta's receipts are forwarded: read every few minutes.
-        Setting::put('receipts_host', ($data['receipts_host'] ?? null) ?: 'imap.hostinger.com');
+        Setting::put('receipts_host', $receiptsHost);
         Setting::put('receipts_username', $data['receipts_username'] ?? '');
         if (filled($data['receipts_password'] ?? null)) {
             Setting::put('receipts_password', Crypt::encryptString($data['receipts_password']));
+        } elseif ($receiptsMoved) {
+            Setting::put('receipts_password', null);
         }
 
-        // A blank password keeps the saved one.
+        // A blank password keeps the saved one, on the same server.
         if (filled($data['password'] ?? null)) {
             Setting::put('smtp_password', Crypt::encryptString($data['password']));
+        } elseif ($smtpMoved) {
+            Setting::put('smtp_password', null);
         }
 
-        $this->toast(__('Email-এর settings সংরক্ষণ হয়েছে।'));
+        $this->toast($smtpMoved || $receiptsMoved
+            ? __('সংরক্ষণ হয়েছে। Server বদলেছে, তাই আগের password মুছে দেওয়া হয়েছে — নতুন server-এর password আবার দিন।')
+            : __('Email-এর settings সংরক্ষণ হয়েছে।'));
 
         return back();
     }

@@ -14,6 +14,7 @@ import { t } from '@/lib/i18n';
 type Session = {
     id: string;
     user: string;
+    owner: boolean;
     email: string;
     device: string;
     app: boolean;
@@ -26,6 +27,8 @@ type Session = {
 defineProps<{ sessions: Session[] }>();
 
 const can = computed(() => usePage().props.auth.can);
+// Only an Owner can sign an Owner out.
+const amOwner = computed(() => usePage().props.auth.user.role === 'Owner');
 
 // The list keeps itself fresh while it is open.
 let timer: number | undefined;
@@ -99,7 +102,7 @@ async function end(s: Session): Promise<void> {
                 </p>
             </div>
             <KButton
-                v-if="!s.mine && can['users.edit']"
+                v-if="!s.mine && can['users.edit'] && (!s.owner || amOwner)"
                 size="sm"
                 variant="plain"
                 icon="out"

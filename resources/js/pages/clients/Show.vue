@@ -49,6 +49,8 @@ type PortalPerson = {
     phone: string | null;
     company: string | null;
     since: string | null;
+    // Waiting sign-ups only: whether they opened the link sent to their email.
+    verified?: boolean;
 };
 
 const props = defineProps<{
@@ -198,6 +200,10 @@ const can = computed(() => usePage().props.auth.can);
 
 // Portal: a sign-up waiting for a client becomes this client's person.
 const linkUser = ref<number | null>(null);
+// Refused when their email is not confirmed yet.
+const linkError = computed(
+    () => usePage().props.errors.user_id as string | undefined,
+);
 function link(): void {
     if (!linkUser.value) {
         return;
@@ -918,13 +924,19 @@ function print(): void {
             v-if="can['clients.edit'] && portal.waiting.length"
             class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
         >
-            <KField :label="t('Register করে অপেক্ষায় আছেন')" class="min-w-0">
+            <KField
+                :label="t('Register করে অপেক্ষায় আছেন')"
+                :error="linkError"
+                class="min-w-0"
+            >
                 <KSelect
                     v-model="linkUser"
                     :options="
                         portal.waiting.map((w) => ({
                             value: w.id,
-                            label: `${w.name}${w.company ? ' · ' + w.company : ''} · ${w.phone ?? w.email}`,
+                            label: `${w.name}${w.company ? ' · ' + w.company : ''} · ${w.email}${w.phone ? ' · ' + w.phone : ''}`,
+                            // Typed by them: only a confirmed email is shown as theirs.
+                            hint: w.verified ? null : t('Email confirm হয়নি'),
                         }))
                     "
                     :placeholder="t('কাকে যুক্ত করবেন?')"

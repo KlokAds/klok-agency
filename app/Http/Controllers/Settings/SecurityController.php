@@ -10,6 +10,7 @@ use App\Notifications\AgencyAlert;
 use App\Providers\FortifyServiceProvider;
 use App\Services\Notifier;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -67,8 +68,9 @@ class SecurityController extends Controller
 
         // Any other device signed in with the old password is signed out; this one stays, and
         // its "keep me signed in" cookie is made again with the new password — the old one would
-        // no longer sign it in, so an app update (which restarts the app) signed it out.
-        FortifyServiceProvider::signOutElsewhere($user, true);
+        // no longer sign it in, so an app update (which restarts the app) signed it out. Only a
+        // device that already had one gets it: a shared PC that never chose it stays without.
+        FortifyServiceProvider::signOutElsewhere($user, $request->hasCookie(Auth::guard('web')->getRecallerName()));
         activity('Auth')->causedBy($user)->log('password changed');
 
         // The person hears of it on every device and by email, in case it was not them.

@@ -91,5 +91,5 @@ it('leaves under a dollar alone: no extension, no refund', function () {
     Notification::assertNotSentTo($this->person, AgencyAlert::class);
 
     $this->actingAs($this->person)->get('/portal')->assertOk()
-        ->assertInertia(fn ($page) => $page->where('credit.left', 46)->where('credit.refund', null));
+        ->assertInertia(fn ($page) => $page->where('credit.left', 46)->where('credit.refundable', false));
 });

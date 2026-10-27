@@ -60,5 +60,14 @@
     "মোছা": "Delete",
     "শেষ update": "Last update",
     "সফল": "Succeeded",
-    "সর্বশেষ version চলছে": "Running the latest version"
+    "সর্বশেষ version চলছে": "Running the latest version",
+    "Email confirm করুন": "Confirm your email",
+    "নতুন link পাঠানো হয়েছে — inbox আর spam দুটোই দেখুন।": "A new link has been sent. Check both your inbox and spam.",
+    "এই email-এ পাঠানো link-টা খুলুন। তারপর Klok Ads আপনার account-টা আপনার ব্যবসার সাথে যুক্ত করতে পারবে।": "Open the link sent to this email. Then Klok Ads can link your account to your business.",
+    "Link আবার পাঠান": "Send the link again",
+    "Confirm করেছি — এগিয়ে যান": "I've confirmed it, continue",
+    "আপনার email-এ একটা link গেছে — ওটা খুললেই account চালু হবে।": "A link has been sent to your email. Open it to switch on your account.",
+    ":name, KlokOne-এ client account খুলতে এই email দেওয়া হয়েছে। নিচের button চাপলে email-টা আপনার বলে confirm হবে।": ":name, this email was given to open a client account on KlokOne. Press the button below to confirm it's yours.",
+    "Link-টা :minutes মিনিট চলবে। আপনি account না খুলে থাকলে কিছু করতে হবে না।": "The link works for :minutes minutes. If you didn't open an account, you don't need to do anything.",
+    "KlokOne-এ আপনার email confirm করুন": "Confirm your email on KlokOne"
 }

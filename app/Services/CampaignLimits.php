@@ -256,7 +256,9 @@ class CampaignLimits
 
     /**
      * The client switches their paused campaign on again — only one they paused themselves, with
-     * money left for it; one stopped for want of money runs again once paid.
+     * money left for it; one stopped for want of money runs again once paid. A client with no
+     * paid money (one who pays after the spend) asks the team: guard() puts no spend cap on
+     * their campaigns, so switching on here would spend the agency's money with no limit.
      *
      * @throws RuntimeException when there is no money left, or Pilot or Meta refuses
      */
@@ -268,8 +270,8 @@ class CampaignLimits
 
         $figure = collect($this->books->clients())->firstWhere('id', $campaign->client_id) ?? [];
 
-        // A client who pays after the spend is billed for it; one who pays ahead needs money left.
-        if ((int) ($figure['credit_usd'] ?? 0) > 0 && (int) ($figure['credit_left'] ?? 0) <= 0) {
+        // No money left (or none ever paid ahead): pay first, or the team switches it on.
+        if ((int) ($figure['credit_left'] ?? 0) <= 0) {
             throw new RuntimeException(__('বিজ্ঞাপনের টাকা শেষ — আগে pay করুন, তারপর চালু হবে।'));
         }
 
@@ -304,7 +306,8 @@ class CampaignLimits
     /**
      * The client sets the budget a day (cents, USD). Lowering it is always allowed; raising it
      * only as far as the money left carries the campaign to its last day — more needs paying first,
-     * so a campaign never runs on money not paid.
+     * so a campaign never runs on money not paid. A client who pays after the spend has no paid
+     * money to raise it on (and no spend cap): they may lower it, the team raises it.
      *
      * @throws RuntimeException when the money does not carry it, or Pilot or Meta refuses
      */
@@ -315,9 +318,10 @@ class CampaignLimits
         }
 
         $was = $campaign->dailyBudget();
-        $room = $this->budgetRoom($campaign);
+        // Null room (pays after the spend) is no room at all, not no limit.
+        $room = $this->budgetRoom($campaign) ?? 0;
 
-        if ($room !== null && $cents > (int) $was && $cents > $room) {
+        if ($cents > (int) $was && $cents > $room) {
             throw new RuntimeException($room >= self::CLIENT_BUDGET_MIN
                 ? __('আপনার বাকি টাকায় শেষ দিন পর্যন্ত দিনে সর্বোচ্চ :max চলবে। বেশি চাইলে আগে pay করুন।', ['max' => '$'.number_format($room / 100, 2)])
                 : __('বাকি টাকায় budget বাড়ানো যাবে না — আগে pay করুন।'));

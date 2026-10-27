@@ -75,8 +75,23 @@ class ProfileController extends Controller
             return back()->withErrors(['email' => __('এটাই এখনকার email।')]);
         }
 
+        if (($error = $this->sendEmailLink($user, $email)) !== null) {
+            return back()->withErrors(['email' => $error]);
+        }
+
+        $this->toast(__(':email-এ link পাঠানো হয়েছে — ওটা খুলে confirm করুন।', ['email' => $email]));
+
+        return to_route('profile.edit');
+    }
+
+    /**
+     * The link to a new address, and a word to the person that it went. Opening it asks for the
+     * password again (see routes/settings.php). Gives back the error to show when no mail can go.
+     */
+    private function sendEmailLink(User $user, string $email): ?string
+    {
         if (! MailSettings::ready()) {
-            return back()->withErrors(['email' => __('Email পাঠানোর mailbox দেওয়া নেই — Owner-কে বলুন, Users পাতা থেকে বদলে দেবেন।')]);
+            return __('Email পাঠানোর mailbox দেওয়া নেই — Owner-কে বলুন, Users পাতা থেকে বদলে দেবেন।');
         }
 
         Cache::put(self::pendingKey($user->id), $email, now()->addMinutes(self::EMAIL_LINK_MINUTES));
@@ -89,9 +104,7 @@ class ProfileController extends Controller
             'email' => $email,
         ], ['url' => '/settings/profile', 'important' => true])));
 
-        $this->toast(__(':email-এ link পাঠানো হয়েছে — ওটা খুলে confirm করুন।', ['email' => $email]));
-
-        return to_route('profile.edit');
+        return null;
     }
 
     public const EMAIL_ASKED_TITLE = 'নতুন email-এর জন্য link পাঠানো হয়েছে'; // i18n
@@ -122,6 +135,13 @@ class ProfileController extends Controller
         rescue(fn () => $user->notify(AccountChanged::alert($user, [__('Email')])));
         if (filled($old) && MailSettings::ready()) {
             rescue(fn () => Notification::route('mail', $old)->notify(new AccountChanged([__('Email')], (string) ($user->locale ?? 'bn'))));
+        }
+
+        // A client's new address: the agency hears, as with their other details.
+        if ($user->isClient()) {
+            app(Notifier::class)->send(null, new AgencyAlert('portal_profile', self::CLIENT_CHANGED_TITLE, '{name} · {client} · {what}', [
+                'name' => $user->name, 'client' => $user->client->name ?? '—', 'what' => 'email',
+            ], ['url' => $user->client_id ? '/clients/'.$user->client_id : '/clients']));
         }
 
         $this->toast(__('Email বদলে গেছে — এখন থেকে :email দিয়ে sign in করবেন।', ['email' => $email]));
@@ -161,21 +181,29 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $user->fill(array_merge($request->validated(), isset($request->validated()['email']) ? ['email' => Str::lower($request->validated()['email'])] : []));
+        $data = $request->validated();
+
+        // A client's new email is their sign-in name, so it is never saved from here: it goes
+        // through the same link as the team's, and opening it asks for the password. A session
+        // left open on a desk or phone cannot move the account to someone else's inbox.
+        $newEmail = isset($data['email']) ? Str::lower($data['email']) : null;
+        unset($data['email']);
+        $askEmail = $newEmail !== null && $newEmail !== Str::lower((string) $user->email);
+
+        if ($askEmail && ($error = $this->sendEmailLink($user, $newEmail)) !== null) {
+            return back()->withErrors(['email' => $error]);
+        }
+
+        $user->fill($data);
         $changed = array_keys($user->getDirty());
-        $oldEmail = $user->getOriginal('email');
         $user->save();
 
-        // The person hears of it themselves — bell, phone and email — and the old address too when
-        // the email changed, so a change they did not make never goes unnoticed.
+        // The person hears of it themselves — bell, phone and email — so a change they did not
+        // make never goes unnoticed.
         if ($changed !== []) {
             $words = array_map(fn (string $field) => self::FIELD_WORDS[$field] ?? $field, $changed);
             // A mail server hiccup must not undo the change or show an error.
             rescue(fn () => $user->notify(AccountChanged::alert($user, array_map(fn ($w) => __($w), $words))));
-
-            if (in_array('email', $changed, true) && filled($oldEmail) && MailSettings::ready()) {
-                rescue(fn () => Notification::route('mail', $oldEmail)->notify(new AccountChanged([__('Email')], (string) ($user->locale ?? 'bn'))));
-            }
         }
 
         // A client changed their own details: the agency hears, so it knows who it is talking to.
@@ -185,7 +213,9 @@ class ProfileController extends Controller
             ], ['url' => $user->client_id ? '/clients/'.$user->client_id : '/clients']));
         }
 
-        $this->toast(__('Profile আপডেট হয়েছে।'));
+        $this->toast($askEmail
+            ? __(':email-এ link পাঠানো হয়েছে — ওটা খুলে confirm করুন।', ['email' => $newEmail])
+            : __('Profile আপডেট হয়েছে।'));
 
         return to_route('profile.edit');
     }

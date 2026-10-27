@@ -31,6 +31,10 @@ import java.util.concurrent.TimeUnit
  * has it, so a payment SMS is never lost — not without internet, not after a restart.
  * The server books each TrxID once, so a resend never books it twice.
  *
+ * A sender name alone can be faked on some SMS routes, so each SMS also carries the
+ * service centre (SMSC) that delivered it: the server can tell a payment SMS that came
+ * by an unusual route and leave it for the Owner instead of settling it by itself.
+ *
  * The phone also keeps a short log of what it sent and what the server made of it
  * (matched an invoice, kept, not money), shown in the app with a retry; and once an
  * hour it tells the server it is alive, so a phone that stopped forwarding is noticed.
@@ -120,7 +124,7 @@ object SmsForwarder {
         var queued = 0
         val cursor = context.contentResolver.query(
             android.net.Uri.parse("content://sms/inbox"),
-            arrayOf("address", "body", "date"),
+            arrayOf("address", "body", "date", "service_center"),
             "date >= ?", arrayOf(since.toString()), "date ASC",
         ) ?: return 0
         try {
@@ -130,7 +134,7 @@ object SmsForwarder {
                 if (from == null || text == null || text in known) {
                     continue
                 }
-                if (enqueue(context, from, text, cursor.getLong(2))) {
+                if (enqueue(context, from, text, cursor.getLong(2), cursor.getString(3))) {
                     known.add(text)
                     queued++
                 }
@@ -163,7 +167,7 @@ object SmsForwarder {
     }
 
     @Synchronized
-    fun enqueue(context: Context, from: String, text: String, at: Long): Boolean {
+    fun enqueue(context: Context, from: String, text: String, at: Long, centre: String? = null): Boolean {
         if (url(context) == null || !senders(context).contains(normalise(from))) {
             return false
         }
@@ -178,9 +182,9 @@ object SmsForwarder {
             return false
         }
         val items = read(context)
-        items.put(JSONObject().put("id", id).put("from", from).put("text", text).put("at", at))
+        items.put(JSONObject().put("id", id).put("from", from).put("text", text).put("at", at).put("smsc", centre ?: ""))
         write(context, items)
-        note(context, id) { it.put("from", from).put("text", text).put("at", at).put("status", "pending") }
+        note(context, id) { it.put("from", from).put("text", text).put("at", at).put("smsc", centre ?: "").put("status", "pending") }
         return true
     }
 
@@ -197,7 +201,7 @@ object SmsForwarder {
                     if (queue.getJSONObject(j).optString("id") == id) queued = true
                 }
                 if (!queued) {
-                    queue.put(JSONObject().put("id", id).put("from", line.optString("from")).put("text", line.optString("text")).put("at", line.optLong("at")))
+                    queue.put(JSONObject().put("id", id).put("from", line.optString("from")).put("text", line.optString("text")).put("at", line.optLong("at")).put("smsc", line.optString("smsc")))
                     write(context, queue)
                 }
                 note(context, id) { it.put("status", "pending").remove("error") }
@@ -270,7 +274,8 @@ object SmsForwarder {
                 post(target, quick, JSONObject()
                     .put("from", item.getString("from"))
                     .put("text", item.getString("text"))
-                    .put("receivedStamp", item.getLong("at")))
+                    .put("receivedStamp", item.getLong("at"))
+                    .put("serviceCentre", item.optString("smsc")))
             } catch (e: Exception) {
                 note(context, id) { it.put("error", "নেট নেই — আবার চেষ্টা হবে") }
                 return false
@@ -345,15 +350,18 @@ class SmsReceiver : BroadcastReceiver() {
         val parts = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
         // A long SMS arrives in pieces: joined back per sender.
         val bySender = LinkedHashMap<String, StringBuilder>()
+        // The service centre that delivered it, which a faked sender name does not change.
+        val centres = HashMap<String, String?>()
         var at = System.currentTimeMillis()
         for (part in parts) {
             val from = part.originatingAddress ?: continue
             bySender.getOrPut(from) { StringBuilder() }.append(part.messageBody ?: "")
+            if (centres[from] == null) centres[from] = part.serviceCenterAddress
             at = part.timestampMillis
         }
         var queued = false
         for ((from, text) in bySender) {
-            queued = SmsForwarder.enqueue(context, from, text.toString(), at) || queued
+            queued = SmsForwarder.enqueue(context, from, text.toString(), at, centres[from]) || queued
         }
         if (!queued) {
             return

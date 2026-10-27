@@ -158,7 +158,9 @@ class Renewals
         $due = $this->dueOf($renewal->client_id);
 
         return DB::transaction(function () use ($renewal, $days, $rate, $due) {
-            $renewal = Renewal::with(['campaign', 'invoice'])->lockForUpdate()->findOrFail($renewal->id);
+            $renewal = Renewal::with('campaign')->lockForUpdate()->findOrFail($renewal->id);
+            // Locked, so a payment being settled finishes before the paid check below.
+            $renewal->setRelation('invoice', $this->lockedInvoice($renewal));
 
             if (! in_array($renewal->status, ['open', 'invoiced', 'declined'], true) || ($renewal->invoice !== null && $renewal->invoice->paid > 0)) {
                 throw new RuntimeException(__('এই renewal আর বদলানো যাবে না।'));
@@ -256,8 +258,10 @@ class Renewals
     public function changeDays(Renewal $renewal, int $days): Invoice
     {
         return DB::transaction(function () use ($renewal, $days) {
-            $renewal = Renewal::with(['campaign', 'invoice.items'])->lockForUpdate()->findOrFail($renewal->id);
-            $invoice = $renewal->invoice;
+            $renewal = Renewal::with('campaign')->lockForUpdate()->findOrFail($renewal->id);
+            // The invoice row is locked too: a payment being settled (Invoices::verify locks it)
+            // finishes first, so a paid invoice is never priced again for more days.
+            $invoice = $this->lockedInvoice($renewal);
 
             if (! in_array($renewal->status, ['invoiced', 'declined'], true) || $invoice === null || $invoice->status === 'void' || $invoice->paid > 0) {
                 throw new RuntimeException(__('এই renewal আর বদলানো যাবে না।'));
@@ -287,22 +291,40 @@ class Renewals
         });
     }
 
+    /** The renewal's invoice, its row locked for this transaction (with its lines). */
+    private function lockedInvoice(Renewal $renewal): ?Invoice
+    {
+        return $renewal->invoice_id ? Invoice::with('items')->lockForUpdate()->find($renewal->invoice_id) : null;
+    }
+
     /** The client ends the contract: the admin hears, Meta is left as it is. */
     public function decline(Renewal $renewal): void
     {
-        if (! in_array($renewal->status, ['open', 'invoiced'], true) || ($renewal->invoice !== null && $renewal->invoice->paid > 0)) {
-            return;
-        }
+        // Checked under the renewal's and the invoice's locks: a payment settling at the same
+        // moment either lands first (and nothing is withdrawn) or finds the invoice void.
+        $declined = DB::transaction(function () use ($renewal) {
+            $fresh = Renewal::lockForUpdate()->findOrFail($renewal->id);
+            $invoice = $this->lockedInvoice($fresh);
 
-        DB::transaction(function () use ($renewal) {
-            if ($renewal->invoice !== null && $renewal->invoice->status !== 'void') {
-                $this->invoices->void($renewal->invoice);
+            if (! in_array($fresh->status, ['open', 'invoiced'], true) || ($invoice !== null && $invoice->paid > 0)) {
+                return false;
+            }
+
+            if ($invoice !== null && $invoice->status !== 'void') {
+                $this->invoices->void($invoice);
             }
 
             // The withdrawn invoice stays linked, so its page still says why; choosing again makes a new one.
-            $renewal->forceFill(['status' => 'declined', 'decided_at' => now()])->save();
+            $fresh->forceFill(['status' => 'declined', 'decided_at' => now()])->save();
+
+            return true;
         });
 
+        if (! $declined) {
+            return;
+        }
+
+        $renewal->refresh();
         $this->tell($renewal, 'declined', self::DECLINED_TITLE);
 
         $renewal->loadMissing('campaign');

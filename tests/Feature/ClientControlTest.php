@@ -144,7 +144,7 @@ it('sends a feature request to the Owners and gives clients the agency WhatsApp'
     $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('contact.whatsapp', 'https://wa.me/8801712345678'));
 });
 
-it('shows what would come back of the unspent dollars at the agency rate, never the commission', function () {
+it('lets the client ask the unspent dollars back without any taka figure built from the agency rate', function () {
     payAhead($this, '1500', '10');
     $fx = Invoices::fxRate();
     $left = collect(app(Books::class)->clients())->firstWhere('id', $this->gffs->id)['credit_left'];
@@ -152,7 +152,9 @@ it('shows what would come back of the unspent dollars at the agency rate, never 
     expect($fx)->toBeGreaterThan(0);
     // The money card counts from this payment: $10 added, nothing spent since today.
     $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.round.paid', 1000)->where('credit.round.spent', 0));
-    $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.refund', (int) floor($left * $fx / 10000) * 10000)); // to ৳100, so the rate stays ours
+    // A taka estimate from our rate would give the rate (and the commission) away: only the dollars go out.
+    $this->actingAs($this->client)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.left', $left)
+        ->where('credit.refundable', true)->missing('credit.refund'));
 });
 
 it('lets the team pause, switch on and budget a campaign from KlokOne, and the client sees who did it', function () {
@@ -190,6 +192,8 @@ it('welcomes a new sign-up, tells them when they are linked, and takes a request
     $karim = User::where('email', 'karim@gffs.test')->sole();
     expect($karim->notifications()->where('data->kind', 'client_welcome')->count())->toBe(1);
 
+    // Only a confirmed email can be linked: they open the link sent to it first.
+    $karim->markEmailAsVerified();
     $this->actingAs($this->owner)->post("/clients/{$this->gffs->id}/portal-users", ['user_id' => $karim->id])->assertRedirect();
     expect($karim->notifications()->where('data->kind', 'client_linked')->count())->toBe(1);
 

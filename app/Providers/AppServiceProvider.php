@@ -6,10 +6,13 @@ use App\Services\ActivityAlerts;
 use App\Support\Access;
 use App\Support\MailSettings;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Activitylog\Models\Activity;
@@ -30,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureRateLimits();
 
         // The mailbox saved in Settings, once something is about to send mail.
         $this->app->resolving('mail.manager', fn () => rescue(fn () => MailSettings::apply(), report: false));
@@ -46,6 +50,20 @@ class AppServiceProvider extends ServiceProvider
         foreach (glob(lang_path('parts/*'), GLOB_ONLYDIR) ?: [] as $dir) {
             app('translator')->addJsonPath($dir);
         }
+    }
+
+    /**
+     * Limits for the public invoice/renewal routes (routes/web.php). Each route gets its own
+     * counter per person (or IP for guests): a bare throttle:N,M shares one counter across
+     * every route, so the invoice page's status poll used to lock out pay and claim.
+     */
+    protected function configureRateLimits(): void
+    {
+        $perRoute = fn (Request $request): string => ($request->route()?->getName() ?? $request->path())
+            .'|'.($request->user()?->getAuthIdentifier() ?? $request->ip());
+
+        RateLimiter::for('public-view', fn (Request $request) => Limit::perMinute(60)->by($perRoute($request)));
+        RateLimiter::for('public-action', fn (Request $request) => Limit::perMinute(12)->by($perRoute($request)));
     }
 
     /**

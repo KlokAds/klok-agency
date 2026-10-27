@@ -157,5 +157,7 @@
     "{amount} credit বাকি আছে।": "{amount} credit left.",
     "কোনো বাকি নেই, credit-ও শেষ।": "Nothing owed, and no credit left.",
     "মোট credit {credit} · খরচ হয়েছে {spent}": "Total credit {credit} · spent {spent}",
-    "এই report-এ ad-এর খরচ Meta-র হিসাবে, USD-তে; পেমেন্ট টাকায়। প্রশ্ন থাকলে {name}-এর সাথে কথা বলুন।": "Ad spend here is Meta's figure, in USD; payments are in taka. Questions: talk to {name}."
+    "এই report-এ ad-এর খরচ Meta-র হিসাবে, USD-তে; পেমেন্ট টাকায়। প্রশ্ন থাকলে {name}-এর সাথে কথা বলুন।": "Ad spend here is Meta's figure, in USD; payments are in taka. Questions: talk to {name}.",
+    "Email confirm হয়নি": "Email not confirmed",
+    "ওঁর email এখনো confirm হয়নি — email-এ যাওয়া link খুলতে বলুন, তারপর যুক্ত করুন।": "Their email isn't confirmed yet. Ask them to open the link sent to their email, then link them."
 }

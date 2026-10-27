@@ -640,48 +640,50 @@ function appSettings(): void {
 
         <!-- Phone: the four places a day's work happens, and the new entry raised in the middle -->
         <!-- Inside the app only: the browser on a phone keeps the web layout -->
+        <!-- A floating bar: the open page lit in the accent, the new entry raised in the middle -->
         <nav
             v-if="inApp"
-            class="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/92 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+            class="no-print pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(10px+env(safe-area-inset-bottom))] lg:hidden"
             :aria-label="t('মূল পাতা')"
         >
             <div
-                class="mx-auto grid h-[64px] max-w-[560px] grid-cols-5 items-end"
+                class="pointer-events-auto mx-auto grid h-[66px] max-w-[520px] grid-cols-5 items-center rounded-[22px] border border-line-2 bg-paper/95 shadow-pop backdrop-blur-md"
             >
                 <template v-for="(tab, i) in tabs" :key="tab.href ?? tab.label">
                     <button
                         v-if="i === 2 && canQuick"
                         type="button"
-                        class="k-accent mx-auto mb-2.5 flex h-13 w-13 flex-col items-center justify-center rounded-2xl"
+                        class="flex h-full flex-col items-center justify-end gap-1 pb-2 text-[12.5px] font-bold text-brand-ink"
                         :aria-label="t('নতুন entry')"
                         @click="quick = true"
                     >
-                        <KIcon name="plus" :size="22" />
-                        <span class="text-[11.5px] leading-none font-bold">{{
-                            t('নতুন')
-                        }}</span>
+                        <span
+                            class="k-accent -mt-8 grid size-[52px] place-items-center rounded-full ring-[5px] ring-paper"
+                            ><KIcon name="plus" :size="24"
+                        /></span>
+                        {{ t('নতুন') }}
                     </button>
                     <component
                         :is="tab.href ? Link : 'button'"
                         v-else
                         :href="tab.href"
                         type="button"
-                        class="flex h-full flex-col items-center justify-center gap-1 pb-1.5 text-[12.5px] font-semibold"
+                        class="flex h-full flex-col items-center justify-center gap-1 text-[12.5px]"
                         :class="
-                            tab.href && isActive(tab.href)
-                                ? 'text-brand-ink'
-                                : 'text-ink-3'
+                            (tab.href ? isActive(tab.href) : menuSheet)
+                                ? 'font-bold text-brand-ink'
+                                : 'font-semibold text-ink-3'
                         "
                         @click="tab.href ? undefined : (menuSheet = true)"
                     >
                         <span
-                            class="grid h-7 w-11 place-items-center rounded-full transition-colors"
+                            class="grid h-8 w-12 place-items-center rounded-full transition-colors"
                             :class="
-                                tab.href &&
-                                isActive(tab.href) &&
-                                'bg-brand-soft'
+                                (tab.href ? isActive(tab.href) : menuSheet)
+                                    ? 'k-accent'
+                                    : ''
                             "
-                            ><KIcon :name="tab.icon" :size="18"
+                            ><KIcon :name="tab.icon" :size="19"
                         /></span>
                         {{ t(tab.label) }}
                     </component>

@@ -74,8 +74,10 @@ class AgencyAlert extends Notification
         $locale = (string) ($notifiable->locale ?? 'bn');
         // The body is Markdown in mail: what a client or visitor typed (a name, a note) must not
         // become a link or heading there.
-        $app['body'] = isset($app['body']) ? addcslashes((string) $app['body'], '\\`*_[]()<>#!~|') : null;
-        $name = $notifiable instanceof User ? trim((string) $notifiable->name) : '';
+        $app['body'] = isset($app['body']) ? self::plain((string) $app['body']) : null;
+        // The reader's name is typed at sign-up by anyone: escaped the same way, so a name
+        // like "[Pay here](https://…)" is shown as text, never as a link or image.
+        $name = $notifiable instanceof User ? self::plain(trim((string) $notifiable->name)) : '';
 
         // A letter, not a log line: what it is about, the title, a greeting, the news, one button.
         return (new MailMessage)
@@ -86,6 +88,13 @@ class AgencyAlert extends Notification
             ->line((string) ($app['body'] ?? ''))
             ->action(__('KlokOne-এ দেখুন', [], $locale), url($app['url'] ?? '/notifications'))
             ->salutation(__('শুভেচ্ছান্তে,', [], $locale));
+    }
+
+    /** Text that Markdown shows as it is: no links, images, headings or emphasis. */
+    private static function plain(string $text): string
+    {
+        // < and > are left to the mail view's {{ }}: escaping them too showed "&lt;" in the email.
+        return MailText::plain($text);
     }
 
     /** The small line above an email's title: what the news is about. */

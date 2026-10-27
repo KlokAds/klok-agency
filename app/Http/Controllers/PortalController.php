@@ -34,6 +34,8 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Fortify\Features;
+use Spatie\Activitylog\Models\Activity;
 
 /**
  * The client portal: a client's own people see their campaigns (spend and results over any
@@ -69,6 +71,11 @@ class PortalController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ], ['phone.regex' => __('১১ সংখ্যার নম্বর দিন, যেমন 01712345678।')]);
 
+        // Anyone can type a client's email here, so the address counts only once the link sent to
+        // it is opened, and the Owner can link only such an account (ClientController). The check is
+        // on in config/fortify.php; taking it out there brings back the old unchecked sign-up.
+        $checks = Features::enabled(Features::emailVerification());
+
         $user = User::create([
             'name' => $data['name'],
             'company' => $data['company'] ?? null,
@@ -76,10 +83,13 @@ class PortalController extends Controller
             'email' => Str::lower($data['email']),
             'password' => $data['password'],
             'is_active' => true,
-            // Nothing is shown until the Owner links them, and that is the check of who they are.
-            'email_verified_at' => now(),
+            'email_verified_at' => $checks ? null : now(),
         ]);
         $user->assignRole(Access::CLIENT);
+
+        if ($checks) {
+            rescue(fn () => $user->sendEmailVerificationNotification());
+        }
 
         $notifier->send(null, new AgencyAlert('portal_signup', self::SIGNUP_TITLE, '{name} · {company} · {phone}', [
             'name' => $user->name, 'company' => $user->company ?? '—', 'phone' => $user->phone,
@@ -107,7 +117,7 @@ class PortalController extends Controller
         $campaigns = Campaign::with('account:id,platform,currency,problem')->where('client_id', $client->id)->get();
         $ids = $campaigns->pluck('id');
         $today = CarbonImmutable::now()->startOfDay();
-        $week = CampaignDay::whereIn('campaign_id', $ids)->whereDate('day', '>=', $today->subDays(6)->toDateString())->get()
+        $week = $this->theirDays(CampaignDay::whereIn('campaign_id', $ids)->whereDate('day', '>=', $today->subDays(6)->toDateString())->get(), $this->shownFrom($campaigns, $client))
             ->groupBy(fn (CampaignDay $d) => $d->day->toDateString());
         $due = Invoice::where('client_id', $client->id)->shared()->whereIn('status', Invoice::PAYABLE)->get();
 
@@ -121,11 +131,10 @@ class PortalController extends Controller
                 'meta' => app(AdAccountBalances::class)->client($client->id),
                 'daily' => (int) ($figure['daily_usd'] ?? 0),
                 'days_left' => $figure['days_left'] ?? null,
-                // Asked back now: the dollars not spent yet at the agency's own dollar rate — the
-                // commission is not refunded (an estimate, whole taka; the agency confirms).
-                // Rounded to ৳100, so the agency's own rate cannot be read back from it.
-                'refund' => ($left = (int) ($figure['credit_left'] ?? 0)) >= CampaignLimits::RUN_OUT_MIN && ($fx = Invoices::fxRate())
-                    ? (int) floor($left * $fx / 10000) * 10000 : null,
+                // Whether the unspent dollars can be asked back. Only the dollars are shown: any taka
+                // figure worked out from our dollar rate would let the client read that rate (and so
+                // our commission) back from it, so the agency confirms the taka amount itself.
+                'refundable' => (int) ($figure['credit_left'] ?? 0) >= CampaignLimits::RUN_OUT_MIN,
                 'round' => $this->creditRound($client, (int) ($figure['credit_left'] ?? 0)),
                 // What a dollar costs them now, so the top-up form can say what their taka buys.
                 'rate' => Invoices::clientRate(),
@@ -177,9 +186,12 @@ class PortalController extends Controller
         $client = $this->client($request);
         $campaigns = Campaign::with('account:id,platform,currency,problem')->where('client_id', $client->id)->get();
         $ids = $campaigns->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $shown = $this->shownFrom($campaigns, $client);
+        // "From the start": the earliest day they may see, so another client's days never set it.
+        $first = collect([$this->firstDay(array_values(array_diff($ids, array_keys($shown)))), ...array_values($shown)])->filter()->min();
         // Today once something was spent today; the first hours of a day open on yesterday instead.
-        [$from, $to, $range] = $this->range($request, $this->firstDay($ids), CampaignStats::openingDay($ids));
-        $days = CampaignDay::whereIn('campaign_id', $campaigns->pluck('id'))->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->get();
+        [$from, $to, $range] = $this->range($request, $first, CampaignStats::openingDay($ids));
+        $days = $this->theirDays(CampaignDay::whereIn('campaign_id', $ids)->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->get(), $shown);
 
         $rows = $campaigns->map(function (Campaign $c) use ($days) {
             $mine = $days->where('campaign_id', $c->id);
@@ -318,8 +330,9 @@ class PortalController extends Controller
     {
         $client = $this->client($request);
         abort_unless($campaign->client_id === $client->id, 404);
-        [$from, $to, $range] = $this->range($request, $this->firstDay([$campaign->id]));
-        $days = CampaignDay::where('campaign_id', $campaign->id)->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->orderBy('day')->get();
+        $shown = $this->shownFrom(collect([$campaign]), $client);
+        [$from, $to, $range] = $this->range($request, $shown[$campaign->id] ?? $this->firstDay([$campaign->id]));
+        $days = $this->theirDays(CampaignDay::where('campaign_id', $campaign->id)->whereDate('day', '>=', $from->toDateString())->whereDate('day', '<=', $to->toDateString())->orderBy('day')->get(), $shown);
 
         return Inertia::render('portal/Campaign', [
             'campaign' => [...$this->campaignCard($campaign->load('account:id,platform,currency,problem')), 'started' => $campaign->start_at?->setTimezone(config('app.timezone'))->format('j M Y')],
@@ -422,7 +435,7 @@ class PortalController extends Controller
         return $this->control($request, $campaign, fn () => $limits->clientBudget($campaign, (int) round((float) $data['budget'] * 100), $request->user()), __('দৈনিক budget বদলানো হয়েছে।'));
     }
 
-    /** One of the client's own changes on Meta: their campaign, a Meta one in USD, Pilot's answer shown as it is. */
+    /** One of the client's own changes on Meta: their campaign, a Meta one in USD. */
     private function control(Request $request, Campaign $campaign, \Closure $change, string $done): RedirectResponse
     {
         $client = $this->client($request);
@@ -432,6 +445,14 @@ class PortalController extends Controller
         try {
             $change();
         } catch (\RuntimeException $e) {
+            // CampaignLimits' own refusals are written for the client. Anything from deeper down
+            // (Pilot's or Meta's reply, a missing token) can name our ad account or its billing, so
+            // it goes to the error log and the client gets a plain line.
+            if ($e->getFile() !== (new \ReflectionClass(CampaignLimits::class))->getFileName()) {
+                report($e);
+                throw ValidationException::withMessages(['control' => __('এখন বদলানো গেল না — একটু পরে আবার চেষ্টা করুন, না হলে Klok Ads-কে জানান।')]);
+            }
+
             throw ValidationException::withMessages(['control' => $e->getMessage()]);
         }
 
@@ -569,6 +590,40 @@ class PortalController extends Controller
     private function firstDay(array $campaignIds): ?CarbonImmutable
     {
         return CampaignStats::firstDay($campaignIds);
+    }
+
+    /**
+     * A client sees each campaign's whole life (campaigns:read-history), except one that was once
+     * another client's: its days before it was billed to this client were the other client's, so
+     * those show only from bill_from (and none at all without one).
+     *
+     * @param  Collection<int, Campaign>  $campaigns
+     * @return array<int, CarbonImmutable> campaign id => the first day shown, for those cut short
+     */
+    private function shownFrom(Collection $campaigns, Client $client): array
+    {
+        $before = Activity::where('log_name', 'Campaign')->where('subject_type', (new Campaign)->getMorphClass())
+            ->whereIn('subject_id', $campaigns->pluck('id'))->get(['subject_id', 'attribute_changes'])
+            ->filter(function (Activity $a) use ($client) {
+                $old = $a->attribute_changes?->get('old')['client_id'] ?? null;
+
+                return $old !== null && (int) $old !== $client->id;
+            })
+            ->pluck('subject_id')->map(fn ($id) => (int) $id)->all();
+
+        return $campaigns->filter(fn (Campaign $c) => in_array($c->id, $before, true))
+            ->mapWithKeys(fn (Campaign $c) => [$c->id => $c->bill_from?->startOfDay() ?? CarbonImmutable::now()->addDay()->startOfDay()])
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, CampaignDay>  $days
+     * @param  array<int, CarbonImmutable>  $shown  from shownFrom()
+     * @return Collection<int, CampaignDay>
+     */
+    private function theirDays(Collection $days, array $shown): Collection
+    {
+        return $days->filter(fn (CampaignDay $d) => ! isset($shown[$d->campaign_id]) || $d->day->gte($shown[$d->campaign_id]))->values();
     }
 
     /**

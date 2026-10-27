@@ -6,9 +6,11 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\PaymentSms;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\Invoices;
 use App\Support\Money;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +32,9 @@ class PaymentMatcher
 
     /** SMS older than this are not used to confirm TrxID claims. */
     public const WINDOW_DAYS = 7;
+
+    /** Service centres kept per sender: the ones its genuine SMS last came through. */
+    public const CENTRES_KEPT = 5;
 
     public function __construct(private Invoices $invoices) {}
 
@@ -95,8 +100,10 @@ class PaymentMatcher
             return false;
         }
 
+        // A held SMS (did not look genuine) is only ever matched by the Owner.
         $sms = PaymentSms::query()
             ->where('status', 'unmatched')
+            ->where('held', false)
             ->when($payment->method !== PaymentMethod::BanglaQr, fn (Builder $query) => $query->where('provider', $payment->method->value));
 
         if (filled($payment->reference)) {
@@ -104,12 +111,17 @@ class PaymentMatcher
                 ->where('received_at', '>=', now()->subDays(self::WINDOW_DAYS))
                 ->first();
 
-            // Someone else's TrxID, typed on this invoice: the money came from a number that is
-            // not this client's — it waits for the Owner instead.
-            if ($sms !== null && filled($sms->payer_number) && ! $this->payerOk($payment, $sms->payer_number)) {
+            // Someone else's TrxID, typed on this invoice: it waits for the Owner instead.
+            if ($sms !== null && ! $this->claimOk($payment, $sms)) {
                 $sms = null;
             }
         } else {
+            // No payer number (Bangla QR) leaves only the amount to go by, and money already here came
+            // before the session opened: someone else's. Its own SMS settles it on arrival (forSms).
+            if (blank($payment->sender)) {
+                return false;
+            }
+
             $candidates = $sms->whereBetween('amount', [$payment->amount - $this->shortBy($payment), $payment->amount])
                 ->where('received_at', '>=', $payment->created_at->subMinutes(self::SESSION_MINUTES))
                 ->get()
@@ -125,21 +137,18 @@ class PaymentMatcher
     /** A new SMS arrived: settle the TrxID claim or the open session it belongs to. */
     public function forSms(PaymentSms $sms): bool
     {
-        if ($sms->status !== 'unmatched' || $sms->trx_id === null || $sms->amount === null) {
+        // A held SMS (did not look genuine) is only ever matched by the Owner.
+        if ($sms->status !== 'unmatched' || $sms->held || $sms->trx_id === null || $sms->amount === null) {
             return false;
         }
 
         $methods = [$sms->provider, PaymentMethod::BanglaQr->value];
 
-        $claim = InvoicePayment::query()
-            ->where('status', 'pending')
-            ->whereIn('method', $methods)
-            ->whereRaw('upper(trim(reference)) = ?', [$sms->trx_id])
-            ->oldest()
-            ->first();
+        // The same checks as a claim made after the SMS (forPayment): which came first must not matter.
+        $claim = $this->claimFor($sms);
 
         if ($claim !== null) {
-            return $this->settle($claim, $sms);
+            return $this->claimOk($claim, $sms) && $this->settle($claim, $sms);
         }
 
         // Already written by hand with this TrxID: the SMS is that payment's proof, not a new one.
@@ -154,7 +163,8 @@ class PaymentMatcher
             return true;
         }
 
-        $sessions = InvoicePayment::query()
+        // With its invoice: the payer checks below read the client of each session.
+        $sessions = InvoicePayment::with('invoice')
             ->where('status', 'pending')
             ->whereIn('method', $methods)
             ->whereNull('reference')
@@ -168,6 +178,13 @@ class PaymentMatcher
 
         // Prefer the session on the exact wallet, then the exact amount; never guess between equals.
         $exact = $sessions->filter(fn (InvoicePayment $p) => $p->method->value === $sms->provider);
+
+        // A session on this wallet waits for exactly this money but the number differs: it is most
+        // likely that client's payment, so it waits for the Owner and never pays a Bangla QR session.
+        if ($exact->isEmpty() && $this->nearMatch($sms) !== null) {
+            return false;
+        }
+
         $pool = $exact->isNotEmpty() ? $exact : $sessions;
         $same = $pool->where('amount', $sms->amount);
         $session = $same->count() === 1 ? $same->first() : ($same->isEmpty() && $pool->count() === 1 ? $pool->first() : null);
@@ -181,7 +198,7 @@ class PaymentMatcher
      */
     public function nearMatch(PaymentSms $sms): ?InvoicePayment
     {
-        if ($sms->status !== 'unmatched' || $sms->amount === null) {
+        if ($sms->status !== 'unmatched' || $sms->held || $sms->amount === null) {
             return null;
         }
 
@@ -195,6 +212,100 @@ class PaymentMatcher
             ->filter(fn (InvoicePayment $p) => in_array((int) $sms->amount, [(int) $p->amount, (int) $p->amount - (int) $p->charge], true));
 
         return $open->count() === 1 ? $open->first() : null;
+    }
+
+    /** The pending TrxID claim (typed by a client) this SMS's TrxID belongs to, if any. */
+    public function claimFor(PaymentSms $sms): ?InvoicePayment
+    {
+        if ($sms->trx_id === null) {
+            return null;
+        }
+
+        return InvoicePayment::with('invoice')
+            ->where('status', 'pending')
+            ->whereIn('method', [$sms->provider, PaymentMethod::BanglaQr->value])
+            ->whereRaw('upper(trim(reference)) = ?', [$sms->trx_id])
+            ->oldest()
+            ->first();
+    }
+
+    /**
+     * A TrxID claim may take this SMS's money: it came from a number this client may pay from
+     * (never one known as another client's), and the claim did not ask for far less than came
+     * in — a ৳0 claim on someone else's TrxID would otherwise get all of it.
+     */
+    public function claimOk(InvoicePayment $claim, PaymentSms $sms): bool
+    {
+        if (filled($sms->payer_number) && ! $this->payerOk($claim, $sms->payer_number)) {
+            return false;
+        }
+
+        return (int) $claim->amount * 2 >= (int) $sms->amount;
+    }
+
+    /**
+     * Whether an SMS from a payment sender looks like that sender's own: it came through a service
+     * centre already seen for it, or its Balance is the last known one moved by just this money.
+     * A sender with no centre known yet is taken as before, and its SMS teaches the centre. A
+     * genuine SMS keeps its centre and balance for the next one.
+     *
+     * @param  array{0: int, 1: int}|null  $change  poisha the balance moves by: lowest, highest
+     */
+    public function genuine(string $sender, ?string $centre, ?int $balance, ?array $change, CarbonInterface $at): bool
+    {
+        $key = PaySettings::sender($sender);
+        $known = self::centres()[$key] ?? [];
+        $last = self::balances()[$key] ?? null;
+
+        $fits = $balance !== null && $change !== null && $last !== null && $at->getTimestamp() >= $last['at']
+            && $balance - $last['b'] >= $change[0] && $balance - $last['b'] <= $change[1];
+
+        $genuine = $known === [] || ($centre !== null && in_array($centre, $known, true)) || $fits;
+
+        if ($genuine) {
+            $this->learn($sender, $centre, $balance, $at);
+        }
+
+        return $genuine;
+    }
+
+    /** Remembers a genuine SMS's service centre and balance (also a held one the Owner matched). */
+    public function learn(string $sender, ?string $centre, ?int $balance, CarbonInterface $at): void
+    {
+        $key = PaySettings::sender($sender);
+
+        if ($key === '') {
+            return;
+        }
+
+        $centres = self::centres();
+        if (filled($centre) && ! in_array($centre, $centres[$key] ?? [], true)) {
+            $centres[$key] = array_slice([...$centres[$key] ?? [], (string) $centre], -self::CENTRES_KEPT);
+            Setting::putQuietly('sms_centres', json_encode($centres, JSON_THROW_ON_ERROR));
+        }
+
+        // An older SMS sent late (the phone was offline) does not wind the balance back.
+        $balances = self::balances();
+        if ($balance !== null && $at->getTimestamp() >= ($balances[$key]['at'] ?? 0)) {
+            $balances[$key] = ['b' => $balance, 'at' => $at->getTimestamp()];
+            Setting::putQuietly('sms_balances', json_encode($balances, JSON_THROW_ON_ERROR));
+        }
+    }
+
+    /** @return array<string, list<string>> */
+    private static function centres(): array
+    {
+        $centres = json_decode((string) Setting::get('sms_centres', ''), true);
+
+        return is_array($centres) ? $centres : [];
+    }
+
+    /** @return array<string, array{b: int, at: int}> */
+    private static function balances(): array
+    {
+        $balances = json_decode((string) Setting::get('sms_balances', ''), true);
+
+        return is_array($balances) ? $balances : [];
     }
 
     /**
@@ -250,7 +361,16 @@ class PaymentMatcher
             'status' => 'pending',
         ]);
 
-        return $this->settle($payment, $sms, $by);
+        if (! $this->settle($payment, $sms, $by)) {
+            return false;
+        }
+
+        // The Owner checked a held SMS and it was real: its centre and balance count from now on.
+        if ($sms->held) {
+            $this->learn($sms->sender, $sms->service_centre, $sms->balance, $sms->received_at);
+        }
+
+        return true;
     }
 
     public function expireStale(): void
@@ -312,14 +432,19 @@ class PaymentMatcher
         return $owner !== null && $owner !== (int) $payment->invoice?->client_id;
     }
 
-    /** Which client a number is known as (their phone, a portal person's, or a verified payment's). */
+    /**
+     * Which client a number is known as: the client's phone (set by us), then a verified payment's
+     * sender (real money came from it), and only then a portal person's phone. A portal phone is
+     * typed by the client themself and never checked, so it must not claim a number another
+     * client has already paid from.
+     */
     public static function clientOfNumber(string $digits): ?int
     {
         $like = '%'.$digits;
         $client = Client::where('phone', 'like', $like)->value('id')
-            ?? User::whereNotNull('client_id')->where('phone', 'like', $like)->value('client_id')
             ?? InvoicePayment::where('invoice_payments.status', 'verified')->where('invoice_payments.sender', 'like', $like)
-                ->join('invoices', 'invoices.id', '=', 'invoice_payments.invoice_id')->value('invoices.client_id');
+                ->join('invoices', 'invoices.id', '=', 'invoice_payments.invoice_id')->value('invoices.client_id')
+            ?? User::whereNotNull('client_id')->where('phone', 'like', $like)->value('client_id');
 
         return $client !== null ? (int) $client : null;
     }

@@ -12,10 +12,13 @@ use App\Services\Notifier;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -23,10 +26,21 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
-        health: '/up',
+        // Uptime check: a plain "OK" with our security headers, not Laravel's default health
+        // page (that one pulls a script from a CDN onto this site, outside our CSP).
+        then: function (): void {
+            Route::get('/up', function () {
+                Event::dispatch(new DiagnosingHealth);
+
+                return response('OK', 200, ['Content-Type' => 'text/plain; charset=UTF-8', 'Cache-Control' => 'no-store']);
+            })->middleware(SecurityHeaders::class);
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        // The uptime check keeps answering while the site is in maintenance (as Laravel's own did).
+        $middleware->preventRequestsDuringMaintenance(except: ['/up']);
 
         // The SMS forwarder phone has no session; its secret URL is its key.
         $middleware->preventRequestForgery(except: ['hooks/*']);

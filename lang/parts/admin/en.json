@@ -239,5 +239,8 @@
     "Email বদলান": "Change email",
     "নতুন email-এ একটা link যাবে; ওটা খুললে তবেই বদলাবে। পুরোনো email-ও খবর পাবে।": "A link goes to the new email; it changes only when that is opened. The old email is told too.",
     "নতুন email": "New email",
-    "Link পাঠান": "Send link"
+    "Link পাঠান": "Send link",
+    "Client role বদলানো বা মোছা যায় না।": "The Client role cannot be changed or deleted.",
+    "Owner-এর account শুধু Owner বদলাতে পারে।": "Only an Owner can change an Owner's account.",
+    "সংরক্ষণ হয়েছে। Server বদলেছে, তাই আগের password মুছে দেওয়া হয়েছে — নতুন server-এর password আবার দিন।": "Saved. The server changed, so the old password was deleted. Enter the new server's password again."
 }

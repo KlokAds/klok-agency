@@ -44,6 +44,11 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'same-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
         $response->headers->remove('X-Powered-By');
+        // PHP adds its own X-Powered-By (expose_php) outside the response; take that one out too.
+        // The sure fix is expose_php = Off in the server's PHP settings.
+        if (! headers_sent()) {
+            header_remove('X-Powered-By');
+        }
 
         if ($request->isSecure()) {
             $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
@@ -51,8 +56,11 @@ class SecurityHeaders
         }
 
         // Financial pages must not sit in shared caches or the back/forward cache.
+        // The offline worker (public/sw.js) keeps a page only for this user, and drops the
+        // kept pages when another user signs in or the answer comes back signed out.
         if ($request->user()) {
             $response->headers->set('Cache-Control', 'no-store, private');
+            $response->headers->set('X-Kept-For', (string) $request->user()->getAuthIdentifier());
         }
 
         return $response;

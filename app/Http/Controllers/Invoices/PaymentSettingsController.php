@@ -10,6 +10,7 @@ use App\Payments\BanglaQr;
 use App\Payments\PaymentMethod;
 use App\Payments\PaySettings;
 use App\Payments\SmsParser;
+use App\Support\Access;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -190,9 +191,13 @@ class PaymentSettingsController extends Controller
         ]);
     }
 
-    /** A fresh forwarder URL; the old one stops working at once. */
+    /**
+     * A fresh forwarder URL; the old one stops working at once. Owner only, as on the phone: the
+     * URL marks invoices paid from a payment SMS, so whoever holds it could fake a payment.
+     */
     public function token(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->hasRole(Access::OWNER), 403);
         $token = Str::random(40);
         Setting::put('sms_device_token', Hash::make($token));
         Setting::putQuietly('sms_last_seen', null);
@@ -205,6 +210,7 @@ class PaymentSettingsController extends Controller
 
     public function disconnect(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->hasRole(Access::OWNER), 403);
         Setting::put('sms_device_token', null);
         activity('Setting')->causedBy($request->user())->log('sms forwarder turned off');
         $this->toast(__('SMS forwarder বন্ধ করা হয়েছে।'));

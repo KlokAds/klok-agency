@@ -194,5 +194,8 @@
     "এই নম্বরটা অন্য একটা account-এর — আপনার নিজের নম্বর দিন।": "That number belongs to another account — enter your own.",
     "Wallet থেকে client-এর নম্বরে টাকা গেছে — ফেরত কি?": "Money went from the wallet to a client’s number — a refund?",
     "{amount} → {to} · Invoice {number} — ফেরত হলে payment-এ \"Refund\" দিন": "{amount} → {to} · Invoice {number} — if it was a refund, press \"Refund\" on the payment",
-    "এই client-এর কোনো পাওনা নেই।": "This client owes nothing."
+    "এই client-এর কোনো পাওনা নেই।": "This client owes nothing.",
+    "পেমেন্ট SMS আসল কিনা যাচাই করুন": "Check whether this payment SMS is genuine",
+    "{amount} · {sender} · TrxID {trx} — অচেনা পথে এসেছে; wallet-এ টাকা দেখে তবেই মেলান": "{amount} · {sender} · TrxID {trx}: came by an unfamiliar route. Match it only after you see the money in the wallet.",
+    "{amount} · {from} · Invoice {number} — এই TrxID দাবি করা হয়েছে, কিন্তু নম্বর বা টাকা মেলেনি": "{amount} · {from} · Invoice {number}: this TrxID was claimed, but the number or amount didn't match."
 }

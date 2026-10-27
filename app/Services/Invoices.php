@@ -211,6 +211,15 @@ class Invoices
                 return false;
             }
 
+            // Money already in the book pays one invoice once: a double submit (or another invoice)
+            // that got here first has linked it, so it is not counted again.
+            if ($existing !== null && (
+                ! BdtEntry::whereKey($existing->id)->lockForUpdate()->exists()
+                || InvoicePayment::where('bdt_entry_id', $existing->id)->whereKeyNot($fresh->id)->lockForUpdate()->exists()
+            )) {
+                return false;
+            }
+
             $method = $fresh->method;
             $day = $date ?? now()->toDateString();
             $place = $wallet ?? $method->wallet();
@@ -228,9 +237,13 @@ class Invoices
                     $qrFee = PaySettings::qrFee($received);
                 }
             }
-            // The client's payment charge is only what came in beyond the invoice's due, so a
-            // client who sent just the due still pays the invoice in full.
-            $charge = min((int) $fresh->charge, max(0, $received - $invoice->due()));
+            // The client's payment charge is only what came in beyond what this payment was for: the
+            // invoice's due, or the smaller part a part payment was opened for. So a client who sent
+            // just the due still pays the invoice in full, and a part payment keeps its charge
+            // instead of counting it toward the invoice. Never more than this way's charge on all
+            // that arrived (a claim carries the charge on the whole due).
+            $base = min($invoice->due(), max(0, (int) $fresh->amount - (int) $fresh->charge));
+            $charge = min((int) $fresh->charge, PaySettings::charge($method, $received), max(0, $received - $base));
             $arrived = $received;
             $received -= $charge;
             $paid = $invoice->paid + $received;
@@ -354,7 +367,8 @@ class Invoices
                 return false;
             }
 
-            $share = (int) (BdtEntry::find($fresh->bdt_entry_id)->amount ?? 0);
+            // Its row may already be in Trash: the invoice still gets its share back.
+            $share = (int) (BdtEntry::withTrashed()->find($fresh->bdt_entry_id)->amount ?? 0);
             BdtEntry::whereKey(array_filter([$fresh->bdt_entry_id, $fresh->charge_entry_id, $fresh->fee_entry_id]))->get()->each->delete();
 
             $paid = max(0, $invoice->paid - $share);
@@ -392,6 +406,50 @@ class Invoices
         ], ['url' => route('invoice.public', $invoice->public_token, false)]));
 
         return true;
+    }
+
+    /**
+     * The BDT book row behind a confirmed payment is being deleted (a payment written by mistake):
+     * the payment is cancelled with its charge and QR fee rows, and the invoice is due again by
+     * what that row paid. Nothing to do for a row no confirmed payment stands on.
+     */
+    public function entryDeleted(BdtEntry $entry): void
+    {
+        $payment = InvoicePayment::where('bdt_entry_id', $entry->id)->where('status', 'verified')->first();
+
+        if ($payment === null) {
+            return;
+        }
+
+        DB::transaction(function () use ($payment, $entry) {
+            $fresh = InvoicePayment::lockForUpdate()->findOrFail($payment->id);
+            /** @var Invoice $invoice */
+            $invoice = Invoice::lockForUpdate()->findOrFail($fresh->invoice_id);
+
+            if ($fresh->status !== 'verified') {
+                return;
+            }
+
+            BdtEntry::whereKey(array_filter([$fresh->charge_entry_id, $fresh->fee_entry_id]))->get()->each->delete();
+
+            $paid = max(0, $invoice->paid - (int) $entry->amount);
+            $invoice->forceFill([
+                'paid' => $paid,
+                'status' => $paid >= $invoice->total ? 'paid' : ($paid > 0 ? 'partial' : 'sent'),
+                'paid_at' => $paid >= $invoice->total ? $invoice->paid_at : null,
+            ])->save();
+
+            // Unlinked, so the row (if brought back from Trash) can pay an invoice again.
+            $fresh->forceFill([
+                'status' => 'rejected',
+                'bdt_entry_id' => null,
+                'note' => trim(($fresh->note ? $fresh->note.' · ' : '').'BDT entry deleted '.now()->toDateString()),
+            ])->save();
+
+            activity('Invoice')->performedOn($invoice)->withProperties([
+                'number' => $invoice->number, 'payment' => $fresh->id, 'amount' => $entry->amount, 'bdt_entry_id' => $entry->id,
+            ])->log('payment entry deleted');
+        });
     }
 
     /** A client sent a TrxID / bank reference nobody could confirm yet. */

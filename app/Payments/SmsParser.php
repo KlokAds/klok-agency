@@ -10,7 +10,8 @@ use App\Support\Money;
  *
  * Only SMS from the wallets' official sender IDs (and the bank sender IDs
  * set in Settings → Payment) are trusted, so a client can't fake a payment
- * by texting a look-alike message from an ordinary phone number.
+ * by texting a look-alike message from an ordinary phone number. A forged
+ * sender ID is caught by the hook's service-centre and balance checks.
  */
 class SmsParser
 {
@@ -92,7 +93,7 @@ class SmsParser
         $amount = preg_match("/send\\s*money\\s+(?:Tk|BDT)\\.?\\s*{$number}/i", $body, $m) || preg_match("/Amount:?\\s*(?:Tk|BDT)\\.?\\s*{$number}/i", $body, $m)
             ? Money::toMinor($m[1]) : null;
         $to = preg_match('/\b(?:to|Receiver:?|Recipient:?)\s*(\+?8?8?01[3-9]\d{8})/i', $body, $t) ? $t[1] : null;
-        $fee = preg_match("/Fee:?\\s*(?:Tk|BDT)\\.?\\s*{$number}/i", $body, $f) ? (int) Money::toMinor($f[1]) : 0;
+        $fee = $this->fee($body);
         $trxId = $this->trxId($body);
 
         if ($amount === null || $amount <= 0 || $to === null || $trxId === null) {
@@ -100,6 +101,23 @@ class SmsParser
         }
 
         return ['provider' => $provider, 'amount' => $amount, 'to' => $to, 'fee' => $fee, 'trx_id' => $trxId];
+    }
+
+    /** Poisha: the "Fee Tk 5.00" an SMS shows, 0 without one. */
+    public function fee(string $body): int
+    {
+        return preg_match('/Fee:?\s*(?:Tk|BDT)\.?\s*([\d,]+(?:\.\d{1,2})?)/i', $body, $m) ? (int) Money::toMinor($m[1]) : 0;
+    }
+
+    /**
+     * Poisha: the account's balance after this transaction ("Balance Tk 1,500.00", "Avl Bal:
+     * BDT 12,000.00"), or null. A forger does not know it, so it helps tell a genuine SMS.
+     */
+    public function balance(string $body): ?int
+    {
+        $label = '(?:Avl\.?\s*Bal(?:ance)?|Available\s+Balance|Current\s+Balance|Balance|Bal)';
+
+        return preg_match("/\\b{$label}\\.?\\s*(?:is\\s*)?:?\\s*(?:Tk|BDT)\\.?\\s*([\\d,]+(?:\\.\\d{1,2})?)/i", $body, $m) ? Money::toMinor($m[1]) : null;
     }
 
     /** Money coming in, not a Send Money / Cash Out / Payment the account itself made. */

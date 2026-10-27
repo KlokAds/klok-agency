@@ -4,15 +4,18 @@ namespace App\Http\Controllers\Books;
 
 use App\Http\Controllers\Controller;
 use App\Models\BdtEntry;
+use App\Models\InvoicePayment;
 use App\Models\Wallet;
 use App\Services\Books;
 use App\Services\CampaignBilling;
+use App\Services\Invoices;
 use App\Support\Lookups;
 use App\Support\Money;
 use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -116,6 +119,16 @@ class BdtEntryController extends Controller
         $this->ensureEditable($bdt);
         $data = $this->validated($request, $bdt);
 
+        // An invoice's payment: what it paid is on the invoice too, so its money stays as it is
+        // (the date, wallet and words can still be fixed).
+        if (InvoicePayment::where('bdt_entry_id', $bdt->id)->where('status', 'verified')->exists()) {
+            foreach (['amount', 'client_id', 'category', 'usd_credit'] as $key) {
+                if (array_key_exists($key, $data) && (string) $data[$key] !== (string) $bdt->{$key}) {
+                    throw ValidationException::withMessages(['entry' => __('এটা একটা invoice-এর পেমেন্ট — টাকা বদলাতে হলে row-টা মুছে invoice-এ আবার পেমেন্ট লিখুন।')]);
+                }
+            }
+        }
+
         if ($request->boolean('clear_review')) {
             $data['review_note'] = null;
         }
@@ -132,13 +145,17 @@ class BdtEntryController extends Controller
         return back();
     }
 
-    public function destroy(BdtEntry $bdt): RedirectResponse
+    public function destroy(BdtEntry $bdt, Invoices $invoices): RedirectResponse
     {
         $this->ensureEditable($bdt, true);
 
-        // Spend this payment settled goes back to pending.
-        $bdt->settles()->get()->each->update(['status' => 'pending', 'settled_by_id' => null]);
-        $bdt->delete();
+        DB::transaction(function () use ($bdt, $invoices) {
+            // Spend this payment settled goes back to pending.
+            $bdt->settles()->get()->each->update(['status' => 'pending', 'settled_by_id' => null]);
+            // An invoice's payment: the invoice is due again by what this row paid.
+            $invoices->entryDeleted($bdt);
+            $bdt->delete();
+        });
 
         // A payment or refund carrying ad credit: the client's spend is funded again.
         if ($bdt->usd_credit !== null && $bdt->client_id !== null) {

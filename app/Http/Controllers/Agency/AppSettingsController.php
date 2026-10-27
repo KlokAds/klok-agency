@@ -118,6 +118,8 @@ class AppSettingsController extends Controller
     public function destroyDevice(Request $request, AppDevice $device): RedirectResponse
     {
         if ($device->sms_forwarder) {
+            // The Owner's own payment-SMS phone: only the Owner takes it away.
+            abort_unless($request->user()?->hasRole(Access::OWNER), 403);
             // That phone no longer forwards: its secret URL stops working.
             Setting::put('sms_device_token', null);
         }

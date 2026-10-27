@@ -41,7 +41,7 @@ const props = defineProps<{
         meta?: { charged: number; uncharged: number };
         daily: number;
         days_left: number | null;
-        refund?: number | null;
+        refundable?: boolean;
         rate?: number | null;
         topup_min?: number;
         owed?: number;
@@ -281,17 +281,6 @@ const low = computed(
                     :class="credit.left <= 0 ? 'text-out' : 'text-in'"
                     >{{ money(credit.left, 'usd') }}</span
                 >
-                <!-- Asked back now: at our dollar rate; the commission stays. -->
-                <span
-                    v-if="credit.refund"
-                    class="num text-[13px] text-ink-3"
-                    :title="t('আমাদের ডলার রেটে; commission ফেরতযোগ্য নয়')"
-                    >{{
-                        t('ফেরত ≈ {amount}', {
-                            amount: money(credit.refund, 'bdt'),
-                        })
-                    }}</span
-                >
             </p>
             <!-- Of what was spent: Meta has charged this much (final); the rest settles on the charge. -->
             <p
@@ -357,7 +346,7 @@ const low = computed(
                     >{{ t('Credit যোগ করুন') }}</KButton
                 >
                 <KButton
-                    v-if="credit.refund"
+                    v-if="credit.refundable"
                     size="sm"
                     variant="plain"
                     @click="refundOpen = true"
@@ -790,16 +779,12 @@ const low = computed(
         v-model="refundOpen"
         width="md"
         :title="t('বাকি টাকা ফেরত চান')"
-        :subtitle="
-            credit.refund
-                ? `${money(credit.left, 'usd')} ≈ ${money(credit.refund, 'bdt')}`
-                : undefined
-        "
+        :subtitle="money(credit.left, 'usd')"
     >
         <p class="text-[14px] text-ink-3">
             {{
                 t(
-                    'আমাদের ডলার রেটে, commission বাদে — চূড়ান্ত অঙ্ক Klok Ads নিশ্চিত করবে।',
+                    'এই ডলার কত টাকায় ফেরত হবে, Klok Ads হিসাব করে জানিয়ে দেবে।',
                 )
             }}
         </p>

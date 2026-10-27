@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\ProfileController;
 use App\Models\Account;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
@@ -16,9 +17,12 @@ use App\Services\Invoices;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 
 beforeEach(function () {
     $this->seed([AccessSeeder::class, BooksSeeder::class]);
@@ -46,7 +50,13 @@ function signUp(): User
         'password' => 'secret-pass-1', 'password_confirmation' => 'secret-pass-1',
     ])->assertRedirect('/portal');
 
-    return User::where('email', 'rahim@gffs.test')->sole();
+    // They open the link sent to their email: only a confirmed address can be linked to a client
+    // or see the portal (PortalSecurityTest checks the link itself).
+    $user = User::where('email', 'rahim@gffs.test')->sole();
+    $user->email_verified_at ??= now();
+    $user->save();
+
+    return $user;
 }
 
 it('lets a client sign up, waits for the Owner, and keeps them out of the books', function () {
@@ -177,16 +187,28 @@ it('lets a client change their own name, email, phone and password, and tells th
         'name' => 'Akbor Hossain', 'email' => 'akbor@gffs.test', 'phone' => '01812345678', 'company' => 'GFFS',
     ])->assertRedirect();
 
-    // The person hears of it themselves (bell, phone and email), and the old address gets an email.
-    expect($user->fresh()->notifications()->where('data->kind', 'account_changed')->count())->toBe(1)
+    // The other details save at once; the new email waits on the link sent to it. The person hears
+    // of both (bell, phone and email): the link that went out, and what changed.
+    expect($user->fresh()->notifications()->where('data->kind', 'account_changed')->count())->toBe(2)
         ->and(AccountChanged::alert($user, ['Email'])->via($user->fresh()))->toContain('mail');
-    expect($user->fresh())->name->toBe('Akbor Hossain')->email->toBe('akbor@gffs.test')->phone->toBe('01812345678')
-        ->and($this->owner->notifications()->where('data->kind', 'portal_profile')->sole()->data['params']['what'])->toContain('email');
+    expect($user->fresh())->name->toBe('Akbor Hossain')->email->toBe('rahim@gffs.test')->phone->toBe('01812345678')
+        ->and(Cache::get(ProfileController::pendingKey($user->id)))->toBe('akbor@gffs.test')
+        ->and($this->owner->notifications()->where('data->kind', 'portal_profile')->sole()->data['params']['what'])->not->toContain('email');
+
+    // The link, opened after the password is asked again: now the email changes, and the agency hears.
+    $url = URL::temporarySignedRoute('profile.email.verify', now()->addHour(), ['hash' => sha1('akbor@gffs.test')]);
+    $this->actingAs($user->fresh())->get($url)->assertRedirect(route('password.confirm'));
+    expect($user->fresh()->email)->toBe('rahim@gffs.test');
+    $this->actingAs($user->fresh())->withSession(['auth.password_confirmed_at' => time()])->get($url)->assertRedirect(route('profile.edit'));
+    expect($user->fresh()->email)->toBe('akbor@gffs.test')
+        ->and($user->fresh()->notifications()->where('data->kind', 'account_changed')->count())->toBe(3)
+        // Notification ids are random (uuid), so look for the email notice among them, not the "latest".
+        ->and($this->owner->notifications()->where('data->kind', 'portal_profile')->get()->pluck('data.params.what')->all())->toContain('email');
 
     $this->actingAs($user->fresh())->withSession(['auth.password_confirmed_at' => time()])->put('/settings/password', [
         'current_password' => 'secret-pass-1', 'password' => 'newpass-123', 'password_confirmation' => 'newpass-123',
     ])->assertRedirect();
-    expect($this->owner->notifications()->where('data->kind', 'portal_profile')->count())->toBe(2);
+    expect($this->owner->notifications()->where('data->kind', 'portal_profile')->count())->toBe(3);
 
     // The team cannot change their own sign-in email here.
     $this->owner->forceFill(['email' => 'owner@klok.test'])->save();
@@ -203,8 +225,17 @@ it('emails the old address when the sign-in email changes', function () {
 
     $this->actingAs($user->fresh())->patch('/settings/profile', ['name' => 'Rahim', 'email' => 'new@gffs.test', 'phone' => '01712345678', 'company' => 'GFFS Ltd'])->assertRedirect();
 
-    Notification::assertSentOnDemand(AccountChanged::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === 'rahim@gffs.test');
+    // Asking only sends the link (and tells the person it went); the sign-in email has not moved yet.
     Notification::assertSentTo($user->fresh(), AgencyAlert::class, fn (AgencyAlert $n) => $n->kind === 'account_changed');
+    Notification::assertNotSentTo(new AnonymousNotifiable, AccountChanged::class);
+    expect($user->fresh()->email)->toBe('rahim@gffs.test');
+
+    // The link is opened, with the password asked again: the old address hears of the change.
+    $url = URL::temporarySignedRoute('profile.email.verify', now()->addHour(), ['hash' => sha1('new@gffs.test')]);
+    $this->actingAs($user->fresh())->withSession(['auth.password_confirmed_at' => time()])->get($url)->assertRedirect(route('profile.edit'));
+
+    expect($user->fresh()->email)->toBe('new@gffs.test');
+    Notification::assertSentOnDemand(AccountChanged::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === 'rahim@gffs.test');
 });
 
 it('does not let anyone link a staff account to a client', function () {

@@ -6,11 +6,14 @@
  *  - the last copy of every page opened (network first: with internet a page
  *    is always fresh; with none, the last copy shows).
  * Quick entries written offline wait in the page's own queue (lib/offline.ts).
- * Signing out deletes the kept pages.
+ * Signing out deletes the kept pages, and so does opening the sign-in page,
+ * an answer that comes back signed out, or another user signing in: kept
+ * pages belong to the one user the server named (X-Kept-For).
  */
 const ASSETS = 'kf-assets-v1';
 const PAGES = 'kf-pages-v1';
 const DATA = 'kf-data-v1';
+const WHO = 'kf-who-v1';
 const KEEP = 60;
 
 const FALLBACK = `<!doctype html><html lang="bn"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -30,7 +33,7 @@ self.addEventListener('activate', (event) => {
                         .filter(
                             (key) =>
                                 key.startsWith('kf-') &&
-                                ![ASSETS, PAGES, DATA].includes(key),
+                                ![ASSETS, PAGES, DATA, WHO].includes(key),
                         )
                         .map((key) => caches.delete(key)),
                 ),
@@ -39,11 +42,31 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+/** Every kept page and list goes, and with them whose they were. */
+function forget() {
+    return Promise.all([
+        caches.delete(PAGES),
+        caches.delete(DATA),
+        caches.delete(WHO),
+    ]);
+}
+
+/** Pages are kept for one user: when the server names someone else, the old ones go first. */
+async function keepFor(user) {
+    const who = await caches.open(WHO);
+    const hit = await who.match('/who');
+
+    if (hit && (await hit.text()) === user) {
+        return;
+    }
+
+    await Promise.all([caches.delete(PAGES), caches.delete(DATA)]);
+    await who.put('/who', new Response(user));
+}
+
 self.addEventListener('message', (event) => {
     if (event.data === 'clear-pages') {
-        event.waitUntil(
-            Promise.all([caches.delete(PAGES), caches.delete(DATA)]),
-        );
+        event.waitUntil(forget());
     }
 });
 
@@ -84,15 +107,18 @@ async function networkFirst(request, cacheName, key) {
     try {
         const response = await fetch(request);
         const landed = new URL(response.url || request.url);
+        const user = response.headers.get('X-Kept-For');
 
-        // Sent to sign in (signed out here or elsewhere): nothing kept stays on the phone.
-        if (landed.pathname === '/login') {
-            await Promise.all([caches.delete(PAGES), caches.delete(DATA)]);
+        // Sent to sign in, or answered as nobody (signed out here or elsewhere, or the
+        // session ran out): nothing kept stays on the phone.
+        if (landed.pathname === '/login' || (response.ok && !user)) {
+            await forget();
 
             return response;
         }
 
         if (response.ok && !response.redirected && keepable(landed)) {
+            await keepFor(user);
             const cache = await caches.open(cacheName);
             await cache.put(key, response.clone());
             trim(cache);
@@ -158,6 +184,17 @@ self.addEventListener('fetch', (event) => {
 
     if (url.hostname === 'fonts.bunny.net' || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
         event.respondWith(cacheFirst(request));
+
+        return;
+    }
+
+    // Opening the sign-in page: whoever comes next must not find the last user's pages.
+    if (
+        url.origin === self.location.origin &&
+        request.mode === 'navigate' &&
+        /^\/(login|logout)\b/.test(url.pathname)
+    ) {
+        event.waitUntil(forget());
 
         return;
     }

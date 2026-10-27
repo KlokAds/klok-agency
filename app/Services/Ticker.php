@@ -94,7 +94,8 @@ class Ticker
 
         // Money SMS no invoice took, and ones the Owner set aside: only invoices need SMS.
         if (Cache::add('sms-pruned:'.now()->format('Y-m-d-H'), true, 3600)) {
-            rescue(fn () => PaymentSms::query()->whereIn('status', ['unmatched', 'ignored'])
+            // A held SMS (came by an unfamiliar route) stays until the Owner has looked at it.
+            rescue(fn () => PaymentSms::query()->whereIn('status', ['unmatched', 'ignored'])->where('held', false)
                 ->where('received_at', '<', now()->subHours(SmsHookController::KEEP_UNMATCHED_HOURS))->delete());
         }
     }

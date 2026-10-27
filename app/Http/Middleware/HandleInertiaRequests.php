@@ -53,8 +53,9 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'idleMinutes' => fn () => $user ? (int) Setting::get('idle_minutes', 30) : null,
             'unread' => fn () => $user ? $user->unreadNotifications()->count() : 0,
-            // Loaded only when the quick-entry panel opens (partial reload).
-            'lookups' => Inertia::optional(fn () => $user && ! $user->isClient() ? [
+            // Loaded only when the quick-entry panel opens (partial reload), and only
+            // for those who may write an entry there (the same check as the panel's button).
+            'lookups' => Inertia::optional(fn () => $user && ! $user->isClient() && $user->canAny(['usd.create', 'bdt.create', 'fx.create']) ? [
                 // Inactive clients stay pickable: they can still owe money.
                 'clients' => Lookups::clients(),
                 'accounts' => Lookups::accounts(),

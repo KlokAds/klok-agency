@@ -294,5 +294,7 @@
     "বাকি": "left",
     "পাওনা": "owed",
     "পাওনা — বিজ্ঞাপন চলে গেছে, টাকা বাকি": "Owed: ads have run, payment pending",
-    "এখনই pay করুন": "Pay now"
+    "এখনই pay করুন": "Pay now",
+    "এই ডলার কত টাকায় ফেরত হবে, Klok Ads হিসাব করে জানিয়ে দেবে।": "Klok Ads will work out and tell you how much this comes to in taka.",
+    "এখন বদলানো গেল না — একটু পরে আবার চেষ্টা করুন, না হলে Klok Ads-কে জানান।": "Couldn't change it right now. Try again in a little while, or tell Klok Ads."
 }

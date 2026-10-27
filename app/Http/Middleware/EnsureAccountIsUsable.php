@@ -21,6 +21,8 @@ class EnsureAccountIsUsable
         'security.edit', 'user-password.update', 'logout', 'password.confirm', 'password.confirmation',
         'password.confirm.store', 'two-factor.enable', 'two-factor.confirm', 'two-factor.disable',
         'two-factor.qr-code', 'two-factor.secret-key', 'two-factor.recovery-codes', 'two-factor.regenerate-recovery-codes',
+        // A new sign-up confirms their email first; sending them to Security from there would loop.
+        'verification.notice', 'verification.verify', 'verification.send',
     ];
 
     public function handle(Request $request, Closure $next): Response

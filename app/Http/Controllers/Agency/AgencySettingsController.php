@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -48,10 +49,24 @@ class AgencySettingsController extends Controller
             'credit_guard' => ['required', 'boolean'],
         ]);
 
+        // The agency token goes to this URL on every call, so it may only be Klok Pilot's
+        // own host (any host while building locally).
+        $host = strtolower((string) parse_url($data['pilot_url'], PHP_URL_HOST));
+        if (! app()->isLocal() && $host !== 'klokads.com' && ! str_ends_with($host, '.klokads.com')) {
+            throw ValidationException::withMessages(['pilot_url' => __('Klok Pilot-এর URL klokads.com-এর হতে হবে।')]);
+        }
+
+        // A new URL drops the saved token: it was given for the old one, and is typed
+        // again for the new one, so whoever changes the URL cannot send it elsewhere.
+        $moved = rtrim($data['pilot_url'], '/') !== rtrim(PilotClient::url(), '/') && PilotClient::connected();
+
         Setting::put('summary_time', $data['summary_time']);
         Setting::put('pilot_url', $data['pilot_url']);
         Setting::put('credit_guard', $data['credit_guard'] ? '1' : '0');
-        $this->toast(__('সংরক্ষণ হয়েছে।'));
+        if ($moved) {
+            Setting::put('pilot_token', null);
+        }
+        $this->toast($moved ? __('সংরক্ষণ হয়েছে। Pilot-এর URL বদলেছে, তাই token মুছে দেওয়া হয়েছে — নতুন URL-এর token আবার দিন।') : __('সংরক্ষণ হয়েছে।'));
 
         return back();
     }

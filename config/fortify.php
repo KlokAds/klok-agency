@@ -118,6 +118,8 @@ return [
         'login' => 'login',
         'two-factor' => 'two-factor',
         'passkeys' => 'passkeys',
+        // Sending the email-confirm link again, and opening it (FortifyServiceProvider).
+        'verification' => 'verification',
     ],
 
     /*
@@ -162,6 +164,10 @@ return [
 
     'features' => [
         Features::resetPasswords(),
+        // A portal self sign-up must open the link sent to its email before the team can link it
+        // to a client (PortalController::signUp, ClientController::linkPortalUser). Team accounts
+        // are made by the Owner and come confirmed.
+        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

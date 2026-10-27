@@ -88,9 +88,17 @@ function saveNotify(): void {
                 />
             </KField>
             <template v-if="isClient">
+                <!-- A new email waits on the link sent to it; say so, so the old one showing here is not a surprise. -->
                 <KField
                     label="Email"
-                    :hint="t('এটাই আপনার sign-in নাম, আর এখানেই email যায়।')"
+                    :hint="
+                        pending_email
+                            ? t(
+                                  '{email}-এ link গেছে — ওটা খুললেই বদলে যাবে (১ ঘণ্টা)।',
+                                  { email: pending_email },
+                              )
+                            : t('এটাই আপনার sign-in নাম, আর এখানেই email যায়।')
+                    "
                     :error="form.errors.email"
                 >
                     <KInput

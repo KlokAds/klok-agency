@@ -34,7 +34,11 @@ it('changes the email when the signed link is opened, and tells the old address'
     Cache::put(ProfileController::pendingKey($this->user->id), 'new@example.com', now()->addHour());
     $url = URL::temporarySignedRoute('profile.email.verify', now()->addHour(), ['hash' => sha1('new@example.com')]);
 
-    $this->actingAs($this->user)->get($url)->assertRedirect(route('profile.edit'));
+    // The password is asked again first: a signed-in session alone cannot move the account.
+    $this->actingAs($this->user)->get($url)->assertRedirect(route('password.confirm'));
+    expect($this->user->fresh()->email)->toBe('old@example.com');
+
+    $this->actingAs($this->user)->withSession(['auth.password_confirmed_at' => time()])->get($url)->assertRedirect(route('profile.edit'));
 
     expect($this->user->fresh()->email)->toBe('new@example.com')
         ->and(Cache::get(ProfileController::pendingKey($this->user->id)))->toBeNull();
@@ -47,7 +51,7 @@ it('ignores a link that was not signed, or that belongs to another address', fun
     $this->actingAs($this->user)->get('/settings/email/verify/'.sha1('new@example.com'))->assertStatus(403);
 
     $other = URL::temporarySignedRoute('profile.email.verify', now()->addHour(), ['hash' => sha1('someone@example.com')]);
-    $this->actingAs($this->user)->get($other)->assertRedirect(route('profile.edit'));
+    $this->actingAs($this->user)->withSession(['auth.password_confirmed_at' => time()])->get($other)->assertRedirect(route('profile.edit'));
     expect($this->user->fresh()->email)->toBe('old@example.com');
 });
 

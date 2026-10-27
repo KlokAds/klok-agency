@@ -17,6 +17,7 @@ type Role = {
     id: number;
     name: string;
     is_owner: boolean;
+    is_client: boolean;
     users: number;
     permissions: string[];
 };
@@ -159,7 +160,7 @@ const count = (r: Role) => (r.is_owner ? t('সব') : r.permissions.length);
                 >
             </div>
             <div
-                v-if="!r.is_owner && can['roles.edit']"
+                v-if="!r.is_owner && !r.is_client && can['roles.edit']"
                 class="mt-auto flex justify-end pt-4"
             >
                 <KButton

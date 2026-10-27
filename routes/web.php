@@ -61,30 +61,32 @@ Route::fallback(function (Request $request) {
     return redirect()->route($request->user() ? 'dashboard' : 'login');
 });
 
-Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
+Route::post('locale', LocaleController::class)->middleware('throttle:20,1,locale.update')->name('locale.update');
 
 // For cron-job.org: the token in Settings → Reminders makes the URL secret.
-Route::get('agency/tick/{token}', TickController::class)->middleware('throttle:30,1')->name('agency.tick');
+Route::get('agency/tick/{token}', TickController::class)->middleware('throttle:30,1,agency.tick')->name('agency.tick');
 
 // The wallet phone's SMS forwarder (token in Settings → Payment; CSRF-exempt in bootstrap/app.php).
-Route::post('hooks/sms/{token}', SmsHookController::class)->middleware('throttle:120,1')->name('hooks.sms');
-Route::get('app/get', [AppReleaseController::class, 'get'])->middleware('throttle:10,1')->name('app.get');
-Route::get('app/download', [AppReleaseController::class, 'download'])->middleware(['signed', 'throttle:10,1'])->name('app.download');
-Route::post('hooks/app-crash', AppCrashController::class)->middleware('throttle:20,1')->name('hooks.app-crash');
-Route::post('hooks/app-forget', [AppDeviceController::class, 'forget'])->middleware('throttle:10,1')->name('app.device.forget');
-Route::post('hooks/app-release/{token}', [AppReleaseController::class, 'upload'])->middleware('throttle:10,1')->name('hooks.app-release');
+Route::post('hooks/sms/{token}', SmsHookController::class)->middleware('throttle:120,1,hooks.sms')->name('hooks.sms');
+Route::get('app/get', [AppReleaseController::class, 'get'])->middleware('throttle:10,1,app.get')->name('app.get');
+Route::get('app/download', [AppReleaseController::class, 'download'])->middleware(['signed', 'throttle:10,1,app.download'])->name('app.download');
+Route::post('hooks/app-crash', AppCrashController::class)->middleware('throttle:20,1,hooks.app-crash')->name('hooks.app-crash');
+Route::post('hooks/app-forget', [AppDeviceController::class, 'forget'])->middleware('throttle:10,1,app.device.forget')->name('app.device.forget');
+Route::post('hooks/app-release/{token}', [AppReleaseController::class, 'upload'])->middleware('throttle:10,1,hooks.app-release')->name('hooks.app-release');
 // The owner's console (MH-Bot) reads the dollar rate to bill his own clients' ads (shared key).
-Route::get('hooks/fx-rate', FxRateController::class)->middleware('throttle:60,1')->name('hooks.fx-rate');
+Route::get('hooks/fx-rate', FxRateController::class)->middleware('throttle:60,1,hooks.fx-rate')->name('hooks.fx-rate');
 
 // The client's invoice page: no sign-in, the token is the key.
-Route::middleware('throttle:60,1')->group(function () {
+// Each throttle counts per route (named limiters in AppServiceProvider, a route-name prefix elsewhere),
+// so the page's 5-second status poll can't use up the pay/claim allowance.
+Route::middleware('throttle:public-view')->group(function () {
     Route::get('i/{token}', [PublicInvoiceController::class, 'show'])->name('invoice.public');
     Route::get('i/{token}/status', [PublicInvoiceController::class, 'status'])->name('invoice.public.status');
     Route::get('i/{token}/qr.svg', [PublicInvoiceController::class, 'qr'])->name('invoice.public.qr');
     Route::get('r/{token}', [PublicRenewalController::class, 'show'])->name('renewal.public');
     Route::get('pay/media/{kind}', [PaymentSettingsController::class, 'media'])->name('pay.media');
 });
-Route::middleware('throttle:12,1')->group(function () {
+Route::middleware('throttle:public-action')->group(function () {
     Route::post('i/{token}/pay', [PublicInvoiceController::class, 'start'])->name('invoice.public.start');
     Route::post('r/{token}/choose', [PublicRenewalController::class, 'choose'])->name('renewal.public.choose');
     Route::post('r/{token}/decline', [PublicRenewalController::class, 'decline'])->name('renewal.public.decline');
@@ -92,7 +94,7 @@ Route::middleware('throttle:12,1')->group(function () {
     Route::post('i/{token}/days', [PublicInvoiceController::class, 'days'])->name('invoice.public.days');
     Route::post('i/{token}/stop', [PublicInvoiceController::class, 'stop'])->name('invoice.public.stop');
 });
-Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1')->name('invoice.public.claim');
+Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1,invoice.public.claim')->name('invoice.public.claim');
 
 // Android: links to this site may open in the KlokOne app (an email's button, a shared link).
 Route::get('.well-known/assetlinks.json', fn () => response()->json([[
@@ -107,45 +109,45 @@ Route::get('.well-known/assetlinks.json', fn () => response()->json([[
 // The client portal: sign-up for anyone, the rest for a signed-in client's own person.
 Route::middleware('guest')->group(function () {
     Route::get('portal/register', [PortalController::class, 'register'])->name('portal.register');
-    Route::post('portal/register', [PortalController::class, 'signUp'])->middleware('throttle:3,60')->name('portal.signup');
+    Route::post('portal/register', [PortalController::class, 'signUp'])->middleware('throttle:3,60,portal.signup')->name('portal.signup');
 });
 Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [PortalController::class, 'home'])->name('home');
     Route::get('campaigns', [PortalController::class, 'campaigns'])->name('campaigns');
     Route::get('campaigns/{campaign}', [PortalController::class, 'campaign'])->name('campaign');
-    Route::post('campaigns/{campaign}/renew', [PortalController::class, 'renew'])->middleware('throttle:3,10')->name('campaign.renew');
-    Route::post('campaigns/{campaign}/stop', [PortalController::class, 'stop'])->middleware('throttle:3,10')->name('campaign.stop');
-    Route::post('campaigns/{campaign}/pause', [PortalController::class, 'pause'])->middleware('throttle:10,1')->name('campaign.pause');
-    Route::post('campaigns/{campaign}/resume', [PortalController::class, 'resume'])->middleware('throttle:10,1')->name('campaign.resume');
-    Route::post('campaigns/{campaign}/budget', [PortalController::class, 'budget'])->middleware('throttle:10,1')->name('campaign.budget');
+    Route::post('campaigns/{campaign}/renew', [PortalController::class, 'renew'])->middleware('throttle:3,10,portal.campaign.renew')->name('campaign.renew');
+    Route::post('campaigns/{campaign}/stop', [PortalController::class, 'stop'])->middleware('throttle:3,10,portal.campaign.stop')->name('campaign.stop');
+    Route::post('campaigns/{campaign}/pause', [PortalController::class, 'pause'])->middleware('throttle:10,1,portal.campaign.pause')->name('campaign.pause');
+    Route::post('campaigns/{campaign}/resume', [PortalController::class, 'resume'])->middleware('throttle:10,1,portal.campaign.resume')->name('campaign.resume');
+    Route::post('campaigns/{campaign}/budget', [PortalController::class, 'budget'])->middleware('throttle:10,1,portal.campaign.budget')->name('campaign.budget');
     Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
-    Route::post('refund-request', [PortalController::class, 'refundRequest'])->middleware('throttle:3,60')->name('refund-request');
-    Route::post('top-up', [PortalController::class, 'topUp'])->middleware('throttle:5,60')->name('top-up');
-    Route::post('pay-due', [PortalController::class, 'payDue'])->middleware('throttle:5,60')->name('pay-due');
+    Route::post('refund-request', [PortalController::class, 'refundRequest'])->middleware('throttle:3,60,portal.refund-request')->name('refund-request');
+    Route::post('top-up', [PortalController::class, 'topUp'])->middleware('throttle:5,60,portal.top-up')->name('top-up');
+    Route::post('pay-due', [PortalController::class, 'payDue'])->middleware('throttle:5,60,portal.pay-due')->name('pay-due');
     Route::get('notifications', [PortalController::class, 'notifications'])->name('notifications');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // The Android app: this phone's notifications, and the phone that forwards the wallet SMS.
-    Route::post('feedback', [FeedbackController::class, 'store'])->middleware('throttle:5,10')->name('feedback');
-    Route::post('app/device', [AppDeviceController::class, 'store'])->middleware('throttle:30,1')->name('app.device');
-    Route::get('app/latest', [AppReleaseController::class, 'latest'])->middleware('throttle:30,1')->name('app.latest');
-    Route::post('app/sms-forwarder', [AppDeviceController::class, 'smsForwarder'])->middleware('throttle:10,1')->name('app.sms-forwarder');
-    Route::get('app/sms-center', [AppSmsController::class, 'index'])->middleware('throttle:60,1')->name('app.sms-center');
-    Route::post('app/sms-senders', [AppSmsController::class, 'store'])->middleware('throttle:30,1')->name('app.sms-senders.store');
-    Route::delete('app/sms-senders', [AppSmsController::class, 'destroy'])->middleware('throttle:30,1')->name('app.sms-senders.destroy');
+    Route::post('feedback', [FeedbackController::class, 'store'])->middleware('throttle:5,10,feedback')->name('feedback');
+    Route::post('app/device', [AppDeviceController::class, 'store'])->middleware('throttle:30,1,app.device')->name('app.device');
+    Route::get('app/latest', [AppReleaseController::class, 'latest'])->middleware('throttle:30,1,app.latest')->name('app.latest');
+    Route::post('app/sms-forwarder', [AppDeviceController::class, 'smsForwarder'])->middleware('throttle:10,1,app.sms-forwarder')->name('app.sms-forwarder');
+    Route::get('app/sms-center', [AppSmsController::class, 'index'])->middleware('throttle:60,1,app.sms-center')->name('app.sms-center');
+    Route::post('app/sms-senders', [AppSmsController::class, 'store'])->middleware('throttle:30,1,app.sms-senders.store')->name('app.sms-senders.store');
+    Route::delete('app/sms-senders', [AppSmsController::class, 'destroy'])->middleware('throttle:30,1,app.sms-senders.destroy')->name('app.sms-senders.destroy');
 
     Route::get('dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
 
     Route::get('invoices', [InvoiceController::class, 'index'])->middleware('can:clients.view')->name('invoices.index');
     Route::get('invoices/create', [InvoiceController::class, 'create'])->middleware('can:clients.edit')->name('invoices.create');
-    Route::get('invoices/campaigns', [InvoiceController::class, 'campaigns'])->middleware(['can:clients.edit', 'throttle:60,1'])->name('invoices.campaigns');
+    Route::get('invoices/campaigns', [InvoiceController::class, 'campaigns'])->middleware(['can:clients.edit', 'throttle:60,1,invoices.campaigns'])->name('invoices.campaigns');
     Route::post('invoices', [InvoiceController::class, 'store'])->middleware('can:clients.edit')->name('invoices.store');
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('can:clients.view')->name('invoices.show');
     Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->middleware('can:clients.edit')->name('invoices.edit');
     Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->middleware('can:clients.edit')->name('invoices.update');
     Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->middleware('can:clients.edit')->name('invoices.send');
-    Route::post('invoices/{invoice}/email', [InvoiceController::class, 'email'])->middleware(['can:clients.edit', 'throttle:10,1'])->name('invoices.email');
+    Route::post('invoices/{invoice}/email', [InvoiceController::class, 'email'])->middleware(['can:clients.edit', 'throttle:10,1,invoices.email'])->name('invoices.email');
     Route::post('invoices/{invoice}/partial', [InvoiceController::class, 'partial'])->middleware('can:clients.edit')->name('invoices.partial');
     Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void'])->middleware('can:clients.edit')->name('invoices.void');
     Route::post('invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->middleware('can:bdt.create')->name('invoices.pay');
@@ -153,7 +155,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('invoices/sms/{sms}/assign', [InvoiceController::class, 'assignSms'])->name('invoices.sms.assign');
     Route::post('invoices/sms/{sms}/ignore', [InvoiceController::class, 'ignoreSms'])->name('invoices.sms.ignore');
 
-    Route::post('quick/{type}', QuickEntryController::class)->middleware('throttle:60,1')->name('quick.store');
+    Route::post('quick/{type}', QuickEntryController::class)->middleware('throttle:60,1,quick.store')->name('quick.store');
 
     Route::get('usd', [UsdEntryController::class, 'index'])->middleware('can:usd.view')->name('usd.index');
     Route::post('usd', [UsdEntryController::class, 'store'])->middleware('can:usd.create')->name('usd.store');
@@ -165,13 +167,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('bdt/{bdt}', [BdtEntryController::class, 'update'])->middleware('can:bdt.edit')->name('bdt.update');
     Route::delete('bdt/{bdt}', [BdtEntryController::class, 'destroy'])->middleware('can:bdt.delete')->name('bdt.destroy');
 
-    Route::get('search', SearchController::class)->middleware('throttle:60,1')->name('search');
+    Route::get('search', SearchController::class)->middleware('throttle:60,1,search')->name('search');
     Route::get('dollars', [DollarController::class, 'index'])->middleware('can:usd.view')->name('dollars.index');
     Route::get('dollars/receipts', [MetaReceiptController::class, 'index'])->middleware('can:usd.view')->name('dollars.receipts');
     Route::get('dollars/receipts/{receipt}', [MetaReceiptController::class, 'show'])->middleware('can:usd.view')->name('dollars.receipts.show');
-    Route::post('dollars/receipts/{receipt}/retry', [MetaReceiptController::class, 'retry'])->middleware(['can:usd.create', 'throttle:20,1'])->name('dollars.receipts.retry');
-    Route::post('dollars/receipts/check', [MetaReceiptController::class, 'check'])->middleware(['can:usd.create', 'throttle:6,1'])->name('dollars.receipts.check');
-    Route::get('dollars/pending/{account}', [DollarController::class, 'pending'])->middleware(['can:usd.create', 'throttle:60,1'])->name('dollars.pending');
+    Route::post('dollars/receipts/{receipt}/retry', [MetaReceiptController::class, 'retry'])->middleware(['can:usd.create', 'throttle:20,1,dollars.receipts.retry'])->name('dollars.receipts.retry');
+    Route::post('dollars/receipts/check', [MetaReceiptController::class, 'check'])->middleware(['can:usd.create', 'throttle:6,1,dollars.receipts.check'])->name('dollars.receipts.check');
+    Route::get('dollars/pending/{account}', [DollarController::class, 'pending'])->middleware(['can:usd.create', 'throttle:60,1,dollars.pending'])->name('dollars.pending');
     Route::post('dollars/accounts', [DollarController::class, 'storeAccount'])->middleware('can:usd.edit')->name('dollars.accounts.store');
     Route::put('dollars/accounts/{account}', [DollarController::class, 'updateAccount'])->middleware('can:usd.edit')->name('dollars.accounts.update');
     Route::get('payments', [MoneyInOutController::class, 'payments'])->middleware('can:bdt.view')->name('payments.index');
@@ -197,11 +199,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clients', [ClientController::class, 'index'])->middleware('can:clients.view')->name('clients.index');
     Route::get('clients/{client}', [ClientController::class, 'show'])->middleware('can:clients.view')->name('clients.show');
     Route::get('clients/{client}/report', ClientReportController::class)->middleware('can:clients.view')->name('clients.report');
-    Route::post('clients/{client}/invoice-due', [ClientController::class, 'invoiceDue'])->middleware(['can:clients.edit', 'throttle:10,1'])->name('clients.invoice-due');
+    Route::post('clients/{client}/invoice-due', [ClientController::class, 'invoiceDue'])->middleware(['can:clients.edit', 'throttle:10,1,clients.invoice-due'])->name('clients.invoice-due');
     Route::post('clients', [ClientController::class, 'store'])->middleware('can:clients.create')->name('clients.store');
     Route::post('clients/{client}/portal-users', [ClientController::class, 'linkPortalUser'])->middleware('can:clients.edit')->name('clients.portal.link');
     Route::delete('clients/{client}/portal-users/{user}', [ClientController::class, 'unlinkPortalUser'])->middleware('can:clients.edit')->name('clients.portal.unlink');
-    Route::post('clients/{client}/refund', [ClientController::class, 'refund'])->middleware(['can:bdt.create', 'throttle:10,1'])->name('clients.refund');
+    Route::post('clients/{client}/refund', [ClientController::class, 'refund'])->middleware(['can:bdt.create', 'throttle:10,1,clients.refund'])->name('clients.refund');
     Route::put('clients/{client}', [ClientController::class, 'update'])->middleware('can:clients.edit')->name('clients.update');
     Route::delete('clients/{client}', [ClientController::class, 'destroy'])->middleware('can:clients.delete')->name('clients.destroy');
 
@@ -218,14 +220,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('campaigns/{campaign}/client', [CampaignController::class, 'link'])->middleware('can:clients.edit')->name('campaigns.link');
     Route::post('campaigns/link-suggested', [CampaignController::class, 'linkSuggested'])->middleware('can:clients.edit')->name('campaigns.link-suggested');
     Route::post('campaigns/sync', [CampaignController::class, 'sync'])->middleware('can:runs.view')->name('campaigns.sync');
-    Route::post('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->middleware(['can:runs.edit', 'throttle:20,1'])->name('campaigns.pause');
-    Route::post('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->middleware(['can:runs.edit', 'throttle:20,1'])->name('campaigns.resume');
-    Route::post('campaigns/{campaign}/budget', [CampaignController::class, 'budget'])->middleware(['can:runs.edit', 'throttle:20,1'])->name('campaigns.budget');
-    Route::post('campaigns/{campaign}/extend', [RenewalController::class, 'extend'])->middleware(['can:clients.edit', 'throttle:20,1'])->name('campaigns.extend');
+    Route::post('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->middleware(['can:runs.edit', 'throttle:20,1,campaigns.pause'])->name('campaigns.pause');
+    Route::post('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->middleware(['can:runs.edit', 'throttle:20,1,campaigns.resume'])->name('campaigns.resume');
+    Route::post('campaigns/{campaign}/budget', [CampaignController::class, 'budget'])->middleware(['can:runs.edit', 'throttle:20,1,campaigns.budget'])->name('campaigns.budget');
+    Route::post('campaigns/{campaign}/extend', [RenewalController::class, 'extend'])->middleware(['can:clients.edit', 'throttle:20,1,campaigns.extend'])->name('campaigns.extend');
 
     Route::get('renewals', [RenewalController::class, 'index'])->middleware('can:runs.view')->name('renewals.index');
     Route::get('renewals/{renewal}', [RenewalController::class, 'show'])->middleware('can:runs.view')->name('renewals.show');
-    Route::post('renewals/{renewal}/approve', [RenewalController::class, 'approve'])->middleware(['can:clients.edit', 'throttle:20,1'])->name('renewals.approve');
+    Route::post('renewals/{renewal}/approve', [RenewalController::class, 'approve'])->middleware(['can:clients.edit', 'throttle:20,1,renewals.approve'])->name('renewals.approve');
 
     Route::get('ad-accounts', [PilotAccountController::class, 'index'])->middleware('can:runs.view')->name('ad-accounts.index');
     Route::post('ad-accounts/refresh', [PilotAccountController::class, 'refresh'])->middleware('can:runs.view')->name('ad-accounts.refresh');
@@ -239,7 +241,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Everyone sees their own notifications; no permission needed.
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('notifications/feed', [NotificationController::class, 'feed'])->middleware('throttle:60,1')->name('notifications.feed');
+    Route::get('notifications/feed', [NotificationController::class, 'feed'])->middleware('throttle:60,1,notifications.feed')->name('notifications.feed');
     Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('notifications/clear', [NotificationController::class, 'clear'])->name('notifications.clear');
@@ -256,7 +258,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('payroll/payments/{payment}', [PayrollController::class, 'destroyPayment'])->middleware('can:payroll.delete')->name('payroll.payments.destroy');
 
     Route::get('reports', [ReportController::class, 'index'])->middleware('can:reports.view')->name('reports.index');
-    Route::get('reports/export/{book}', [ReportController::class, 'export'])->middleware(['can:reports.export', 'throttle:20,1'])->name('reports.export');
+    Route::get('reports/export/{book}', [ReportController::class, 'export'])->middleware(['can:reports.export', 'throttle:20,1,reports.export'])->name('reports.export');
 
     Route::get('reconcile', [ReconcileController::class, 'index'])->middleware('can:reconcile.view')->name('reconcile.index');
     Route::post('reconcile', [ReconcileController::class, 'store'])->middleware('can:reconcile.create')->name('reconcile.store');
@@ -277,9 +279,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('sessions/{session}', [SessionController::class, 'destroy'])->middleware('can:users.edit')->name('sessions.destroy');
         Route::get('errors', [ErrorLogController::class, 'index'])->name('errors.index');
         Route::get('system', [SystemController::class, 'index'])->name('system.index');
-        Route::post('system/run/{job}', [SystemController::class, 'run'])->middleware('throttle:10,1')->name('system.run');
+        Route::post('system/run/{job}', [SystemController::class, 'run'])->middleware('throttle:10,1,admin.system.run')->name('system.run');
         Route::post('system/pace', [SystemController::class, 'pace'])->name('system.pace');
-        Route::post('system/charges-since', [SystemController::class, 'chargesSince'])->middleware('throttle:5,1')->name('system.charges-since');
+        Route::post('system/charges-since', [SystemController::class, 'chargesSince'])->middleware('throttle:5,1,admin.system.charges-since')->name('system.charges-since');
         Route::get('sms', [PaymentSmsController::class, 'index'])->name('sms.index');
         Route::get('roles', [RoleController::class, 'index'])->middleware('can:roles.view')->name('roles.index');
         Route::post('roles', [RoleController::class, 'store'])->middleware('can:roles.create')->name('roles.store');
@@ -289,26 +291,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('settings', [SettingController::class, 'index'])->middleware('can:settings.view')->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->middleware('can:settings.edit')->name('settings.update');
         Route::put('settings/mail', [SettingController::class, 'mail'])->middleware('can:settings.edit')->name('settings.mail');
-        Route::post('settings/mail/test', [SettingController::class, 'testMail'])->middleware(['can:settings.edit', 'throttle:5,1'])->name('settings.mail.test');
+        Route::post('settings/mail/test', [SettingController::class, 'testMail'])->middleware(['can:settings.edit', 'throttle:5,1,admin.settings.mail.test'])->name('settings.mail.test');
         Route::get('payment', [PaymentSettingsController::class, 'index'])->middleware('can:settings.view')->name('payment.index');
         Route::post('payment', [PaymentSettingsController::class, 'update'])->middleware('can:settings.edit')->name('payment.update');
         Route::delete('payment/image/{kind}', [PaymentSettingsController::class, 'removeImage'])->middleware('can:settings.edit')->name('payment.image.destroy');
-        Route::post('payment/sms-test', [PaymentSettingsController::class, 'smsTest'])->middleware(['can:settings.view', 'throttle:30,1'])->name('payment.sms-test');
+        Route::post('payment/sms-test', [PaymentSettingsController::class, 'smsTest'])->middleware(['can:settings.view', 'throttle:30,1,admin.payment.sms-test'])->name('payment.sms-test');
         Route::post('payment/token', [PaymentSettingsController::class, 'token'])->middleware('can:settings.edit')->name('payment.token');
         Route::post('payment/disconnect', [PaymentSettingsController::class, 'disconnect'])->middleware('can:settings.edit')->name('payment.disconnect');
         Route::get('agency', [AgencySettingsController::class, 'index'])->middleware('can:settings.view')->name('agency.index');
         Route::put('agency', [AgencySettingsController::class, 'update'])->middleware('can:settings.edit')->name('agency.update');
         Route::put('agency/pilot-token', [AgencySettingsController::class, 'pilotToken'])->middleware('can:settings.edit')->name('agency.pilot-token');
-        Route::post('agency/pilot-test', [AgencySettingsController::class, 'pilotTest'])->middleware(['can:settings.edit', 'throttle:10,1'])->name('agency.pilot-test');
+        Route::post('agency/pilot-test', [AgencySettingsController::class, 'pilotTest'])->middleware(['can:settings.edit', 'throttle:10,1,admin.agency.pilot-test'])->name('agency.pilot-test');
         Route::post('agency/tick-token', [AgencySettingsController::class, 'tickToken'])->middleware('can:settings.edit')->name('agency.tick-token');
-        Route::post('agency/summary-now', [AgencySettingsController::class, 'summaryNow'])->middleware(['can:settings.edit', 'throttle:3,1'])->name('agency.summary-now');
+        Route::post('agency/summary-now', [AgencySettingsController::class, 'summaryNow'])->middleware(['can:settings.edit', 'throttle:3,1,admin.agency.summary-now'])->name('agency.summary-now');
         Route::get('app', [AppSettingsController::class, 'index'])->middleware('can:settings.view')->name('app.index');
         Route::put('app/firebase', [AppSettingsController::class, 'firebase'])->middleware('can:settings.edit')->name('app.firebase');
         Route::put('app/card-low', [AppSettingsController::class, 'cardLow'])->middleware('can:settings.edit')->name('app.card-low');
-        Route::post('app/test', [AppSettingsController::class, 'test'])->middleware('throttle:10,1')->name('app.test');
+        Route::post('app/test', [AppSettingsController::class, 'test'])->middleware('throttle:10,1,admin.app.test')->name('app.test');
         Route::delete('app/devices/{device}', [AppSettingsController::class, 'destroyDevice'])->middleware('can:settings.edit')->name('app.devices.destroy');
-        Route::get('update/status', [UpdateController::class, 'status'])->middleware('throttle:20,1')->name('update.status');
-        Route::post('update', [UpdateController::class, 'update'])->middleware('throttle:5,10')->name('update.run');
+        Route::get('update/status', [UpdateController::class, 'status'])->middleware('throttle:20,1,admin.update.status')->name('update.status');
+        Route::post('update', [UpdateController::class, 'update'])->middleware('throttle:5,10,admin.update.run')->name('update.run');
     });
 });
 

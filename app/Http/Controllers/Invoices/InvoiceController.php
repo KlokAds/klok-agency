@@ -254,7 +254,16 @@ class InvoiceController extends Controller
             'expires_at' => null,
         ])->save();
 
-        $invoices->verify($payment, $amount, $request->user(), $data['paid_on'], $data['wallet'], $existing ? __('আগে খাতায় লেখা পেমেন্ট') : __('হাতে লেখা'), $existing);
+        $verified = $invoices->verify($payment, $amount, $request->user(), $data['paid_on'], $data['wallet'], $existing ? __('আগে খাতায় লেখা পেমেন্ট') : __('হাতে লেখা'), $existing);
+
+        // The earlier entry was taken meanwhile (a double submit, or another invoice): nothing was
+        // paid, so the payment made for it here goes too.
+        if ($existing !== null && ! $verified) {
+            if (empty($data['payment_id'])) {
+                $payment->delete();
+            }
+            throw ValidationException::withMessages(['existing_entry_id' => __('এই পেমেন্ট আর বাছা যায় না — অন্য invoice-এ জুড়ে গেছে বা মুছে গেছে।')]);
+        }
         $sms = $matcher->linkSms($payment);
         $this->toast($existing !== null
             ? __('আগে খাতায় থাকা :amount (:date) দিয়ে invoice পরিশোধ হলো — নতুন করে টাকা যোগ হয়নি।', ['amount' => Money::bdt($existing->amount), 'date' => $existing->entry_date->format('j M')])

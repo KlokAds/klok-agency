@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\SessionController;
 use App\Models\User;
 use App\Support\Access;
 use Database\Seeders\AccessSeeder;
@@ -33,7 +34,10 @@ it('shows who is signed in where, and the Owner can end a session', function () 
             ->where('sessions.0.device', 'Android app · SM-A155F')
             ->where('sessions.0.active', true));
 
-    $this->actingAs($this->owner)->delete('/admin/sessions/anowar-phone')->assertRedirect();
+    // A row is named by its keyed hash, never the raw session id (that is the cookie's value).
+    $this->actingAs($this->owner)->delete('/admin/sessions/anowar-phone')->assertNotFound();
+    expect(DB::table('sessions')->where('id', 'anowar-phone')->exists())->toBeTrue();
+    $this->actingAs($this->owner)->delete('/admin/sessions/'.SessionController::key('anowar-phone'))->assertRedirect();
 
     expect(DB::table('sessions')->where('id', 'anowar-phone')->exists())->toBeFalse()
         ->and($this->anowar->fresh()->remember_token)->not->toBe('old-token');
