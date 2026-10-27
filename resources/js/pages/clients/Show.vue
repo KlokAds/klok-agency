@@ -87,15 +87,16 @@ const props = defineProps<{
         pending_cost: number;
         pending_usd: number;
     };
-    campaigns: {
+    campaigns: Paginated<{
         id: number;
+        slug: string | null;
         name: string;
         live: boolean;
         account: string | null;
         spend_7d: number;
         spend_billed?: number | null;
         bill_from: string | null;
-    }[];
+    }>;
     credit: {
         credit_usd: number;
         campaign_usd: number;
@@ -494,9 +495,12 @@ function print(): void {
         <section class="panel p-5 sm:p-6">
             <div class="flex items-baseline justify-between">
                 <h2 class="text-[16px] font-bold">Campaign</h2>
-                <KButton v-if="can['runs.view']" size="sm" href="/campaigns">{{
-                    t('সব দেখুন')
-                }}</KButton>
+                <KButton
+                    v-if="can['runs.view'] && campaigns.total"
+                    size="sm"
+                    :href="`/campaigns?client=${client.id}`"
+                    >{{ t('সব দেখুন') }}</KButton
+                >
             </div>
             <div
                 v-if="credit && (credit.credit_usd || credit.campaign_usd)"
@@ -556,50 +560,74 @@ function print(): void {
                 }}
             </p>
             <p
-                v-if="!campaigns.length"
+                v-if="!campaigns.total"
                 class="mt-3 rounded-lg bg-sunken px-3 py-2.5 text-[14px] text-ink-3"
             >
                 {{ t('এখনো কোনো campaign এই client-এর সাথে যুক্ত নয়।') }}
             </p>
             <ul v-else class="mt-2">
+                <!-- Each campaign opens its own page (spend, results, day by day) for those who may see it. -->
                 <li
-                    v-for="c in campaigns"
+                    v-for="c in campaigns.data"
                     :key="c.id"
-                    class="flex items-center gap-3 border-b border-line py-2.5 text-[14px] last:border-0"
+                    class="border-b border-line last:border-0"
                 >
-                    <span
-                        class="size-2 shrink-0 rounded-full"
-                        :class="c.live ? 'bg-in' : 'bg-line-2'"
-                    />
-                    <span class="min-w-0 flex-1">
-                        <span class="block truncate font-medium">{{
-                            c.name
-                        }}</span>
-                        <span class="text-[13px] text-ink-3"
-                            >{{ c.account }}
-                            <template v-if="c.bill_from">
-                                ·
-                                {{
-                                    t('{date} থেকে এই client-এর হিসাবে', {
-                                        date: niceDate(c.bill_from, false),
-                                    })
-                                }}</template
-                            ></span
-                        >
-                    </span>
-                    <span class="num shrink-0 text-right"
-                        >{{ money(c.spend_billed ?? c.spend_7d, 'usd') }}
-                        <span class="block text-[13px] text-ink-3">{{
-                            c.spend_billed !== null &&
-                            c.spend_billed !== undefined
-                                ? t('হিসাবে মোট · ৭ দিনে {amount}', {
-                                      amount: money(c.spend_7d, 'usd'),
-                                  })
-                                : t('৭ দিনে')
-                        }}</span></span
+                    <component
+                        :is="can['runs.view'] ? Link : 'div'"
+                        :href="
+                            can['runs.view']
+                                ? `/campaigns/${c.slug ?? c.id}`
+                                : undefined
+                        "
+                        class="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 text-[14px]"
+                        :class="can['runs.view'] ? 'hover:bg-sunken' : ''"
                     >
+                        <span
+                            class="size-2 shrink-0 rounded-full"
+                            :class="c.live ? 'bg-in' : 'bg-line-2'"
+                        />
+                        <span class="min-w-0 flex-1">
+                            <span
+                                class="block truncate font-medium group-hover:text-brand"
+                                >{{ c.name }}</span
+                            >
+                            <span class="text-[13px] text-ink-3"
+                                >{{ c.account }}
+                                <template v-if="c.bill_from">
+                                    ·
+                                    {{
+                                        t('{date} থেকে এই client-এর হিসাবে', {
+                                            date: niceDate(c.bill_from, false),
+                                        })
+                                    }}</template
+                                ></span
+                            >
+                        </span>
+                        <span class="num shrink-0 text-right"
+                            >{{ money(c.spend_billed ?? c.spend_7d, 'usd') }}
+                            <span class="block text-[13px] text-ink-3">{{
+                                c.spend_billed !== null &&
+                                c.spend_billed !== undefined
+                                    ? t('হিসাবে মোট · ৭ দিনে {amount}', {
+                                          amount: money(c.spend_7d, 'usd'),
+                                      })
+                                    : t('৭ দিনে')
+                            }}</span></span
+                        >
+                        <KIcon
+                            v-if="can['runs.view']"
+                            name="back"
+                            :size="15"
+                            class="shrink-0 rotate-180 text-ink-3 group-hover:text-brand"
+                        />
+                    </component>
                 </li>
             </ul>
+            <KPager
+                v-if="campaigns.last_page > 1"
+                :page="campaigns"
+                class="-mx-5 mt-2 -mb-5 sm:-mx-6 sm:-mb-6"
+            />
         </section>
 
         <section class="panel p-5 sm:p-6">

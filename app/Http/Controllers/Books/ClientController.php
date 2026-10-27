@@ -169,9 +169,11 @@ class ClientController extends Controller
             'statement' => $statement,
             'statement_totals' => $statementTotals,
             'campaigns' => Campaign::with('account:id,name')->where('client_id', $client->id)
-                ->orderByRaw('case when last_spend_day is null then 1 else 0 end')->orderByDesc('last_spend_day')->limit(10)->get()
-                ->map(fn (Campaign $c) => [
-                    'id' => $c->id, 'name' => $c->name, 'live' => $c->isLive(), 'account' => $c->account?->name,
+                ->orderByRaw('case when last_spend_day is null then 1 else 0 end')->orderByDesc('last_spend_day')->orderBy('id')
+                // Its own page number, so paging the campaigns leaves the rest of the client page as it is.
+                ->paginate(6, pageName: 'campaign_page')->withQueryString()
+                ->through(fn (Campaign $c) => [
+                    'id' => $c->id, 'slug' => $c->slug, 'name' => $c->name, 'live' => $c->isLive(), 'account' => $c->account?->name,
                     'spend_7d' => $c->spend_7d, 'bill_from' => $c->bill_from?->toDateString(),
                     // What this client has been billed for: the spend from the day it was linked to them.
                     'spend_billed' => $c->bill_from ? (int) CampaignDay::where('campaign_id', $c->id)->whereDate('day', '>=', $c->bill_from->toDateString())->sum('spend') : null,

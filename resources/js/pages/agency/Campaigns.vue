@@ -32,6 +32,7 @@ type Row = {
     id: number;
     slug?: string | null;
     name: string;
+    account: string | null;
     status: string | null;
     live: boolean;
     objective: string | null;
@@ -74,6 +75,7 @@ const props = defineProps<{
     campaigns: Paginated<Row>;
     counts: { total: number; linked: number };
     filters: { q: string | null; status: string };
+    client: { id: number; name: string } | null;
     range: { key: string; from: string; to: string };
     synced_at: string | null;
     options: { clients: Option[] };
@@ -84,6 +86,7 @@ const usdAccount = computed(() => (props.account?.currency ?? 'USD') === 'USD');
 
 const { filters } = useFilters('/campaigns', {
     account: props.account?.id ?? null,
+    client: props.client?.id ?? null,
     q: props.filters.q,
     status: props.filters.status,
     range: props.range.key,
@@ -299,7 +302,29 @@ function sync(): void {
             <div
                 class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2 sm:gap-3 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)] lg:grid-cols-[260px_minmax(0,1fr)_auto]"
             >
+                <!-- From a client's page: their campaigns in every account; the cross shows all again. -->
+                <div
+                    v-if="client"
+                    class="k-chip col-span-2 flex h-10 min-w-0 items-center gap-2 rounded-[10px] pr-1 pl-3 text-[14px] md:col-span-1"
+                >
+                    <KIcon name="user" :size="15" class="shrink-0 text-brand" />
+                    <Link
+                        :href="`/clients/${client.id}`"
+                        class="min-w-0 flex-1 truncate font-semibold hover:text-brand"
+                        >{{ client.name }}</Link
+                    >
+                    <button
+                        type="button"
+                        class="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-sunken hover:text-ink"
+                        :title="t('সব campaign দেখুন')"
+                        :aria-label="t('সব campaign দেখুন')"
+                        @click="filters.client = null"
+                    >
+                        <KIcon name="close" :size="15" />
+                    </button>
+                </div>
                 <KSelect
+                    v-else
                     v-model="filters.account"
                     :options="accounts"
                     :placeholder="t('Ad account বাছুন')"
@@ -307,6 +332,7 @@ function sync(): void {
                 />
                 <KInput
                     v-model="filters.q"
+                    :class="client ? 'col-span-2 md:col-span-1' : ''"
                     :placeholder="t('Campaign খুঁজুন…')"
                     icon="search"
                     size="sm"
@@ -317,6 +343,7 @@ function sync(): void {
                         :range="range"
                         :params="{
                             account: filters.account,
+                            client: filters.client,
                             q: filters.q,
                             status: filters.status,
                         }"
@@ -350,7 +377,7 @@ function sync(): void {
                 </p>
             </div>
             <p
-                v-if="account && !usdAccount"
+                v-if="account && !usdAccount && !client"
                 class="rounded-lg bg-wait-soft px-3 py-2 text-[13.5px] text-wait"
             >
                 {{
@@ -410,6 +437,9 @@ function sync(): void {
                                 >{{ c.name }}</Link
                             >
                             <p class="mt-0.5 text-[13px] text-ink-3">
+                                <template v-if="c.account"
+                                    >{{ c.account }} ·
+                                </template>
                                 {{
                                     c.live
                                         ? t('চালু')
@@ -625,6 +655,9 @@ function sync(): void {
                                     >
                                 </p>
                                 <p class="mt-0.5 pl-4 text-[13px] text-ink-3">
+                                    <template v-if="c.account"
+                                        >{{ c.account }} ·
+                                    </template>
                                     {{
                                         c.live
                                             ? t('চালু')

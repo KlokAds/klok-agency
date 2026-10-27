@@ -35,6 +35,7 @@ class CampaignController extends Controller
     {
         $filters = $request->validate([
             'account' => ['nullable', 'integer'],
+            'client' => ['nullable', 'integer'],
             'q' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in(['all', 'live', 'off', 'linked', 'unlinked'])],
         ]);
@@ -62,12 +63,18 @@ class CampaignController extends Controller
         $status = $filters['status'] ?? 'all';
         $clients = Client::where('status', 'active')->orderBy('name')->get(['id', 'name']);
 
+        // From a client's page: that client's campaigns, whatever ad account they run in.
+        $client = isset($filters['client']) ? Client::whereKey((int) $filters['client'])->first(['id', 'name']) : null;
+        $scope = fn ($q) => $client
+            ? $q->where('client_id', $client->id)
+            : $q->where('pilot_account_id', $account->id ?? 0);
+
         // The period the figures cover: today once something was spent today, else yesterday.
-        $ids = Campaign::where('pilot_account_id', $account->id ?? 0)->pluck('id')->all();
+        $ids = Campaign::where($scope)->pluck('id')->all();
         [$from, $to, $range] = CampaignStats::range($request, CampaignStats::firstDay($ids), CampaignStats::openingDay($ids));
 
         $campaigns = Campaign::with(['client:id,name', 'account', 'renewals' => fn ($q) => $q->whereNotIn('status', ['approved', 'expired'])->latest('id')])
-            ->where('pilot_account_id', $account->id ?? 0)
+            ->where($scope)
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where('name', 'like', '%'.$term.'%'))
             ->when($status === 'live', fn ($q) => $q->running())
             ->when($status === 'off', fn ($q) => $q->whereNot(fn ($w) => $w->running()))
@@ -86,6 +93,7 @@ class CampaignController extends Controller
             'id' => $c->id,
             'slug' => $c->slug,
             'name' => $c->name,
+            'account' => $client ? $c->account?->name : null,
             'status' => $c->status,
             'live' => $c->isLive(),
             'objective' => $c->objective,
@@ -114,7 +122,7 @@ class CampaignController extends Controller
             'suggested' => $c->client_id ? null : CampaignBilling::suggestClient($c->name, $clients)?->only(['id', 'name']),
         ]);
 
-        $counts = Campaign::where('pilot_account_id', $account->id ?? 0)
+        $counts = Campaign::where($scope)
             ->selectRaw('count(*) as total, sum(case when client_id is null then 0 else 1 end) as linked')->first();
 
         return Inertia::render('agency/Campaigns', [
@@ -130,6 +138,7 @@ class CampaignController extends Controller
             'campaigns' => $campaigns,
             'counts' => ['total' => (int) ($counts->total ?? 0), 'linked' => (int) ($counts->linked ?? 0)],
             'filters' => ['q' => $filters['q'] ?? null, 'status' => $status],
+            'client' => $client ? ['id' => $client->id, 'name' => $client->name] : null,
             'range' => ['key' => $range, 'from' => $from->toDateString(), 'to' => $to->toDateString()],
             'synced_at' => Setting::get('pilot_spend_synced_at'),
             'options' => ['clients' => Lookups::clients(true)],
