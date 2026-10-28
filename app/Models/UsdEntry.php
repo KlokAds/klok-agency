@@ -40,7 +40,7 @@ class UsdEntry extends Model
     public const STATUSES = ['pending' => 'Pending', 'settled' => 'Settled', 'na' => '—'];
 
     protected $fillable = [
-        'entry_date', 'sequence', 'description', 'category', 'account_id', 'client_id', 'amount',
+        'entry_date', 'sequence', 'description', 'category', 'account_id', 'card_id', 'client_id', 'amount',
         'status', 'fx_batch_id', 'settled_by_id', 'pair_key', 'notes', 'review_note', 'created_by', 'updated_by', 'allocations',
     ];
 

@@ -87,13 +87,14 @@ class Books
             $use = -$entry->amount;
             $before = $consumed;
             $consumed += $use;
-            $cost = $this->costOfRange($segments, $before, $consumed);
+            // A refund (spend coming back) gives back the dollars and what they cost.
+            $cost = $use >= 0 ? $this->costOfRange($segments, $before, $consumed) : -$this->costOfRange($segments, $consumed, $before);
 
             $entries[$entry->id] = [
                 'before' => $before,
                 'after' => $consumed,
                 'cost' => (int) round($cost),
-                'rate' => $use > 0 ? $cost / $use : 0.0,
+                'rate' => $use !== 0 ? $cost / $use : 0.0,
             ];
         }
 
@@ -152,6 +153,28 @@ class Books
     public static function hitsCard(UsdEntry $entry): bool
     {
         return $entry->category === 'card_charge' || $entry->account?->kind === 'card';
+    }
+
+    /**
+     * Each card's own balance (NSave main and its copy): its own rows, and the platform charges
+     * it paid (a charge that names no card was paid by the main card). Together they are the card.
+     *
+     * @return list<array{id: int, name: string, last4: string|null, balance: int}>
+     */
+    public function cardBalances(): array
+    {
+        $cards = Account::where('kind', 'card')->orderBy('sort')->get();
+        $main = $cards->first()?->id;
+        $sums = [];
+
+        foreach ($this->usdEntries() as $entry) {
+            if (self::hitsCard($entry)) {
+                $card = $entry->account?->kind === 'card' ? $entry->account_id : ($entry->card_id ?? $main);
+                $sums[$card] = ($sums[$card] ?? 0) + $entry->amount;
+            }
+        }
+
+        return array_values($cards->map(fn (Account $a) => ['id' => $a->id, 'name' => $a->name, 'last4' => $a->last4, 'balance' => (int) ($sums[$a->id] ?? 0)])->all());
     }
 
     /**

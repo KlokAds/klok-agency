@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SectionTabs from '@/components/SectionTabs.vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatTiles from '@/components/StatTiles.vue';
@@ -13,10 +13,11 @@ import KField from '@/components/k/KField.vue';
 import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
+import KSelect from '@/components/k/KSelect.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KSwitch from '@/components/k/KSwitch.vue';
 import KTag from '@/components/k/KTag.vue';
-import { money, niceDate } from '@/lib/format';
+import { ago, money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { openQuickEntry } from '@/lib/quick-entry';
 import type { Option } from '@/types';
@@ -26,8 +27,23 @@ type Account = {
     code: string;
     name: string;
     kind: string;
+    last4: string | null;
     is_active: boolean;
     balance: number | null;
+};
+
+// One NSave app notification the phone forwarded, and what the books did with it.
+type CardEvent = {
+    id: number;
+    at: string | null;
+    kind: string;
+    amount: number | null;
+    merchant: string | null;
+    last4: string | null;
+    card: string | null;
+    status: string;
+    problem: string | null;
+    body: string;
 };
 
 // Where the dollars are: the card and other USD accounts, what each ad
@@ -86,6 +102,13 @@ const props = defineProps<{
         rate: number | null;
     };
     accounts: Account[];
+    cards: {
+        id: number;
+        name: string;
+        last4: string | null;
+        balance: number;
+    }[];
+    card_events: CardEvent[];
     batches: {
         id: number;
         number: number;
@@ -115,6 +138,13 @@ const tiles = computed<StatTile[]>(() => [
         icon: 'wallet',
         badge: 'bg-white/10 text-white',
         dark: true,
+        // With NSave's copy card too: each card's own balance under the total.
+        sub:
+            props.cards.length > 1
+                ? props.cards
+                      .map((c) => `${c.name} ${money(c.balance, 'usd')}`)
+                      .join(' · ')
+                : undefined,
         action: { label: t('Card মেলান'), href: '/reconcile', icon: 'scale' },
     },
     {
@@ -156,8 +186,19 @@ const later = computed(() =>
 
 const accountOpen = ref(false);
 const editingAccount = ref<Account | null>(null);
-const accountForm = useForm({ name: '', kind: 'platform', is_active: true });
-const newKinds = computed(() => props.kinds.filter((k) => k.value !== 'card'));
+const accountForm = useForm({
+    name: '',
+    kind: 'platform',
+    is_active: true,
+    last4: '',
+});
+const newKinds = computed(() => props.kinds);
+// A card needs its last four digits: NSave's notifications and Meta's charges find it by them.
+const askDigits = computed(() =>
+    editingAccount.value
+        ? editingAccount.value.kind === 'card'
+        : accountForm.kind === 'card',
+);
 
 function startAccount(a?: Account): void {
     editingAccount.value = a ?? null;
@@ -165,8 +206,13 @@ function startAccount(a?: Account): void {
     Object.assign(
         accountForm,
         a
-            ? { name: a.name, kind: a.kind, is_active: a.is_active }
-            : { name: '', kind: 'platform', is_active: true },
+            ? {
+                  name: a.name,
+                  kind: a.kind,
+                  is_active: a.is_active,
+                  last4: a.last4 ?? '',
+              }
+            : { name: '', kind: 'platform', is_active: true, last4: '' },
     );
     accountOpen.value = true;
 }
@@ -182,6 +228,47 @@ function saveAccount(): void {
     } else {
         accountForm.post('/dollars/accounts', opts);
     }
+}
+
+// NSave lines: the held ones the Owner puts on a card or sets aside.
+const cardOptions = computed<Option[]>(() =>
+    props.cards.map((c) => ({
+        value: c.id,
+        label: c.last4 ? `${c.name} · ${c.last4}` : c.name,
+    })),
+);
+const placeOn = ref<Record<number, number | null>>({});
+const held = computed(() =>
+    props.card_events.filter((e) => e.status === 'held'),
+);
+const EVENT_KIND: Record<string, string> = {
+    charge: 'খরচ', // i18n
+    refund: 'Refund',
+    topup: 'টাকা যোগ', // i18n
+    declined: 'Declined',
+    other: 'অন্য', // i18n
+};
+const EVENT_STATUS: Record<string, { label: string; tone: string }> = {
+    booked: { label: 'খাতায় উঠেছে', tone: 'text-in' }, // i18n
+    duplicate: { label: 'আগেই ছিল', tone: 'text-ink-3' }, // i18n
+    held: { label: 'মেলাতে হবে', tone: 'text-wait' }, // i18n
+    ignored: { label: 'টাকা নড়েনি', tone: 'text-ink-3' }, // i18n
+};
+
+function placeEvent(e: CardEvent): void {
+    router.post(
+        `/dollars/card-events/${e.id}/place`,
+        { card_id: placeOn.value[e.id] ?? props.cards[0]?.id },
+        { preserveScroll: true },
+    );
+}
+
+function dismissEvent(e: CardEvent): void {
+    router.post(
+        `/dollars/card-events/${e.id}/dismiss`,
+        {},
+        { preserveScroll: true },
+    );
 }
 </script>
 
@@ -252,6 +339,107 @@ function saveAccount(): void {
             }}</b></span
         >
     </div>
+
+    <!-- NSave: every move on our cards, read from the app's notifications -->
+    <section v-if="card_events.length" class="panel mt-6 p-5 sm:p-6">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="flex items-center gap-2 text-[16px] font-bold">
+                <KIcon name="bell" class="text-brand" />{{
+                    t('NSave থেকে আসা লেনদেন')
+                }}
+            </h2>
+            <p class="text-[13.5px] text-ink-3">
+                {{
+                    held.length
+                        ? t('{n}টা মেলাতে হবে', { n: held.length })
+                        : t('সব খাতায় উঠেছে')
+                }}
+            </p>
+        </div>
+        <ul class="mt-3 divide-y divide-line">
+            <li
+                v-for="e in card_events"
+                :key="e.id"
+                class="py-3 text-[14px]"
+                :class="
+                    e.status === 'held' && '-mx-3 rounded-xl bg-wait-soft px-3'
+                "
+            >
+                <div class="flex items-start gap-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="font-semibold">
+                            {{ t(EVENT_KIND[e.kind] ?? e.kind) }}
+                            <template v-if="e.merchant">
+                                · {{ e.merchant }}</template
+                            >
+                        </p>
+                        <p class="mt-0.5 text-[13px] text-ink-3">
+                            {{ e.at ? ago(e.at) : '' }}
+                            <template v-if="e.card || e.last4">
+                                · {{ e.card ?? 'card ' + e.last4 }}</template
+                            >
+                            ·
+                            <span
+                                :class="EVENT_STATUS[e.status]?.tone"
+                                class="font-semibold"
+                                >{{
+                                    t(EVENT_STATUS[e.status]?.label ?? e.status)
+                                }}</span
+                            >
+                        </p>
+                        <p
+                            v-if="e.status === 'held' && e.problem"
+                            class="mt-1 text-[13px] text-wait"
+                        >
+                            {{ e.problem }}
+                        </p>
+                    </div>
+                    <span
+                        class="num shrink-0 font-bold"
+                        :class="
+                            e.kind === 'charge'
+                                ? 'text-out'
+                                : e.kind === 'refund' || e.kind === 'topup'
+                                  ? 'text-in'
+                                  : 'text-ink-3'
+                        "
+                        >{{
+                            e.amount !== null
+                                ? (e.kind === 'charge' ? '−' : '+') +
+                                  money(e.amount, 'usd')
+                                : '—'
+                        }}</span
+                    >
+                </div>
+                <div
+                    v-if="e.status === 'held' && can['usd.create']"
+                    class="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2"
+                >
+                    <KSelect
+                        :model-value="placeOn[e.id] ?? cards[0]?.id ?? null"
+                        :options="cardOptions"
+                        size="sm"
+                        @update:model-value="
+                            (v: string | number | null | undefined) =>
+                                (placeOn[e.id] = v == null ? null : Number(v))
+                        "
+                    />
+                    <KButton
+                        size="sm"
+                        variant="primary"
+                        @click="placeEvent(e)"
+                        >{{ t('এই card-এ তুলুন') }}</KButton
+                    >
+                    <KButton
+                        size="sm"
+                        variant="plain"
+                        @click="dismissEvent(e)"
+                        >{{ t('সরান') }}</KButton
+                    >
+                </div>
+            </li>
+        </ul>
+    </section>
 
     <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <!-- FX batches -->
@@ -555,7 +743,12 @@ function saveAccount(): void {
                     <span
                         class="min-w-0 flex-1 truncate font-medium"
                         :class="!a.is_active && 'text-ink-3 line-through'"
-                        >{{ a.name }}</span
+                        >{{ a.name
+                        }}<span
+                            v-if="a.last4"
+                            class="num ml-1.5 text-[13px] font-normal text-ink-3"
+                            >· {{ a.last4 }}</span
+                        ></span
                     >
                     <span v-if="a.balance !== null" class="num text-[14px]">{{
                         money(a.balance, 'usd')
@@ -594,6 +787,21 @@ function saveAccount(): void {
             /></KField>
             <KField v-if="!editingAccount" :label="t('ধরন')"
                 ><KSegment v-model="accountForm.kind" :options="newKinds"
+            /></KField>
+            <KField
+                v-if="askDigits"
+                :label="t('Card-এর শেষ ৪ সংখ্যা')"
+                :hint="
+                    t(
+                        'NSave-এর notification আর Meta-র charge এই সংখ্যা দেখে ঠিক card-এ ওঠে।',
+                    )
+                "
+                :error="accountForm.errors.last4"
+                ><KInput
+                    v-model="accountForm.last4"
+                    inputmode="numeric"
+                    :maxlength="4"
+                    placeholder="1234"
             /></KField>
             <KSwitch
                 v-if="editingAccount && editingAccount.kind !== 'card'"

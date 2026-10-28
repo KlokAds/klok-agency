@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * or an ad platform (Meta, Google, TikTok).
  *
  * @property bool $is_active
+ * @property string|null $last4
  */
 class Account extends Model
 {
@@ -18,7 +19,7 @@ class Account extends Model
 
     public const KINDS = ['card' => 'Card', 'holding' => 'Holding', 'platform' => 'Ad platform'];
 
-    protected $fillable = ['code', 'name', 'kind', 'is_active', 'sort'];
+    protected $fillable = ['code', 'name', 'kind', 'last4', 'is_active', 'sort'];
 
     protected function casts(): array
     {
@@ -31,8 +32,15 @@ class Account extends Model
         return $this->hasMany(UsdEntry::class);
     }
 
+    /** The main card: where bought dollars land and what pays when no card is named. */
     public static function card(): self
     {
         return static::where('kind', 'card')->orderBy('sort')->firstOrFail();
+    }
+
+    /** One of our cards by its last four digits (NSave main or its copy), else none. */
+    public static function cardByDigits(?string $last4): ?self
+    {
+        return $last4 === null ? null : static::where('kind', 'card')->where('last4', $last4)->first();
     }
 }

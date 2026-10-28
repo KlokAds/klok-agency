@@ -65,6 +65,8 @@ class Postings
             'description' => $data['description'] ?: "{$account->name} card charge",
             'category' => 'card_charge',
             'account_id' => $account->id,
+            // Which of our cards paid (NSave main or copy); empty is the main card.
+            'card_id' => $data['card_id'] ?? null,
             'amount' => -$data['amount'],
             'status' => 'na',
             'notes' => $data['notes'] ?? null,

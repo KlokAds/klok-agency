@@ -11,6 +11,7 @@ use App\Notifications\AgencyAlert;
 use App\Payments\PaymentMatcher;
 use App\Payments\PaySettings;
 use App\Payments\SmsParser;
+use App\Services\CardEvents;
 use App\Services\Invoices;
 use App\Services\Notifier;
 use App\Support\Money;
@@ -55,6 +56,13 @@ class SmsHookController extends Controller
 
         if ($body === '') {
             return response()->json(['status' => 'heartbeat']);
+        }
+
+        // NSave's app notification (the same phone sends it): a move on one of our cards.
+        if (strcasecmp(trim($sender), 'NSave') === 0) {
+            $event = app(CardEvents::class)->take($body, $this->timestamp($this->first($request, ['receivedStamp', 'timestamp'])), $request->string('package')->toString() ?: null);
+
+            return response()->json(['status' => 'card_'.$event->status]);
         }
 
         $parsed = $parser->parse($sender, $body);

@@ -3,10 +3,13 @@ package com.klokads.finance
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.view.WindowManager
+import androidx.core.app.NotificationManagerCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -125,6 +128,17 @@ class MainActivity : FlutterFragmentActivity() {
                     }.start()
                 }
                 "defaultIgnore" -> result.success(SmsForwarder.DEFAULT_IGNORE.joinToString("\n"))
+                // NSave's card notifications (NSaveListener): whether the phone lets this app read them.
+                "notificationAccess" -> result.success(NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName))
+                "openNotificationAccess" -> {
+                    try {
+                        startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                    } catch (e: Exception) {
+                        // A phone without that screen: the app's own settings page instead.
+                        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
+                    }
+                    result.success(null)
+                }
                 else -> result.notImplemented()
             }
         }

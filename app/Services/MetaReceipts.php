@@ -507,7 +507,10 @@ class MetaReceipts
     {
         $set = array_filter(array_map('trim', explode(',', (string) Setting::get('meta_cards', ''))));
 
-        return array_values($set ?: MetaReceipt::where('status', 'booked')->whereNotNull('card_last4')->distinct()->pluck('card_last4')->all());
+        $cards = $set ?: MetaReceipt::where('status', 'booked')->whereNotNull('card_last4')->distinct()->pluck('card_last4')->all();
+
+        // A card added in Dollar ও Card (NSave's copy) is ours too.
+        return array_values(array_unique([...$cards, ...CardEvents::ourDigits()]));
     }
 
     /**
@@ -566,6 +569,7 @@ class MetaReceipts
                 'entry_date' => $at->toDateString(),
                 'description' => 'Meta charge'.($receipt->card_last4 ? ' · card '.$receipt->card_last4 : ''),
                 'account_id' => $meta->id,
+                'card_id' => Account::cardByDigits($receipt->card_last4)?->id,
                 'amount' => $receipt->amount,
                 'notes' => $account->name.' · Transaction '.$receipt->transaction_id.' · Klok Pilot',
             ]);

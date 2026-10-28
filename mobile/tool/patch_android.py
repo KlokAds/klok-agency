@@ -33,6 +33,23 @@ if sys.argv[1:] == ['sms']:
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>\1''')
+    # NSave (the USD card) tells of card moves in its app's notifications, not by SMS: this
+    # listener hands them to the SMS forwarder (android-src/NSaveListener.kt). Android binds it
+    # only once the Owner allows notification access. Added once, however often this runs.
+    if '.NSaveListener' not in Path(manifest).read_text(encoding='utf8'):
+        patch(manifest, r'(\n(\s*)<activity)', r'''
+        <service android:name=".NSaveListener" android:exported="true" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>\1''')
+        # Android 11+ hides other apps' names unless asked: launcher apps are visible, so NSave
+        # is found by its name too when its package name does not say "nsave".
+        patch(manifest, r'(<queries>)', r'''\1
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>''')
     print('android patched: sms')
     sys.exit(0)
 

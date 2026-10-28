@@ -1302,7 +1302,7 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver {
   String mode = 'off';
   int after = 1;
   bool pinFinger = false;
@@ -1314,12 +1314,30 @@ class _SettingsPageState extends State<SettingsPage> {
   DateTime? lastBeat;
   bool smsAllowed = false;
   bool batteryFree = false;
+  // NSave's card notifications: whether the phone lets the app read them, and NSave's package once seen.
+  bool nsaveAllowed = false;
+  String? nsavePackage;
   String version = '';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Back from Android's settings (notification access has no answer to wait for): shown afresh.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      load();
+    }
   }
 
   Future<void> load() async {
@@ -1331,6 +1349,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final beat = prefs.getInt('sms.last_beat');
     final allowed = smsBuild && await Permission.sms.isGranted;
     final battery = smsBuild && await Permission.ignoreBatteryOptimizations.isGranted;
+    final nsave = smsBuild && (await smsChannel.invokeMethod<bool>('notificationAccess').catchError((_) => false) ?? false);
     final revoked = prefs.getString('sms.error') == 'revoked';
     mode = await Lock.mode();
     after = await Lock.after();
@@ -1346,6 +1365,8 @@ class _SettingsPageState extends State<SettingsPage> {
       lastBeat = beat != null ? DateTime.fromMillisecondsSinceEpoch(beat) : null;
       smsAllowed = allowed;
       batteryFree = battery;
+      nsaveAllowed = nsave;
+      nsavePackage = prefs.getString('nsave.package');
       version = '${info.version} (${info.buildNumber})';
     });
   }
@@ -1580,6 +1601,19 @@ class _SettingsPageState extends State<SettingsPage> {
                     () async {
                       await Permission.ignoreBatteryOptimizations.request();
                       await load();
+                    },
+                  ),
+                  // NSave (the USD card) tells of card moves in its notifications: read only with access.
+                  health(
+                    nsaveAllowed,
+                    Icons.credit_card_rounded,
+                    'NSave notification',
+                    nsaveAllowed
+                        ? 'চালু: card-এর খরচ, refund, টাকা যোগ নিজে খাতায় ওঠে${nsavePackage != null ? ' · $nsavePackage' : ''}'
+                        : 'বন্ধ — চালু করুন',
+                    () async {
+                      // Android's own list: KlokOne → allow. The page reloads on coming back.
+                      await smsChannel.invokeMethod('openNotificationAccess').catchError((_) => null);
                     },
                   ),
                   health(

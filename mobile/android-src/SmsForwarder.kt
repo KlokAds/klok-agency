@@ -54,9 +54,25 @@ object SmsForwarder {
         "access code", "auth code", "login code", "confirmation code", "your code is", "use code", "pin",
     )
 
+    /**
+     * A card notification (NSave) that carries a one-time code: its words, or a 4-8 digit number
+     * right next to "code" / "OTP" (either side). Such a notification is never sent.
+     */
+    private val CARD_OTP = Regex(
+        "\\b(otp|one[-\\s]?time|verification\\s+code|passcode|security\\s+code|3ds|code\\s+is)\\b" +
+            "|\\b(code|otp)\\W{0,3}\\d{4,8}\\b" +
+            "|\\b\\d{4,8}\\W{0,3}(code|otp)\\b" +
+            // "834201 is your (NSave) code"
+            "|\\b\\d{4,8}\\s+is\\s+your\\s+(\\w+\\s+)?(code|otp)\\b",
+        RegexOption.IGNORE_CASE,
+    )
+
     private fun flutter(context: Context) = context.getSharedPreferences(FLUTTER, Context.MODE_PRIVATE)
 
     private fun url(context: Context): String? = flutter(context).getString("flutter.sms.url", null)
+
+    /** This phone is the SMS forwarder (the hook URL is set): the same rule for NSave's notifications. */
+    fun forwarding(context: Context): Boolean = url(context) != null
 
     /** The senders the server named, less those switched off on this phone. */
     private fun senders(context: Context): Set<String> {
@@ -166,25 +182,42 @@ object SmsForwarder {
         write(context, out, LOG)
     }
 
+    /**
+     * @param card a card provider's app notification (NSave), not an SMS: it is not held to the
+     *             SMS senders list or the ignore words; the server reads it as a card move.
+     * @param app  the package of the app that posted it (card only); sent as "package".
+     */
     @Synchronized
-    fun enqueue(context: Context, from: String, text: String, at: Long, centre: String? = null): Boolean {
-        if (url(context) == null || !senders(context).contains(normalise(from))) {
+    fun enqueue(context: Context, from: String, text: String, at: Long, centre: String? = null, card: Boolean = false, app: String? = null): Boolean {
+        if (url(context) == null || (!card && !senders(context).contains(normalise(from)))) {
             return false
         }
         val id = UUID.randomUUID().toString()
-        val lower = text.lowercase()
-        // Money coming in always goes, even when the bank adds "never share your PIN/OTP" to it.
-        val money = Regex("\\b(received|credited|deposited|cash\\s*in)\\b").containsMatchIn(lower)
-        val word = if (money) null else ignoreWords(context).firstOrNull { hasWord(lower, it) }
-        if (word != null) {
-            // Kept off the server, and off the log too: only that one was held back, and why.
-            note(context, id) { it.put("from", from).put("text", "").put("at", at).put("status", "skipped").put("why", word) }
+        if (card && CARD_OTP.containsMatchIn(text)) {
+            // A card's one-time code (a 3DS check at a shop) never leaves the phone: logged, no words.
+            note(context, id) { it.put("from", from).put("text", "").put("at", at).put("status", "skipped").put("why", "OTP") }
             return false
         }
+        if (!card) {
+            val lower = text.lowercase()
+            // Money coming in always goes, even when the bank adds "never share your PIN/OTP" to it.
+            val money = Regex("\\b(received|credited|deposited|cash\\s*in)\\b").containsMatchIn(lower)
+            val word = if (money) null else ignoreWords(context).firstOrNull { hasWord(lower, it) }
+            if (word != null) {
+                // Kept off the server, and off the log too: only that one was held back, and why.
+                note(context, id) { it.put("from", from).put("text", "").put("at", at).put("status", "skipped").put("why", word) }
+                return false
+            }
+        }
         val items = read(context)
-        items.put(JSONObject().put("id", id).put("from", from).put("text", text).put("at", at).put("smsc", centre ?: ""))
+        val item = JSONObject().put("id", id).put("from", from).put("text", text).put("at", at).put("smsc", centre ?: "")
+        if (app != null) item.put("package", app)
+        items.put(item)
         write(context, items)
-        note(context, id) { it.put("from", from).put("text", text).put("at", at).put("smsc", centre ?: "").put("status", "pending") }
+        note(context, id) {
+            it.put("from", from).put("text", text).put("at", at).put("smsc", centre ?: "").put("status", "pending")
+            if (app != null) it.put("package", app)
+        }
         return true
     }
 
@@ -201,7 +234,9 @@ object SmsForwarder {
                     if (queue.getJSONObject(j).optString("id") == id) queued = true
                 }
                 if (!queued) {
-                    queue.put(JSONObject().put("id", id).put("from", line.optString("from")).put("text", line.optString("text")).put("at", line.optLong("at")).put("smsc", line.optString("smsc")))
+                    val item = JSONObject().put("id", id).put("from", line.optString("from")).put("text", line.optString("text")).put("at", line.optLong("at")).put("smsc", line.optString("smsc"))
+                    if (line.has("package")) item.put("package", line.optString("package"))
+                    queue.put(item)
                     write(context, queue)
                 }
                 note(context, id) { it.put("status", "pending").remove("error") }
@@ -271,11 +306,14 @@ object SmsForwarder {
             val item = items.getJSONObject(i)
             val id = item.getString("id")
             val (status, body) = try {
-                post(target, quick, JSONObject()
+                val payload = JSONObject()
                     .put("from", item.getString("from"))
                     .put("text", item.getString("text"))
                     .put("receivedStamp", item.getLong("at"))
-                    .put("serviceCentre", item.optString("smsc")))
+                    .put("serviceCentre", item.optString("smsc"))
+                // Only an NSave notification carries the app it came from; an SMS goes as before.
+                if (item.has("package")) payload.put("package", item.optString("package"))
+                post(target, quick, payload)
             } catch (e: Exception) {
                 note(context, id) { it.put("error", "নেট নেই — আবার চেষ্টা হবে") }
                 return false
