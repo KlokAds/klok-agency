@@ -57,6 +57,23 @@ it('reads the usual ways a card app tells a charge, refund, money added, a decli
         ->and(CardEvents::read('Get 5% cashback this weekend!')['amount'])->toBeNull();
 });
 
+it("reads NSave's own words, as MH-Bot received them", function () {
+    expect(CardEvents::read('Card payment approved. 💳 Paid $1.00 at Elevenlabs.io with your card ending 6903'))
+        ->toMatchArray(['kind' => 'charge', 'amount' => 100, 'merchant' => 'Elevenlabs.io', 'last4' => '6903'])
+        ->and(CardEvents::read('Card payment approved. 💳 Paid $19.00 at FACEBK* Z25JQBJSD4 with your card ending 6903'))
+        ->toMatchArray(['kind' => 'charge', 'amount' => 1900, 'merchant' => 'FACEBK* Z25JQBJSD4', 'last4' => '6903'])
+        // The ask before the charge is not the charge.
+        ->and(CardEvents::read('A card payment needs your approval. ELEVENLABS-IO 1.00 USD')['kind'])->toBe('other')
+        ->and(CardEvents::read('Money received. 💰 Received $327.00 from Md Mujaid Hossain'))
+        ->toMatchArray(['kind' => 'topup', 'amount' => 32700, 'merchant' => 'Md Mujaid Hossain'])
+        ->and(CardEvents::read('4 days left to win $500 💰. Spend $50 this month and enter the draw automatically.')['kind'])->toBe('other');
+
+    // Approved, then the ask arrives late: one charge only.
+    moneyNote('Card payment approved. 💳 Paid $1.00 at Elevenlabs.io with your card ending 6903')->assertJson(['status' => 'card_booked']);
+    moneyNote('A card payment needs your approval. ELEVENLABS-IO 1.00 USD')->assertJson(['status' => 'card_ignored']);
+    expect((new Books)->summary()['card'])->toBe(49900);
+});
+
 it('books a charge on the copy card from its own balance, and both cards add up to the card', function () {
     $copy = copyCard();
     moneyNote('$50.00 added to your card ****4321')->assertJson(['status' => 'card_booked']);

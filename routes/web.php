@@ -289,6 +289,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('system/pace', [SystemController::class, 'pace'])->name('system.pace');
         Route::post('system/charges-since', [SystemController::class, 'chargesSince'])->middleware('throttle:5,1,admin.system.charges-since')->name('system.charges-since');
         Route::get('sms', [PaymentSmsController::class, 'index'])->name('sms.index');
+        // The Owner clears what they have seen from the list (the record stays).
+        Route::post('sms/clear', [PaymentSmsController::class, 'clearAll'])->middleware('throttle:30,1,admin.sms.clear-all')->name('sms.clear-all');
+        Route::post('sms/{kind}/{id}/clear', [PaymentSmsController::class, 'clear'])->whereIn('kind', ['sms', 'app'])->whereNumber('id')->middleware('throttle:120,1,admin.sms.clear')->name('sms.clear');
         Route::get('roles', [RoleController::class, 'index'])->middleware('can:roles.view')->name('roles.index');
         Route::post('roles', [RoleController::class, 'store'])->middleware('can:roles.create')->name('roles.store');
         Route::put('roles/{role}', [RoleController::class, 'update'])->middleware('can:roles.edit')->name('roles.update');

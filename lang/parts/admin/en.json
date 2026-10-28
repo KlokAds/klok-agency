@@ -242,5 +242,12 @@
     "Link পাঠান": "Send link",
     "Client role বদলানো বা মোছা যায় না।": "The Client role cannot be changed or deleted.",
     "Owner-এর account শুধু Owner বদলাতে পারে।": "Only an Owner can change an Owner's account.",
-    "সংরক্ষণ হয়েছে। Server বদলেছে, তাই আগের password মুছে দেওয়া হয়েছে — নতুন server-এর password আবার দিন।": "Saved. The server changed, so the old password was deleted. Enter the new server's password again."
+    "সংরক্ষণ হয়েছে। Server বদলেছে, তাই আগের password মুছে দেওয়া হয়েছে — নতুন server-এর password আবার দিন।": "Saved. The server changed, so the old password was deleted. Enter the new server's password again.",
+    ":nটা list থেকে সরানো হয়েছে।": ":n cleared from the list.",
+    "List থেকে সরান": "Clear from the list",
+    "Phone থেকে যা এসেছে — টাকার SMS আর card ও bank app-এর notification, কোনটা কোথায় গেল। দেখা হলে list থেকে সরিয়ে দিন; হিসাব থেকে যায়। শুধু Owner দেখেন।": "What came from the phone: money SMS and card and bank apps' notifications, and where each went. Clear them from the list once seen; the books keep them. Only the Owner sees this.",
+    "এই list পুরো সরাবেন?": "Clear this whole list?",
+    "টাকার SMS": "Money SMS",
+    "শুধু list থেকে সরবে। কোনো invoice বা খাতার হিসাব বদলাবে না।": "They only leave the list. No invoice or book entry changes.",
+    "সব সরান": "Clear all"
 }

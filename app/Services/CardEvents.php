@@ -63,6 +63,9 @@ class CardEvents
         $kind = match (true) {
             // A one-time code for a payment is not the payment: the charge itself comes after.
             preg_match('/\botp\b|one.?time|verification code|passcode|security code|\b3ds\b|code is|\bcode\b\D{0,12}\d{4,8}/', $lower) === 1 => 'other',
+            // "A card payment needs your approval" (NSave) comes before "Card payment approved":
+            // only the approved one is the charge.
+            preg_match('/needs? your approval|awaiting (?:your )?approval|pending approval|approve (?:this|the) payment|is pending/', $lower) === 1 => 'other',
             preg_match('/declin|\bfailed\b|unsuccessful|insufficient|rejected/', $lower) === 1 => 'declined',
             preg_match('/refund|revers|returned|credited back|chargeback/', $lower) === 1 => 'refund',
             preg_match('/\b(added|add money|deposit(?:ed)?|top.?up|topped up|loaded|funded|received)\b/', $lower) === 1 => 'topup',
@@ -70,7 +73,7 @@ class CardEvents
             default => 'other',
         };
 
-        $merchant = preg_match('/\b(?:at|to|from|with)\s+([A-Za-z0-9][\w*&\'.\- ]{1,60}?)(?=\s+(?:on|for|using|via|with|was|is|has|card|ending)\b|[.,!]|$)/u', $flat, $m) === 1
+        $merchant = preg_match('/\b(?:at|to|from|with)\s+([A-Za-z0-9][\w*&\'.\- ]{1,60}?)(?=\s+(?:on|for|using|via|with|was|is|has|card|ending)\b|[.,!](?:\s|$)|$)/u', $flat, $m) === 1
             ? trim($m[1]) : null;
 
         return ['kind' => $kind, 'amount' => $amount ?: null, 'currency' => $currency, 'merchant' => $merchant, 'last4' => $last4];
