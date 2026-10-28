@@ -58,9 +58,14 @@ class SmsHookController extends Controller
             return response()->json(['status' => 'heartbeat']);
         }
 
-        // NSave's app notification (the same phone sends it): a move on one of our cards.
-        if (strcasecmp(trim($sender), 'NSave') === 0) {
-            $event = app(CardEvents::class)->take($body, $this->timestamp($this->first($request, ['receivedStamp', 'timestamp'])), $request->string('package')->toString() ?: null);
+        // A card or bank app's notification (the same phone sends it): a dollar move of ours.
+        if (in_array(strtolower(trim($sender)), ['app', 'nsave'], true)) {
+            $event = app(CardEvents::class)->take(
+                $body,
+                $this->timestamp($this->first($request, ['receivedStamp', 'timestamp'])),
+                $request->string('package')->toString() ?: null,
+                $request->string('appName')->toString() ?: (strcasecmp(trim($sender), 'NSave') === 0 ? 'NSave' : null),
+            );
 
             return response()->json(['status' => 'card_'.$event->status]);
         }

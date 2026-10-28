@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\CardEvent;
 use App\Models\FxBatch;
+use App\Models\MoneyApp;
 use App\Services\AdAccountBalances;
 use App\Services\Books;
 use App\Services\CampaignForecast;
@@ -42,6 +43,7 @@ class DollarController extends Controller
             'name' => $a->name,
             'kind' => $a->kind,
             'last4' => $a->last4,
+            'topup_from_id' => $a->topup_from_id,
             'is_active' => $a->is_active,
             // A card's balance counts its own rows and the platform charges it paid.
             'balance' => match ($a->kind) {
@@ -79,6 +81,7 @@ class DollarController extends Controller
             'accounts' => $accounts,
             'cards' => $cards->values(),
             'card_events' => CardEvents::recent(),
+            'money_apps' => CardEvents::apps(),
             'batches' => $batches,
             'kinds' => collect(Account::KINDS)->map(fn ($l, $v) => ['value' => $v, 'label' => $l])->values(),
         ]);
@@ -98,11 +101,17 @@ class DollarController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
             'kind' => ['required', Rule::in(['card', 'holding', 'platform'])],
-            'last4' => ['nullable', 'required_if:kind,card', 'digits:4', Rule::unique('accounts', 'last4')],
+            'last4' => ['nullable', 'digits:4', Rule::unique('accounts', 'last4')],
+            'app_package' => ['nullable', Rule::exists('money_apps', 'package')],
+            'topup_from_id' => ['nullable', Rule::exists('accounts', 'id')->whereIn('kind', ['card', 'holding'])],
         ]);
 
         if ($data['kind'] !== 'card') {
             $data['last4'] = null;
+        }
+
+        if ($data['kind'] === 'platform') {
+            $data['app_package'] = $data['topup_from_id'] = null;
         }
 
         Account::create($data + [
@@ -121,6 +130,7 @@ class DollarController extends Controller
             'name' => ['required', 'string', 'max:80'],
             'is_active' => ['required', 'boolean'],
             'last4' => ['nullable', 'digits:4', Rule::unique('accounts', 'last4')->ignore($account->id)],
+            'topup_from_id' => ['nullable', Rule::exists('accounts', 'id')->whereIn('kind', ['card', 'holding'])->whereNot('id', $account->id)],
         ]);
 
         // A card is what balances are measured against; it stays on.
@@ -130,9 +140,41 @@ class DollarController extends Controller
             unset($data['last4']);
         }
 
+        if ($account->kind === 'platform') {
+            unset($data['topup_from_id']);
+        }
+
         $account->update($data);
         $this->toast(__('Account আপডেট হয়েছে।'));
         $this->cardsChanged();
+
+        return back();
+    }
+
+    /** A new card or bank app is ours: a new account for it, or joined to one in the books. */
+    public function approveApp(Request $request, MoneyApp $app, CardEvents $events): RedirectResponse
+    {
+        $data = $request->validate([
+            'mode' => ['required', Rule::in(['new', 'link'])],
+            'account_id' => ['nullable', 'required_if:mode,link', Rule::exists('accounts', 'id')->whereIn('kind', ['card', 'holding'])],
+            'name' => ['nullable', 'string', 'max:80'],
+            'kind' => ['nullable', Rule::in(['card', 'holding'])],
+            'last4' => ['nullable', 'digits:4', Rule::unique('accounts', 'last4')->ignore($request->integer('account_id') ?: null)],
+            'topup_from_id' => ['nullable', Rule::exists('accounts', 'id')->whereIn('kind', ['card', 'holding'])],
+        ]);
+
+        $account = $events->approve($app, $data);
+        $this->toast(__(':app চালু — এখন থেকে :account-এ নিজে উঠবে।', ['app' => $app->name, 'account' => $account->name]));
+
+        return back();
+    }
+
+    /** A card or bank app on or off. */
+    public function turnApp(Request $request, MoneyApp $app, CardEvents $events): RedirectResponse
+    {
+        $on = $request->boolean('on');
+        $events->turn($app, $on);
+        $this->toast($on ? __(':app চালু হয়েছে।', ['app' => $app->name]) : __(':app বন্ধ — এর লেনদেন আর খাতায় উঠবে না।', ['app' => $app->name]));
 
         return back();
     }

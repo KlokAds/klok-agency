@@ -19,6 +19,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $last4
  * @property string|null $problem
  * @property string $body
+ * @property string|null $package
+ * @property string|null $app_name
  * @property Carbon|null $posted_at
  */
 class CardEvent extends Model
@@ -26,7 +28,7 @@ class CardEvent extends Model
     public const KINDS = ['charge', 'refund', 'topup', 'declined', 'other'];
 
     protected $fillable = [
-        'source', 'package', 'body', 'hash', 'posted_at', 'kind', 'amount', 'currency', 'merchant',
+        'source', 'package', 'app_name', 'body', 'hash', 'posted_at', 'kind', 'amount', 'currency', 'merchant',
         'last4', 'status', 'problem', 'card_id', 'usd_entry_id',
     ];
 

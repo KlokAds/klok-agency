@@ -1314,9 +1314,11 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
   DateTime? lastBeat;
   bool smsAllowed = false;
   bool batteryFree = false;
-  // NSave's card notifications: whether the phone lets the app read them, and NSave's package once seen.
-  bool nsaveAllowed = false;
-  String? nsavePackage;
+  // Card and bank apps' notifications: whether the phone lets the app read them, the switch for all
+  // of them, and each app seen (MoneyListener.kt), newest first.
+  bool notificationsAllowed = false;
+  bool moneyOn = true;
+  List<MoneyApp> moneyApps = const [];
   String version = '';
 
   @override
@@ -1349,7 +1351,17 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     final beat = prefs.getInt('sms.last_beat');
     final allowed = smsBuild && await Permission.sms.isGranted;
     final battery = smsBuild && await Permission.ignoreBatteryOptimizations.isGranted;
-    final nsave = smsBuild && (await smsChannel.invokeMethod<bool>('notificationAccess').catchError((_) => false) ?? false);
+    final notices = smsBuild && (await smsChannel.invokeMethod<bool>('notificationAccess').catchError((_) => false) ?? false);
+    final money = smsBuild ? await smsChannel.invokeMethod<String>('moneyApps').catchError((_) => null) : null;
+    var allOn = true;
+    var apps = <MoneyApp>[];
+    if (money != null) {
+      try {
+        final data = jsonDecode(money) as Map<String, dynamic>;
+        allOn = data['on'] != false;
+        apps = [for (final a in (data['apps'] as List? ?? const [])) MoneyApp.fromJson(Map<String, dynamic>.from(a as Map))];
+      } catch (_) {}
+    }
     final revoked = prefs.getString('sms.error') == 'revoked';
     mode = await Lock.mode();
     after = await Lock.after();
@@ -1365,8 +1377,9 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
       lastBeat = beat != null ? DateTime.fromMillisecondsSinceEpoch(beat) : null;
       smsAllowed = allowed;
       batteryFree = battery;
-      nsaveAllowed = nsave;
-      nsavePackage = prefs.getString('nsave.package');
+      notificationsAllowed = notices;
+      moneyOn = allOn;
+      moneyApps = apps;
       version = '${info.version} (${info.buildNumber})';
     });
   }
@@ -1603,19 +1616,6 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
                       await load();
                     },
                   ),
-                  // NSave (the USD card) tells of card moves in its notifications: read only with access.
-                  health(
-                    nsaveAllowed,
-                    Icons.credit_card_rounded,
-                    'NSave notification',
-                    nsaveAllowed
-                        ? 'চালু: card-এর খরচ, refund, টাকা যোগ নিজে খাতায় ওঠে${nsavePackage != null ? ' · $nsavePackage' : ''}'
-                        : 'বন্ধ — চালু করুন',
-                    () async {
-                      // Android's own list: KlokOne → allow. The page reloads on coming back.
-                      await smsChannel.invokeMethod('openNotificationAccess').catchError((_) => null);
-                    },
-                  ),
                   health(
                     pending == 0,
                     Icons.cloud_upload_outlined,
@@ -1644,6 +1644,64 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
                 ],
               ],
             ),
+            // Card and bank apps (NSave, Fasset, PlasmaOne, …): their dollar notifications go the way
+            // payment SMS do, from the same phone. The server asks the Owner about each new app.
+            if (smsOn)
+              SettingsCard(
+                title: 'Card ও bank app',
+                icon: Icons.credit_card_rounded,
+                children: [
+                  SettingsRow(
+                    first: true,
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'চালু',
+                    subtitle: 'card ও bank-এর notification থেকে dollar-এর লেনদেন নিজে খাতায়',
+                    trailing: Switch(
+                      value: moneyOn,
+                      onChanged: (v) async {
+                        await smsChannel.invokeMethod('setMoneyOn', {'on': v}).catchError((_) => null);
+                        await load();
+                      },
+                    ),
+                  ),
+                  health(
+                    notificationsAllowed,
+                    Icons.notifications_active_outlined,
+                    'Notification পড়ার অনুমতি',
+                    notificationsAllowed ? 'দেওয়া আছে — card ও bank app-এর notification ধরা যাবে' : 'বন্ধ — চালু করুন',
+                    () async {
+                      // Android's own list: KlokOne → allow. The page reloads on coming back.
+                      await smsChannel.invokeMethod('openNotificationAccess').catchError((_) => null);
+                    },
+                  ),
+                  if (moneyApps.isEmpty)
+                    const SettingsRow(
+                      icon: Icons.hourglass_empty_rounded,
+                      title: 'এখনো কোনো app আসেনি',
+                      subtitle: 'কোনো app-এর notification-এ dollar-এর লেনদেন এলে app-টি এখানে দেখাবে, নিজে চালু থাকবে',
+                    ),
+                  // Each app on its own; all of them wait while the switch above is off.
+                  for (final app in moneyApps)
+                    SettingsRow(
+                      icon: Icons.credit_card_rounded,
+                      tint: app.on && moneyOn ? null : bad,
+                      title: app.label,
+                      subtitle: [
+                        if (app.seen != null) 'শেষ notification ${ago(app.seen!)}',
+                        !moneyOn ? 'সব বন্ধ' : (app.on ? 'চালু — server-এ যায়' : 'বন্ধ — phone থেকে যায় না'),
+                      ].join(' · '),
+                      trailing: Switch(
+                        value: app.on,
+                        onChanged: moneyOn
+                            ? (v) async {
+                                await smsChannel.invokeMethod('setMoneyApp', {'package': app.package, 'on': v}).catchError((_) => null);
+                                await load();
+                              }
+                            : null,
+                      ),
+                    ),
+                ],
+              ),
           ],
           SettingsCard(
             title: 'App',
@@ -1709,6 +1767,28 @@ ThemeData appTheme(bool dark) {
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
     dividerTheme: DividerThemeData(color: dark ? lineDark : lineLight),
   );
+}
+
+/// A card or bank app this phone has seen a dollar notification from (MoneyApps in MoneyListener.kt).
+class MoneyApp {
+  const MoneyApp({required this.package, required this.label, required this.on, this.seen});
+
+  factory MoneyApp.fromJson(Map<String, dynamic> json) {
+    final seen = (json['seen'] as num?)?.toInt() ?? 0;
+    final package = '${json['package'] ?? ''}';
+    final label = '${json['label'] ?? ''}';
+    return MoneyApp(
+      package: package,
+      label: label.isEmpty ? package : label,
+      on: json['on'] != false,
+      seen: seen > 0 ? DateTime.fromMillisecondsSinceEpoch(seen) : null,
+    );
+  }
+
+  final String package;
+  final String label;
+  final bool on;
+  final DateTime? seen;
 }
 
 /// A settings group: a small purple heading over a rounded card, as the site's panels.
@@ -2052,10 +2132,15 @@ class _SmsCenterPageState extends State<SmsCenterPage> {
       out.add(SmsItem(
         key: 'l${l['id']}',
         status: status,
-        sender: '${l['from'] ?? ''}',
+        // A card or bank app's notification goes by the app's name (its "from" is just "app").
+        sender: '${l['appName'] ?? l['from'] ?? ''}',
         at: (l['at'] as num?)?.toInt() ?? 0,
         amount: amountIn(text),
-        body: status == 'skipped' ? 'OTP বা code-এর SMS ("${l['why']}") — phone থেকে বের হয়নি।' : text,
+        body: status != 'skipped'
+            ? text
+            : l['why'] == 'off'
+                ? 'এই app বন্ধ (App lock ও SMS → Card ও bank app) — notification phone থেকে বের হয়নি।'
+                : 'OTP বা code-এর SMS ("${l['why']}") — phone থেকে বের হয়নি।',
         invoice: l['invoice'] as String?,
         error: l['error'] as String?,
         localId: '${l['id']}',

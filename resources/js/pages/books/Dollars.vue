@@ -28,14 +28,32 @@ type Account = {
     name: string;
     kind: string;
     last4: string | null;
+    topup_from_id: number | null;
     is_active: boolean;
     balance: number | null;
+};
+
+// A card or bank app the phone saw a dollar move in (NSave, Fasset, PlasmaOne, …).
+type MoneyApp = {
+    id: number;
+    name: string;
+    package: string;
+    status: 'pending' | 'on' | 'off';
+    seen: string | null;
+    waiting: number;
+    accounts: {
+        id: number;
+        name: string;
+        last4: string | null;
+        kind: string;
+    }[];
 };
 
 // One NSave app notification the phone forwarded, and what the books did with it.
 type CardEvent = {
     id: number;
     at: string | null;
+    app: string | null;
     kind: string;
     amount: number | null;
     merchant: string | null;
@@ -109,6 +127,7 @@ const props = defineProps<{
         balance: number;
     }[];
     card_events: CardEvent[];
+    money_apps: MoneyApp[];
     batches: {
         id: number;
         number: number;
@@ -191,6 +210,7 @@ const accountForm = useForm({
     kind: 'platform',
     is_active: true,
     last4: '',
+    topup_from_id: null as number | null,
 });
 const newKinds = computed(() => props.kinds);
 // A card needs its last four digits: NSave's notifications and Meta's charges find it by them.
@@ -211,8 +231,15 @@ function startAccount(a?: Account): void {
                   kind: a.kind,
                   is_active: a.is_active,
                   last4: a.last4 ?? '',
+                  topup_from_id: a.topup_from_id,
               }
-            : { name: '', kind: 'platform', is_active: true, last4: '' },
+            : {
+                  name: '',
+                  kind: 'platform',
+                  is_active: true,
+                  last4: '',
+                  topup_from_id: null,
+              },
     );
     accountOpen.value = true;
 }
@@ -224,9 +251,19 @@ function saveAccount(): void {
     };
 
     if (editingAccount.value) {
-        accountForm.put(`/dollars/accounts/${editingAccount.value.id}`, opts);
+        accountForm
+            .transform((d) => ({
+                ...d,
+                topup_from_id: d.topup_from_id || null,
+            }))
+            .put(`/dollars/accounts/${editingAccount.value.id}`, opts);
     } else {
-        accountForm.post('/dollars/accounts', opts);
+        accountForm
+            .transform((d) => ({
+                ...d,
+                topup_from_id: d.topup_from_id || null,
+            }))
+            .post('/dollars/accounts', opts);
     }
 }
 
@@ -254,6 +291,95 @@ const EVENT_STATUS: Record<string, { label: string; tone: string }> = {
     held: { label: 'মেলাতে হবে', tone: 'text-wait' }, // i18n
     ignored: { label: 'টাকা নড়েনি', tone: 'text-ink-3' }, // i18n
 };
+
+// Where money added to an account comes from: another of ours, or new dollars bought.
+const NEW_MONEY = 0;
+const topupOptions = (except?: number) => [
+    { value: NEW_MONEY, label: t('নতুন কেনা dollar — নিজে লিখব') },
+    ...props.accounts
+        .filter(
+            (a) =>
+                (a.kind === 'card' || a.kind === 'holding') && a.id !== except,
+        )
+        .map((a) => ({
+            value: a.id,
+            label: t('{name} থেকে আসে', { name: a.name }),
+        })),
+];
+const ownAccounts = computed<Option[]>(() =>
+    props.accounts
+        .filter((a) => a.kind === 'card' || a.kind === 'holding')
+        .map((a) => ({
+            value: a.id,
+            label: a.last4 ? `${a.name} · ${a.last4}` : a.name,
+        })),
+);
+const APP_STATUS: Record<MoneyApp['status'], { label: string; tone: string }> =
+    {
+        pending: {
+            label: 'নতুন — approve বাকি',
+            tone: 'bg-wait-soft text-wait',
+        }, // i18n
+        on: { label: 'চালু', tone: 'bg-in-soft text-in' }, // i18n
+        off: { label: 'বন্ধ', tone: 'bg-sunken text-ink-3' }, // i18n
+    };
+
+// Approving a new app: a new card or USD account for it, or joined to one already in the books.
+const approving = ref<MoneyApp | null>(null);
+const approveForm = useForm({
+    mode: 'new' as 'new' | 'link',
+    name: '',
+    kind: 'card' as 'card' | 'holding',
+    last4: '',
+    account_id: null as number | null,
+    topup_from_id: NEW_MONEY as number | null,
+});
+const approveModes = computed<Option[]>(() => [
+    { value: 'new', label: t('নতুন account') },
+    { value: 'link', label: t('আগের account-এ যুক্ত') },
+]);
+const accountKinds = computed<Option[]>(() => [
+    { value: 'card', label: 'Card' },
+    { value: 'holding', label: t('USD account') },
+]);
+
+function startApprove(app: MoneyApp): void {
+    approving.value = app;
+    approveForm.clearErrors();
+    Object.assign(approveForm, {
+        mode: 'new',
+        name: app.name,
+        kind: 'card',
+        last4: '',
+        account_id: null,
+        topup_from_id: NEW_MONEY,
+    });
+}
+
+function saveApprove(): void {
+    if (!approving.value) {
+        return;
+    }
+
+    approveForm
+        .transform((d) => ({
+            ...d,
+            topup_from_id: d.topup_from_id || null,
+            last4: d.last4 || null,
+        }))
+        .post(`/dollars/money-apps/${approving.value.id}/approve`, {
+            preserveScroll: true,
+            onSuccess: () => (approving.value = null),
+        });
+}
+
+function turnApp(app: MoneyApp, on: boolean): void {
+    router.post(
+        `/dollars/money-apps/${app.id}/turn`,
+        { on },
+        { preserveScroll: true },
+    );
+}
 
 function placeEvent(e: CardEvent): void {
     router.post(
@@ -340,12 +466,103 @@ function dismissEvent(e: CardEvent): void {
         >
     </div>
 
-    <!-- NSave: every move on our cards, read from the app's notifications -->
+    <!-- Card and bank apps the phone reads: approve a new one, turn one on or off -->
+    <section v-if="money_apps.length" class="panel mt-6 p-5 sm:p-6">
+        <h2 class="flex items-center gap-2 text-[16px] font-bold">
+            <KIcon name="wallet" class="text-brand" />{{ t('Card ও bank app') }}
+        </h2>
+        <p class="mt-1 text-[13.5px] text-ink-3">
+            {{
+                t(
+                    'Phone-এর notification থেকে dollar-এর লেনদেন নিজে খাতায় ওঠে। নতুন app এলে approve করুন; যেটা চান না, বন্ধ রাখুন।',
+                )
+            }}
+        </p>
+        <ul class="mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+            <li
+                v-for="app in money_apps"
+                :key="app.id"
+                class="rounded-xl border p-3.5"
+                :class="
+                    app.status === 'pending'
+                        ? 'border-wait/40 bg-wait-soft'
+                        : 'border-line bg-sunken'
+                "
+            >
+                <div class="flex items-start gap-3">
+                    <span
+                        class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand text-[15px] font-bold text-white"
+                        >{{ app.name.slice(0, 1).toUpperCase() }}</span
+                    >
+                    <div class="min-w-0 flex-1">
+                        <p class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold">{{ app.name }}</span>
+                            <span
+                                class="rounded-full px-2 py-0.5 text-[12.5px] font-semibold"
+                                :class="APP_STATUS[app.status].tone"
+                                >{{ t(APP_STATUS[app.status].label) }}</span
+                            >
+                        </p>
+                        <p class="mt-0.5 truncate text-[13px] text-ink-3">
+                            {{
+                                app.accounts.length
+                                    ? app.accounts
+                                          .map((a) =>
+                                              a.last4
+                                                  ? `${a.name} · ${a.last4}`
+                                                  : a.name,
+                                          )
+                                          .join(', ')
+                                    : app.package
+                            }}
+                            <template v-if="app.seen">
+                                · {{ ago(app.seen) }}</template
+                            >
+                        </p>
+                        <p
+                            v-if="app.waiting"
+                            class="mt-1 text-[13px] font-semibold text-wait"
+                        >
+                            {{
+                                t('{n}টা লেনদেন অপেক্ষায়', { n: app.waiting })
+                            }}
+                        </p>
+                    </div>
+                    <KSwitch
+                        v-if="app.status !== 'pending' && can['usd.edit']"
+                        :model-value="app.status === 'on'"
+                        :label="app.status === 'on' ? t('চালু') : t('বন্ধ')"
+                        @update:model-value="(v: boolean) => turnApp(app, v)"
+                    />
+                </div>
+                <div
+                    v-if="app.status === 'pending' && can['usd.edit']"
+                    class="mt-3 grid grid-cols-2 gap-2"
+                >
+                    <KButton
+                        size="sm"
+                        variant="primary"
+                        icon="check"
+                        @click="startApprove(app)"
+                        >{{ t('Approve') }}</KButton
+                    >
+                    <KButton
+                        size="sm"
+                        variant="plain"
+                        @click="turnApp(app, false)"
+                        >{{ t('বন্ধ রাখুন') }}</KButton
+                    >
+                </div>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Every dollar move read from those apps' notifications -->
     <section v-if="card_events.length" class="panel mt-6 p-5 sm:p-6">
         <div class="flex flex-wrap items-baseline justify-between gap-2">
             <h2 class="flex items-center gap-2 text-[16px] font-bold">
                 <KIcon name="bell" class="text-brand" />{{
-                    t('NSave থেকে আসা লেনদেন')
+                    t('App থেকে আসা লেনদেন')
                 }}
             </h2>
             <p class="text-[13.5px] text-ink-3">
@@ -371,6 +588,11 @@ function dismissEvent(e: CardEvent): void {
                             {{ t(EVENT_KIND[e.kind] ?? e.kind) }}
                             <template v-if="e.merchant">
                                 · {{ e.merchant }}</template
+                            >
+                            <span
+                                v-if="e.app"
+                                class="ml-1 text-[13px] font-normal text-ink-3"
+                                >{{ e.app }}</span
                             >
                         </p>
                         <p class="mt-0.5 text-[13px] text-ink-3">
@@ -803,6 +1025,26 @@ function dismissEvent(e: CardEvent): void {
                     :maxlength="4"
                     placeholder="1234"
             /></KField>
+            <KField
+                v-if="
+                    editingAccount
+                        ? editingAccount.kind !== 'platform'
+                        : accountForm.kind !== 'platform'
+                "
+                :label="t('টাকা যোগ হলে কোথা থেকে আসে')"
+                :hint="
+                    t(
+                        'যেমন NSave copy-তে টাকা main card থেকে আসে। নতুন কেনা হলে আপনি taka সহ লিখবেন।',
+                    )
+                "
+                ><KSelect
+                    :model-value="accountForm.topup_from_id ?? NEW_MONEY"
+                    :options="topupOptions(editingAccount?.id)"
+                    @update:model-value="
+                        (v: string | number | null | undefined) =>
+                            (accountForm.topup_from_id = v ? Number(v) : null)
+                    "
+            /></KField>
             <KSwitch
                 v-if="editingAccount && editingAccount.kind !== 'card'"
                 v-model="accountForm.is_active"
@@ -819,6 +1061,76 @@ function dismissEvent(e: CardEvent): void {
                 variant="primary"
                 :loading="accountForm.processing"
                 >{{ t('সংরক্ষণ') }}</KButton
+            >
+        </template>
+    </KModal>
+
+    <KModal
+        :model-value="approving !== null"
+        width="sm"
+        :title="t('{app} approve', { app: approving?.name ?? '' })"
+        :subtitle="t('এর notification-এর dollar-এর লেনদেন কোন account-এ উঠবে।')"
+        @update:model-value="(v: boolean) => !v && (approving = null)"
+    >
+        <form
+            id="approve-form"
+            class="flex flex-col gap-4"
+            @submit.prevent="saveApprove"
+        >
+            <KSegment v-model="approveForm.mode" :options="approveModes" />
+            <template v-if="approveForm.mode === 'new'">
+                <KField :label="t('নাম')" :error="approveForm.errors.name"
+                    ><KInput v-model="approveForm.name"
+                /></KField>
+                <KField :label="t('ধরন')"
+                    ><KSegment
+                        v-model="approveForm.kind"
+                        :options="accountKinds"
+                /></KField>
+            </template>
+            <KField
+                v-else
+                :label="t('কোন account')"
+                :error="approveForm.errors.account_id"
+                ><KSelect
+                    v-model="approveForm.account_id"
+                    :options="ownAccounts"
+                    :placeholder="t('বাছুন')"
+            /></KField>
+            <KField
+                v-if="
+                    approveForm.mode === 'link' || approveForm.kind === 'card'
+                "
+                :label="t('Card-এর শেষ ৪ সংখ্যা')"
+                :error="approveForm.errors.last4"
+                ><KInput
+                    v-model="approveForm.last4"
+                    inputmode="numeric"
+                    :maxlength="4"
+                    placeholder="1234"
+            /></KField>
+            <KField
+                v-if="approveForm.mode === 'new'"
+                :label="t('টাকা যোগ হলে কোথা থেকে আসে')"
+                ><KSelect
+                    :model-value="approveForm.topup_from_id ?? NEW_MONEY"
+                    :options="topupOptions()"
+                    @update:model-value="
+                        (v: string | number | null | undefined) =>
+                            (approveForm.topup_from_id = v ? Number(v) : null)
+                    "
+            /></KField>
+        </form>
+        <template #footer>
+            <KButton variant="quiet" @click="approving = null">{{
+                t('বাতিল')
+            }}</KButton>
+            <KButton
+                type="submit"
+                form="approve-form"
+                variant="primary"
+                :loading="approveForm.processing"
+                >{{ t('Approve') }}</KButton
             >
         </template>
     </KModal>

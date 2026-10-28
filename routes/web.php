@@ -176,7 +176,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dollars/pending/{account}', [DollarController::class, 'pending'])->middleware(['can:usd.create', 'throttle:60,1,dollars.pending'])->name('dollars.pending');
     Route::post('dollars/accounts', [DollarController::class, 'storeAccount'])->middleware('can:usd.edit')->name('dollars.accounts.store');
     Route::put('dollars/accounts/{account}', [DollarController::class, 'updateAccount'])->middleware('can:usd.edit')->name('dollars.accounts.update');
-    // NSave lines the phone could not place: put on a card, or set aside.
+    // Card and bank apps the phone reads (NSave, Fasset, …): approve a new one, or turn one on or off.
+    Route::post('dollars/money-apps/{app}/approve', [DollarController::class, 'approveApp'])->middleware('can:usd.edit')->name('dollars.money-apps.approve');
+    Route::post('dollars/money-apps/{app}/turn', [DollarController::class, 'turnApp'])->middleware('can:usd.edit')->name('dollars.money-apps.turn');
+    // Lines the phone could not place: put on a card, or set aside.
     Route::post('dollars/card-events/{event}/place', [DollarController::class, 'placeEvent'])->middleware('can:usd.create')->name('dollars.card-events.place');
     Route::post('dollars/card-events/{event}/dismiss', [DollarController::class, 'dismissEvent'])->middleware('can:usd.create')->name('dollars.card-events.dismiss');
     Route::get('payments', [MoneyInOutController::class, 'payments'])->middleware('can:bdt.view')->name('payments.index');

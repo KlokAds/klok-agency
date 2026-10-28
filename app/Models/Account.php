@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property bool $is_active
  * @property string|null $last4
+ * @property string|null $app_package
+ * @property int|null $topup_from_id
  */
 class Account extends Model
 {
@@ -19,7 +21,7 @@ class Account extends Model
 
     public const KINDS = ['card' => 'Card', 'holding' => 'Holding', 'platform' => 'Ad platform'];
 
-    protected $fillable = ['code', 'name', 'kind', 'last4', 'is_active', 'sort'];
+    protected $fillable = ['code', 'name', 'kind', 'last4', 'app_package', 'topup_from_id', 'is_active', 'sort'];
 
     protected function casts(): array
     {

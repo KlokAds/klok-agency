@@ -128,7 +128,7 @@ class MainActivity : FlutterFragmentActivity() {
                     }.start()
                 }
                 "defaultIgnore" -> result.success(SmsForwarder.DEFAULT_IGNORE.joinToString("\n"))
-                // NSave's card notifications (NSaveListener): whether the phone lets this app read them.
+                // Card and bank apps' notifications (MoneyListener): whether the phone lets this app read them.
                 "notificationAccess" -> result.success(NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName))
                 "openNotificationAccess" -> {
                     try {
@@ -138,6 +138,21 @@ class MainActivity : FlutterFragmentActivity() {
                         startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
                     }
                     result.success(null)
+                }
+                // The card and bank apps seen, each on or off, and the switch for all of them.
+                "moneyApps" -> result.success(MoneyApps.list(this))
+                "setMoneyOn" -> {
+                    MoneyApps.setAll(this, call.argument<Boolean>("on") ?: true)
+                    result.success(null)
+                }
+                "setMoneyApp" -> {
+                    val app = call.argument<String>("package")
+                    if (app.isNullOrEmpty()) {
+                        result.error("package", "no package", null)
+                    } else {
+                        MoneyApps.setApp(this, app, call.argument<Boolean>("on") ?: true)
+                        result.success(null)
+                    }
                 }
                 else -> result.notImplemented()
             }
