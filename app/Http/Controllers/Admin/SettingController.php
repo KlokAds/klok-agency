@@ -9,6 +9,7 @@ use App\Services\MoveFees;
 use App\Support\MailSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -57,7 +58,13 @@ class SettingController extends Controller
         // Where clients reach the agency on WhatsApp, from the portal.
         Setting::put('business_whatsapp', $data['business_whatsapp'] ?? null);
         // The cards Meta charges that are ours: their charges come off the card balance.
-        Setting::put('meta_cards', filled($data['meta_cards'] ?? null) ? preg_replace('/\s+/', '', $data['meta_cards']) : null);
+        $cards = filled($data['meta_cards'] ?? null) ? preg_replace('/\s+/', '', $data['meta_cards']) : null;
+        if ($cards !== Setting::get('meta_cards')) {
+            Setting::put('meta_cards', $cards);
+            // A card just added: its charges (also ones set aside before) come off the balance now.
+            Cache::forget('meta-charges:pilot');
+            rescue(fn () => app(MetaReceipts::class)->fromPilotIfDue());
+        }
 
         $this->toast(__('Settings সংরক্ষণ হয়েছে।'));
 

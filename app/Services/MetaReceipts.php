@@ -32,7 +32,8 @@ class MetaReceipts
     public const EVERY_MINUTES = 5;
 
     /** Meta's card charges are read from Pilot this often. */
-    public const CHARGES_EVERY_MINUTES = 60;
+    // Every tick (5 minutes): a charge comes off the card's dollars soon after Meta takes it.
+    public const CHARGES_EVERY_MINUTES = 5;
 
     /** Receipts in these states are safely in the books, so their mail is deleted. */
     public const DONE = ['booked', 'duplicate', 'ignored'];
@@ -457,7 +458,8 @@ class MetaReceipts
      * down even when no receipt email comes. Only charges from the first run on, only USD ad
      * accounts paying with one of our cards; each charge once (Meta's transaction id). A charge
      * already in the books (by hand, or from its receipt: same amount within two days) is linked,
-     * never booked twice. Once an hour.
+     * never booked twice. Every five minutes; a charge set aside because its card was not ours
+     * yet is booked once the card is added in Settings.
      *
      * @return int how many charges were booked
      */
@@ -515,9 +517,19 @@ class MetaReceipts
     private function bookPilotCharge(PilotAccount $account, array $charge, ?string $card, array $cards): bool
     {
         $key = 'pilot:'.$charge['id'];
+        $seen = MetaReceipt::where('message_id', $key)->first() ?? MetaReceipt::where('transaction_id', $charge['id'])->first();
 
-        if (MetaReceipt::where('message_id', $key)->exists() || MetaReceipt::where('transaction_id', $charge['id'])->exists()) {
-            return false;
+        if ($seen !== null) {
+            // Set aside only because its card was not ours then: now that it is, it is booked
+            // like a new charge. Anything else already seen stays as it is.
+            $nowOurs = $seen->message_id === $key && $seen->status === 'ignored' && $seen->usd_entry_id === null
+                && $card !== null && in_array($card, $cards, true) && strtoupper((string) $charge['currency']) === 'USD';
+
+            if (! $nowOurs) {
+                return false;
+            }
+
+            $seen->delete();
         }
 
         $at = CarbonImmutable::parse($charge['time'])->setTimezone(config('app.timezone'));

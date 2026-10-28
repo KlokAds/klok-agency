@@ -255,4 +255,18 @@ it('leaves Meta charges on a card that is not ours out of the books', function (
     expect(app(MetaReceipts::class)->fromPilotIfDue())->toBe(0)
         ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(0)
         ->and(MetaReceipt::where('message_id', 'pilot:C-9')->value('status'))->toBe('ignored');
+
+    // The card turns out to be ours (another NSave card): the charge set aside comes off now, once.
+    $owner = User::factory()->create();
+    $owner->assignRole(Access::OWNER);
+    $this->actingAs($owner)->withSession(['auth.password_confirmed_at' => time()])->put('/admin/settings', [
+        'lock_date' => null, 'require_2fa' => false, 'idle_minutes' => 30, 'mfs_out_percent' => '1.85', 'bank_transfer_fee' => '0', 'meta_cards' => '4242, 1111',
+    ])->assertSessionHasNoErrors()->assertRedirect();
+    expect(Setting::get('meta_cards'))->toBe('4242,1111')
+        ->and((int) UsdEntry::where('category', 'card_charge')->sum('amount'))->toBe(-2500)
+        ->and(MetaReceipt::where('message_id', 'pilot:C-9')->sole()->status)->toBe('booked');
+
+    Cache::flush();
+    expect(app(MetaReceipts::class)->fromPilotIfDue())->toBe(0)
+        ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(1);
 });
