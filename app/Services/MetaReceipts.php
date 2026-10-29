@@ -96,6 +96,12 @@ class MetaReceipts
         }
 
         foreach ($messages as $message) {
+            // A KlokOne company's mail (its meta-…@ address, brought here by the catch-all) is
+            // KlokOne's to read: it stays exactly as it is, never flagged or deleted.
+            if (self::forKlokOne((string) $message->getHeader()?->raw)) {
+                continue;
+            }
+
             $html = (string) $message->getHTMLBody();
             $text = (string) $message->getTextBody();
             $id = (string) $message->getMessageId();
@@ -123,6 +129,9 @@ class MetaReceipts
         // else (Gmail's forwarding codes and the like) after a month. Unreadable ones stay.
         $cutoff = now()->subDays(self::KEEP_DAYS);
         foreach ($inbox?->query()->whereSeen()->limit(100)->get() ?? [] as $old) {
+            if (self::forKlokOne((string) $old->getHeader()?->raw)) {
+                continue;
+            }
             $stored = MetaReceipt::where('message_id', (string) $old->getMessageId())->first();
             $sent = (string) $old->getDate();
             $isOld = $sent !== '' && CarbonImmutable::parse($sent)->lt($cutoff);
@@ -137,6 +146,12 @@ class MetaReceipts
         Setting::putQuietly('meta_receipts_checked_at', now()->toIso8601String());
 
         return $count;
+    }
+
+    /** Mail to a KlokOne company's address on this mailbox (App\Tenancy\ReceiptsInbox there). */
+    public static function forKlokOne(string $header): bool
+    {
+        return preg_match('/\bmeta-(?:[a-z0-9-]+-)?[a-z0-9]{8}@klokads\.com\b/i', $header) === 1;
     }
 
     /**

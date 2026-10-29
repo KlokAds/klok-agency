@@ -69,3 +69,12 @@ it('tells Meta senders from others', function () {
         ->and(MetaReceipts::fromMeta('x@notfacebook.com'))->toBeFalse()
         ->and(MetaReceipts::fromMeta('x@facebook.com.evil.example'))->toBeFalse();
 });
+
+it('leaves a KlokOne company\'s mail on the shared mailbox alone', function () {
+    // Gmail's forward to a company's meta-… address, brought in by the catch-all.
+    expect(MetaReceipts::forKlokOne("To: owner@gmail.com\r\nX-Forwarded-To: meta-rupkotha-ads-k3x9q2za@klokads.com\r\n"))->toBeTrue()
+        ->and(MetaReceipts::forKlokOne("Received: from mx1\r\n\tfor <meta-k3x9q2za@klokads.com>; Thu\r\n"))->toBeTrue()
+        // Ours: the mailbox's own address.
+        ->and(MetaReceipts::forKlokOne("Delivered-To: receipts@klokads.com\r\nTo: <receipts@klokads.com>\r\n"))->toBeFalse()
+        ->and(MetaReceipts::forKlokOne("To: <metadata@klokads.com>\r\n"))->toBeFalse();
+});
