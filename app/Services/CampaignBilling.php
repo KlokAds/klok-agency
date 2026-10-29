@@ -35,6 +35,11 @@ class CampaignBilling
 
     public const PROBLEM_TITLE = 'Ad account-এ সমস্যা — client-দের ad থেমে আছে'; // i18n
 
+    public const STALE_TITLE = 'Meta থেকে ad-এর খরচ আসছে না'; // i18n
+
+    /** Hours without fresh numbers from Meta before the Owner is told. */
+    public const STALE_HOURS = 3;
+
     public function __construct(private PilotClient $pilot) {}
 
     /**
@@ -86,6 +91,8 @@ class CampaignBilling
             $account->forceFill(['problem' => $report['account_problem'], 'problem_since' => $report['account_problem'] ? now() : null])->saveQuietly();
             $this->accountProblem($account, $was);
         }
+
+        $this->staleCheck($account, $report['last_synced_at'] ?? null);
 
         foreach ($report['campaigns'] ?? [] as $c) {
             $campaign = Campaign::firstOrNew(['pilot_campaign_id' => (int) $c['campaign_id']]);
@@ -171,6 +178,32 @@ class CampaignBilling
         foreach ($campaigns as $campaign) {
             $this->tellClient($campaign, $account->problem !== null ? 'held' : ($was !== null ? 'back' : null));
         }
+    }
+
+    /**
+     * Pilot still answers but Meta stopped sending it this account's numbers (on 28 Oct 2026 the
+     * System User lost five ad accounts and billing went quiet): while clients' campaigns run on it,
+     * the Owner hears once every six hours. Clients hear nothing; their ads are still running.
+     */
+    private function staleCheck(PilotAccount $account, ?string $lastSynced): void
+    {
+        $key = 'pilot:stale:'.$account->id;
+        $since = $lastSynced !== null ? CarbonImmutable::parse($lastSynced) : null;
+
+        if ($since === null || $since->gte(now()->subHours(self::STALE_HOURS))) {
+            Cache::forget($key);
+
+            return;
+        }
+
+        if (! Campaign::where('pilot_account_id', $account->id)->whereNotNull('client_id')->running()->exists() || ! Cache::add($key, true, 6 * 3600)) {
+            return;
+        }
+
+        app(Notifier::class)->send(null, new AgencyAlert('account_problem', self::STALE_TITLE, '{account} — Meta থেকে শেষ খবর {since}। Meta Business Settings → System users → Assign assets-এ ad account-টা আবার দিন।', [ // i18n
+            'account' => $account->name,
+            'since' => $since->timezone(config('app.timezone'))->format('j M, g:i A'),
+        ], ['url' => '/campaigns?account='.$account->id]));
     }
 
     private function tellClient(Campaign $campaign, ?string $what): void

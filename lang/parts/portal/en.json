@@ -296,5 +296,7 @@
     "পাওনা — বিজ্ঞাপন চলে গেছে, টাকা বাকি": "Owed: ads have run, payment pending",
     "এখনই pay করুন": "Pay now",
     "এই ডলার কত টাকায় ফেরত হবে, Klok Ads হিসাব করে জানিয়ে দেবে।": "Klok Ads will work out and tell you how much this comes to in taka.",
-    "এখন বদলানো গেল না — একটু পরে আবার চেষ্টা করুন, না হলে Klok Ads-কে জানান।": "Couldn't change it right now. Try again in a little while, or tell Klok Ads."
+    "এখন বদলানো গেল না — একটু পরে আবার চেষ্টা করুন, না হলে Klok Ads-কে জানান।": "Couldn't change it right now. Try again in a little while, or tell Klok Ads.",
+    "Meta থেকে ad-এর খরচ আসছে না": "Ad spend is not coming in from Meta",
+    "{account} — Meta থেকে শেষ খবর {since}। Meta Business Settings → System users → Assign assets-এ ad account-টা আবার দিন।": "{account}: last heard from Meta {since}. Give the ad account back in Meta Business Settings → System users → Assign assets."
 }
