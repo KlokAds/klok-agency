@@ -69,6 +69,12 @@ patch(app, r'(\n(\s*)buildTypes \{)', r'''
             storePassword = System.getenv("KEYSTORE_PASSWORD")
             keyAlias = "khamar"
             keyPassword = System.getenv("KEYSTORE_PASSWORD")
+            // With minSdk 24 Gradle signs v2 only; realme/OPPO's own installer (ColorOS) reads
+            // the old v1 signature in its safety check and stops ("Package installer keeps
+            // stopping") without it. All three cost nothing on other phones.
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 \1''')
