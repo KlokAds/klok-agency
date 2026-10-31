@@ -115,7 +115,7 @@ class CampaignForecast
                 'to_spend' => $toSpend,
                 'balance' => $balance,
                 // Spend already run is owed at the batches that paid for it; days to come at today's rate.
-                'due_bdt' => $balance < 0 ? $dueBdt + (int) round(max(0, -$balance - $dueNow) * ($rate ?? 0)) : null,
+                'due_bdt' => $balance < 0 ? $dueBdt + (int) round(max(0, -$balance - $dueNow) * (Invoices::clientRate($client) ?? 0)) : null,
                 'due_now' => $dueNow,
                 'due_now_bdt' => $dueNow > 0 ? $dueBdt : null,
                 'credit_now' => $creditNow,

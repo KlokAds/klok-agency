@@ -330,7 +330,7 @@ class Books
                 'usd_pending' => -$pending->sum('amount'),
                 'cost_pending' => $pendingCost,
                 // Unpaid spend as the client owes it: its batches' rate plus commission.
-                'pending_bdt' => (int) round($pendingCost * (1 + Invoices::commissionPercent() / 100)),
+                'pending_bdt' => Invoices::pendingBdt($client, (int) -$pending->sum('amount'), (int) $pendingCost),
                 'pending_count' => $pending->count(),
                 'credit_usd' => $prepaid['credit_usd'],
                 'campaign_usd' => $prepaid['spent_usd'],

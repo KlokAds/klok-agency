@@ -57,7 +57,7 @@ class Invoices
             throw new RuntimeException(__('এই client-এর কোনো পাওনা নেই।'));
         }
         $rows = UsdEntry::where('source', 'pilot')->where('client_id', $client->id)->where('status', 'pending')->get();
-        $rate = self::rateFor($rows) ?? self::clientRate() ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
+        $rate = self::rateFor($rows, $client) ?? self::clientRate($client) ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
 
         return DB::transaction(function () use ($client, $due, $rate) {
             foreach (Invoice::where('client_id', $client->id)->where('notes', self::DUE_NOTE)->where('status', '!=', 'void')->where('paid', 0)->get() as $old) {
@@ -517,6 +517,12 @@ class Invoices
         return (float) (Setting::get('commission_percent') ?? '20');
     }
 
+    /** The client's own commission, else the agency's. */
+    public static function commissionFor(?Client $client): float
+    {
+        return $client?->commission_percent !== null ? (float) $client->commission_percent : self::commissionPercent();
+    }
+
     /** BDT per USD of the FX batch now being spent (the first with USD left; else the latest). */
     public static function fxRate(): ?float
     {
@@ -537,12 +543,16 @@ class Invoices
     /**
      * What a client pays per USD of spend already run: the rate of the FX
      * batch that paid for it (FIFO), plus the commission. Spend not costed
-     * yet (no batch) takes today's client rate.
+     * yet (no batch) takes today's client rate. A fixed-rate client pays
+     * their rate whatever the batch cost.
      *
      * @param  iterable<UsdEntry>  $rows  spend rows (negative amounts)
      */
-    public static function rateFor(iterable $rows): ?float
+    public static function rateFor(iterable $rows, ?Client $client = null): ?float
     {
+        if ($client?->fixedRate() !== null) {
+            return $client->fixedRate();
+        }
         $fifo = app(Books::class)->fifo();
         $usd = 0;
         $cost = 0;
@@ -554,15 +564,32 @@ class Invoices
             }
         }
 
-        return $usd > 0 ? round($cost / $usd * (1 + self::commissionPercent() / 100), 2) : self::clientRate();
+        return $usd > 0 ? round($cost / $usd * (1 + self::commissionFor($client) / 100), 2) : self::clientRate($client);
     }
 
-    /** What a client pays per USD: the FX rate plus the agency's commission. */
-    public static function clientRate(): ?float
+    /**
+     * What a client pays per USD: their fixed rate, or the FX rate plus their commission (the
+     * agency's when they have none). Without a client, the agency's own rate.
+     */
+    public static function clientRate(?Client $client = null): ?float
     {
+        if ($client?->fixedRate() !== null) {
+            return $client->fixedRate();
+        }
         $fx = self::fxRate();
 
-        return $fx ? round($fx * (1 + self::commissionPercent() / 100), 2) : null;
+        return $fx ? round($fx * (1 + self::commissionFor($client) / 100), 2) : null;
+    }
+
+    /**
+     * Spend not paid yet as the client owes it in taka (poisha): its batches' cost plus their
+     * commission, or the dollars at their fixed rate.
+     */
+    public static function pendingBdt(?Client $client, int $usd, int $cost): int
+    {
+        return $client?->fixedRate() !== null
+            ? (int) round($usd * $client->fixedRate())
+            : (int) round($cost * (1 + self::commissionFor($client) / 100));
     }
 
     /**
@@ -576,6 +603,7 @@ class Invoices
     public static function campaignSpend(int $clientId, string $from, string $to): array
     {
         $rows = [];
+        $client = Client::find($clientId);
         $campaigns = Campaign::with('account')->where('client_id', $clientId)->orderBy('name')->get();
 
         if (PilotClient::connected()) {
@@ -603,7 +631,7 @@ class Invoices
             $rows[] = [
                 'id' => $campaign->id,
                 'name' => $campaign->name,
-                'rate' => self::rateFor($billed),
+                'rate' => self::rateFor($billed, $client),
                 'usd' => (int) $days->sum('spend'),
                 'results' => (int) $days->sum('results'),
                 'clicks' => (int) $days->sum('clicks'),

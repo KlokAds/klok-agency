@@ -36,7 +36,7 @@ class TopUps
         if ($bdt < self::MIN_BDT || $bdt > self::MAX_BDT) {
             throw new RuntimeException(__('৳:min থেকে ৳:max-এর মধ্যে দিন।', ['min' => number_format(self::MIN_BDT / 100), 'max' => number_format(self::MAX_BDT / 100)]));
         }
-        $rate = Invoices::clientRate() ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
+        $rate = Invoices::clientRate($client) ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
         // Whole cents of credit for the taka asked; the invoice total is those cents at the rate.
         $usd = (int) floor($bdt / $rate);
 

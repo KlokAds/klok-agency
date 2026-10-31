@@ -66,11 +66,29 @@ const props = defineProps<{
         fx_rate: number | null;
         commission: number;
         rate: number | null;
+        /** Clients priced their own way: a fixed rate, or the batch plus their commission. */
+        clients: Record<
+            string,
+            { fixed: number | null; commission: number; rate: number | null }
+        >;
     };
     options: { clients: Option[]; kinds: Option[]; campaigns: Option[] };
 }>();
 
-const defaultRate = props.pricing.rate ? String(props.pricing.rate) : '';
+// The client the new lines are priced for (followed from the form once it exists).
+const chosenClient = ref<number | string | null>(
+    props.invoice?.client_id ?? props.client_id,
+);
+const clientPricing = computed(() =>
+    chosenClient.value
+        ? (props.pricing.clients[String(chosenClient.value)] ?? null)
+        : null,
+);
+const defaultRate = computed(() => {
+    const rate = clientPricing.value?.rate ?? props.pricing.rate;
+
+    return rate ? String(rate) : '';
+});
 
 function inDays(days: number): string {
     const date = new Date();
@@ -89,16 +107,14 @@ function blank(kind: string): Line {
         results: null,
         clicks: null,
         usd: '',
-        rate: defaultRate,
+        rate: defaultRate.value,
         amount: '',
     };
 }
 
 const form = useForm({
     client_id: (props.invoice?.client_id ?? props.client_id) as
-        | number
-        | string
-        | null,
+        number | string | null,
     issue_date: props.invoice?.issue_date ?? today(),
     due_date: (props.invoice?.due_date ?? inDays(7)) as string | null,
     notes: props.invoice?.notes ?? '',
@@ -227,8 +243,9 @@ async function loadCampaigns(): Promise<void> {
 
 watch(
     () => form.client_id,
-    () => {
+    (id) => {
         spend.value = null;
+        chosenClient.value = id;
     },
 );
 
@@ -271,7 +288,7 @@ function generate(): void {
             clicks: c.clicks,
             usd: (c.usd / 100).toFixed(2),
             // The batches that paid for this spend, plus commission.
-            rate: c.rate ? String(c.rate) : defaultRate,
+            rate: c.rate ? String(c.rate) : defaultRate.value,
         }));
 
     form.items = [
@@ -731,19 +748,27 @@ const errorAt = (index: number, field: string) =>
                 <p class="font-semibold text-ink">{{ t('Client rate') }}</p>
                 <p class="mt-1">
                     {{
-                        pricing.fx_rate
-                            ? t(
-                                  'FX batch {fx} + {commission}% commission = {rate} প্রতি USD',
-                                  {
-                                      fx: taka(
-                                          Math.round(pricing.fx_rate * 100) /
-                                              100,
-                                      ),
-                                      commission: pricing.commission,
-                                      rate: taka(pricing.rate),
-                                  },
-                              )
-                            : t('কোনো FX batch নেই — rate নিজে লিখুন।')
+                        clientPricing?.fixed
+                            ? t('এই client-এর fixed rate: {rate} প্রতি USD', {
+                                  rate: taka(clientPricing.fixed),
+                              })
+                            : pricing.fx_rate
+                              ? t(
+                                    'FX batch {fx} + {commission}% commission = {rate} প্রতি USD',
+                                    {
+                                        fx: taka(
+                                            Math.round(pricing.fx_rate * 100) /
+                                                100,
+                                        ),
+                                        commission:
+                                            clientPricing?.commission ??
+                                            pricing.commission,
+                                        rate: taka(
+                                            clientPricing?.rate ?? pricing.rate,
+                                        ),
+                                    },
+                                )
+                              : t('কোনো FX batch নেই — rate নিজে লিখুন।')
                     }}
                 </p>
                 <p class="mt-1 text-ink-3">

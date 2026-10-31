@@ -79,6 +79,7 @@ class ClientController extends Controller
             ],
             'options' => [
                 'statuses' => Lookups::options(Client::STATUSES),
+                'pricing' => self::pricing(),
             ],
         ]);
     }
@@ -160,7 +161,7 @@ class ClientController extends Controller
         $person = fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'phone' => $u->phone, 'company' => $u->company, 'since' => $u->created_at?->format('j M Y')];
 
         return Inertia::render('clients/Show', [
-            'client' => $client->only(['id', 'name', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days']),
+            'client' => $client->only(['id', 'name', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days', 'rate_mode', 'fixed_rate', 'commission_percent']),
             // The client's own people on the portal, and sign-ups still waiting for a client.
             'portal' => [
                 'users' => User::where('client_id', $client->id)->orderBy('name')->get()->map($person)->all(),
@@ -196,6 +197,7 @@ class ClientController extends Controller
                 'users' => User::visible()->where('is_active', true)->whereDoesntHave('roles', fn ($q) => $q->where('name', Access::CLIENT))
                     ->orderBy('name')->get(['id', 'name'])->map(fn ($u) => ['value' => $u->id, 'label' => $u->name])->all(),
                 'wallets' => Lookups::wallets(),
+                'pricing' => self::pricing(),
             ],
         ]);
     }
@@ -371,6 +373,19 @@ class ClientController extends Controller
             'manager_id' => ['nullable', Rule::exists('users', 'id')->whereNull('client_id')
                 ->where(fn ($q) => $q->whereNotIn('id', User::whereHas('roles', fn ($r) => $r->where('name', Access::CLIENT))->select('id')))],
             'renew_days' => ['nullable', 'integer', 'min:1', 'max:90'],
-        ], [], ['name' => __('নাম')]);
+            'rate_mode' => ['sometimes', 'required', Rule::in(array_keys(Client::RATE_MODES))],
+            'fixed_rate' => ['nullable', 'required_if:rate_mode,fixed', 'numeric', 'min:1', 'max:1000'],
+            'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:200'],
+        ], [], ['name' => __('নাম'), 'fixed_rate' => __('Fixed rate'), 'commission_percent' => __('Commission')]);
+    }
+
+    /**
+     * For the client form: the agency's commission and today's FX batch, to show what a choice costs.
+     *
+     * @return array{commission: float, fx_rate: ?float}
+     */
+    private static function pricing(): array
+    {
+        return ['commission' => Invoices::commissionPercent(), 'fx_rate' => Invoices::fxRate()];
     }
 }

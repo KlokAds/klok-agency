@@ -16,6 +16,7 @@ import KSegment from '@/components/k/KSegment.vue';
 import KSelect from '@/components/k/KSelect.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
+import ClientPricing from '@/components/ClientPricing.vue';
 import { useFilters } from '@/composables/useFilters';
 import { initials, money } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -45,7 +46,10 @@ const props = defineProps<{
     clients: Paginated<Client>;
     filters: { q?: string | null; status: string };
     totals: { margin: number; spent: number; pending: number };
-    options: { statuses: Option[] };
+    options: {
+        statuses: Option[];
+        pricing: { commission: number; fx_rate: number | null };
+    };
 }>();
 
 const can = computed(() => usePage().props.auth.can);
@@ -64,6 +68,9 @@ const form = useForm({
     company: '',
     notes: '',
     renew_days: '',
+    rate_mode: 'commission',
+    fixed_rate: '',
+    commission_percent: '',
 });
 
 function save(): void {
@@ -311,6 +318,13 @@ const tiles = computed<StatTile[]>(() => [
                     :placeholder="t('যেমন 7')"
                     :invalid="!!form.errors.renew_days"
             /></KField>
+            <ClientPricing
+                v-model:mode="form.rate_mode"
+                v-model:fixed="form.fixed_rate"
+                v-model:commission="form.commission_percent"
+                :pricing="options.pricing"
+                :errors="form.errors"
+            />
             <KField label="Note" optional class="sm:col-span-2"
                 ><KTextarea
                     v-model="form.notes"

@@ -134,7 +134,7 @@ class PortalController extends Controller
                 'refundable' => (int) ($figure['credit_left'] ?? 0) >= CampaignLimits::RUN_OUT_MIN,
                 'round' => $this->creditRound($client, (int) ($figure['credit_left'] ?? 0)),
                 // What a dollar costs them now, so the top-up form can say what their taka buys.
-                'rate' => Invoices::clientRate(),
+                'rate' => Invoices::clientRate($client),
                 'topup_min' => TopUps::MIN_BDT,
                 // Owed for ads already run (credit below zero), in dollars and at their rate in taka.
                 'owed' => max(0, (int) ($figure['usd_pending'] ?? 0)),
@@ -641,7 +641,7 @@ class PortalController extends Controller
 
         return [
             'budget' => $campaign->dailyBudget(),
-            'rate' => Invoices::clientRate(),
+            'rate' => Invoices::clientRate($campaign->client),
             'status' => $renewal?->status,
             'days' => $renewal?->days,
             'invoice_url' => $renewal?->invoice && $renewal->invoice->status !== 'void' ? $renewal->invoice->publicUrl() : null,

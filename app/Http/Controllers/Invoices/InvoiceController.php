@@ -354,7 +354,7 @@ class InvoiceController extends Controller
 
         return response()->json([
             'campaigns' => Invoices::campaignSpend((int) $data['client'], (string) $data['from'], (string) $data['to']),
-            'rate' => Invoices::clientRate(),
+            'rate' => Invoices::clientRate(Client::find((int) $data['client'])),
         ]);
     }
 
@@ -389,6 +389,9 @@ class InvoiceController extends Controller
                 'fx_rate' => Invoices::fxRate(),
                 'commission' => Invoices::commissionPercent(),
                 'rate' => Invoices::clientRate(),
+                // Each client's own pricing: a fixed rate, or the batch plus their commission.
+                'clients' => Client::whereNot('rate_mode', 'commission')->orWhereNotNull('commission_percent')->get()
+                    ->mapWithKeys(fn (Client $c) => [$c->id => ['fixed' => $c->fixedRate(), 'commission' => Invoices::commissionFor($c), 'rate' => Invoices::clientRate($c)]])->all(),
             ],
             'options' => [
                 'clients' => Lookups::clients(),

@@ -158,11 +158,13 @@ class Renewals
      */
     public function choose(Renewal $renewal, int $days): Invoice
     {
-        $rate = Invoices::clientRate() ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
+        $renewal->loadMissing('client');
+        $rate = Invoices::clientRate($renewal->client) ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
+        $client = $renewal->client;
 
         $due = $this->dueOf($renewal->client_id);
 
-        return DB::transaction(function () use ($renewal, $days, $rate, $due) {
+        return DB::transaction(function () use ($renewal, $days, $rate, $due, $client) {
             $renewal = Renewal::with('campaign')->lockForUpdate()->findOrFail($renewal->id);
             // Locked, so a payment being settled finishes before the paid check below.
             $renewal->setRelation('invoice', $this->lockedInvoice($renewal));
@@ -181,7 +183,7 @@ class Renewals
                 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null,
             ];
             // Spend already run is owed at the batches that paid for it; the new days at today's rate.
-            $dueRate = Invoices::rateFor(UsdEntry::where('source', 'pilot')->where('client_id', $renewal->client_id)->where('status', 'pending')->get()) ?? $rate;
+            $dueRate = Invoices::rateFor(UsdEntry::where('source', 'pilot')->where('client_id', $renewal->client_id)->where('status', 'pending')->get(), $client) ?? $rate;
             $items = $due > 0 ? [$line(self::DUE_LINE, $due, $dueRate)] : [];
             $invoice = $this->invoices->save([
                 'client_id' => $renewal->client_id,

@@ -16,6 +16,7 @@ import KPager from '@/components/k/KPager.vue';
 import KSegment from '@/components/k/KSegment.vue';
 import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
+import ClientPricing from '@/components/ClientPricing.vue';
 import { confirmAction } from '@/lib/feedback';
 import { ago, money, niceDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -31,6 +32,9 @@ type Client = {
     notes: string | null;
     manager_id: number | null;
     renew_days: number | null;
+    rate_mode: string;
+    fixed_rate: number | null;
+    commission_percent: number | null;
 };
 
 type OpenTask = {
@@ -129,7 +133,11 @@ const props = defineProps<{
         due: number;
     }[];
     pilot: { days: number; accounts: PilotAccount[] } | null;
-    options: { users: Option[]; wallets: Option[] };
+    options: {
+        users: Option[];
+        wallets: Option[];
+        pricing: { commission: number; fx_rate: number | null };
+    };
     portal: {
         users: PortalPerson[];
         waiting: PortalPerson[];
@@ -284,6 +292,13 @@ const form = useForm({
     company: props.client.company ?? person?.company ?? '',
     notes: props.client.notes ?? '',
     renew_days: props.client.renew_days ? String(props.client.renew_days) : '',
+    rate_mode: props.client.rate_mode ?? 'commission',
+    fixed_rate:
+        props.client.fixed_rate !== null ? String(props.client.fixed_rate) : '',
+    commission_percent:
+        props.client.commission_percent !== null
+            ? String(props.client.commission_percent)
+            : '',
 });
 
 const statuses: Option[] = [
@@ -1112,6 +1127,13 @@ function print(): void {
                     :placeholder="t('যেমন 7')"
                     :invalid="!!form.errors.renew_days"
             /></KField>
+            <ClientPricing
+                v-model:mode="form.rate_mode"
+                v-model:fixed="form.fixed_rate"
+                v-model:commission="form.commission_percent"
+                :pricing="options.pricing"
+                :errors="form.errors"
+            />
             <KField label="Note" optional class="sm:col-span-2"
                 ><KTextarea v-model="form.notes"
             /></KField>

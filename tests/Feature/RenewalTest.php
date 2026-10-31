@@ -267,6 +267,28 @@ it('moves an unpaid renewal and its invoice along when the end moves, instead of
         ->and($this->owner->notifications()->where('data->kind', 'renewal_invoiced')->count())->toBe(1);
 });
 
+it('prices a fixed-rate client\'s renewal at their rate, set on the client form', function () {
+    payGffs($this, '1500', '10');
+    app(CampaignLimits::class)->refresh($this->campaign, true);
+
+    $form = ['name' => 'GFFS', 'status' => 'active', 'renew_days' => 7, 'rate_mode' => 'fixed', 'fixed_rate' => ''];
+    $this->actingAs($this->owner)->put("/clients/{$this->gffs->id}", $form)->assertSessionHasErrors('fixed_rate');
+    $this->actingAs($this->owner)->put("/clients/{$this->gffs->id}", [...$form, 'fixed_rate' => '150'])->assertSessionHasNoErrors();
+
+    expect(app(Renewals::class)->openDue())->toBe(1);
+    $invoice = Invoice::sole();
+
+    expect($invoice->items()->sole()->rate)->toEqual(150.0)
+        ->and($invoice->total)->toBe(210000)
+        ->and(Invoices::clientRate($this->gffs->fresh()))->toEqual(150.0);
+
+    // Back to commission: their own percent on the FX batch, not the agency's.
+    $this->actingAs($this->owner)->put("/clients/{$this->gffs->id}", [...$form, 'rate_mode' => 'commission', 'commission_percent' => '10'])->assertSessionHasNoErrors();
+    $fx = Invoices::fxRate();
+    expect(Invoices::clientRate($this->gffs->fresh()))->toEqual(round($fx * 1.1, 2))
+        ->and(Invoices::clientRate())->toEqual(round($fx * (1 + Invoices::commissionPercent() / 100), 2));
+});
+
 it('gives a link already open its invoice once the client is switched to auto renewal', function () {
     payGffs($this, '1500', '10');
     app(CampaignLimits::class)->refresh($this->campaign, true);

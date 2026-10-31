@@ -16,7 +16,22 @@ class Client extends Model
 
     public const STATUSES = ['active' => 'Active', 'inactive' => 'Inactive'];
 
-    protected $fillable = ['name', 'type', 'status', 'manager_id', 'renew_days', 'phone', 'email', 'company', 'notes'];
+    /** How their dollar is priced: the FX batch plus a commission, or a fixed taka rate. */
+    public const RATE_MODES = ['commission' => 'Commission', 'fixed' => 'Fixed rate'];
+
+    protected $fillable = ['name', 'type', 'status', 'manager_id', 'renew_days', 'rate_mode', 'fixed_rate', 'commission_percent', 'phone', 'email', 'company', 'notes'];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return ['fixed_rate' => 'float', 'commission_percent' => 'float'];
+    }
+
+    /** Their fixed taka per dollar, when they are priced that way. */
+    public function fixedRate(): ?float
+    {
+        return $this->rate_mode === 'fixed' && $this->fixed_rate > 0 ? (float) $this->fixed_rate : null;
+    }
 
     /** @return HasMany<PilotAccount, $this> */
     public function pilotAccounts(): HasMany

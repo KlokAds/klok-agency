@@ -28,7 +28,7 @@ class PublicRenewalController extends Controller
     {
         $renewal = $this->find($token);
         $campaign = $renewal->campaign;
-        $rate = Invoices::clientRate();
+        $rate = Invoices::clientRate($renewal->client);
         $results = $campaign->days()->where('day', '>=', $campaign->bill_from?->toDateString() ?? '1970-01-01')->get();
 
         return Inertia::render('public/Renewal', [
