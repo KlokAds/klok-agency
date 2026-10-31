@@ -114,7 +114,9 @@ function blank(kind: string): Line {
 
 const form = useForm({
     client_id: (props.invoice?.client_id ?? props.client_id) as
-        number | string | null,
+        | number
+        | string
+        | null,
     issue_date: props.invoice?.issue_date ?? today(),
     due_date: (props.invoice?.due_date ?? inDays(7)) as string | null,
     notes: props.invoice?.notes ?? '',
