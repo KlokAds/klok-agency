@@ -13,7 +13,7 @@
 
 /*
  * KlokOne — "ledger desk".
- * Warm paper, deep ink, Klok teal as the one accent. Money in tabular
+ * Lavender paper, deep ink, Klok purple as the one accent. Money in tabular
  * figures so columns line up like a ruled book.
  */
 :root {
@@ -21,9 +21,9 @@
     --surface: #ffffff;
     --surface-2: #faf9fc;
     --sunken: #ece8f2;
-    --ink: #15211f;
-    --ink-2: #4a5653;
-    --ink-3: #6b7874;
+    --ink: #17151f;
+    --ink-2: #4c4858;
+    --ink-3: #6c6878;
     --line: #e3dfea;
     --line-2: #cdc5d9;
     --brand: #6f4a97;
@@ -37,21 +37,21 @@
     --wait-soft: #f8efd6;
     --done: #3759c9;
     --done-soft: #e4eafb;
-    --rail: #11211e;
-    --rail-2: #182d29;
-    --rail-ink: #d5e2de;
-    --rail-dim: #9db0aa;
+    --rail: #16141f;
+    --rail-2: #221f31;
+    --rail-ink: #e6e0f0;
+    --rail-dim: #a8a2b8;
     /* chart polarity marks — validated for CVD against the surface */
     --pos: #0f7a50;
     --neg: #be123c;
     --shadow-pop:
-        0 1px 2px rgb(21 33 31 / 0.06), 0 12px 32px -8px rgb(21 33 31 / 0.22);
+        0 1px 2px rgb(23 21 31 / 0.06), 0 12px 32px -8px rgb(23 21 31 / 0.22);
     --shadow-card:
-        0 1px 2px rgb(21 33 31 / 0.05), 0 10px 28px -20px rgb(21 33 31 / 0.25);
+        0 1px 2px rgb(23 21 31 / 0.05), 0 10px 28px -20px rgb(23 21 31 / 0.25);
     /* A panel is a card on the page, not a box drawn on it: a faint top light, a soft drop. */
     --panel-bg: linear-gradient(180deg, #ffffff 0%, #fcfbf8 100%);
     --field-bg: #ffffff;
-    --field-shadow: inset 0 1px 2px rgb(21 33 31 / 0.04);
+    --field-shadow: inset 0 1px 2px rgb(23 21 31 / 0.04);
     --glow: rgb(111 74 151 / 0.08);
 }
 

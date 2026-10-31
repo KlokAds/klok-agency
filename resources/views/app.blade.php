@@ -15,8 +15,8 @@
         </script>
 
         <style nonce="{{ Vite::cspNonce() }}">
-            html { background-color: #f3f1ea; }
-            html.dark { background-color: #0c1312; }
+            html { background-color: #f4f2f7; }
+            html.dark { background-color: #0c0b13; }
         </style>
 
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">

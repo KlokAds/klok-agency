@@ -107,7 +107,7 @@ patch(manifest, r'(\n(\s*)<activity)', r'''
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="finance_normal" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
-        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/finance_teal" />\1''')
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/finance_brand" />\1''')
 patch(manifest, r'android:label="[^"]*"', 'android:label="KlokOne"')
 # Nothing of the app's own data (the SMS hook secret, the PIN, payment SMS) goes into phone backups.
 # Nor into a phone-to-phone move: the whole data folder ("root") is left out, so the WebView's
@@ -177,7 +177,7 @@ res = Path('android/app/src/main/res')
 (res / 'values').mkdir(parents=True, exist_ok=True)
 (res / 'values' / 'finance_colors.xml').write_text('''<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="finance_teal">#0D9488</color>
+    <color name="finance_brand">#6F4A97</color>
 </resources>
 ''', encoding='utf8')
 print('android patched')

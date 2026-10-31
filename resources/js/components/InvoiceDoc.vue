@@ -140,12 +140,12 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                                 width="64"
                                 height="64"
                                 rx="16"
-                                fill="#11211e"
+                                fill="#1b1927"
                             />
                             <path
                                 d="M20 16v32M20 34l14-18M26 27l12 21"
                                 fill="none"
-                                stroke="#2dd4bf"
+                                stroke="#c2a3df"
                                 stroke-width="6"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
@@ -379,11 +379,11 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
    the app's dark surfaces in the dark theme. */
 .inv {
     --paper: #ffffff;
-    --ink: #111816;
-    --muted: #66706d;
-    --line: #e6e9e8;
-    --band: #f6f8f7;
-    --brand: #0f766e;
+    --ink: #16141f;
+    --muted: #6b6878;
+    --line: #e7e3ee;
+    --band: #f7f5fa;
+    --brand: #5a3b82;
 
     /* A column, so beside a taller pay panel the footer sits at the bottom. */
     display: flex;
@@ -402,7 +402,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
 
 .inv-rule {
     height: 4px;
-    background: linear-gradient(90deg, var(--brand), #2dd4bf);
+    background: linear-gradient(90deg, #4b2367, #a07fbd);
 }
 
 .inv-title {
@@ -477,8 +477,8 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
 
 .inv-pill-brand {
     color: var(--brand);
-    border-color: rgb(15 118 110 / 30%);
-    background: rgb(15 118 110 / 6%);
+    border-color: rgb(90 59 130 / 30%);
+    background: rgb(90 59 130 / 6%);
 }
 
 .inv-pill-in {
@@ -500,20 +500,25 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
 }
 
 .dark .inv {
-    --paper: #121b19;
-    --ink: #e7eeeb;
-    --muted: #8d9a96;
-    --line: #26332f;
-    --band: #16211f;
-    --brand: #2dd4bf;
+    --paper: #15141f;
+    --ink: #eef2f6;
+    --muted: #87919e;
+    --line: #27243a;
+    --band: #1b1927;
+    --brand: #c2a3df;
 
     box-shadow: none;
 }
 
-/* Dark: the amount due in the brand's teal, not a white slab on a dark page. */
+/* Dark: the amount due in the brand's purple, not a white slab on a dark page. */
 .dark .inv-due {
-    background: #0f766e;
+    background: linear-gradient(135deg, #7e5c9b, #4b2367);
     color: #ffffff;
+}
+
+.dark .inv-pill-brand {
+    border-color: rgb(194 163 223 / 30%);
+    background: rgb(194 163 223 / 8%);
 }
 
 .dark .inv-out {
@@ -538,15 +543,15 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
     .dark .inv,
     .inv {
         --paper: #ffffff;
-        --ink: #111816;
-        --muted: #66706d;
-        --line: #e6e9e8;
-        --band: #f6f8f7;
-        --brand: #0f766e;
+        --ink: #16141f;
+        --muted: #6b6878;
+        --line: #e7e3ee;
+        --band: #f7f5fa;
+        --brand: #5a3b82;
     }
 
     .dark .inv-due {
-        background: #111816;
+        background: #16141f;
         color: #ffffff;
     }
 

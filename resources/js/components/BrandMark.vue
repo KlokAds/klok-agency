@@ -26,7 +26,7 @@ withDefaults(
                 width="64"
                 height="64"
                 rx="16"
-                :fill="light ? '#1b302c' : '#11211e'"
+                :fill="light ? '#262236' : '#1b1927'"
             />
             <path
                 d="M20 16v32M20 34l14-18M26 27l12 21"
@@ -38,7 +38,7 @@ withDefaults(
             />
             <path
                 d="M42 40h6M42 32h6M44 24h4"
-                stroke="#d5e2de"
+                stroke="#e6e0f0"
                 stroke-width="4"
                 stroke-linecap="round"
             />

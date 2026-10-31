@@ -116,8 +116,8 @@ const justPaid = ref(false);
 // The thank-you over the page, with paper falling, the moment the money is confirmed.
 const celebrate = ref(false);
 const CONFETTI_COLORS = [
-    '#14b8a6',
-    '#2dd4bf',
+    '#7e5c9b',
+    '#c2a3df',
     '#f59e0b',
     '#ef4444',
     '#8b5cf6',

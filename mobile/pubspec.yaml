@@ -3,7 +3,7 @@ description: KlokOne - the agency's own Android app (the site inside, notificati
 publish_to: none
 # Raise this only when several phone-side changes have piled up: the pages inside come from the
 # site and are always new. A raise (pushed to main) builds and ships a new APK.
-version: 1.1.5+16
+version: 1.1.6+17
 
 environment:
     sdk: '>=3.5.0 <4.0.0'
@@ -33,6 +33,6 @@ flutter_launcher_icons:
     android: true
     ios: false
     image_path: assets/icon.png
-    adaptive_icon_background: '#0F1F1C'
+    adaptive_icon_background: '#1B1927'
     adaptive_icon_foreground: assets/icon-foreground.png
     min_sdk_android: 23

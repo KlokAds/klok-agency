@@ -1,4 +1,4 @@
-/* KlokOne mail: the app's dark rail on top, a white sheet, the brand teal for what to press. */
+/* KlokOne mail: the app's dark rail on top, a white sheet, the brand purple for what to press. */
 
 body,
 body *:not(html):not(style):not(br):not(tr):not(code) {
@@ -18,8 +18,8 @@ body *:not(html):not(style):not(br):not(tr):not(code) {
 
 body {
     -webkit-text-size-adjust: none;
-    background-color: #eef3f1;
-    color: #3c4a47;
+    background-color: #f4f2f7;
+    color: #4c4858;
     height: 100%;
     line-height: 1.55;
     margin: 0;
@@ -36,7 +36,7 @@ blockquote {
 }
 
 a {
-    color: #0f766e;
+    color: #5a3b82;
 }
 
 a img {
@@ -44,7 +44,7 @@ a img {
 }
 
 h1 {
-    color: #14211f;
+    color: #16141f;
     font-size: 20px;
     font-weight: bold;
     line-height: 1.35;
@@ -54,7 +54,7 @@ h1 {
 }
 
 h2 {
-    color: #14211f;
+    color: #16141f;
     font-size: 16px;
     font-weight: bold;
     margin-top: 0;
@@ -62,7 +62,7 @@ h2 {
 }
 
 h3 {
-    color: #14211f;
+    color: #16141f;
     font-size: 14px;
     font-weight: bold;
     margin-top: 0;
@@ -86,7 +86,7 @@ img {
 /* Layout */
 
 .wrapper {
-    background-color: #eef3f1;
+    background-color: #f4f2f7;
     margin: 0;
     padding: 0;
     width: 100%;
@@ -110,9 +110,9 @@ img {
 }
 
 .brand-mark {
-    background-color: #11211e;
+    background-color: #1b1927;
     border-radius: 12px;
-    color: #2dd4bf;
+    color: #c2a3df;
     font-size: 22px;
     font-weight: bold;
     height: 42px;
@@ -122,7 +122,7 @@ img {
 }
 
 .brand-name {
-    color: #14211f;
+    color: #16141f;
     font-size: 19px;
     font-weight: bold;
     line-height: 1.1;
@@ -131,7 +131,7 @@ img {
 }
 
 .brand-tag {
-    color: #6b7a77;
+    color: #6b6878;
     font-size: 11.5px;
     font-weight: normal;
     letter-spacing: 0.02em;
@@ -140,7 +140,7 @@ img {
 /* The sheet */
 
 .body {
-    background-color: #eef3f1;
+    background-color: #f4f2f7;
     border-bottom: 0;
     border-top: 0;
     margin: 0;
@@ -150,9 +150,9 @@ img {
 
 .inner-body {
     background-color: #ffffff;
-    border: 1px solid #dfe8e5;
+    border: 1px solid #e3dfea;
     border-radius: 16px;
-    border-top: 4px solid #0f766e;
+    border-top: 4px solid #5a3b82;
     margin: 0 auto;
     padding: 0;
     width: 570px;
@@ -170,13 +170,13 @@ img {
 /* Subcopy */
 
 .subcopy {
-    border-top: 1px solid #e6eeeb;
+    border-top: 1px solid #e7e3ee;
     margin-top: 24px;
     padding-top: 20px;
 }
 
 .subcopy p {
-    color: #6b7a77;
+    color: #6b6878;
     font-size: 12.5px;
 }
 
@@ -190,13 +190,13 @@ img {
 }
 
 .footer p {
-    color: #7d8b88;
+    color: #87849a;
     font-size: 12px;
     text-align: center;
 }
 
 .footer a {
-    color: #0f766e;
+    color: #5a3b82;
     text-decoration: none;
 }
 
@@ -208,16 +208,16 @@ img {
 }
 
 .table th {
-    border-bottom: 1px solid #e6eeeb;
-    color: #6b7a77;
+    border-bottom: 1px solid #e7e3ee;
+    color: #6b6878;
     font-size: 12px;
     margin: 0;
     padding-bottom: 8px;
 }
 
 .table td {
-    border-bottom: 1px solid #eef3f1;
-    color: #3c4a47;
+    border-bottom: 1px solid #f4f2f7;
+    color: #4c4858;
     font-size: 14.5px;
     line-height: 20px;
     margin: 0;
@@ -251,11 +251,11 @@ img {
 
 .button-blue,
 .button-primary {
-    background-color: #0f766e;
-    border-bottom: 12px solid #0f766e;
-    border-left: 24px solid #0f766e;
-    border-right: 24px solid #0f766e;
-    border-top: 12px solid #0f766e;
+    background-color: #5a3b82;
+    border-bottom: 12px solid #5a3b82;
+    border-left: 24px solid #5a3b82;
+    border-right: 24px solid #5a3b82;
+    border-top: 12px solid #5a3b82;
 }
 
 .button-green,
@@ -279,19 +279,19 @@ img {
 /* Panels */
 
 .panel {
-    border-left: #0f766e solid 4px;
+    border-left: #5a3b82 solid 4px;
     margin: 21px 0;
 }
 
 .panel-content {
-    background-color: #f1f7f5;
+    background-color: #f7f5fa;
     border-radius: 0 10px 10px 0;
-    color: #3c4a47;
+    color: #4c4858;
     padding: 16px;
 }
 
 .panel-content p {
-    color: #3c4a47;
+    color: #4c4858;
 }
 
 .panel-item {
@@ -312,7 +312,7 @@ img {
 /* The small line above the title, and the signature */
 
 .kicker {
-    color: #0f766e;
+    color: #5a3b82;
     font-size: 12px;
     font-weight: bold;
     letter-spacing: 0.06em;
@@ -321,7 +321,7 @@ img {
 }
 
 .signature {
-    color: #3c4a47;
+    color: #4c4858;
     font-size: 14.5px;
     margin-top: 22px;
 }

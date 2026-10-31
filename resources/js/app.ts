@@ -32,7 +32,7 @@ void createInertiaApp({
         });
     },
     progress: {
-        color: '#0d9488',
+        color: '#a07fbd',
         delay: 120,
     },
 });

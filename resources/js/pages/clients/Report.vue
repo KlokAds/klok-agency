@@ -585,9 +585,9 @@ function print(): void {
 
 .rep {
     --paper: #ffffff;
-    --ink: #111816;
-    --muted: #66706d;
-    --line: #e6e9e8;
+    --ink: #16141f;
+    --muted: #6b6878;
+    --line: #e7e3ee;
     --band: #f6f5f9;
     --brand: #5a3b82;
     --brand-2: #a07fbd;

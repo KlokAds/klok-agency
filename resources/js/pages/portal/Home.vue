@@ -411,10 +411,10 @@ const low = computed(
 
     <!-- The money running the ads now: what is left, how long it lasts, and what keeps it going. -->
     <section
-        class="mt-5 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#0f766e] via-[#0d5f59] to-[#11211e] p-5 text-white shadow-[0_10px_30px_-12px_rgb(15_118_110/0.55)] sm:p-6"
+        class="mt-5 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#7e5c9b] via-[#5a3b82] to-[#2b1d3f] p-5 text-white shadow-[0_10px_30px_-12px_rgb(90_59_130/0.55)] sm:p-6"
     >
         <div class="flex items-center gap-5">
-            <!-- How much of the paid money is left: teal, then amber, then red as it runs out -->
+            <!-- How much of the paid money is left: lilac, then amber, then red as it runs out -->
             <span
                 class="relative grid size-[104px] shrink-0 place-items-center"
             >
@@ -528,19 +528,19 @@ const low = computed(
         <a
             v-if="next_invoice"
             :href="due.count > 1 ? '/portal/invoices' : next_invoice.url"
-            class="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3.5 text-[#14211f] transition-transform active:scale-[0.99]"
+            class="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3.5 text-[#16141f] transition-transform active:scale-[0.99]"
         >
             <span
                 class="grid size-10 shrink-0 place-items-center rounded-full"
                 :class="
                     next_invoice.overdue
                         ? 'bg-[#fee2e2] text-[#b91c1c]'
-                        : 'bg-[#ccfbf1] text-[#0f766e]'
+                        : 'bg-[#efe6f8] text-[#5a3b82]'
                 "
                 ><KIcon name="doc" :size="20"
             /></span>
             <span class="min-w-0 flex-1">
-                <span class="block text-[15px] font-semibold text-[#14211f]">{{
+                <span class="block text-[15px] font-semibold text-[#16141f]">{{
                     due.count > 1
                         ? t('{n}টা invoice বাকি · মোট {amount}', {
                               n: due.count,
@@ -550,7 +550,7 @@ const low = computed(
                               amount: money(next_invoice.due, 'bdt'),
                           })
                 }}</span>
-                <span class="block text-[13px] text-[#5b6b68]">{{
+                <span class="block text-[13px] text-[#6b6878]">{{
                     next_invoice.overdue
                         ? t('Invoice {number} · শেষ তারিখ পার হয়ে গেছে', {
                               number: next_invoice.number,
@@ -564,7 +564,7 @@ const low = computed(
                 }}</span>
             </span>
             <span
-                class="shrink-0 rounded-xl bg-[#0f766e] px-4 py-2 text-[14.5px] font-bold text-white"
+                class="shrink-0 rounded-xl bg-[#5a3b82] px-4 py-2 text-[14.5px] font-bold text-white"
                 >{{ t('Pay') }}</span
             >
         </a>

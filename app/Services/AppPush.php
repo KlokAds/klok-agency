@@ -90,7 +90,7 @@ class AppPush
                                 'visibility' => 'PRIVATE',
                                 'tag' => $payload['tag'] ?? null,
                                 'icon' => 'ic_notification',
-                                'color' => '#0D9488',
+                                'color' => '#6F4A97',
                             ], fn ($v) => $v !== null),
                         ],
                     ]],

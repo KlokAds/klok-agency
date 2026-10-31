@@ -36,7 +36,7 @@
 <body>
     <main class="card">
         <div class="brand">
-            <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1b302c"/><path d="M20 16v32M20 34l14-18M26 27l12 21" fill="none" stroke="#c2a3df" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 40h6M42 32h6M44 24h4" stroke="#d5e2de" stroke-width="4" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#262236"/><path d="M20 16v32M20 34l14-18M26 27l12 21" fill="none" stroke="#c2a3df" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 40h6M42 32h6M44 24h4" stroke="#e6e0f0" stroke-width="4" stroke-linecap="round"/></svg>
             KlokOne
         </div>
         <p class="code">@yield('code')</p>

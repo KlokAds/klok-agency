@@ -17,7 +17,7 @@ it('sends every email in KlokOne\'s own design, not Laravel\'s', function () {
     expect($html)->toContain('>K</a></td>')
         ->toContain('KlokOne')
         ->toContain('Klok Ads')
-        ->toContain('#0f766e')
+        ->toContain('#5a3b82')
         ->toContain('Hind Siliguri')
         ->toContain('Button না খুললে')
         ->toContain('শুভেচ্ছান্তে')

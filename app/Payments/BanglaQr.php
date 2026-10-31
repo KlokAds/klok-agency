@@ -17,7 +17,7 @@ use InvalidArgumentException;
  * locks it. The money still goes to the same merchant account.
  *
  * It is then drawn in the brand's colours with the mark in the middle: rounded
- * squares in deep teal (dark enough for any camera) and error correction Q
+ * squares in deep purple (dark enough for any camera) and error correction Q
  * (~25%), which leaves the code less dense, so phones read it quickly.
  */
 class BanglaQr
@@ -122,11 +122,11 @@ class BanglaQr
         $channel = fn (string $hex, int $at): int => max(0, min(255, (int) hexdec(substr($hex, $at, 2))));
         $rgb = fn (string $hex) => (int) imagecolorallocate($img, $channel($hex, 1), $channel($hex, 3), $channel($hex, 5));
         $white = $rgb('#FFFFFF');
-        $ink = $rgb('#0F766E');
-        $brand = $rgb('#0D9488');
-        $markBg = $rgb('#11211E');
-        $markTeal = $rgb('#2DD4BF');
-        $markGrey = $rgb('#D5E2DE');
+        $ink = $rgb('#4B2367');
+        $brand = $rgb('#6F4A97');
+        $markBg = $rgb('#1B1927');
+        $markTeal = $rgb('#C2A3DF');
+        $markGrey = $rgb('#E6E0F0');
         imagefill($img, 0, 0, $white);
 
         $rounded = function (float $x, float $y, float $w, float $h, float $r, int $color) use ($img): void {
@@ -156,7 +156,7 @@ class BanglaQr
         foreach ([[0, 0], [$count - 7, 0], [0, $count - 7]] as [$ex, $ey]) {
             $ox = ($ex + $quiet) * $cell;
             $oy = ($ey + $quiet) * $cell;
-            // A teal ring (outer rounded square with a white one cut out), then the dark centre.
+            // A purple ring (outer rounded square with a white one cut out), then the dark centre.
             $rounded($ox, $oy, $cell * 7, $cell * 7, $cell * 2.2, $brand);
             $rounded($ox + $cell, $oy + $cell, $cell * 5, $cell * 5, $cell * 1.4, $white);
             $rounded($ox + $cell * 2, $oy + $cell * 2, $cell * 3, $cell * 3, $cell, $ink);
@@ -195,7 +195,7 @@ class BanglaQr
     }
 
     /**
-     * The QR drawn as an SVG: round dots, the brand's teal eyes, and the
+     * The QR drawn as an SVG: round dots, the brand's purple eyes, and the
      * Klok mark in a clear square in the middle.
      */
     public static function svg(string $text, int $size = 300): string
@@ -204,8 +204,8 @@ class BanglaQr
         $count = $matrix->getWidth();
         $quiet = 4;
         $cell = $size / ($count + 2 * $quiet);
-        $ink = '#0F766E';
-        $brand = '#0D9488';
+        $ink = '#4B2367';
+        $brand = '#6F4A97';
 
         // The middle square kept clear for the mark: under a fifth of the code, well within H.
         $hole = (int) floor($count * 0.18);
@@ -239,9 +239,9 @@ class BanglaQr
         $my = round(($from + $quiet + 0.5) * $cell, 2);
         $scale = round($markSize / 64, 4);
         $mark = '<g transform="translate('.$mx.' '.$my.') scale('.$scale.')">'
-            .'<rect width="64" height="64" rx="16" fill="#11211E"/>'
-            .'<path d="M20 16v32M20 34l14-18M26 27l12 21" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'
-            .'<path d="M42 40h6M42 32h6M44 24h4" stroke="#D5E2DE" stroke-width="4" stroke-linecap="round"/>'
+            .'<rect width="64" height="64" rx="16" fill="#1B1927"/>'
+            .'<path d="M20 16v32M20 34l14-18M26 27l12 21" fill="none" stroke="#C2A3DF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'
+            .'<path d="M42 40h6M42 32h6M44 24h4" stroke="#E6E0F0" stroke-width="4" stroke-linecap="round"/>'
             .'</g>';
 
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$size.' '.$size.'" width="'.$size.'" height="'.$size.'" role="img" aria-label="Bangla QR">'

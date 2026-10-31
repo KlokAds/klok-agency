@@ -6,7 +6,7 @@
 @php
     // One solid colour on the cell and on the link, inline: Gmail's dark mode then shows one clean
     // button, not a lighter box with a highlighted word inside it.
-    $bg = ['success' => '#15803d', 'error' => '#b91c1c'][$color] ?? '#0f766e';
+    $bg = ['success' => '#15803d', 'error' => '#b91c1c'][$color] ?? '#5a3b82';
 @endphp
 <table class="action" align="{{ $align }}" width="100%" cellpadding="0" cellspacing="0" role="presentation">
 <tr>

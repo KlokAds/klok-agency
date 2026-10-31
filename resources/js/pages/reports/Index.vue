@@ -161,7 +161,7 @@ type Card = {
     upIsGood: boolean;
 };
 
-// A colour a figure: money in green, ad cost gold, margin teal, office cost red.
+// A colour a figure: money in green, ad cost gold, margin purple, office cost red.
 const TONES: Record<string, { edge: string; text: string }> = {
     revenue: { edge: 'border-l-in', text: 'text-in' },
     ad_cost: { edge: 'border-l-wait', text: 'text-wait' },
