@@ -10,7 +10,7 @@ import KIcon from '@/components/k/KIcon.vue';
 import KInput from '@/components/k/KInput.vue';
 import KModal from '@/components/k/KModal.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
-import { money, niceDate } from '@/lib/format';
+import { money } from '@/lib/format';
 import { t } from '@/lib/i18n';
 
 type Campaign = {
@@ -38,7 +38,6 @@ const props = defineProps<{
         paid: number;
         spent: number;
         left: number;
-        meta?: { charged: number; uncharged: number };
         daily: number;
         days_left: number | null;
         refundable?: boolean;
@@ -255,23 +254,22 @@ const low = computed(
                 v-if="lastPayment"
                 class="mt-1.5 space-y-0.5 border-t border-line pt-1.5 text-[13px] text-ink-3"
             >
-                <li class="flex items-center justify-between gap-2">
-                    <span class="truncate">{{ t('শেষ পেমেন্ট') }}</span>
+                <li class="flex flex-wrap items-center justify-between gap-x-2">
+                    <span>{{ t('শেষ পেমেন্ট') }}</span>
                     <span class="num shrink-0 font-semibold text-ink-2">{{
                         lastPayment.date
                     }}</span>
                 </li>
-                <li class="flex items-center justify-between gap-2">
-                    <span class="truncate">{{
-                        t('{n}টা পেমেন্ট', { n: paidCount })
-                    }}</span>
+                <li class="flex flex-wrap items-center justify-between gap-x-2">
+                    <span>{{ t('{n}টা পেমেন্ট', { n: paidCount }) }}</span>
                     <span class="num shrink-0 font-semibold text-ink-2">{{
                         money(lastPayment.amount, 'bdt')
                     }}</span>
                 </li>
             </ul>
         </div>
-        <div class="panel p-3.5">
+        <!-- A full row on a phone: its two buttons do not fit half the width (realme 8, 360px). -->
+        <div class="panel col-span-2 p-3.5 sm:col-span-1">
             <p class="text-[13px] text-ink-3">
                 {{ t('বিজ্ঞাপনের জন্য বাকি') }}
             </p>
@@ -280,27 +278,6 @@ const low = computed(
                     class="num text-[18px] font-bold"
                     :class="credit.left <= 0 ? 'text-out' : 'text-in'"
                     >{{ money(credit.left, 'usd') }}</span
-                >
-            </p>
-            <!-- Of what was spent: Meta has charged this much (final); the rest settles on the charge. -->
-            <p
-                v-if="
-                    credit.meta &&
-                    credit.meta.charged + credit.meta.uncharged > 0
-                "
-                class="num mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[13px] text-ink-3"
-            >
-                <span
-                    >{{ t('Meta কেটেছে') }}
-                    <b class="text-ink">{{
-                        money(credit.meta.charged, 'usd')
-                    }}</b></span
-                >
-                <span
-                    >{{ t('এখনো কাটেনি') }}
-                    <b class="text-ink">{{
-                        money(credit.meta.uncharged, 'usd')
-                    }}</b></span
                 >
             </p>
             <p
@@ -357,7 +334,7 @@ const low = computed(
         <component
             :is="next_invoice ? 'a' : 'div'"
             :href="due.count > 1 ? '/portal/invoices' : next_invoice?.url"
-            class="panel p-3.5"
+            class="panel col-span-2 p-3.5 sm:col-span-1"
             :class="next_invoice ? 'transition-colors hover:border-brand' : ''"
         >
             <p class="text-[13px] text-ink-3">{{ t('Invoice বাকি') }}</p>
@@ -386,10 +363,10 @@ const low = computed(
                     {{
                         next_invoice.overdue
                             ? t('{date}-এ শেষ হয়েছে', {
-                                  date: niceDate(next_invoice.due_date, false),
+                                  date: next_invoice.due_date,
                               })
                             : t('{date}-এর মধ্যে', {
-                                  date: niceDate(next_invoice.due_date, false),
+                                  date: next_invoice.due_date,
                               })
                     }}</template
                 >
