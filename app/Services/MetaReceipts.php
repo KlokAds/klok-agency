@@ -16,7 +16,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
+use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
+use Webklex\PHPIMAP\Folder;
 use Webklex\PHPIMAP\Message;
 
 /**
@@ -79,7 +81,6 @@ class MetaReceipts
     public function check(): int
     {
         $box = MailSettings::receipts() ?? throw new RuntimeException(__('Receipt-এর mailbox দেওয়া নেই।'));
-        $count = 0;
 
         try {
             $client = (new ClientManager)->make([
@@ -94,6 +95,26 @@ class MetaReceipts
 
             throw new RuntimeException(__('Receipt-এর mailbox খোলা গেল না: :error', ['error' => mb_substr($e->getMessage(), 0, 200)]));
         }
+
+        // Hostinger's mail server at times drops the line before the goodbye (31 Oct 2026, twice
+        // in one morning). The library's own logout shrugs that off and lets go of the line;
+        // left to the destructor, the goodbye is written to a dead line and the Owner's phone
+        // got a "server problem" alert after the mail had already been read.
+        try {
+            return $this->read($client, $inbox, $messages);
+        } finally {
+            $client->getConnection()->logout();
+        }
+    }
+
+    /**
+     * The unseen mail is stored and booked; mail read earlier is cleared out.
+     *
+     * @param  iterable<Message>  $messages
+     */
+    private function read(Client $client, ?Folder $inbox, iterable $messages): int
+    {
+        $count = 0;
 
         foreach ($messages as $message) {
             // A KlokOne company's mail (its meta-…@ address, brought here by the catch-all) is
