@@ -245,6 +245,28 @@ it('makes an auto-renewal client\'s invoice by itself, and extends the campaign 
         ->and($this->owner->notifications()->where('data->kind', 'renewal_paid')->count())->toBe(0);
 });
 
+it('moves an unpaid renewal and its invoice along when the end moves, instead of making a second one', function () {
+    payGffs($this, '1500', '10');
+    app(CampaignLimits::class)->refresh($this->campaign, true);
+    $this->gffs->update(['renew_days' => 7]);
+
+    expect(app(Renewals::class)->openDue())->toBe(1);
+    $invoice = Invoice::sole();
+
+    // The credit left runs it a day more (as on 1 Nov 2026), and the ticker comes round again.
+    $this->campaign->update(['stop_at' => now()->addDays(2)->setTime(23, 59)]);
+    expect(app(Renewals::class)->openDue())->toBe(0);
+
+    $from = now()->addDays(3);
+    expect(Invoice::count())->toBe(1)
+        ->and(Renewal::sole()->ends_on->toDateString())->toBe(now()->addDays(2)->toDateString())
+        ->and($invoice->fresh()->number)->toBe($invoice->number)
+        ->and($invoice->fresh()->total)->toBe($invoice->total)
+        ->and($invoice->fresh()->due_date->toDateString())->toBe(now()->addDays(2)->toDateString())
+        ->and($invoice->items()->sole()->description)->toContain('7 days ('.$from->format('j M').' – '.$from->addDays(6)->format('j M Y').')')
+        ->and($this->owner->notifications()->where('data->kind', 'renewal_invoiced')->count())->toBe(1);
+});
+
 it('gives a link already open its invoice once the client is switched to auto renewal', function () {
     payGffs($this, '1500', '10');
     app(CampaignLimits::class)->refresh($this->campaign, true);

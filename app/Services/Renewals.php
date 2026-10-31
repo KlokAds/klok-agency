@@ -96,6 +96,11 @@ class Renewals
                 continue;
             }
 
+            // The end moved while the last renewal still waits for its money: that one moves too.
+            if ($this->carryForward($campaign, $endsOn) !== null) {
+                continue;
+            }
+
             $renewal = Renewal::create([
                 'campaign_id' => $campaign->id,
                 'client_id' => $campaign->client_id,
@@ -171,7 +176,6 @@ class Renewals
             }
 
             $usd = (int) $renewal->budget * $days;
-            $from = CarbonImmutable::parse($renewal->ends_on)->max(CarbonImmutable::now()->startOfDay())->addDay();
             $line = fn (string $description, int $cents, float $at) => [
                 'kind' => 'ad_budget', 'description' => $description, 'usd' => $cents, 'rate' => $at, 'amount' => null,
                 'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null,
@@ -186,7 +190,7 @@ class Renewals
                 'notes' => "Renewal: {$renewal->campaign->name}",
                 'items' => [...$items, [
                     'kind' => 'ad_budget',
-                    'description' => "{$renewal->campaign->name} — {$days} days ({$from->format('j M')} – {$from->addDays($days - 1)->format('j M Y')})",
+                    'description' => self::daysText($renewal->campaign->name, $renewal->ends_on, $days),
                     'usd' => $usd,
                     'rate' => $rate,
                     'amount' => null,
@@ -238,7 +242,7 @@ class Renewals
         $endsOn = $campaign->lastDay()->toDateString();
 
         return Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->whereIn('status', ['open', 'invoiced', 'declined'])->latest('id')->first()
-            ?? (Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->exists() ? null : Renewal::create([
+            ?? (Renewal::where('campaign_id', $campaign->id)->whereDate('ends_on', $endsOn)->exists() ? null : $this->carryForward($campaign, $endsOn) ?? Renewal::create([
                 'campaign_id' => $campaign->id,
                 'client_id' => $campaign->client_id,
                 'token' => Str::random(40),
@@ -273,11 +277,10 @@ class Renewals
             }
 
             $usd = (int) $renewal->budget * $days;
-            $from = CarbonImmutable::parse($renewal->ends_on)->max(CarbonImmutable::now()->startOfDay())->addDay();
             $line->forceFill([
                 'usd' => $usd,
                 'amount' => InvoiceItem::bdtFor($usd, (float) $line->rate),
-                'description' => "{$renewal->campaign->name} — {$days} days ({$from->format('j M')} – {$from->addDays($days - 1)->format('j M Y')})",
+                'description' => self::daysText($renewal->campaign->name, $renewal->ends_on, $days),
             ])->save();
 
             $items = $invoice->items()->get();
@@ -289,6 +292,46 @@ class Renewals
 
             return $invoice->refresh();
         });
+    }
+
+    /**
+     * The campaign's end moved before the client paid for the next days (on 1 Nov 2026 the credit
+     * left ran GFFS two days more, and a second invoice was made beside the unpaid KA-GFFS-03):
+     * the waiting renewal moves to the new end. Its invoice keeps its number and price; only
+     * the due date and the dates of the days follow. Null when none is waiting.
+     */
+    private function carryForward(Campaign $campaign, string $endsOn): ?Renewal
+    {
+        return DB::transaction(function () use ($campaign, $endsOn) {
+            $renewal = Renewal::where('campaign_id', $campaign->id)->whereIn('status', ['open', 'invoiced'])
+                ->whereDate('ends_on', '<', $endsOn)->latest('id')->lockForUpdate()->first();
+            $invoice = $renewal !== null ? $this->lockedInvoice($renewal) : null;
+
+            if ($renewal === null || $invoice?->status === 'void') {
+                return null;
+            }
+
+            $renewal->forceFill(['ends_on' => $endsOn])->save();
+
+            if ($invoice !== null) {
+                $invoice->forceFill(['due_date' => $endsOn])->save();
+                $line = $invoice->items->where('kind', 'ad_budget')->where('description', '!=', self::DUE_LINE)->last();
+
+                if ($line !== null && $renewal->days) {
+                    $line->forceFill(['description' => self::daysText($campaign->name, $endsOn, (int) $renewal->days)])->save();
+                }
+            }
+
+            return $renewal;
+        });
+    }
+
+    /** "GFFS — 7 days (4 Nov – 10 Nov 2026)": the days after the end (or after today, once it has passed). */
+    private static function daysText(string $campaign, mixed $endsOn, int $days): string
+    {
+        $from = CarbonImmutable::parse($endsOn)->max(CarbonImmutable::now()->startOfDay())->addDay();
+
+        return "{$campaign} — {$days} days ({$from->format('j M')} – {$from->addDays($days - 1)->format('j M Y')})";
     }
 
     /** The renewal's invoice, its row locked for this transaction (with its lines). */
