@@ -215,6 +215,19 @@ it('reads the dollar coins crypto cards count in, and tells Google Play from Goo
         ->and(UsdEntry::where('account_id', $google->id)->where('category', 'card_charge')->sum('amount'))->toBe(-3000);
 });
 
+it('takes NSave\'s bare "Google" as the Google Ads charge only while Google is still owed that much', function () {
+    $google = Account::where('kind', 'platform')->where('code', 'google')->sole();
+    UsdEntry::create(['entry_date' => now()->subDays(5)->toDateString(), 'description' => 'Client Google spend', 'category' => 'business_spend', 'account_id' => $google->id, 'amount' => -500, 'status' => 'na']);
+
+    moneyNote('Card payment approved. 💳 Paid $4.96 at Google with your card ending 6903')->assertJson(['status' => 'card_booked']);
+    // Google is now owed 4 cents: a later $9.99 "Google" is something else of ours.
+    moneyNote('Card payment approved. 💳 Paid $9.99 at Google with your card ending 6903')->assertJson(['status' => 'card_booked']);
+
+    expect(UsdEntry::where('account_id', $google->id)->where('category', 'card_charge')->sole())
+        ->amount->toBe(-496)->card_id->toBe($this->main->id)
+        ->and(UsdEntry::where('description', 'NSave · Google')->sole()->amount)->toBe(-999);
+});
+
 it("books any new app's charge on the card with the same last four digits once approved", function () {
     $redot = Account::create(['code' => 'redotpay', 'name' => 'RedotPay', 'kind' => 'card', 'last4' => '7781', 'is_active' => true, 'sort' => 3]);
     UsdEntry::create(['entry_date' => now()->subDays(5)->toDateString(), 'description' => 'NSave → RedotPay', 'category' => 'transfer', 'account_id' => $redot->id, 'amount' => 10000, 'status' => 'na']);

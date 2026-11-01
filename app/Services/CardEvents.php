@@ -283,6 +283,12 @@ class CardEvents
         $code = collect(self::PLATFORMS)->search(fn (string $re) => preg_match($re, $shop.' '.$event->body) === 1);
         $platform = $code !== false ? Account::where('kind', 'platform')->where('code', $code)->first() : null;
 
+        // NSave names a Google Ads charge just "Google": it is Ads when Google's book still owes that much.
+        if ($platform === null && preg_match('/^\s*google\s*$/i', $shop) === 1) {
+            $google = Account::where('kind', 'platform')->where('code', 'google')->first();
+            $platform = $google !== null && $this->platformDue($google) >= (int) $event->amount ? $google : null;
+        }
+
         if ($platform === null) {
             return [$this->postings->ownSpend([
                 'entry_date' => $at->toDateString(), 'description' => ($event->app_name ?? 'Card').' · '.$shop, 'account_id' => $card->id,
@@ -311,6 +317,15 @@ class CardEvents
             'account_id' => $platform->id, 'card_id' => $card->kind === 'card' ? $card->id : null, 'amount' => (int) $event->amount,
             'notes' => $via.' · '.$shop,
         ]), 'booked'];
+    }
+
+    /** Spend booked on a platform that its card charges have not paid yet, in cents. */
+    private function platformDue(Account $platform): int
+    {
+        $entries = UsdEntry::where('account_id', $platform->id);
+
+        return (int) -(clone $entries)->where('category', '!=', 'card_charge')->sum('amount')
+            + (int) (clone $entries)->where('category', 'card_charge')->sum('amount');
     }
 
     private function hold(CardEvent $event, string $why, bool $quiet): void
