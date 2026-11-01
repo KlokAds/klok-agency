@@ -53,7 +53,10 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             TickOnTraffic::class,
-            AddLinkHeadersForPreloadedAssets::class,
+            // Only the first scripts go in the Link header (the page's own tags preload them all): the
+            // hosting's web server answers 500 once a response's headers pass 8 KB (Klok Pilot's
+            // signed-in pages hit that on 31 Oct 2026 and showed an error on every visit).
+            AddLinkHeadersForPreloadedAssets::using(20),
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
