@@ -351,7 +351,7 @@ const hasUsd = computed(() => props.invoice.items.some((i) => i.usd !== null));
                 <div
                     class="inv-due mt-2 flex items-baseline justify-between px-4 py-3"
                 >
-                    <dt class="font-semibold">{{ t('বাকি') }}</dt>
+                    <dt class="font-semibold">{{ t('দিতে হবে') }}</dt>
                     <dd class="num text-[18px] font-semibold">
                         {{ bdt(invoice.due) }}
                     </dd>

@@ -1088,10 +1088,8 @@ const STATUS_WORD: Record<string, string> = {
                     >
                         {{ t('১. কীভাবে দেবেন?') }}
                     </p>
-                    <div
-                        v-if="keys.length"
-                        class="grid grid-cols-1 gap-2 sm:grid-cols-2"
-                    >
+                    <!-- One a row: the name, how to pay and the fee never squeeze each other. -->
+                    <div v-if="keys.length" class="grid grid-cols-1 gap-2">
                         <button
                             v-for="key in [
                                 ...wallets,
@@ -1128,10 +1126,22 @@ const STATUS_WORD: Record<string, string> = {
                             ><span
                                 v-if="state.charges?.[key]"
                                 class="shrink-0 rounded-full bg-wait-soft px-2 py-0.5 text-[13px] font-semibold text-wait"
-                                >+{{ bdt(state.charges[key]) }}</span
+                                >+{{ bdt(state.charges[key]) }}
+                                {{ t('চার্জ') }}</span
                             >
                         </button>
                     </div>
+                    <!-- What the "+৳…" on a way is: that way's own charge, paid on top of the bill. -->
+                    <p
+                        v-if="keys.some((k) => state.charges?.[k])"
+                        class="mt-2 text-[13px] text-ink-3"
+                    >
+                        {{
+                            t(
+                                '“+ চার্জ” মানে ওই পথে টাকা পাঠানোর খরচ (যেমন bKash-এর charge), বিলের সাথে যোগ হয়। চার্জ ছাড়া পথে দিলে শুধু বিলের টাকা।',
+                            )
+                        }}
+                    </p>
 
                     <!-- 2. bKash, Nagad, Rocket: the client's own number, the one the money leaves from. -->
                     <div

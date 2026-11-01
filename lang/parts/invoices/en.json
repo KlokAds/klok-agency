@@ -198,5 +198,7 @@
     "পেমেন্ট SMS আসল কিনা যাচাই করুন": "Check whether this payment SMS is genuine",
     "{amount} · {sender} · TrxID {trx} — অচেনা পথে এসেছে; wallet-এ টাকা দেখে তবেই মেলান": "{amount} · {sender} · TrxID {trx}: came by an unfamiliar route. Match it only after you see the money in the wallet.",
     "{amount} · {from} · Invoice {number} — এই TrxID দাবি করা হয়েছে, কিন্তু নম্বর বা টাকা মেলেনি": "{amount} · {from} · Invoice {number}: this TrxID was claimed, but the number or amount didn't match.",
-    "এই client-এর fixed rate: {rate} প্রতি USD": "This client's fixed rate: {rate} per USD"
+    "এই client-এর fixed rate: {rate} প্রতি USD": "This client's fixed rate: {rate} per USD",
+    "চার্জ": "charge",
+    "“+ চার্জ” মানে ওই পথে টাকা পাঠানোর খরচ (যেমন bKash-এর charge), বিলের সাথে যোগ হয়। চার্জ ছাড়া পথে দিলে শুধু বিলের টাকা।": "“+ charge” is what sending money that way costs (bKash’s charge, for example), added to the bill. A way with no charge costs only the bill."
 }
