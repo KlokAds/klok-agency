@@ -33,7 +33,8 @@ class CardEvents
     /** Shops that are an ad platform: their charges pay that platform's spend. */
     private const PLATFORMS = [
         'meta' => '/facebk|facebook|\bmeta\b|\bfb\b/i',
-        'google' => '/google/i',
+        // Google Ads only ("GOOGLE*ADS1234"), not Google Play, Workspace or One.
+        'google' => '/google\s*\*?\s*ads|adwords/i',
         'tiktok' => '/tiktok/i',
     ];
 
@@ -52,8 +53,9 @@ class CardEvents
 
         $amount = null;
         $currency = null;
-        if (preg_match('/(?:US\$|\$|USD)\s?([\d,]+(?:\.\d{1,2})?)/i', $flat, $m) === 1
-            || preg_match('/([\d,]+(?:\.\d{1,2})?)\s?(?:USD|US\$)/i', $flat, $m) === 1) {
+        // Dollars, or the dollar coins crypto cards count in (USDT, USDC): one to one.
+        if (preg_match('/(?:US\$|\$|USD[TC]?)\s?([\d,]+(?:\.\d{1,2})?)/i', $flat, $m) === 1
+            || preg_match('/([\d,]+(?:\.\d{1,2})?)\s?(?:USD[TC]?|US\$)/i', $flat, $m) === 1) {
             $amount = Money::toMinor(str_replace(',', '', $m[1]));
             $currency = 'USD';
         }

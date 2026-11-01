@@ -200,3 +200,34 @@ it('changes nothing for a decline, an OTP or an offer', function () {
 
     expect((new Books)->summary()['card'])->toBe(50000)->and(UsdEntry::count())->toBe(1);
 });
+
+it('reads the dollar coins crypto cards count in, and tells Google Play from Google Ads', function () {
+    expect(CardEvents::read('Bybit Card: 12.50 USDT spent at NETFLIX.COM, card ending 6903'))
+        ->toMatchArray(['kind' => 'charge', 'amount' => 1250, 'currency' => 'USD', 'last4' => '6903'])
+        ->and(CardEvents::read('RedotPay: USDC 40.00 deposited to your account')['amount'])->toBe(4000);
+
+    // Google Play is our own spend; only Google Ads pays the Google Ads platform.
+    moneyNote('Card payment approved. 💳 Paid $25.00 at Google Play with your card ending 6903')->assertJson(['status' => 'card_booked']);
+    moneyNote('Card payment approved. 💳 Paid $30.00 at GOOGLE*ADS7319 with your card ending 6903')->assertJson(['status' => 'card_booked']);
+
+    $google = Account::where('kind', 'platform')->where('code', 'google')->sole();
+    expect(UsdEntry::where('description', 'NSave · Google Play')->sole()->category)->toBe('business_spend')
+        ->and(UsdEntry::where('account_id', $google->id)->where('category', 'card_charge')->sum('amount'))->toBe(-3000);
+});
+
+it("books any new app's charge on the card with the same last four digits once approved", function () {
+    $redot = Account::create(['code' => 'redotpay', 'name' => 'RedotPay', 'kind' => 'card', 'last4' => '7781', 'is_active' => true, 'sort' => 3]);
+    UsdEntry::create(['entry_date' => now()->subDays(5)->toDateString(), 'description' => 'NSave → RedotPay', 'category' => 'transfer', 'account_id' => $redot->id, 'amount' => 10000, 'status' => 'na']);
+    UsdEntry::create(['entry_date' => now()->subDays(5)->toDateString(), 'description' => 'NSave → RedotPay', 'category' => 'transfer', 'account_id' => $this->main->id, 'amount' => -10000, 'status' => 'na']);
+
+    // Never seen before: asked about once, waits.
+    moneyNote('Transaction of 9.99 USD at SPOTIFY with card ****7781', 'com.redotpay.app', 'RedotPay')->assertJson(['status' => 'card_held']);
+    $app = MoneyApp::where('package', 'com.redotpay.app')->sole();
+    expect($app->status)->toBe('pending');
+
+    // Approved as that card: the waiting charge comes off that card's balance by its digits.
+    app(CardEvents::class)->approve($app, ['mode' => 'link', 'account_id' => $redot->id]);
+    $cards = collect(app(Books::class)->cardBalances())->keyBy('id');
+    expect($cards[$redot->id]['balance'])->toBe(10000 - 999)
+        ->and($cards[$this->main->id]['balance'])->toBe(50000 - 10000);
+});

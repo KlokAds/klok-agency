@@ -148,8 +148,11 @@ class MoneyListener : NotificationListenerService() {
         private const val SEEN = "klok_money_seen"
         private const val WINDOW = 10 * 60 * 1000L
 
-        /** A US-dollar amount: $25, $ 25.00, 25$, US$25, USD 25, 25 USD (not S$, A$, C$, HK$). */
-        private val DOLLARS = Regex("""(?:\bUS\$|(?<![A-Za-z])\$|\bUSD)\s*\d|\d\s*(?:USD\b|US\$|\$)""", RegexOption.IGNORE_CASE)
+        /**
+         * A US-dollar amount: $25, $ 25.00, 25$, US$25, USD 25, 25 USD, and the dollar coins crypto
+         * cards (Bybit, RedotPay, Tria, Gluon …) count in, 25 USDT / USDC (not S$, A$, C$, HK$).
+         */
+        private val DOLLARS = Regex("""(?:\bUS\$|(?<![A-Za-z])\$|\bUSD[TC]?)\s*\d|\d\s*(?:USD[TC]?\b|US\$|\$)""", RegexOption.IGNORE_CASE)
 
         /** A word that says money moved. */
         private val MONEY_WORD = Regex(
