@@ -274,16 +274,18 @@ function appSettings(): void {
     >
         <!-- Rail -->
         <aside
-            class="no-print fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-rail text-rail-ink transition-transform lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0"
+            class="no-print fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col overflow-x-hidden bg-rail text-rail-ink transition-transform lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0"
             :class="drawer ? 'translate-x-0' : '-translate-x-full'"
         >
-            <div class="flex h-[68px] items-center justify-between px-5">
-                <Link href="/dashboard"
+            <!-- A long name (English) gives way, so the close button stays inside the drawer
+                 and never peeks out past its edge while the drawer is shut. -->
+            <div class="flex h-[68px] items-center justify-between gap-2 px-5">
+                <Link href="/dashboard" class="min-w-0"
                     ><BrandMark light :badge="roleBadge"
                 /></Link>
                 <button
                     type="button"
-                    class="-mr-2 grid size-10 place-items-center rounded-lg text-rail-dim hover:bg-rail-2 hover:text-white lg:hidden"
+                    class="-mr-2 grid size-10 shrink-0 place-items-center rounded-lg text-rail-dim hover:bg-rail-2 hover:text-white lg:hidden"
                     :aria-label="t('মেনু বন্ধ করুন')"
                     @click="drawer = false"
                 >
