@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notification;
  */
 class EmailChangeLink extends Notification
 {
-    public const TITLE = 'KlokOne-এ আপনার নতুন email confirm করুন'; // i18n
+    public const TITLE = 'Klok Agency-এ আপনার নতুন email confirm করুন'; // i18n
 
     public function __construct(public string $url, public string $name, public string $lang = 'bn') {}
 
@@ -28,7 +28,7 @@ class EmailChangeLink extends Notification
             ->markdown('notifications::email', ['kicker' => __('নিরাপত্তা', [], $this->lang)])
             ->greeting(__(self::TITLE, [], $this->lang))
             // The name is typed by the person asking, so it is shown as text, never a link or image.
-            ->line(__(':name এই email-টা KlokOne-এর sign-in email করতে চেয়েছেন। নিচের button চাপলে এটাই হবে।', ['name' => MailText::plain($this->name)], $this->lang))
+            ->line(__(':name এই email-টা Klok Agency-এর sign-in email করতে চেয়েছেন। নিচের button চাপলে এটাই হবে।', ['name' => MailText::plain($this->name)], $this->lang))
             ->action(__('এই email-টা confirm করুন', [], $this->lang), $this->url)
             ->line(__('Link-টা ১ ঘণ্টা চলবে। আপনি না চেয়ে থাকলে কিছু করতে হবে না — কিছুই বদলাবে না।', [], $this->lang))
             ->salutation(__('শুভেচ্ছান্তে,', [], $this->lang));

@@ -32,7 +32,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AppReleaseController extends Controller
 {
-    public const UPDATE_TITLE = 'KlokOne app-এর নতুন version এসেছে'; // i18n
+    public const UPDATE_TITLE = 'Klok Agency app-এর নতুন version এসেছে'; // i18n
 
     public const FLAVORS = ['plain', 'sms'];
 
@@ -81,7 +81,7 @@ class AppReleaseController extends Controller
         // Every phone hears of it now; each app looks for its own kind and installs it itself.
         // One tag, so the plain and the SMS upload make one notification, not two.
         rescue(fn () => app(AppPush::class)->send(AppDevice::all(), [
-            'title' => __('KlokOne-এর নতুন version :name', ['name' => $data['name']]),
+            'title' => __('Klok Agency-এর নতুন version :name', ['name' => $data['name']]),
             'body' => __('App খুললে নিজে থেকে নতুনটা বসে যাবে — login আর setting থেকে যায়।'),
             'level' => 'normal',
             'kind' => 'app_update',

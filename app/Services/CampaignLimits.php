@@ -158,7 +158,7 @@ class CampaignLimits
         $end = $campaign->lastDay() ?? $today;
         $newEnd = $end->max($today)->addDays($days);
 
-        $change = ['new_end' => $newEnd->toDateString(), 'reason' => $reason ?? 'KlokOne'];
+        $change = ['new_end' => $newEnd->toDateString(), 'reason' => $reason ?? 'Klok Agency'];
 
         if ($campaign->paused_for_credit_at !== null) {
             $change['active'] = true;
@@ -247,7 +247,7 @@ class CampaignLimits
             throw new RuntimeException(__('Campaign এখন চলছে না।'));
         }
 
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => false, 'reason' => 'Paused by the client on the portal (KlokOne)']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => false, 'reason' => 'Paused by the client on the portal (Klok Agency)']);
         $this->remember($campaign, $read);
         $campaign->paused_by_client_at = now();
         $campaign->saveQuietly();
@@ -275,7 +275,7 @@ class CampaignLimits
             throw new RuntimeException(__('বিজ্ঞাপনের টাকা শেষ — আগে pay করুন, তারপর চালু হবে।'));
         }
 
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => true, 'reason' => 'Switched on by the client on the portal (KlokOne)']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => true, 'reason' => 'Switched on by the client on the portal (Klok Agency)']);
         $this->remember($campaign, $read);
         $campaign->paused_by_client_at = null;
         $campaign->limits_at = null; // the next guard caps it at the money left
@@ -327,7 +327,7 @@ class CampaignLimits
                 : __('বাকি টাকায় budget বাড়ানো যাবে না — আগে pay করুন।'));
         }
 
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['daily_budget' => round($cents / 100, 2), 'reason' => 'Budget set by the client on the portal (KlokOne)']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['daily_budget' => round($cents / 100, 2), 'reason' => 'Budget set by the client on the portal (Klok Agency)']);
         $this->remember($campaign, $read);
         $campaign->daily_budget = $cents;
         $campaign->saveQuietly();
@@ -338,7 +338,7 @@ class CampaignLimits
     }
 
     /**
-     * The team switches a campaign off or on from KlokOne. Off by the team is its own state, so the
+     * The team switches a campaign off or on from Klok Agency. Off by the team is its own state, so the
      * client sees "paused by Klok Ads" (not a problem, not their own pause) and is told either way.
      *
      * @throws RuntimeException when Pilot or Meta refuses
@@ -349,7 +349,7 @@ class CampaignLimits
             throw new RuntimeException(__('Campaign শেষ হয়ে গেছে।'));
         }
 
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => $on, 'reason' => ($on ? 'Switched on' : 'Paused').' by '.$by->name.' in KlokOne']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => $on, 'reason' => ($on ? 'Switched on' : 'Paused').' by '.$by->name.' in Klok Agency']);
         $this->remember($campaign, $read);
         $campaign->forceFill($on
             ? ['paused_by_team_at' => null, 'paused_by_client_at' => null, 'paused_for_credit_at' => null, 'limits_at' => null]
@@ -377,7 +377,7 @@ class CampaignLimits
         }
 
         $was = $campaign->dailyBudget();
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['daily_budget' => round($cents / 100, 2), 'reason' => 'Budget set by '.$by->name.' in KlokOne']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['daily_budget' => round($cents / 100, 2), 'reason' => 'Budget set by '.$by->name.' in Klok Agency']);
         $this->remember($campaign, $read);
         $campaign->daily_budget = $cents;
         $campaign->saveQuietly();
@@ -441,7 +441,7 @@ class CampaignLimits
             return false;
         }
 
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['spend_cap' => round($cap / 100, 2), 'reason' => 'Client credit (KlokOne)']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['spend_cap' => round($cap / 100, 2), 'reason' => 'Client credit (Klok Agency)']);
         $this->remember($campaign, $read);
         $campaign->limits_error = $read['spend_cap_error'] ?? null;
         $campaign->saveQuietly();
@@ -451,7 +451,7 @@ class CampaignLimits
 
     private function pause(Campaign $campaign, string $clientName): void
     {
-        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => false, 'reason' => 'Client credit used up (KlokOne)']);
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => false, 'reason' => 'Client credit used up (Klok Agency)']);
         $this->remember($campaign, $read);
         $campaign->paused_for_credit_at = now();
         $campaign->saveQuietly();

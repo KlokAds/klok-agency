@@ -57,7 +57,7 @@ function bridge() {
     ).flutter_inappwebview;
 }
 
-/** Inside the KlokOne app: its own settings (fingerprint / PIN lock). */
+/** Inside the Klok Agency app: its own settings (fingerprint / PIN lock). */
 const inApp =
     typeof navigator !== 'undefined' &&
     /KlokFinanceApp/.test(navigator.userAgent);

@@ -4,7 +4,7 @@ import KIcon from '@/components/k/KIcon.vue';
 import { t } from '@/lib/i18n';
 
 /**
- * On an Android phone's browser (not inside the app): "open this in KlokOne". The intent link opens
+ * On an Android phone's browser (not inside the app): "open this in Klok Agency". The intent link opens
  * the app on this very page when it is installed, else the download page. Hidden once dismissed.
  */
 const show = ref(
@@ -50,7 +50,7 @@ function hide(): void {
             ><KIcon name="bell" :size="16"
         /></span>
         <span class="min-w-0 flex-1 text-[13.5px] leading-tight text-ink-2">{{
-            t('KlokOne app-এ আরও সহজে দেখুন')
+            t('Klok Agency app-এ আরও সহজে দেখুন')
         }}</span>
         <a
             :href="link"

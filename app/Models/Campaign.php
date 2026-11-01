@@ -27,7 +27,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string|null $limits_error
  * @property CarbonImmutable|null $paused_for_credit_at
  * @property CarbonImmutable|null $paused_by_client_at the client paused it on the portal
- * @property CarbonImmutable|null $paused_by_team_at the team paused it in KlokOne
+ * @property CarbonImmutable|null $paused_by_team_at the team paused it in Klok Agency
  * @property int $spend_total cents
  * @property int $spend_7d cents
  * @property CarbonImmutable|null $start_at

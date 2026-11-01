@@ -384,7 +384,7 @@ const when = (iso: string | null) => (iso ? ago(iso) : '—');
             <p class="mt-3 text-[14px] leading-relaxed text-ink-2">
                 {{
                     t(
-                        'Owner-এর phone-এর KlokOne SMS app bKash/Nagad/Rocket-এর SMS এখানে পাঠায়; {n} মিনিট খবর না এলে Owner-কে জানানো হয়।',
+                        'Owner-এর phone-এর Klok Agency SMS app bKash/Nagad/Rocket-এর SMS এখানে পাঠায়; {n} মিনিট খবর না এলে Owner-কে জানানো হয়।',
                         { n: sms.silent_minutes },
                     )
                 }}

@@ -3,7 +3,7 @@
 use App\Models\User;
 use App\Notifications\AgencyAlert;
 
-it('sends every email in KlokOne\'s own design, not Laravel\'s', function () {
+it('sends every email in Klok Agency\'s own design, not Laravel\'s', function () {
     $user = User::factory()->make(['locale' => 'bn']);
     $alert = new AgencyAlert('client_paid', 'পেমেন্ট পাওয়া গেছে — ধন্যবাদ!', 'Invoice {number} · {amount}', ['number' => 'KA-0004', 'amount' => '৳2,100'], ['url' => '/portal']);
     $alert->id = 'a1b2c3d4-0000-4000-8000-000000000000';
@@ -15,7 +15,7 @@ it('sends every email in KlokOne\'s own design, not Laravel\'s', function () {
     }
 
     expect($html)->toContain('>K</a></td>')
-        ->toContain('KlokOne')
+        ->toContain('Klok Agency')
         ->toContain('Klok Ads')
         ->toContain('#5a3b82')
         ->toContain('Hind Siliguri')

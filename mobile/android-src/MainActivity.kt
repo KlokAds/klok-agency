@@ -80,7 +80,7 @@ class MainActivity : FlutterFragmentActivity() {
                 "phoneCredential" -> {
                     val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
                     @Suppress("DEPRECATION")
-                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && keyguard.isDeviceSecure) keyguard.createConfirmDeviceCredentialIntent("KlokOne", call.argument<String>("reason")) else null
+                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && keyguard.isDeviceSecure) keyguard.createConfirmDeviceCredentialIntent("Klok Agency", call.argument<String>("reason")) else null
                     if (intent == null) {
                         result.success(false)
                     } else {

@@ -71,7 +71,7 @@ const props = defineProps<{
     }[];
 }>();
 
-// Inside the KlokOne app there is nothing to download.
+// Inside the Klok Agency app there is nothing to download.
 const inApp =
     typeof navigator !== 'undefined' &&
     /KlokFinanceApp/.test(navigator.userAgent);
@@ -396,7 +396,7 @@ const low = computed(
         /></span>
         <span class="min-w-0 flex-1">
             <span class="block text-[15.5px] font-semibold">{{
-                t('KlokOne app নামান')
+                t('Klok Agency app নামান')
             }}</span>
             <span class="block text-[13.5px] text-ink-3">{{
                 t(

@@ -8,7 +8,7 @@
 @if (! empty($greeting))
 # {{ $greeting }}
 @else
-# {{ __('KlokOne থেকে খবর') }}
+# {{ __('Klok Agency থেকে খবর') }}
 @endif
 
 {{-- Intro Lines --}}

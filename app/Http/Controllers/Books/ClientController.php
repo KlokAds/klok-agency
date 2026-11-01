@@ -341,7 +341,7 @@ class ClientController extends Controller
 
         $user->forceFill(['client_id' => $client->id])->save();
         activity('Client')->performedOn($client)->causedBy($request->user())->log("portal user {$user->email} linked");
-        rescue(fn () => $user->notify(new AgencyAlert('client_linked', ClientNotifier::LINKED_TITLE, 'এখন থেকে {client}-এর সব campaign, খরচ, invoice আর পেমেন্ট KlokOne-এ দেখতে পাবেন — phone-এ আর email-এও খবর পাবেন।', [ // i18n
+        rescue(fn () => $user->notify(new AgencyAlert('client_linked', ClientNotifier::LINKED_TITLE, 'এখন থেকে {client}-এর সব campaign, খরচ, invoice আর পেমেন্ট Klok Agency-এ দেখতে পাবেন — phone-এ আর email-এও খবর পাবেন।', [ // i18n
             'client' => $client->name,
         ], ['url' => '/portal'])));
         $this->toast(__(':name এখন :client-এর portal দেখবেন।', ['name' => $user->name, 'client' => $client->name]));

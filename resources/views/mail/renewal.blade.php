@@ -37,7 +37,7 @@ Review & approve
 </x-mail::table>
 
 <x-mail::button :url="$url">
-Open in KlokOne
+Open in Klok Agency
 </x-mail::button>
 @else
 # Contract ended: no extension
@@ -45,9 +45,9 @@ Open in KlokOne
 **{{ $client }}** ended the contract for **{{ $campaign }}**. It stops on {{ $renewal->ends_on->format('d M Y') }} as planned; nothing needs extending.
 
 <x-mail::button :url="$url">
-Open in KlokOne
+Open in Klok Agency
 </x-mail::button>
 @endif
 
-KlokOne
+Klok Agency
 </x-mail::message>

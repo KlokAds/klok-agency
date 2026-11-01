@@ -173,7 +173,7 @@ class PortalController extends Controller
                     'invoice' => preg_match('/\bInvoice ([A-Z]+-(?:[A-Z0-9]+-)*\d+)/', (string) $e->notes.' '.$e->description, $m) ? $m[1] : null,
                     'refund' => $e->category === 'client_refund',
                 ])->all(),
-            // The KlokOne Android app, offered when the portal is open in a browser.
+            // The Klok Agency Android app, offered when the portal is open in a browser.
             'app' => AppReleaseController::downloadUrl('plain') !== null ? AppReleaseController::versionName('plain') : null,
         ]);
     }

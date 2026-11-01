@@ -96,7 +96,7 @@ Route::middleware('throttle:public-action')->group(function () {
 });
 Route::post('i/{token}/claim', [PublicInvoiceController::class, 'claim'])->middleware('throttle:6,1,invoice.public.claim')->name('invoice.public.claim');
 
-// Android: links to this site may open in the KlokOne app (an email's button, a shared link).
+// Android: links to this site may open in the Klok Agency app (an email's button, a shared link).
 Route::get('.well-known/assetlinks.json', fn () => response()->json([[
     'relation' => ['delegate_permission/common.handle_all_urls'],
     'target' => [

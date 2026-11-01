@@ -1,4 +1,4 @@
-"""Turns the android/ folder that `flutter create` makes into KlokOne's app: the package
+"""Turns the android/ folder that `flutter create` makes into Klok Agency's app: the package
 name, Firebase, signing (the same key every time, so a new APK installs over the old one),
 permissions, our Kotlin and the notification icon. Run from mobile/.
 
@@ -108,7 +108,7 @@ patch(manifest, r'(\n(\s*)<activity)', r'''
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="finance_normal" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/finance_brand" />\1''')
-patch(manifest, r'android:label="[^"]*"', 'android:label="KlokOne"')
+patch(manifest, r'android:label="[^"]*"', 'android:label="Klok Agency"')
 # Nothing of the app's own data (the SMS hook secret, the PIN, payment SMS) goes into phone backups.
 # Nor into a phone-to-phone move: the whole data folder ("root") is left out, so the WebView's
 # signed-in cookies and kept pages (app_webview/) stay behind and a new phone signs in fresh,

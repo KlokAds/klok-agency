@@ -2,7 +2,7 @@
 {{-- Header --}}
 <x-slot:header>
 <x-mail::header :url="config('app.url')">
-KlokOne
+Klok Agency
 </x-mail::header>
 </x-slot:header>
 
@@ -23,7 +23,7 @@ KlokOne
 <x-mail::footer>
 **Klok Ads** · [billing.klokads.com]({{ config('app.url') }})
 
-{{ __('এই email KlokOne থেকে নিজে থেকে এসেছে। কোন খবর email-এ আসবে, Profile-এ বদলাতে পারেন।') }}
+{{ __('এই email Klok Agency থেকে নিজে থেকে এসেছে। কোন খবর email-এ আসবে, Profile-এ বদলাতে পারেন।') }}
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

@@ -167,9 +167,9 @@ class Ticker
         }
 
         $fix = match (true) {
-            ! $state['allowed'] => 'Phone-এর Settings → Notifications → Device & app notifications → KlokOne চালু করুন (না দেখা গেলে আগে Apps → KlokOne → ⋮ → Allow restricted settings)', // i18n
-            ! $state['on'] => 'KlokOne app → Settings → Card ও bank app → চালু', // i18n
-            ! $state['running'] => 'অনুমতি আছে, কিন্তু Android চালাচ্ছে না — Phone-এর Settings → Notifications → Device & app notifications-এ KlokOne একবার বন্ধ করে আবার চালু করুন, না হলে phone restart', // i18n
+            ! $state['allowed'] => 'Phone-এর Settings → Notifications → Device & app notifications → Klok Agency চালু করুন (না দেখা গেলে আগে Apps → Klok Agency → ⋮ → Allow restricted settings)', // i18n
+            ! $state['on'] => 'Klok Agency app → Settings → Card ও bank app → চালু', // i18n
+            ! $state['running'] => 'অনুমতি আছে, কিন্তু Android চালাচ্ছে না — Phone-এর Settings → Notifications → Device & app notifications-এ Klok Agency একবার বন্ধ করে আবার চালু করুন, না হলে phone restart', // i18n
             default => null,
         };
 

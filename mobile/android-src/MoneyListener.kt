@@ -17,7 +17,7 @@ import org.json.JSONObject
 /**
  * Card and bank apps (NSave, Fasset, PlasmaOne, Elevate Pay, …) tell of every dollar move (a
  * charge at a shop, a refund, money added) in their notifications, not by SMS. Android hands every
- * notification on the phone here once the Owner gives KlokOne notification access. One that names
+ * notification on the phone here once the Owner gives Klok Agency notification access. One that names
  * a US-dollar amount and a money word goes to the server the way a payment SMS does (SmsForwarder:
  * queue, send, retry, log), from "app", with the app's package and name; the server decides what
  * a new app's notifications are worth (the Owner approves each app on the web).

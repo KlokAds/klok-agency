@@ -116,7 +116,7 @@ return [
     ],
 
     /*
-    | KlokOne's own look for every email (resources/views/vendor/mail).
+    | Klok Agency's own look for every email (resources/views/vendor/mail).
     */
 
     'markdown' => [

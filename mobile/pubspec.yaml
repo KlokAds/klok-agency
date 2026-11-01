@@ -1,9 +1,9 @@
 name: klokfinance
-description: KlokOne - the agency's own Android app (the site inside, notifications with sound, payment SMS forwarding).
+description: Klok Agency - the agency's own Android app (the site inside, notifications with sound, payment SMS forwarding).
 publish_to: none
 # Raise this only when several phone-side changes have piled up: the pages inside come from the
 # site and are always new. A raise (pushed to main) builds and ships a new APK.
-version: 1.1.8+19
+version: 1.1.9+20
 
 environment:
     sdk: '>=3.5.0 <4.0.0'

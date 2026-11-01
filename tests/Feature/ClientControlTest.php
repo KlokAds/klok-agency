@@ -157,7 +157,7 @@ it('lets the client ask the unspent dollars back without any taka figure built f
         ->where('credit.refundable', true)->missing('credit.refund'));
 });
 
-it('lets the team pause, switch on and budget a campaign from KlokOne, and the client sees who did it', function () {
+it('lets the team pause, switch on and budget a campaign from Klok Agency, and the client sees who did it', function () {
     payAhead($this, '1500', '10');
 
     $this->actingAs($this->owner)->post("/campaigns/{$this->campaign->id}/pause")->assertRedirect();

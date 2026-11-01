@@ -53,7 +53,7 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureEmailVerification();
     }
 
-    public const VERIFY_TITLE = 'KlokOne-এ আপনার email confirm করুন'; // i18n
+    public const VERIFY_TITLE = 'Klok Agency-এ আপনার email confirm করুন'; // i18n
 
     /**
      * The link a portal sign-up gets to confirm its email: in the app's own mail design and the
@@ -69,7 +69,7 @@ class FortifyServiceProvider extends ServiceProvider
                 ->subject(__(self::VERIFY_TITLE, [], $lang))
                 ->markdown('notifications::email', ['kicker' => __('নিরাপত্তা', [], $lang)])
                 ->greeting(__(self::VERIFY_TITLE, [], $lang))
-                ->line(__(':name, KlokOne-এ client account খুলতে এই email দেওয়া হয়েছে। নিচের button চাপলে email-টা আপনার বলে confirm হবে।', ['name' => (string) ($notifiable->name ?? '')], $lang))
+                ->line(__(':name, Klok Agency-এ client account খুলতে এই email দেওয়া হয়েছে। নিচের button চাপলে email-টা আপনার বলে confirm হবে।', ['name' => (string) ($notifiable->name ?? '')], $lang))
                 ->action(__('Email confirm করুন', [], $lang), $url)
                 ->line(__('Link-টা :minutes মিনিট চলবে। আপনি account না খুলে থাকলে কিছু করতে হবে না।', ['minutes' => $minutes], $lang))
                 ->salutation(__('শুভেচ্ছান্তে,', [], $lang));

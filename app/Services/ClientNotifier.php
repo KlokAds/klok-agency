@@ -36,7 +36,7 @@ class ClientNotifier
 
     public const BACK_TITLE = 'Campaign আবার চলছে'; // i18n
 
-    public const WELCOME_TITLE = 'KlokOne-এ স্বাগতম'; // i18n
+    public const WELCOME_TITLE = 'Klok Agency-এ স্বাগতম'; // i18n
 
     public const LINKED_TITLE = 'আপনার account Klok Ads-এর সাথে যুক্ত হয়েছে'; // i18n
 

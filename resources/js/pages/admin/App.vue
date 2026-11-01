@@ -94,7 +94,7 @@ function phone(agent: string | null): string {
         :title="t('Phone app')"
         :lead="
             t(
-                'KlokOne-এর Android app: শব্দসহ notification, payment SMS forward, আর app-এর নতুন version।',
+                'Klok Agency-এর Android app: শব্দসহ notification, payment SMS forward, আর app-এর নতুন version।',
             )
         "
     />

@@ -93,7 +93,7 @@ Future<void> setUpNotifications() async {
 /// In the open app Android shows nothing by itself, so the app shows it, on the same channel.
 Future<void> showAlert(RemoteMessage message) async {
   final data = message.data;
-  final title = message.notification?.title ?? data['title'] ?? 'KlokOne';
+  final title = message.notification?.title ?? data['title'] ?? 'Klok Agency';
   final body = message.notification?.body ?? data['body'] ?? '';
   final loud = data['level'] == 'urgent';
   final channel = loud ? urgent : normal;
@@ -212,7 +212,7 @@ class FinanceApp extends StatelessWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: darkMode,
       builder: (context, dark, _) => MaterialApp(
-        title: 'KlokOne',
+        title: 'Klok Agency',
         debugShowCheckedModeBanner: false,
         theme: appTheme(dark),
         // Over every screen (the site and the app's own settings alike).
@@ -387,7 +387,7 @@ class Lock {
 }
 
 /// Asks for whatever the lock is (to open the app, or before changing the lock itself).
-Future<bool> confirmIdentity(BuildContext context, {String reason = 'KlokOne খুলতে'}) async {
+Future<bool> confirmIdentity(BuildContext context, {String reason = 'Klok Agency খুলতে'}) async {
   final mode = await Lock.mode();
   if (mode == 'off') {
     return true;
@@ -467,7 +467,7 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
     var ok = current == 'off';
     try {
       if (current == 'bio') {
-        ok = await Lock.finger('KlokOne খুলতে আঙুলের ছাপ দিন');
+        ok = await Lock.finger('Klok Agency খুলতে আঙুলের ছাপ দিন');
       }
     } catch (error, stack) {
       unawaited(report('lock', error, stack));
@@ -489,7 +489,7 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
     asking = true;
     try {
       // A real fingerprint only: a phone with none set up does not open the app this way.
-      if (await Lock.fingerOk('KlokOne খুলতে আঙুলের ছাপ দিন') == null && mounted) {
+      if (await Lock.fingerOk('Klok Agency খুলতে আঙুলের ছাপ দিন') == null && mounted) {
         setState(() => locked = false);
       }
     } finally {
@@ -504,7 +504,7 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
     }
     asking = true;
     try {
-      if (await Lock.phonePin('KlokOne খুলতে phone-এর PIN / pattern দিন') && mounted) {
+      if (await Lock.phonePin('Klok Agency খুলতে phone-এর PIN / pattern দিন') && mounted) {
         setState(() => locked = false);
       }
     } finally {
@@ -545,7 +545,7 @@ class _LockGateState extends State<LockGate> with WidgetsBindingObserver {
                           children: [
                             const Icon(Icons.fingerprint, size: 76, color: brandLight),
                             const SizedBox(height: 18),
-                            const Text('KlokOne', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+                            const Text('Klok Agency', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
                             const SizedBox(height: 28),
                             FilledButton.icon(
                               style: FilledButton.styleFrom(backgroundColor: brand),
@@ -998,7 +998,7 @@ class _SitePageState extends State<SitePage> {
     final prefs = await SharedPreferences.getInstance();
     final status = await Permission.sms.request();
     if (!status.isGranted) {
-      return 'SMS পড়ার অনুমতি দেওয়া হয়নি। Phone-এর Settings › Apps › KlokOne › Permissions থেকে দিন।';
+      return 'SMS পড়ার অনুমতি দেওয়া হয়নি। Phone-এর Settings › Apps › Klok Agency › Permissions থেকে দিন।';
     }
     final current = token ?? await FirebaseMessaging.instance.getToken();
     handedOver = null;
@@ -1410,7 +1410,7 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
 
   /// Asks for the finger; says why when it did not pass.
   Future<bool> fingerAllowed() async {
-    final why = await Lock.fingerOk('আঙুলের ছাপে KlokOne খোলা চালু করতে');
+    final why = await Lock.fingerOk('আঙুলের ছাপে Klok Agency খোলা চালু করতে');
     if (why != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(why)));
     }
@@ -1676,9 +1676,9 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
                         ? 'বন্ধ — চালু করুন'
                         : listenerRunning
                             ? 'দেওয়া আছে, চলছে — card ও bank app-এর notification ধরা যাবে'
-                            : 'অনুমতি আছে, কিন্তু Android চালাচ্ছে না — KlokOne-এর অনুমতি একবার বন্ধ করে আবার চালু করুন',
+                            : 'অনুমতি আছে, কিন্তু Android চালাচ্ছে না — Klok Agency-এর অনুমতি একবার বন্ধ করে আবার চালু করুন',
                     () async {
-                      // Android's own list: KlokOne → allow. The page reloads on coming back.
+                      // Android's own list: Klok Agency → allow. The page reloads on coming back.
                       await smsChannel.invokeMethod('openNotificationAccess').catchError((_) => null);
                     },
                   ),

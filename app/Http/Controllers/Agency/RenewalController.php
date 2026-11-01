@@ -84,7 +84,7 @@ class RenewalController extends Controller
         abort_unless(CampaignLimits::guarded($campaign->load('account')), 422);
 
         try {
-            $end = $limits->extend($campaign, (int) $data['days'], $request->user(), 'By hand in KlokOne');
+            $end = $limits->extend($campaign, (int) $data['days'], $request->user(), 'By hand in Klok Agency');
         } catch (RuntimeException $e) {
             throw ValidationException::withMessages(['days' => $e->getMessage()]);
         }
