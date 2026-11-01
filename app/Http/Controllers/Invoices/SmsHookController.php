@@ -55,6 +55,18 @@ class SmsHookController extends Controller
         $body = trim((string) $this->first($request, ['text', 'message', 'body', 'content', 'msg', 'sms']));
 
         if ($body === '') {
+            // App 1.1.7 on: whether the phone is really reading card and bank apps' notifications.
+            $listener = $request->input('listener');
+            if (is_array($listener)) {
+                Setting::putQuietly('money_listener', json_encode([
+                    'allowed' => (bool) ($listener['allowed'] ?? false),
+                    'running' => (bool) ($listener['running'] ?? false),
+                    'on' => (bool) ($listener['on'] ?? true),
+                    'apps' => (int) ($listener['apps'] ?? 0),
+                    'at' => now()->toIso8601String(),
+                ]));
+            }
+
             return response()->json(['status' => 'heartbeat']);
         }
 

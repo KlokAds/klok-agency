@@ -130,6 +130,12 @@ class MainActivity : FlutterFragmentActivity() {
                 "defaultIgnore" -> result.success(SmsForwarder.DEFAULT_IGNORE.joinToString("\n"))
                 // Card and bank apps' notifications (MoneyListener): whether the phone lets this app read them.
                 "notificationAccess" -> result.success(NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName))
+                // Allowed is not enough: whether Android is really running the listener; if not, asked again.
+                "listenerRunning" -> {
+                    val running = ListenerState.running(this)
+                    if (!running) ListenerState.rebind(this)
+                    result.success(running)
+                }
                 "openNotificationAccess" -> {
                     try {
                         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))

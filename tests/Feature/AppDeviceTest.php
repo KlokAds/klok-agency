@@ -225,3 +225,36 @@ test('the app reports its own crash without being signed in', function () {
         ->assertOk();
     $this->postJson(route('hooks.app-crash'), [])->assertUnprocessable();
 });
+
+test('tells the Owner when the phone is not reading card and bank apps, with what to do, twice a day at most', function () {
+    Setting::put('sms_device_token', Hash::make('device-secret-0123456789'));
+    AppDevice::create(['user_id' => $this->owner->id, 'token_hash' => hash('sha256', PHONE_TOKEN), 'token' => PHONE_TOKEN, 'app_version' => 18, 'sms_forwarder' => true]);
+    $beat = fn (array $listener) => $this->postJson(route('hooks.sms', 'device-secret-0123456789'), ['from' => 'heartbeat', 'text' => '', 'listener' => $listener])->assertJson(['status' => 'heartbeat']);
+    $told = fn () => $this->owner->notifications()->where('data->title', Ticker::LISTENER_OFF_TITLE)->get();
+
+    // Running: nothing to say.
+    $beat(['allowed' => true, 'running' => true, 'on' => true, 'apps' => 1]);
+    app(Ticker::class)->run();
+    expect($told())->toHaveCount(0);
+
+    // Allowed, but Android is not running it (what happened with NSave): told once, with the fix.
+    $beat(['allowed' => true, 'running' => false, 'on' => true, 'apps' => 0]);
+    app(Ticker::class)->run();
+    app(Ticker::class)->run();
+    expect($told())->toHaveCount(1)
+        ->and(json_encode($told()->first()->data, JSON_UNESCAPED_UNICODE))->toContain('একবার বন্ধ করে আবার চালু');
+
+    // Fixed, then the permission taken away: told again, about the permission.
+    $beat(['allowed' => true, 'running' => true, 'on' => true, 'apps' => 1]);
+    app(Ticker::class)->run();
+    $beat(['allowed' => false, 'running' => false, 'on' => true, 'apps' => 1]);
+    app(Ticker::class)->run();
+    expect($told())->toHaveCount(2)
+        ->and($told()->pluck('data.body')->implode(' '))->toContain('Allow restricted settings');
+
+    // A report older than a day says nothing (the silent-phone alert covers that).
+    Cache::forget('money-listener-told');
+    $this->travel(2)->days();
+    app(Ticker::class)->run();
+    expect($told())->toHaveCount(2);
+});

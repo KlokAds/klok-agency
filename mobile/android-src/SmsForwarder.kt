@@ -293,8 +293,15 @@ object SmsForwarder {
     /** An empty SMS is the heartbeat; the server notes the time and nothing else. */
     fun beat(context: Context): Boolean {
         val target = url(context) ?: return true
+        // Card and bank apps: allowed but not running is asked to start again, and the server hears.
+        val listener = try {
+            if (ListenerState.allowed(context) && !ListenerState.running(context)) ListenerState.rebind(context)
+            ListenerState.json(context)
+        } catch (_: Throwable) {
+            null
+        }
         val (status, _) = try {
-            post(target, false, JSONObject().put("from", "heartbeat").put("text", ""))
+            post(target, false, JSONObject().put("from", "heartbeat").put("text", "").put("listener", listener ?: JSONObject.NULL))
         } catch (e: Exception) {
             return false
         }

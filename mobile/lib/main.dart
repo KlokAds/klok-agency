@@ -1317,6 +1317,7 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
   // Card and bank apps' notifications: whether the phone lets the app read them, the switch for all
   // of them, and each app seen (MoneyListener.kt), newest first.
   bool notificationsAllowed = false;
+  bool listenerRunning = false;
   bool moneyOn = true;
   List<MoneyApp> moneyApps = const [];
   String version = '';
@@ -1352,6 +1353,8 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     final allowed = smsBuild && await Permission.sms.isGranted;
     final battery = smsBuild && await Permission.ignoreBatteryOptimizations.isGranted;
     final notices = smsBuild && (await smsChannel.invokeMethod<bool>('notificationAccess').catchError((_) => false) ?? false);
+    // Allowed is not enough: Android may still not be running the listener (asked to start it again).
+    final running = notices && (await smsChannel.invokeMethod<bool>('listenerRunning').catchError((_) => false) ?? false);
     final money = smsBuild ? await smsChannel.invokeMethod<String>('moneyApps').catchError((_) => null) : null;
     var allOn = true;
     var apps = <MoneyApp>[];
@@ -1378,6 +1381,7 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
       smsAllowed = allowed;
       batteryFree = battery;
       notificationsAllowed = notices;
+      listenerRunning = running;
       moneyOn = allOn;
       moneyApps = apps;
       version = '${info.version} (${info.buildNumber})';
@@ -1665,10 +1669,14 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
                     ),
                   ),
                   health(
-                    notificationsAllowed,
+                    notificationsAllowed && listenerRunning,
                     Icons.notifications_active_outlined,
                     'Notification পড়ার অনুমতি',
-                    notificationsAllowed ? 'দেওয়া আছে — card ও bank app-এর notification ধরা যাবে' : 'বন্ধ — চালু করুন',
+                    !notificationsAllowed
+                        ? 'বন্ধ — চালু করুন'
+                        : listenerRunning
+                            ? 'দেওয়া আছে, চলছে — card ও bank app-এর notification ধরা যাবে'
+                            : 'অনুমতি আছে, কিন্তু Android চালাচ্ছে না — KlokOne-এর অনুমতি একবার বন্ধ করে আবার চালু করুন',
                     () async {
                       // Android's own list: KlokOne → allow. The page reloads on coming back.
                       await smsChannel.invokeMethod('openNotificationAccess').catchError((_) => null);

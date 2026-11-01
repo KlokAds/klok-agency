@@ -409,5 +409,9 @@
     "যেমন NSave copy-তে টাকা main card থেকে আসে। নতুন কেনা হলে আপনি taka সহ লিখবেন।": "For example, NSave copy's money comes from the main card. If it is newly bought, you write it with its taka.",
     "নতুন account": "New account",
     "USD account": "USD account",
-    "{app} approve": "Approve {app}"
+    "{app} approve": "Approve {app}",
+    "NSave ও card app-এর notification ধরা যাচ্ছে না": "NSave and card app notifications are not being caught",
+    "Phone-এর Settings → Notifications → Device & app notifications → KlokOne চালু করুন (না দেখা গেলে আগে Apps → KlokOne → ⋮ → Allow restricted settings)": "On the phone: Settings → Notifications → Device & app notifications → turn KlokOne on (if it is greyed out, first Apps → KlokOne → ⋮ → Allow restricted settings)",
+    "KlokOne app → Settings → Card ও bank app → চালু": "KlokOne app → Settings → Card and bank apps → turn on",
+    "অনুমতি আছে, কিন্তু Android চালাচ্ছে না — Phone-এর Settings → Notifications → Device & app notifications-এ KlokOne একবার বন্ধ করে আবার চালু করুন, না হলে phone restart": "Allowed, but Android is not running it — on the phone, Settings → Notifications → Device & app notifications: turn KlokOne off and on again, or restart the phone"
 }

@@ -1,13 +1,16 @@
 package com.klokads.finance
 
 import android.app.Notification
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import androidx.core.app.NotificationManagerCompat
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -27,6 +30,23 @@ class MoneyListener : NotificationListenerService() {
     /** Each app's name, looked up once per package. */
     private val labels = HashMap<String, String>()
     private var browsers: Set<String>? = null
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        ListenerState.mark(applicationContext, "connected")
+        // Notifications still in the shade, posted while Android was not running us: read them now
+        // (the server keeps each one once, so one already sent is not booked twice).
+        try {
+            activeNotifications?.forEach { onNotificationPosted(it) }
+        } catch (_: Throwable) {
+        }
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        ListenerState.mark(applicationContext, "disconnected")
+        ListenerState.rebind(applicationContext)
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val posted = sbn ?: return
@@ -62,6 +82,7 @@ class MoneyListener : NotificationListenerService() {
         if (blockedLabel(label) || app in browsers()) {
             return
         }
+        ListenerState.mark(context, "money")
         Log.i(TAG, "Money notification from $app ($label)")
         // Listed in the app's settings (new ones on), whether or not it goes.
         val on = MoneyApps.saw(context, app, label)
@@ -199,6 +220,53 @@ class MoneyListener : NotificationListenerService() {
 }
 
 /**
+ * Whether Android is really running MoneyListener: the permission alone is not enough, a phone can
+ * show it on while the listener is unbound (after an update, or a battery saver). The hourly
+ * heartbeat tells the server (an alert for the Owner when it is not running), and asks Android to
+ * start it again.
+ */
+object ListenerState {
+    private const val PREFS = "klok_money_listener"
+
+    private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    fun mark(context: Context, what: String) {
+        prefs(context).edit().putLong(what, System.currentTimeMillis()).apply()
+    }
+
+    fun allowed(context: Context): Boolean = NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
+
+    /** Connected, and not disconnected since. */
+    fun running(context: Context): Boolean {
+        val p = prefs(context)
+        val on = p.getLong("connected", 0L)
+        return on > 0L && on >= p.getLong("disconnected", 0L)
+    }
+
+    /** Asks Android to start the listener again (allowed, but not running). */
+    fun rebind(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && allowed(context)) {
+            try {
+                NotificationListenerService.requestRebind(ComponentName(context, MoneyListener::class.java))
+            } catch (_: Throwable) {
+            }
+        }
+    }
+
+    /** For the heartbeat: {allowed, running, on, apps, connected, money} (times in ms, 0 = never). */
+    fun json(context: Context): JSONObject {
+        val p = prefs(context)
+        return JSONObject()
+            .put("allowed", allowed(context))
+            .put("running", running(context))
+            .put("on", MoneyApps.allOn(context))
+            .put("apps", MoneyApps.count(context))
+            .put("connected", p.getLong("connected", 0L))
+            .put("money", p.getLong("money", 0L))
+    }
+}
+
+/**
  * The card and bank apps this phone has seen a dollar notification from, each on or off here, and
  * one switch for all of it (on unless switched off). A new app starts on: the server still asks
  * the Owner before its notifications count.
@@ -216,6 +284,8 @@ object MoneyApps {
         }
 
     fun allOn(context: Context): Boolean = prefs(context).getBoolean("on", true)
+
+    fun count(context: Context): Int = apps(context).length()
 
     /** Notes the app (its name, now); true when its notifications may go (all on, and it on). */
     @Synchronized

@@ -26,6 +26,8 @@ class Ticker
     /** The SMS app says it is alive every hour; this long without a word and the Owner hears. */
     public const SMS_SILENT_HOURS = 3;
 
+    public const LISTENER_OFF_TITLE = 'NSave ও card app-এর notification ধরা যাচ্ছে না'; // i18n
+
     public const PILOT_DOWN_TITLE = 'Klok Pilot থেকে campaign-এর খরচ আসছে না'; // i18n
 
     /** Below this (USD, after what the platforms will still take) the card is "low". */
@@ -54,6 +56,7 @@ class Ticker
             $this->overdueInvoices();
             $this->cardLow();
             $this->smsSilent();
+            $this->moneyListener();
             $this->pruneNotifications();
             Setting::putQuietly('last_tick_at', now()->toIso8601String());
 
@@ -147,6 +150,40 @@ class Ticker
         $this->notifier->send(null, new AgencyAlert('sms_silent', self::SMS_SILENT_TITLE, 'শেষ খবর {ago} — internet, battery saver আর SMS-এর অনুমতি দেখুন', [ // i18n
             'ago' => $last->diffForHumans(),
         ], ['url' => '/admin/app', 'important' => true]));
+    }
+
+    /**
+     * The SMS phone reads card and bank apps' notifications (NSave …) only while Android runs its
+     * listener: permission off, the switch off, or allowed but not running means card moves stop
+     * reaching the books. The phone says which in its hourly heartbeat; the Owner hears, at most
+     * twice a day, with what to do.
+     */
+    private function moneyListener(): void
+    {
+        $state = json_decode((string) Setting::get('money_listener'), true);
+
+        if (! is_array($state) || ! isset($state['at']) || CarbonImmutable::parse($state['at'])->lt(now()->subDay())) {
+            return;
+        }
+
+        $fix = match (true) {
+            ! $state['allowed'] => 'Phone-এর Settings → Notifications → Device & app notifications → KlokOne চালু করুন (না দেখা গেলে আগে Apps → KlokOne → ⋮ → Allow restricted settings)', // i18n
+            ! $state['on'] => 'KlokOne app → Settings → Card ও bank app → চালু', // i18n
+            ! $state['running'] => 'অনুমতি আছে, কিন্তু Android চালাচ্ছে না — Phone-এর Settings → Notifications → Device & app notifications-এ KlokOne একবার বন্ধ করে আবার চালু করুন, না হলে phone restart', // i18n
+            default => null,
+        };
+
+        if ($fix === null) {
+            Cache::forget('money-listener-told');
+
+            return;
+        }
+
+        if (! Cache::add('money-listener-told', true, 12 * 3600)) {
+            return;
+        }
+
+        $this->notifier->send(null, new AgencyAlert('sms_silent', self::LISTENER_OFF_TITLE, $fix, [], ['url' => '/dollars', 'important' => true]));
     }
 
     /** Meta's receipts from the receipts mailbox become card charges. */
