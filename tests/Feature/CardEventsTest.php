@@ -137,6 +137,15 @@ it('keeps nothing from an app that only sent something without a dollar amount',
     expect(MoneyApp::where('package', 'com.random.app')->exists())->toBeFalse();
 });
 
+it("never takes our own apps' spend reports (MH-Bot) for card money", function () {
+    Notification::fake();
+    moneyNote("🗓 Marine Orvion · week of 26 Oct\nSpent $80.00 · 162 results", 'com.klokads.app', 'MH-Bot')->assertJson(['status' => 'card_ignored']);
+
+    expect(MoneyApp::where('package', 'com.klokads.app')->exists())->toBeFalse()
+        ->and(UsdEntry::where('description', 'like', '%MH-Bot%')->exists())->toBeFalse();
+    Notification::assertNothingSent();
+});
+
 it('lets the Owner turn an app off and on again; what came while off stays out', function () {
     $app = MoneyApp::where('package', 'com.nsave.app')->sole();
     $this->actingAs($this->owner)->post("/dollars/money-apps/{$app->id}/turn", ['on' => false])->assertRedirect();

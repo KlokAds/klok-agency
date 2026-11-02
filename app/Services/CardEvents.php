@@ -91,12 +91,19 @@ class CardEvents
         $package = mb_substr($package ?: 'nsave', 0, 120);
         $read = self::read($body);
 
+        // Our own apps (MH-Bot, Klok-one…) report ad spend, never a card's money.
+        if (str_starts_with($package, 'com.klokads.')) {
+            $read['amount'] = null;
+        }
+
         $app = MoneyApp::where('package', $package)->first();
-        $new = $app === null && $read['amount'] !== null;
+        $new = false;
 
         // Only a dollar move makes an app a platform; anything else from an unknown app is not kept.
-        if ($new) {
-            $app = MoneyApp::create(['package' => $package, 'name' => mb_substr($appName ?: $package, 0, 120), 'status' => 'pending', 'seen_at' => now()]);
+        // Two notices of a new app can arrive at once: one makes it, the other finds it.
+        if ($app === null && $read['amount'] !== null) {
+            $app = MoneyApp::createOrFirst(['package' => $package], ['name' => mb_substr($appName ?: $package, 0, 120), 'status' => 'pending', 'seen_at' => now()]);
+            $new = $app->wasRecentlyCreated;
         } elseif ($app !== null) {
             $app->update(['seen_at' => now()] + ($appName ? ['name' => mb_substr($appName, 0, 120)] : []));
         }
