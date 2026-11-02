@@ -56,6 +56,9 @@ class Invoices
         if ($due <= 0) {
             throw new RuntimeException(__('এই client-এর কোনো পাওনা নেই।'));
         }
+        if (($open = self::covering($client, $due)) !== null) {
+            throw new RuntimeException(__('Invoice :number এখনো বাকি — ওটা pay হলেই এই পাওনাও মিটে যাবে, আলাদা invoice লাগবে না।', ['number' => $open->number]));
+        }
         $rows = UsdEntry::where('source', 'pilot')->where('client_id', $client->id)->where('status', 'pending')->get();
         $rate = self::rateFor($rows, $client) ?? self::clientRate($client) ?? throw new RuntimeException(__('এখন কোনো dollar rate নেই — Klok Ads-এর সাথে যোগাযোগ করুন।'));
 
@@ -77,6 +80,17 @@ class Invoices
 
             return $invoice;
         });
+    }
+
+    /**
+     * An invoice the client already has to pay (a renewal or top-up) whose ad credit covers what
+     * ran past the credit: paying it settles that spend first, so no due invoice is made beside it.
+     */
+    public static function covering(Client $client, int $owedUsd): ?Invoice
+    {
+        return Invoice::with('items')->where('client_id', $client->id)->shared()->whereIn('status', Invoice::PAYABLE)
+            ->where(fn ($q) => $q->whereNull('notes')->orWhere('notes', '!=', self::DUE_NOTE))->orderBy('due_date')->orderBy('id')->get()
+            ->first(fn (Invoice $i) => $i->due() > 0 && (int) $i->items->whereIn('kind', InvoiceItem::USD_KINDS)->sum('usd') >= $owedUsd);
     }
 
     /**

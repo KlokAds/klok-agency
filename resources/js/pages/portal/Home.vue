@@ -45,6 +45,7 @@ const props = defineProps<{
         topup_min?: number;
         owed?: number;
         owed_bdt?: number;
+        owed_by?: string | null;
         round?: {
             paid: number;
             carried: number;
@@ -304,13 +305,27 @@ const low = computed(
                         ></span
                     >
                 </p>
+                <p v-if="credit.owed_by" class="mt-1 text-[13px] text-ink-3">
+                    {{
+                        t(
+                            'Invoice {number} pay করলে এটাও মিটে যাবে — আলাদা কিছু দিতে হবে না।',
+                            { number: credit.owed_by },
+                        )
+                    }}
+                </p>
                 <KButton
                     size="sm"
                     variant="primary"
                     class="mt-2"
                     :loading="payingDue"
                     @click="payDue"
-                    >{{ t('এখনই pay করুন') }}</KButton
+                    >{{
+                        credit.owed_by
+                            ? t('Invoice {number} pay করুন', {
+                                  number: credit.owed_by,
+                              })
+                            : t('এখনই pay করুন')
+                    }}</KButton
                 >
             </div>
             <div class="mt-2 flex flex-wrap gap-2">

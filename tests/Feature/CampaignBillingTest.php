@@ -9,6 +9,7 @@ use App\Models\UsdEntry;
 use App\Models\User;
 use App\Services\Books;
 use App\Services\CampaignBilling;
+use App\Services\Invoices;
 use App\Support\Access;
 use Carbon\CarbonImmutable;
 use Database\Seeders\AccessSeeder;
@@ -87,6 +88,9 @@ it('bills a linked campaign\'s spend to its client week by week and funds it fro
         ->and($client['credit_left'])->toBe(-300)
         // The $6 the money reached is earned: nothing of the ৳900 is still held.
         ->and($client['unearned'])->toBe(0)
+        // Only the $3 beyond the credit is still owed, and the one-click invoice asks for just that.
+        ->and($client['usd_pending'])->toBe(300)
+        ->and(app(Invoices::class)->invoiceDue($this->gffs)->items()->sole()->usd)->toBe(300)
         ->and($books->summary()['equity_ok'])->toBeTrue();
 
     // Pilot rows follow the campaign: they cannot be edited by hand.
@@ -95,6 +99,26 @@ it('bills a linked campaign\'s spend to its client week by week and funds it fro
     // Unlinking takes the spend off the client again.
     $this->actingAs($this->owner)->put("/campaigns/{$campaign->id}/client", ['client_id' => null])->assertRedirect();
     expect(UsdEntry::where('source', 'pilot')->count())->toBe(0);
+});
+
+it('makes no due invoice while a renewal the client still has to pay covers what ran past the credit', function () {
+    app(CampaignBilling::class)->refreshCampaigns($this->account);
+    Campaign::where('pilot_campaign_id', 101)->update(['client_id' => $this->gffs->id, 'bill_from' => $this->day1]);
+    $this->actingAs($this->owner)->post('/quick/client-payment', [
+        'entry_date' => now()->toDateString(), 'client_id' => $this->gffs->id, 'category' => 'client_payment',
+        'pay_via' => 'bank', 'wallet' => 'bank', 'amount' => '900', 'usd_credit' => '6',
+    ])->assertRedirect();
+    app(CampaignBilling::class)->sync();
+
+    $invoices = app(Invoices::class);
+    $renewal = $invoices->save(['client_id' => $this->gffs->id, 'issue_date' => now()->toDateString(), 'due_date' => now()->addDay()->toDateString(), 'notes' => 'Renewal', 'items' => [[
+        'kind' => 'ad_budget', 'description' => 'Next week', 'usd' => 1400, 'rate' => 150.0, 'amount' => null,
+        'campaign_id' => null, 'period_from' => null, 'period_to' => null, 'results' => null, 'clicks' => null,
+    ]]]);
+    $invoices->markSent($renewal);
+
+    expect(fn () => $invoices->invoiceDue($this->gffs))->toThrow(RuntimeException::class, $renewal->number);
+    expect(Invoices::covering($this->gffs, 300)?->id)->toBe($renewal->id);
 });
 
 it('only bills spend from the bill-from day on', function () {

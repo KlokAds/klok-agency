@@ -153,9 +153,12 @@ class ClientController extends Controller
         $page = max(1, $request->integer('page', 1));
         $statement = new LengthAwarePaginator($rows->forPage($page, 5)->values(), $rows->count(), 5, $page, ['path' => $request->url(), 'query' => $request->query()]);
         // Under the table: everything, not just this page.
+        $covered = $books->prepaid($client->id)['covered'];
         $statementTotals = [
             'usd' => (int) $spend->sum('usd'), 'cost' => (int) $spend->sum('cost'), 'bdt' => (int) $payments->sum('bdt'),
-            'pending_cost' => (int) $spend->where('status', 'pending')->sum('cost'), 'pending_usd' => (int) $spend->where('status', 'pending')->sum('usd'),
+            // Of a week the credit partly paid, only the part beyond it is still owed.
+            'pending_cost' => (int) $spend->where('status', 'pending')->sum(fn ($r) => $r['usd'] > 0 ? round($r['cost'] * max(0, $r['usd'] - ($covered[$r['id']] ?? 0)) / $r['usd']) : 0),
+            'pending_usd' => (int) $spend->where('status', 'pending')->sum(fn ($r) => max(0, $r['usd'] - ($covered[$r['id']] ?? 0))),
         ];
 
         $person = fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'phone' => $u->phone, 'company' => $u->company, 'since' => $u->created_at?->format('j M Y')];

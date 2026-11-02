@@ -299,6 +299,9 @@ class Books
             $settled = $spend->where('status', 'settled');
             $pending = $spend->where('status', 'pending');
             $prepaid = $this->prepaid($client->id);
+            // A week the credit only partly reached stays Pending whole; the client owes only the part beyond it.
+            $owed = fn ($e) => max(0, -$e->amount - ($prepaid['covered'][$e->id] ?? 0));
+            $owedCost = fn ($e) => -$e->amount > 0 ? (int) round(($fifo['entries'][$e->id]['cost'] ?? 0) * $owed($e) / -$e->amount) : 0;
 
             // Payments without a USD credit are earned when paid (the old way);
             // advance payments are earned as the campaign spends them.
@@ -311,8 +314,12 @@ class Books
                     ->whereIn('id', array_keys($prepaid['earned']))
                     ->sum(fn ($e) => $prepaid['earned'][$e->id]);
 
-            $settledCost = $settled->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0);
-            $pendingCost = $pending->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0);
+            $pendingUsd = (int) $pending->sum($owed);
+            $pendingCost = (int) $pending->sum($owedCost);
+            // What the credit paid of a Pending week counts as settled, its cost against what it earned.
+            $settledUsd = -$settled->sum('amount') - $pending->sum('amount') - $pendingUsd;
+            $settledCost = $settled->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0)
+                + $pending->sum(fn ($e) => $fifo['entries'][$e->id]['cost'] ?? 0) - $pendingCost;
 
             if ($client->trashed() && $spend->isEmpty() && $received == 0) {
                 continue;
@@ -323,15 +330,15 @@ class Books
                 'name' => $client->name,
                 'type' => $client->type,
                 'status' => $client->status,
-                'usd_settled' => -$settled->sum('amount'),
+                'usd_settled' => $settledUsd,
                 'cost_settled' => $settledCost,
                 'received' => (int) $received,
                 'margin' => (int) $received - $settledCost,
-                'usd_pending' => -$pending->sum('amount'),
+                'usd_pending' => $pendingUsd,
                 'cost_pending' => $pendingCost,
                 // Unpaid spend as the client owes it: its batches' rate plus commission.
-                'pending_bdt' => Invoices::pendingBdt($client, (int) -$pending->sum('amount'), (int) $pendingCost),
-                'pending_count' => $pending->count(),
+                'pending_bdt' => Invoices::pendingBdt($client, $pendingUsd, $pendingCost),
+                'pending_count' => $pending->filter(fn ($e) => $owed($e) > 0)->count(),
                 'credit_usd' => $prepaid['credit_usd'],
                 'campaign_usd' => $prepaid['spent_usd'],
                 'credit_left' => $prepaid['credit_usd'] - $prepaid['spent_usd'],
@@ -367,7 +374,7 @@ class Books
         return $money === null ? $ends : ($ends === null ? $money : min($money, $ends));
     }
 
-    /** @var array<int, array{credit_usd: int, spent_usd: int, paid_bdt: int, unearned: int, daily_usd: int, earned: array<int, int>}> */
+    /** @var array<int, array{credit_usd: int, spent_usd: int, paid_bdt: int, unearned: int, daily_usd: int, earned: array<int, int>, covered: array<int, int>}> */
     private array $prepaid = [];
 
     /**
@@ -376,7 +383,7 @@ class Books
      * earns the BDT its share of the tranche cost; what is not spent yet is
      * the client's money held in advance (unearned).
      *
-     * @return array{credit_usd: int, spent_usd: int, paid_bdt: int, unearned: int, daily_usd: int, earned: array<int, int>}
+     * @return array{credit_usd: int, spent_usd: int, paid_bdt: int, unearned: int, daily_usd: int, earned: array<int, int>, covered: array<int, int>}
      */
     public function prepaid(int $clientId): array
     {
@@ -408,6 +415,7 @@ class Books
         $credit = array_sum(array_column($tranches, 'usd'));
         $paid = array_sum(array_column($tranches, 'bdt'));
         $earned = [];
+        $covered = [];
         $t = 0;
         $leftInTranche = $tranches[0]['usd'] ?? 0;
         $used = 0;
@@ -421,6 +429,7 @@ class Books
             }
 
             $used += $need;
+            $covered[$row->id] = $need;
             $bdt = 0.0;
 
             while ($need > 0 && isset($tranches[$t])) {
@@ -455,6 +464,7 @@ class Books
             'unearned' => $paid - array_sum($earned),
             'daily_usd' => $spent->isEmpty() ? 0 : (int) round($spent->sum('spend') / $spent->count()),
             'earned' => $earned,
+            'covered' => $covered,
         ];
     }
 

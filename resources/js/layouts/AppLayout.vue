@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
+import BackButton from '@/components/BackButton.vue';
 import BrandMark from '@/components/BrandMark.vue';
 import GlobalSearch from '@/components/GlobalSearch.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
@@ -636,6 +637,7 @@ function appSettings(): void {
                         }}</KButton
                     >
                 </div>
+                <BackButton home="/dashboard" />
                 <slot />
             </main>
         </div>

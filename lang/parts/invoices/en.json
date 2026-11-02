@@ -200,5 +200,6 @@
     "{amount} · {from} · Invoice {number} — এই TrxID দাবি করা হয়েছে, কিন্তু নম্বর বা টাকা মেলেনি": "{amount} · {from} · Invoice {number}: this TrxID was claimed, but the number or amount didn't match.",
     "এই client-এর fixed rate: {rate} প্রতি USD": "This client's fixed rate: {rate} per USD",
     "চার্জ": "charge",
-    "“+ চার্জ” মানে ওই পথে টাকা পাঠানোর খরচ (যেমন bKash-এর charge), বিলের সাথে যোগ হয়। চার্জ ছাড়া পথে দিলে শুধু বিলের টাকা।": "“+ charge” is what sending money that way costs (bKash’s charge, for example), added to the bill. A way with no charge costs only the bill."
+    "“+ চার্জ” মানে ওই পথে টাকা পাঠানোর খরচ (যেমন bKash-এর charge), বিলের সাথে যোগ হয়। চার্জ ছাড়া পথে দিলে শুধু বিলের টাকা।": "“+ charge” is what sending money that way costs (bKash’s charge, for example), added to the bill. A way with no charge costs only the bill.",
+    "Invoice :number এখনো বাকি — ওটা pay হলেই এই পাওনাও মিটে যাবে, আলাদা invoice লাগবে না।": "Invoice :number is still unpaid — paying it settles this too, no separate invoice needed."
 }

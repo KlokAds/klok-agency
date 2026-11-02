@@ -139,6 +139,8 @@ class PortalController extends Controller
                 // Owed for ads already run (credit below zero), in dollars and at their rate in taka.
                 'owed' => max(0, (int) ($figure['usd_pending'] ?? 0)),
                 'owed_bdt' => (int) ($figure['pending_bdt'] ?? 0),
+                // The invoice already waiting that pays it as well, so the client pays that one.
+                'owed_by' => ($covering = Invoices::covering($client, max(0, (int) ($figure['usd_pending'] ?? 0)))) ? $covering->number : null,
             ],
             'week' => collect(range(6, 0))->map(function (int $back) use ($today, $week) {
                 $rows = $week->get($today->subDays($back)->toDateString(), collect());
@@ -362,7 +364,9 @@ class PortalController extends Controller
         $client = $this->client($request);
         $open = Invoice::where('client_id', $client->id)->where('notes', Invoices::DUE_NOTE)->where('status', 'sent')->where('paid', 0)->latest('id')->first();
         try {
-            $invoice = $open ?? $invoices->invoiceDue($client);
+            $owed = (int) (collect(app(Books::class)->clients())->firstWhere('id', $client->id)['usd_pending'] ?? 0);
+            // A renewal or top-up already waiting pays this too: the client is sent to it, nothing new is made.
+            $invoice = $open ?? Invoices::covering($client, $owed) ?? $invoices->invoiceDue($client);
         } catch (\RuntimeException $e) {
             throw ValidationException::withMessages(['due' => $e->getMessage()]);
         }

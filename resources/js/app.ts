@@ -4,6 +4,7 @@ import { initializeTheme } from '@/composables/useAppearance';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import MainLayout from '@/layouts/MainLayout.vue';
 import PortalLayout from '@/layouts/PortalLayout.vue';
+import { initializeBack } from '@/lib/back';
 import { initializeFeedback } from '@/lib/feedback';
 import { initializeLocale, t } from '@/lib/i18n';
 
@@ -38,5 +39,6 @@ void createInertiaApp({
 });
 
 initializeTheme();
+initializeBack();
 initializeFeedback();
 initializeLocale();

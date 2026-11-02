@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
+import BackButton from '@/components/BackButton.vue';
 import BrandMark from '@/components/BrandMark.vue';
 import FeedbackModal from '@/components/FeedbackModal.vue';
 import OpenInApp from '@/components/OpenInApp.vue';
@@ -333,6 +334,7 @@ onMounted(() =>
             >
                 {{ t('নেট নেই — আগে খোলা পাতা দেখা যাচ্ছে') }}
             </p>
+            <BackButton home="/portal" />
             <slot />
         </main>
 
