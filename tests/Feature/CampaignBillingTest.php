@@ -121,6 +121,25 @@ it('makes no due invoice while a renewal the client still has to pay covers what
     expect(Invoices::covering($this->gffs, 300)?->id)->toBe($renewal->id);
 });
 
+it("cancels a due invoice still open once a later payment's credit has paid that spend", function () {
+    app(CampaignBilling::class)->refreshCampaigns($this->account);
+    Campaign::where('pilot_campaign_id', 101)->update(['client_id' => $this->gffs->id, 'bill_from' => $this->day1]);
+    app(CampaignBilling::class)->sync();
+    $pay = fn (string $taka, string $usd) => $this->actingAs($this->owner)->post('/quick/client-payment', [
+        'entry_date' => now()->toDateString(), 'client_id' => $this->gffs->id, 'category' => 'client_payment',
+        'pay_via' => 'bank', 'wallet' => 'bank', 'amount' => $taka, 'usd_credit' => $usd,
+    ])->assertRedirect();
+
+    // $6 of credit for a $9 week: $3 owed, and its due invoice.
+    $pay('900', '6');
+    $due = app(Invoices::class)->invoiceDue($this->gffs);
+    expect($due->usd)->toBe(300);
+
+    // A renewal paid (another $6): nothing is owed, so the due invoice can no longer be paid twice.
+    $pay('900', '6');
+    expect($due->fresh()->status)->toBe('void');
+});
+
 it('only bills spend from the bill-from day on', function () {
     app(CampaignBilling::class)->refreshCampaigns($this->account);
     $campaign = Campaign::where('pilot_campaign_id', 101)->sole();

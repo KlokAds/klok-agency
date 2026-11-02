@@ -7,6 +7,7 @@ use App\Models\BdtEntry;
 use App\Models\Campaign;
 use App\Models\CampaignDay;
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\PilotAccount;
 use App\Models\Setting;
 use App\Models\UsdEntry;
@@ -521,6 +522,14 @@ class CampaignBilling
 
             if ($row->status !== $status) {
                 activity()->withoutLogging(fn () => $row->forceFill(['status' => $status])->save());
+            }
+        }
+
+        // Nothing owed any more (a renewal or top-up paid it): a "Due" invoice still open would ask
+        // for the same spend twice, so it is cancelled.
+        if (! UsdEntry::where('client_id', $clientId)->where('category', 'client_spend')->where('status', 'pending')->exists()) {
+            foreach (Invoice::where('client_id', $clientId)->where('notes', Invoices::DUE_NOTE)->whereIn('status', Invoice::PAYABLE)->where('paid', 0)->get() as $due) {
+                app(Invoices::class)->void($due);
             }
         }
     }
