@@ -121,6 +121,8 @@ Route::middleware(['auth', 'verified'])->prefix('portal')->name('portal.')->grou
     Route::post('campaigns/{campaign}/resume', [PortalController::class, 'resume'])->middleware('throttle:10,1,portal.campaign.resume')->name('campaign.resume');
     Route::post('campaigns/{campaign}/budget', [PortalController::class, 'budget'])->middleware('throttle:10,1,portal.campaign.budget')->name('campaign.budget');
     Route::get('invoices', [PortalController::class, 'invoices'])->name('invoices');
+    Route::post('invoices/{invoice}/void', [PortalController::class, 'voidInvoice'])->middleware('throttle:10,1,portal.invoice.void')->name('invoice.void');
+    Route::post('invoices/{invoice}/amount', [PortalController::class, 'changeTopUp'])->middleware('throttle:10,1,portal.invoice.amount')->name('invoice.amount');
     Route::post('refund-request', [PortalController::class, 'refundRequest'])->middleware('throttle:3,60,portal.refund-request')->name('refund-request');
     Route::post('top-up', [PortalController::class, 'topUp'])->middleware('throttle:5,60,portal.top-up')->name('top-up');
     Route::post('pay-due', [PortalController::class, 'payDue'])->middleware('throttle:5,60,portal.pay-due')->name('pay-due');
@@ -150,6 +152,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('invoices/{invoice}/email', [InvoiceController::class, 'email'])->middleware(['can:clients.edit', 'throttle:10,1,invoices.email'])->name('invoices.email');
     Route::post('invoices/{invoice}/partial', [InvoiceController::class, 'partial'])->middleware('can:clients.edit')->name('invoices.partial');
     Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void'])->middleware('can:clients.edit')->name('invoices.void');
+    // Who may delete which one is the invoice's own rule (Invoice::deletableBy).
+    Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->middleware('can:clients.view')->name('invoices.destroy');
     Route::post('invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->middleware('can:bdt.create')->name('invoices.pay');
     Route::post('invoices/{invoice}/payments/{payment}/reject', [InvoiceController::class, 'reject'])->middleware('can:bdt.create')->name('invoices.payments.reject');
     Route::post('invoices/sms/{sms}/assign', [InvoiceController::class, 'assignSms'])->name('invoices.sms.assign');

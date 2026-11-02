@@ -152,6 +152,8 @@ class InvoiceController extends Controller
                 'sent_at' => $invoice->sent_at?->toIso8601String(),
                 'voided_at' => $invoice->voided_at?->toIso8601String(),
                 'author' => $invoice->author?->name,
+                'by_client' => $invoice->madeByClient(),
+                'deletable' => $invoice->deletableBy($request->user()),
                 'client_phone' => $invoice->client->phone,
                 'client_email' => $invoice->client->email,
             ],
@@ -312,6 +314,24 @@ class InvoiceController extends Controller
         $this->toast(__('Invoice বাতিল হয়েছে।'));
 
         return back();
+    }
+
+    /**
+     * Deleted to Trash with its money. One with money on it, or one the client made, only an Owner
+     * may delete; the rest anyone allowed to delete clients' things.
+     */
+    public function destroy(Request $request, Invoice $invoice, Invoices $invoices): RedirectResponse
+    {
+        if (! $invoice->deletableBy($request->user())) {
+            throw ValidationException::withMessages(['invoice' => (int) $invoice->paid > 0
+                ? __('টাকা এসেছে এমন invoice শুধু Owner মুছতে পারেন।')
+                : __('Client নিজে বানানো invoice শুধু Owner মুছতে পারেন।')]);
+        }
+
+        $invoices->delete($invoice);
+        $this->toast(__('Invoice :number Trash-এ গেছে — Trash থেকে টাকাসহ ফেরত আনা যায়।', ['number' => $invoice->number]));
+
+        return redirect()->route('invoices.index');
     }
 
     /** The Owner says which invoice an unmatched wallet SMS paid. */

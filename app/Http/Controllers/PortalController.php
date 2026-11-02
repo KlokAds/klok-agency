@@ -530,9 +530,47 @@ class PortalController extends Controller
         $client = $this->client($request);
 
         return Inertia::render('portal/Invoices', [
-            'invoices' => Invoice::where('client_id', $client->id)->shared()->latest('issue_date')->latest('id')->limit(100)->get()
+            'invoices' => Invoice::with('author')->where('client_id', $client->id)->shared()->latest('issue_date')->latest('id')->limit(100)->get()
                 ->map(fn (Invoice $i) => $this->invoiceRow($i))->all(),
         ]);
+    }
+
+    /** The client cancels an invoice they made themselves, before any money came for it. */
+    public function voidInvoice(Request $request, Invoice $invoice, Invoices $invoices): RedirectResponse
+    {
+        $this->ownUnpaid($request, $invoice);
+        $invoices->void($invoice);
+        $this->toast(__('Invoice :number বাতিল হয়েছে।', ['number' => $invoice->number]));
+
+        return back();
+    }
+
+    /** The client changes the taka on a top-up they made, before any money came for it. */
+    public function changeTopUp(Request $request, Invoice $invoice, TopUps $topUps): RedirectResponse
+    {
+        $this->ownUnpaid($request, $invoice);
+        abort_unless($invoice->notes === TopUps::NOTE, 404);
+        $data = $request->validate(['amount' => ['required', 'numeric', 'min:'.(TopUps::MIN_BDT / 100), 'max:'.(TopUps::MAX_BDT / 100)]], [], ['amount' => __('টাকার অঙ্ক')]);
+
+        try {
+            $topUps->change($invoice, (int) round((float) $data['amount'] * 100));
+        } catch (\RuntimeException $e) {
+            throw ValidationException::withMessages(['amount' => $e->getMessage()]);
+        }
+        $this->toast(__('Invoice :number বদলানো হয়েছে।', ['number' => $invoice->number]));
+
+        return back();
+    }
+
+    /** Only the client's own, made by their own people, with nothing paid yet. */
+    private function ownUnpaid(Request $request, Invoice $invoice): void
+    {
+        $client = $this->client($request);
+        abort_unless($invoice->client_id === $client->id && $invoice->madeByClient(), 404);
+
+        if (! $invoice->isEditable()) {
+            throw ValidationException::withMessages(['invoice' => __('টাকা আসা বা বাতিল invoice বদলানো যায় না।')]);
+        }
     }
 
     /** What the client was told: invoices, payments, the day's result, endings. Opened is read. */
@@ -699,6 +737,11 @@ class PortalController extends Controller
             'status' => $i->status,
             'overdue' => $i->isOverdue(),
             'url' => $i->publicUrl(),
+            'uid' => $i->uid,
+            // One they made and have not paid: theirs to change or cancel. Ours they only pay.
+            'mine' => $i->madeByClient() && $i->isEditable(),
+            // What they can change: a top-up's taka here, a renewal's days on its own page.
+            'change' => $i->notes === TopUps::NOTE ? 'amount' : (str_starts_with((string) $i->notes, 'Renewal') ? 'days' : null),
         ];
     }
 }

@@ -300,5 +300,11 @@
     "Meta থেকে ad-এর খরচ আসছে না": "Ad spend is not coming in from Meta",
     "{account} — Meta থেকে শেষ খবর {since}। Meta Business Settings → System users → Assign assets-এ ad account-টা আবার দিন।": "{account}: last heard from Meta {since}. Give the ad account back in Meta Business Settings → System users → Assign assets.",
     "Invoice {number} pay করলে এটাও মিটে যাবে — আলাদা কিছু দিতে হবে না।": "Paying invoice {number} settles this too — nothing extra to pay.",
-    "Invoice {number} pay করুন": "Pay invoice {number}"
+    "Invoice {number} pay করুন": "Pay invoice {number}",
+    "{number} বাতিল করবেন?": "Cancel {number}?",
+    "এটা আর pay করা যাবে না। দরকার হলে নতুন একটা বানাতে পারবেন।": "It can no longer be paid. You can make a new one if you need.",
+    "আপনার বানানো": "Made by you",
+    "কত টাকার credit?": "How much credit, in taka?",
+    "Invoice :number বাতিল হয়েছে।": "Invoice :number is cancelled.",
+    "Invoice :number বদলানো হয়েছে।": "Invoice :number is changed."
 }

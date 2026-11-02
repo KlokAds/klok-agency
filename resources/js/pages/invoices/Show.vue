@@ -57,6 +57,8 @@ const props = defineProps<{
         voided_at: string | null;
         paid_at: string | null;
         author: string | null;
+        by_client: boolean;
+        deletable: boolean;
         client_phone: string | null;
         client_email: string | null;
     };
@@ -177,6 +179,24 @@ async function voidInvoice(): Promise<void> {
             {},
             { preserveScroll: true },
         );
+    }
+}
+
+// Into Trash with its money; the server decides who may (paid or client-made: only an Owner).
+async function deleteInvoice(): Promise<void> {
+    if (
+        await confirmAction({
+            title: t('Invoice মুছবেন?'),
+            body:
+                props.invoice.paid > 0
+                    ? t(
+                          'এর টাকার entry-ও BDT খাতা থেকে Trash-এ যাবে। Trash থেকে সব একসাথে ফেরত আনা যায়।',
+                      )
+                    : t('Trash-এ যাবে, সেখান থেকে ফেরত আনা যায়।'),
+            danger: true,
+        })
+    ) {
+        router.delete(`/invoices/${props.invoice.uid}`);
     }
 }
 
@@ -471,7 +491,22 @@ const PAY_STATUS: Record<
                         @click="voidInvoice"
                         >{{ t('বাতিল করুন') }}</KButton
                     >
+                    <KButton
+                        v-if="invoice.deletable"
+                        size="sm"
+                        variant="danger"
+                        icon="bin"
+                        @click="deleteInvoice"
+                        >{{ t('মুছুন') }}</KButton
+                    >
                 </div>
+                <p v-if="invoice.by_client" class="mt-3 text-[13px] text-ink-3">
+                    {{
+                        t(
+                            'Client নিজে বানিয়েছেন — তিনি বদলাতে ও বাতিল করতে পারেন; মুছতে পারেন শুধু Owner।',
+                        )
+                    }}
+                </p>
             </section>
         </aside>
     </div>

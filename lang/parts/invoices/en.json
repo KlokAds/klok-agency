@@ -201,5 +201,12 @@
     "এই client-এর fixed rate: {rate} প্রতি USD": "This client's fixed rate: {rate} per USD",
     "চার্জ": "charge",
     "“+ চার্জ” মানে ওই পথে টাকা পাঠানোর খরচ (যেমন bKash-এর charge), বিলের সাথে যোগ হয়। চার্জ ছাড়া পথে দিলে শুধু বিলের টাকা।": "“+ charge” is what sending money that way costs (bKash’s charge, for example), added to the bill. A way with no charge costs only the bill.",
-    "Invoice :number এখনো বাকি — ওটা pay হলেই এই পাওনাও মিটে যাবে, আলাদা invoice লাগবে না।": "Invoice :number is still unpaid — paying it settles this too, no separate invoice needed."
+    "Invoice :number এখনো বাকি — ওটা pay হলেই এই পাওনাও মিটে যাবে, আলাদা invoice লাগবে না।": "Invoice :number is still unpaid — paying it settles this too, no separate invoice needed.",
+    "Invoice মুছবেন?": "Delete this invoice?",
+    "এর টাকার entry-ও BDT খাতা থেকে Trash-এ যাবে। Trash থেকে সব একসাথে ফেরত আনা যায়।": "Its money entries go from the BDT book to Trash too. Trash brings them all back together.",
+    "Trash-এ যাবে, সেখান থেকে ফেরত আনা যায়।": "It goes to Trash and can be brought back from there.",
+    "Client নিজে বানিয়েছেন — তিনি বদলাতে ও বাতিল করতে পারেন; মুছতে পারেন শুধু Owner।": "Made by the client — they can change or cancel it; only an Owner can delete it.",
+    "টাকা এসেছে এমন invoice শুধু Owner মুছতে পারেন।": "Only an Owner can delete an invoice that has money on it.",
+    "Client নিজে বানানো invoice শুধু Owner মুছতে পারেন।": "Only an Owner can delete an invoice the client made.",
+    "Invoice :number Trash-এ গেছে — Trash থেকে টাকাসহ ফেরত আনা যায়।": "Invoice :number is in Trash — it can be brought back from Trash with its money."
 }

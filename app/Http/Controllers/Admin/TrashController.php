@@ -7,7 +7,9 @@ use App\Models\BdtEntry;
 use App\Models\Client;
 use App\Models\Employee;
 use App\Models\FxBatch;
+use App\Models\Invoice;
 use App\Models\UsdEntry;
+use App\Services\Invoices;
 use App\Support\Paging;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,6 +31,7 @@ class TrashController extends Controller
         'fx' => [FxBatch::class, 'FX Batch'],
         'client' => [Client::class, 'Client'],
         'employee' => [Employee::class, 'কর্মী'], // i18n
+        'invoice' => [Invoice::class, 'Invoice'],
     ];
 
     public function index(Request $request): Response
@@ -43,8 +46,8 @@ class TrashController extends Controller
                 'type' => $type,
                 'type_label' => __($label),
                 'id' => $row->id,
-                'title' => $row->description ?? $row->name,
-                'amount' => $row->amount ?? $row->usd ?? null,
+                'title' => $row instanceof Invoice ? $row->number.' · '.$row->client?->name : ($row->description ?? $row->name),
+                'amount' => $row instanceof Invoice ? $row->total : ($row->amount ?? $row->usd ?? null),
                 'currency' => in_array($type, ['usd', 'fx']) ? 'usd' : 'bdt',
                 'deleted_at' => $row->deleted_at->toIso8601String(),
             ]);
@@ -70,6 +73,13 @@ class TrashController extends Controller
         $row = $model::onlyTrashed()->findOrFail($id);
 
         DB::transaction(function () use ($row) {
+            // An invoice comes back with the money its payments wrote.
+            if ($row instanceof Invoice) {
+                app(Invoices::class)->restore($row);
+
+                return;
+            }
+
             $row->restore();
 
             // Transfers and FX batches come back whole.

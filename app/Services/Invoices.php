@@ -191,6 +191,36 @@ class Invoices
     }
 
     /**
+     * Into Trash: the invoice, and the money its payments wrote in the BDT book (the payment, its
+     * charge, the QR fee), so the books never keep money for an invoice that is gone. Restored, all
+     * of it comes back together.
+     */
+    public function delete(Invoice $invoice): void
+    {
+        DB::transaction(function () use ($invoice) {
+            $invoice->payments()->where('status', 'pending')->update(['status' => 'expired', 'expires_at' => null]);
+            BdtEntry::whereIn('id', self::moneyOf($invoice))->get()->each->delete();
+            $invoice->delete();
+        });
+    }
+
+    public function restore(Invoice $invoice): void
+    {
+        DB::transaction(function () use ($invoice) {
+            $invoice->restore();
+            BdtEntry::onlyTrashed()->whereIn('id', self::moneyOf($invoice))->get()->each->restore();
+        });
+    }
+
+    /** @return array<int, int> the BDT entries its verified payments wrote */
+    private static function moneyOf(Invoice $invoice): array
+    {
+        return $invoice->payments()->where('status', 'verified')->get(['bdt_entry_id', 'fee_entry_id', 'charge_entry_id'])
+            ->flatMap(fn (InvoicePayment $p) => [$p->bdt_entry_id, $p->fee_entry_id, $p->charge_entry_id])
+            ->filter()->map(fn ($id) => (int) $id)->values()->all();
+    }
+
+    /**
      * Confirms money against an invoice: the client payment in the BDT book
      * (with its share of the ad budget as USD credit), the Bangla QR fee,
      * and the invoice's paid amount and status.

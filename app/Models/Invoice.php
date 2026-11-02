@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Models\Concerns\Audited;
+use App\Support\Access;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 /**
@@ -33,10 +35,11 @@ use Illuminate\Support\Str;
  * @property CarbonImmutable|null $overdue_notified_at
  * @property int|null $created_by
  * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $deleted_at
  */
 class Invoice extends Model
 {
-    use Audited;
+    use Audited, SoftDeletes;
 
     public const STATUSES = [
         'sent' => 'Sent',
@@ -59,7 +62,7 @@ class Invoice extends Model
     {
         return [
             'issue_date' => 'date', 'due_date' => 'date', 'sent_at' => 'datetime', 'paid_at' => 'datetime',
-            'voided_at' => 'datetime', 'overdue_notified_at' => 'datetime',
+            'voided_at' => 'datetime', 'overdue_notified_at' => 'datetime', 'deleted_at' => 'datetime',
             'total' => 'integer', 'usd' => 'integer', 'paid' => 'integer', 'seq' => 'integer', 'allow_partial' => 'boolean',
         ];
     }
@@ -137,6 +140,27 @@ class Invoice extends Model
         return $this->status === 'sent' && (int) $this->paid === 0;
     }
 
+    /** Made by the client's own person on the portal (a top-up, a renewal, paying what is owed), not by us. */
+    public function madeByClient(): bool
+    {
+        return $this->author !== null && (int) $this->author->client_id === (int) $this->client_id;
+    }
+
+    /**
+     * Who may delete it: one with money on it, or one the client made, only an Owner; the rest
+     * anyone allowed to delete clients' things.
+     */
+    public function deletableBy(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        return (int) $this->paid > 0 || $this->madeByClient()
+            ? $user->hasRole(Access::OWNER)
+            : $user->can('clients.delete');
+    }
+
     /**
      * What the client has been given: shared with them (sent by link, WhatsApp or email) or paid.
      * One made but never sent stays the agency's own until it is.
@@ -161,7 +185,8 @@ class Invoice extends Model
 
     public static function nextSeq(): int
     {
-        return (int) static::max('seq') + 1;
+        // A deleted one waiting in Trash keeps its number: never given again.
+        return (int) static::withTrashed()->max('seq') + 1;
     }
 
     /**
@@ -174,11 +199,11 @@ class Invoice extends Model
             return self::PREFIX.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
         }
         $code = self::codeFor($client);
-        $n = (int) static::where('client_id', $client->id)->count() + 1;
+        $n = (int) static::withTrashed()->where('client_id', $client->id)->count() + 1;
         do {
             $number = self::PREFIX.$code.'-'.str_pad((string) $n, 2, '0', STR_PAD_LEFT);
             $n++;
-        } while (static::where('number', $number)->exists());
+        } while (static::withTrashed()->where('number', $number)->exists());
 
         return $number;
     }
