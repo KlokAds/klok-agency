@@ -80,6 +80,21 @@ class KeepAlive
         }
     }
 
+    /**
+     * Which code is deployed: the checked-out commit and the cached config a deploy rebuilds. A
+     * timer started before a deploy sees it change and hands over to one on the new code.
+     */
+    public static function codeStamp(): string
+    {
+        $head = base_path('.git/HEAD');
+        $ref = is_file($head) ? trim((string) file_get_contents($head)) : '';
+        $refFile = str_starts_with($ref, 'ref: ') ? base_path('.git/'.substr($ref, 5)) : null;
+        $commit = $refFile !== null && is_file($refFile) ? trim((string) file_get_contents($refFile)) : $ref;
+        $config = base_path('bootstrap/cache/config.php');
+
+        return $commit.'|'.(is_file($config) ? (string) filemtime($config) : '');
+    }
+
     /** Pilot's address without its MCP path: a plain request there runs its scheduler. */
     public static function pilotWakeUrl(): string
     {

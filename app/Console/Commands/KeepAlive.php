@@ -24,8 +24,11 @@ class KeepAlive extends Command
     {
         $started = time();
         $lastPilot = 0;
+        $code = KeepAliveService::codeStamp();
 
-        while (time() - $started < KeepAliveService::LIFETIME_SECONDS) {
+        // A deploy changes the code under a running timer: it hands over at once, so the tick never
+        // runs old rules (a guard pausing what the new code allows) for up to an hour.
+        while (time() - $started < KeepAliveService::LIFETIME_SECONDS && KeepAliveService::codeStamp() === $code) {
             $keepAlive->beat();
 
             try {
@@ -41,6 +44,8 @@ class KeepAlive extends Command
             }
 
             sleep(KeepAliveService::EVERY_SECONDS);
+            // File times are cached per process: read them fresh for the deploy check.
+            clearstatcache();
         }
 
         // The successor takes over before this one goes.
