@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Notifications\AgencyAlert;
 use App\Services\CampaignBilling;
 use App\Services\CampaignLimits;
+use App\Services\ClientNotifier;
+use App\Support\Access;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\BooksSeeder;
 use Illuminate\Support\Facades\Crypt;
@@ -92,4 +94,50 @@ it('leaves under a dollar alone: no extension, no refund', function () {
 
     $this->actingAs($this->person)->get('/portal')->assertOk()
         ->assertInertia(fn ($page) => $page->where('credit.left', 46)->where('credit.refundable', false));
+});
+
+it('runs a client past their credit up to the room the team allows, says so once, and stops at the edge', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole(Access::OWNER);
+    // $3 paid, $4.04 spent: $1.04 owed. With $5 allowed on credit the ads keep running.
+    fund($this->gffs, 300, 45000);
+    $this->gffs->update(['credit_allowance' => 500]);
+
+    app(CampaignLimits::class)->guard();
+
+    expect(collect($this->limits)->filter(fn ($l) => ($l['active'] ?? null) === false))->toBeEmpty()
+        ->and($this->campaign->fresh()->paused_for_credit_at)->toBeNull()
+        // The cap stops it where the room ends: $4.04 spent plus $3.96 still allowed.
+        ->and(collect($this->limits)->whereNotNull('spend_cap')->last()['spend_cap'])->toBe(8.0);
+    Notification::assertSentTo($this->person, AgencyAlert::class, fn (AgencyAlert $n) => $n->title === ClientNotifier::ON_CREDIT_TITLE && $n->params['owed'] === '$1.04');
+    Notification::assertSentTo($owner, AgencyAlert::class, fn (AgencyAlert $n) => $n->title === CampaignLimits::ON_CREDIT_TITLE);
+
+    $this->actingAs($this->person)->get('/portal')->assertInertia(fn ($page) => $page->where('credit.left', -104)->where('credit.allowance', 500));
+
+    // Told once, not every tick.
+    app(CampaignLimits::class)->guard();
+    Notification::assertSentToTimes($this->person, AgencyAlert::class, 1);
+
+    // The room ran out (its last day passed): the guard stops the campaign as before.
+    $this->gffs->update(['credit_allowance_until' => now()->subDay()->toDateString()]);
+    app(CampaignLimits::class)->guard();
+    expect($this->campaign->fresh()->paused_for_credit_at)->not->toBeNull();
+
+    // Money came: the old $1.04 is paid first, and what the guard stopped runs again.
+    fund($this->gffs, 600, 90000);
+    app(CampaignLimits::class)->guard();
+    expect($this->campaign->fresh()->paused_for_credit_at)->toBeNull()
+        ->and(collect($this->limits)->last(fn ($l) => isset($l['active']))['active'])->toBeTrue();
+});
+
+it('lets the team set and clear the room on credit on the client page', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole(Access::OWNER);
+    $form = ['name' => 'GFFS', 'status' => 'active', 'rate_mode' => 'commission'];
+
+    $this->actingAs($owner)->put("/clients/{$this->gffs->id}", $form + ['credit_allowance' => '20', 'credit_allowance_until' => now()->addWeek()->toDateString()])->assertSessionHasNoErrors();
+    expect($this->gffs->fresh())->credit_allowance->toBe(2000)->allowance()->toBe(2000);
+
+    $this->actingAs($owner)->put("/clients/{$this->gffs->id}", $form + ['credit_allowance' => '', 'credit_allowance_until' => now()->addWeek()->toDateString()])->assertSessionHasNoErrors();
+    expect($this->gffs->fresh())->credit_allowance->toBeNull()->credit_allowance_until->toBeNull();
 });

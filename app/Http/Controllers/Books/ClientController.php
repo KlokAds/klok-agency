@@ -164,7 +164,9 @@ class ClientController extends Controller
         $person = fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'phone' => $u->phone, 'company' => $u->company, 'since' => $u->created_at?->format('j M Y')];
 
         return Inertia::render('clients/Show', [
-            'client' => $client->only(['id', 'name', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days', 'rate_mode', 'fixed_rate', 'commission_percent']),
+            'client' => $client->only(['id', 'name', 'status', 'phone', 'email', 'company', 'notes', 'manager_id', 'renew_days', 'rate_mode', 'fixed_rate', 'commission_percent', 'credit_allowance']) + [
+                'credit_allowance_until' => $client->credit_allowance_until?->toDateString(),
+            ],
             // The client's own people on the portal, and sign-ups still waiting for a client.
             'portal' => [
                 'users' => User::where('client_id', $client->id)->orderBy('name')->get()->map($person)->all(),
@@ -313,7 +315,13 @@ class ClientController extends Controller
 
     public function update(Request $request, Client $client): RedirectResponse
     {
-        $client->update($this->validated($request, $client));
+        $data = $this->validated($request, $client);
+        // Typed in dollars, kept in cents; empty is none.
+        if (array_key_exists('credit_allowance', $data)) {
+            $data['credit_allowance'] = filled($data['credit_allowance']) && (float) $data['credit_allowance'] > 0 ? (int) round((float) $data['credit_allowance'] * 100) : null;
+            $data['credit_allowance_until'] = $data['credit_allowance'] !== null ? ($data['credit_allowance_until'] ?? null) : null;
+        }
+        $client->update($data);
         $this->toast(__('Client আপডেট হয়েছে।'));
 
         return back();
@@ -379,7 +387,9 @@ class ClientController extends Controller
             'rate_mode' => ['sometimes', 'required', Rule::in(array_keys(Client::RATE_MODES))],
             'fixed_rate' => ['nullable', 'required_if:rate_mode,fixed', 'numeric', 'min:1', 'max:1000'],
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:200'],
-        ], [], ['name' => __('নাম'), 'fixed_rate' => __('Fixed rate'), 'commission_percent' => __('Commission')]);
+            'credit_allowance' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:5000'],
+            'credit_allowance_until' => ['sometimes', 'nullable', 'date'],
+        ], [], ['name' => __('নাম'), 'fixed_rate' => __('Fixed rate'), 'commission_percent' => __('Commission'), 'credit_allowance' => __('বাকিতে চালানোর সীমা'), 'credit_allowance_until' => __('শেষ তারিখ')]);
     }
 
     /**

@@ -246,5 +246,7 @@
     "সব campaign দেখুন": "Show all campaigns",
     "Klok Pilot-এর URL klokads.com-এর হতে হবে।": "The Klok Pilot URL must be on klokads.com.",
     "সংরক্ষণ হয়েছে। Pilot-এর URL বদলেছে, তাই token মুছে দেওয়া হয়েছে — নতুন URL-এর token আবার দিন।": "Saved. The Pilot URL changed, so the token was removed. Enter the token for the new URL again.",
-    "পাঠিয়েছে :from — Meta না, তাই খাতায় তোলা হয়নি। আসল receipt হলে হাতে লিখুন।": "Sent by :from, not Meta, so it was not booked. If it is a real receipt, enter it by hand."
+    "পাঠিয়েছে :from — Meta না, তাই খাতায় তোলা হয়নি। আসল receipt হলে হাতে লিখুন।": "Sent by :from, not Meta, so it was not booked. If it is a real receipt, enter it by hand.",
+    "Client বাকিতে চলছে": "Client running on credit",
+    "{client} — credit শেষ, বাকিতে চলছে: {owed} বাকি (সীমা {limit})। পরের payment থেকে আগে এটা কাটা হবে।": "{client} — credit used up, running on credit: {owed} owed (limit {limit}). Their next payment pays this first."
 }

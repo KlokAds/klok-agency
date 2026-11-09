@@ -18,7 +18,7 @@ import KTag from '@/components/k/KTag.vue';
 import KTextarea from '@/components/k/KTextarea.vue';
 import ClientPricing from '@/components/ClientPricing.vue';
 import { confirmAction } from '@/lib/feedback';
-import { ago, money, niceDate } from '@/lib/format';
+import { ago, money, niceDate, today } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Option, Paginated } from '@/types';
 
@@ -35,6 +35,8 @@ type Client = {
     rate_mode: string;
     fixed_rate: number | null;
     commission_percent: number | null;
+    credit_allowance: number | null;
+    credit_allowance_until: string | null;
 };
 
 type OpenTask = {
@@ -299,6 +301,11 @@ const form = useForm({
         props.client.commission_percent !== null
             ? String(props.client.commission_percent)
             : '',
+    // Dollars here; the server keeps cents.
+    credit_allowance: props.client.credit_allowance
+        ? String(props.client.credit_allowance / 100)
+        : '',
+    credit_allowance_until: props.client.credit_allowance_until ?? '',
 });
 
 const statuses: Option[] = [
@@ -1134,6 +1141,34 @@ function print(): void {
                 :pricing="options.pricing"
                 :errors="form.errors"
             />
+            <KField
+                :label="t('বাকিতে চালানোর সীমা ($)')"
+                optional
+                :error="form.errors.credit_allowance"
+                :hint="
+                    t(
+                        'Credit শেষ হলেও এত ডলার পর্যন্ত বিজ্ঞাপন চলবে; পরের payment থেকে আগে এটা কাটা হবে। খালি = credit শেষ হলেই থামবে।',
+                    )
+                "
+                ><KInput
+                    v-model="form.credit_allowance"
+                    inputmode="decimal"
+                    :placeholder="t('যেমন 20')"
+                    :invalid="!!form.errors.credit_allowance"
+            /></KField>
+            <KField
+                :label="t('বাকি কত দিন পর্যন্ত')"
+                optional
+                :error="form.errors.credit_allowance_until"
+                :hint="
+                    t('এই দিনের পর আর বাকিতে চলবে না। খালি = যতদিন না বদলান।')
+                "
+                ><KDate
+                    v-model="form.credit_allowance_until"
+                    :min="today()"
+                    clearable
+                    :placeholder="t('শেষ তারিখ নেই')"
+            /></KField>
             <KField label="Note" optional class="sm:col-span-2"
                 ><KTextarea v-model="form.notes"
             /></KField>

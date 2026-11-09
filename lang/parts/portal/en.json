@@ -306,5 +306,10 @@
     "আপনার বানানো": "Made by you",
     "কত টাকার credit?": "How much credit, in taka?",
     "Invoice :number বাতিল হয়েছে।": "Invoice :number is cancelled.",
-    "Invoice :number বদলানো হয়েছে।": "Invoice :number is changed."
+    "Invoice :number বদলানো হয়েছে।": "Invoice :number is changed.",
+    "বাকিতে চলছে — সীমা {limit}; পরের payment থেকে আগে এটা কাটা হবে।": "Running on credit — limit {limit}; your next payment pays this first.",
+    "দরকার হলে {limit} পর্যন্ত বাকিতে চলবে।": "If needed, ads run up to {limit} on credit.",
+    "{date} পর্যন্ত।": "Until {date}.",
+    "বিজ্ঞাপন বাকিতে চলছে": "Your ads are running on credit",
+    "Credit শেষ — বিজ্ঞাপন বাকিতে চলছে: {owed} বাকি (সীমা {limit})। পরের payment থেকে আগে এটা কাটা হবে; সীমায় পৌঁছালে থামবে।": "Credit used up — ads are running on credit: {owed} owed (limit {limit}). Your next payment pays this first; ads stop at the limit."
 }

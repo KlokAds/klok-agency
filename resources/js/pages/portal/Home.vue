@@ -46,6 +46,8 @@ const props = defineProps<{
         owed?: number;
         owed_bdt?: number;
         owed_by?: string | null;
+        allowance?: number;
+        allowance_until?: string | null;
         round?: {
             paid: number;
             carried: number;
@@ -288,6 +290,29 @@ const low = computed(
                 {{
                     t('১ ডলারের নিচে — ফেরতযোগ্য নয়, পরের payment-এ যোগ হবে।')
                 }}
+            </p>
+            <!-- Klok Ads lets them run past the credit: how far, and that the next payment pays it first. -->
+            <p
+                v-if="credit.allowance"
+                class="mt-1 text-[13px]"
+                :class="
+                    credit.left < 0 ? 'font-semibold text-wait' : 'text-ink-3'
+                "
+            >
+                {{
+                    credit.left < 0
+                        ? t(
+                              'বাকিতে চলছে — সীমা {limit}; পরের payment থেকে আগে এটা কাটা হবে।',
+                              { limit: money(credit.allowance, 'usd') },
+                          )
+                        : t('দরকার হলে {limit} পর্যন্ত বাকিতে চলবে।', {
+                              limit: money(credit.allowance, 'usd'),
+                          })
+                }}<template v-if="credit.allowance_until">
+                    {{
+                        t('{date} পর্যন্ত।', { date: credit.allowance_until })
+                    }}</template
+                >
             </p>
             <!-- Ads already run past the credit: one tap makes the invoice and opens it to pay. -->
             <div

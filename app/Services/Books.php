@@ -348,6 +348,9 @@ class Books
                 'spent_bdt' => $prepaid['paid_bdt'] - $prepaid['unearned'],
                 'daily_usd' => $prepaid['daily_usd'],
                 'days_left' => $this->daysLeft($client->id, $prepaid),
+                // What the team lets them run past the credit before they pay (cents), and until when.
+                'allowance' => $client->allowance(),
+                'allowance_until' => $client->allowance() > 0 ? $client->credit_allowance_until?->toDateString() : null,
                 'unbilled_usd' => $unbilled[$client->id] ?? 0,
             ];
         }

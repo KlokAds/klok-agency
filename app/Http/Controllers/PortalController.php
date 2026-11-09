@@ -139,6 +139,9 @@ class PortalController extends Controller
                 // Owed for ads already run (credit below zero), in dollars and at their rate in taka.
                 'owed' => max(0, (int) ($figure['usd_pending'] ?? 0)),
                 'owed_bdt' => (int) ($figure['pending_bdt'] ?? 0),
+                // How far past the credit Klok Ads lets their ads run (paid first from the next payment).
+                'allowance' => (int) ($figure['allowance'] ?? 0),
+                'allowance_until' => isset($figure['allowance_until']) ? CarbonImmutable::parse($figure['allowance_until'])->format('j M') : null,
                 // The invoice already waiting that pays it as well, so the client pays that one.
                 'owed_by' => ($covering = Invoices::covering($client, max(0, (int) ($figure['usd_pending'] ?? 0)))) ? $covering->number : null,
             ],

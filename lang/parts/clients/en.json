@@ -164,5 +164,12 @@
     "আজ: FX {fx} + {pct}% = প্রতি USD {rate}": "Today: FX {fx} + {pct}% = {rate} per USD",
     "Dollar-এর দাম": "Dollar price",
     "যেমন 150": "e.g. 150",
-    "{n}% (সবার মতো)": "{n}% (same as everyone)"
+    "{n}% (সবার মতো)": "{n}% (same as everyone)",
+    "বাকিতে চালানোর সীমা ($)": "Pay-later limit ($)",
+    "Credit শেষ হলেও এত ডলার পর্যন্ত বিজ্ঞাপন চলবে; পরের payment থেকে আগে এটা কাটা হবে। খালি = credit শেষ হলেই থামবে।": "Ads keep running this many dollars past the credit; the next payment pays it first. Empty = ads stop when the credit ends.",
+    "যেমন 20": "e.g. 20",
+    "বাকি কত দিন পর্যন্ত": "Pay-later until",
+    "এই দিনের পর আর বাকিতে চলবে না। খালি = যতদিন না বদলান।": "After this day ads no longer run on credit. Empty = until you change it.",
+    "শেষ তারিখ নেই": "No end date",
+    "বাকিতে চালানোর সীমা": "Pay-later limit"
 }

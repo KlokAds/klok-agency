@@ -36,6 +36,8 @@ class CampaignLimits
 
     public const CLIENT_TITLE = 'Client নিজে campaign বদলেছেন'; // i18n
 
+    public const ON_CREDIT_TITLE = 'Client বাকিতে চলছে'; // i18n
+
     public function __construct(private PilotClient $pilot, private Books $books, private Notifier $notifier) {}
 
     public static function enabled(): bool
@@ -81,8 +83,20 @@ class CampaignLimits
                     $this->refresh($campaign);
                 }
 
+                $credit = (int) $client['credit_left'];
+                // Room to run: the credit, and past it what the team allows them on credit (paid
+                // first from their next payment).
+                $left = $credit + (int) ($client['allowance'] ?? 0);
+
+                // Money (or room on credit) is back: what the guard stopped runs again.
+                if ($left >= self::RUN_OUT_MIN) {
+                    foreach ($campaigns as $campaign) {
+                        $this->resume($campaign);
+                    }
+                }
+                $this->onCredit((int) $clientId, $client, $credit);
+
                 $running = $campaigns->filter(fn (Campaign $c) => $c->isLive());
-                $left = (int) $client['credit_left'];
 
                 if ($left <= 0) {
                     foreach ($running as $campaign) {
@@ -98,7 +112,8 @@ class CampaignLimits
                     $done['capped'] += $this->cap($campaign, (int) ($campaign->spent_before ?? 0) + $billed + $share) ? 1 : 0;
                 }
 
-                $done['extended'] = ($done['extended'] ?? 0) + $this->runOut($campaigns, $client, $left);
+                // Only real credit stretches a campaign past its end, never the room on credit.
+                $done['extended'] = ($done['extended'] ?? 0) + $this->runOut($campaigns, $client, $credit);
             } catch (RuntimeException $e) {
                 if (str_contains($e->getMessage(), 'write:campaigns')) {
                     // The Pilot token may only read: say so once a day, not every tick.
@@ -447,6 +462,51 @@ class CampaignLimits
         $campaign->saveQuietly();
 
         return ($read['spend_cap_error'] ?? null) === null;
+    }
+
+    /** A campaign the guard stopped for money runs again, unless it ended or someone paused it themselves. */
+    private function resume(Campaign $campaign): void
+    {
+        if ($campaign->paused_for_credit_at === null || $campaign->hasEnded() || $campaign->paused_by_client_at !== null || $campaign->paused_by_team_at !== null) {
+            return;
+        }
+
+        $read = $this->pilot->limits($campaign->account->pilot_id, $campaign->pilot_campaign_id, ['active' => true, 'reason' => 'Client credit back (Klok Agency)']);
+        $this->remember($campaign, $read);
+        $campaign->paused_for_credit_at = null;
+        $campaign->saveQuietly();
+
+        activity('Campaign')->performedOn($campaign)->log('switched on: credit back');
+        app(ClientNotifier::class)->send($campaign->client_id, new AgencyAlert('client_back', ClientNotifier::BACK_TITLE, '{campaign} — আবার চলছে', [ // i18n
+            'campaign' => $campaign->name,
+        ], ['url' => '/portal/campaigns/'.($campaign->slug ?? $campaign->id)]));
+    }
+
+    /**
+     * Running past the credit on the room the team allowed: the team and the client hear once each
+     * time it starts, with what is owed and that the next payment takes it first.
+     *
+     * @param  array<string, mixed>  $client  a Books::clients() row
+     */
+    private function onCredit(int $clientId, array $client, int $credit): void
+    {
+        $key = "on-credit:{$clientId}";
+
+        if ($credit >= 0) {
+            Cache::forget($key);
+
+            return;
+        }
+
+        if ((int) ($client['allowance'] ?? 0) <= 0 || ! Cache::add($key, true, now()->addDays(30))) {
+            return;
+        }
+
+        $params = ['client' => (string) $client['name'], 'owed' => '$'.number_format(-$credit / 100, 2), 'limit' => '$'.number_format((int) $client['allowance'] / 100, 2)];
+        $this->notifier->send(Client::whereKey($clientId)->value('manager_id'), new AgencyAlert('credit_out', self::ON_CREDIT_TITLE, '{client} — credit শেষ, বাকিতে চলছে: {owed} বাকি (সীমা {limit})। পরের payment থেকে আগে এটা কাটা হবে।', $params, // i18n
+            ['url' => '/clients/'.$clientId]));
+        app(ClientNotifier::class)->send($clientId, new AgencyAlert('client_credit_low', ClientNotifier::ON_CREDIT_TITLE, 'Credit শেষ — বিজ্ঞাপন বাকিতে চলছে: {owed} বাকি (সীমা {limit})। পরের payment থেকে আগে এটা কাটা হবে; সীমায় পৌঁছালে থামবে।', $params, // i18n
+            ['url' => '/portal']));
     }
 
     private function pause(Campaign $campaign, string $clientName): void
