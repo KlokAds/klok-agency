@@ -28,6 +28,9 @@ class CardEvents
 {
     public const HELD_TITLE = 'Card-এর একটা লেনদেন মেলাতে হবে'; // i18n
 
+    /** Words of a promotion, a reward, a price alert or market news — never a card's money. */
+    private const PROMO = '/\b(?:win|draw|earn|rewards?|up to|voucher|bonus|referral|invite|mission|claim|giveaway|t&cs apply|marketplace|starting today|price alert|crosses|dips below|market update|liquidations?|valuation|sell-?off|offer)\b/u';
+
     public const NEW_APP_TITLE = 'নতুন card/bank app পাওয়া গেছে'; // i18n
 
     /** Shops that are an ad platform: their charges pay that platform's spend. */
@@ -53,6 +56,8 @@ class CardEvents
 
         $amount = null;
         $currency = null;
+        // "$57B", "$1.2 million": a market figure, never an amount.
+        $flat = (string) preg_replace('/(?:US\$|\$|USD[TC]?)\s?\d[\d,.]*\s?(?:[BMKT]\b|bn\b|million\b|billion\b|trillion\b)/iu', ' ', $flat);
         // Dollars, or the dollar coins crypto cards count in (USDT, USDC): one to one.
         if (preg_match('/(?:US\$|\$|USD[TC]?)\s?([\d,]+(?:\.\d{1,2})?)/i', $flat, $m) === 1
             || preg_match('/([\d,]+(?:\.\d{1,2})?)\s?(?:USD[TC]?|US\$)/i', $flat, $m) === 1) {
@@ -63,6 +68,8 @@ class CardEvents
         $last4 = preg_match('/(?:card|ending(?:\s+in)?|[*•x…]{2,})\s*(?:ending\s*(?:in)?\s*)?[*•x…]*\s?(\d{4})\b/iu', $flat, $m) === 1 ? $m[1] : null;
 
         $kind = match (true) {
+            // Promotions, rewards, price alerts and market news (Binance, Fasset, Telegram bots…): no money moved.
+            preg_match(self::PROMO, $lower) === 1 => 'other',
             // A one-time code for a payment is not the payment: the charge itself comes after.
             preg_match('/\botp\b|one.?time|verification code|passcode|security code|\b3ds\b|code is|\bcode\b\D{0,12}\d{4,8}/', $lower) === 1 => 'other',
             // "A card payment needs your approval" (NSave) comes before "Card payment approved":
@@ -99,9 +106,9 @@ class CardEvents
         $app = MoneyApp::where('package', $package)->first();
         $new = false;
 
-        // Only a dollar move makes an app a platform; anything else from an unknown app is not kept.
+        // Only a real dollar move (a charge, a refund, money added) makes an app a platform; a promotion never does.
         // Two notices of a new app can arrive at once: one makes it, the other finds it.
-        if ($app === null && $read['amount'] !== null) {
+        if ($app === null && $read['amount'] !== null && in_array($read['kind'], ['charge', 'refund', 'topup'], true)) {
             $app = MoneyApp::createOrFirst(['package' => $package], ['name' => mb_substr($appName ?: $package, 0, 120), 'status' => 'pending', 'seen_at' => now()]);
             $new = $app->wasRecentlyCreated;
         } elseif ($app !== null) {

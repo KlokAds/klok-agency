@@ -66,7 +66,12 @@ it("reads NSave's own words, as MH-Bot received them", function () {
         ->and(CardEvents::read('A card payment needs your approval. ELEVENLABS-IO 1.00 USD')['kind'])->toBe('other')
         ->and(CardEvents::read('Money received. 💰 Received $327.00 from Md Mujaid Hossain'))
         ->toMatchArray(['kind' => 'topup', 'amount' => 32700, 'merchant' => 'Md Mujaid Hossain'])
-        ->and(CardEvents::read('4 days left to win $500 💰. Spend $50 this month and enter the draw automatically.')['kind'])->toBe('other');
+        ->and(CardEvents::read('4 days left to win $500 💰. Spend $50 this month and enter the draw automatically.')['kind'])->toBe('other')
+        // Promotions and news from Binance, Fasset: no money moved, never a new app to approve.
+        ->and(CardEvents::read('Sending money? Get gold back 💥. Send $30+ to any Fasset Tag and earn $1 in Tether Gold (XAUT) on every transfer until 22 Nov. T&Cs apply.')['kind'])->toBe('other')
+        ->and(CardEvents::read('Last Call for $10 in SPCXB. Earnings return every quarter, but this reward might not. Complete your mission now.')['kind'])->toBe('other')
+        ->and(CardEvents::read('Record $57B Leveraged ETF Selling Drove the Nov 5 Selloff. ETFs sold a record $57B of US stocks')['amount'])->toBeNull()
+        ->and(CardEvents::read('Bitcoin Rebounds to $78K After Midterm Dip')['amount'])->toBeNull();
 
     // Approved, then the ask arrives late: one charge only.
     moneyNote('Card payment approved. 💳 Paid $1.00 at Elevenlabs.io with your card ending 6903')->assertJson(['status' => 'card_booked']);
