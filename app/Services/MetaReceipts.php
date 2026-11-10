@@ -220,6 +220,19 @@ class MetaReceipts
             'campaigns' => $parsed['campaigns'],
         ]);
 
+        // The same charge is already here (read from Pilot, or this mail came twice): never saved again —
+        // a second row with its transaction id would fail every check. The receipt only adds what each campaign took.
+        if ($parsed['transaction_id'] !== null && ($first = MetaReceipt::where('transaction_id', $parsed['transaction_id'])->first()) !== null) {
+            $matched = $parsed['campaigns'] !== [] && $parsed['amount'] !== null && abs($parsed['amount'] - (int) array_sum(array_column($parsed['campaigns'], 'cents'))) <= 1;
+            $entry = $first->usd_entry_id ? UsdEntry::find($first->usd_entry_id) : null;
+            if ($matched && $entry !== null && ! $entry->allocations && ($sender === null || self::fromMeta($sender))) {
+                $entry->forceFill(['allocations' => self::allocations($parsed['campaigns'], $parsed['amount'])])->save();
+            }
+            $receipt->fill(['status' => 'duplicate', 'transaction_id' => null, 'usd_entry_id' => null])->save();
+
+            return $receipt;
+        }
+
         // Anyone can mail the mailbox: only mail from Meta itself is booked (or adds a split to a
         // charge). Anything else that looks like a receipt is kept for a person, never booked.
         if ($sender !== null && ! self::fromMeta($sender)) {
@@ -259,17 +272,6 @@ class MetaReceipts
         if ($parsed['campaigns'] === [] || abs($unmatched) > 1) {
             $receipt->fill(['status' => 'unread', 'problem' => __('Receipt-এর :amount কোনো campaign-এর নামের সাথে মেলেনি — Campaign পাতায় নাম/account মিলিয়ে "আবার পড়ুন" চাপুন।', ['amount' => '$'.number_format(abs($unmatched) / 100, 2)])])->save();
             $this->tell($receipt, self::UNREAD_TITLE);
-
-            return $receipt;
-        }
-
-        if ($parsed['transaction_id'] !== null && ($first = MetaReceipt::where('transaction_id', $parsed['transaction_id'])->first()) !== null) {
-            // Already booked from Pilot: the receipt adds what each campaign took.
-            $entry = $first->usd_entry_id ? UsdEntry::find($first->usd_entry_id) : null;
-            if ($entry !== null && ! $entry->allocations) {
-                $entry->forceFill(['allocations' => self::allocations($parsed['campaigns'], $parsed['amount'])])->save();
-            }
-            $receipt->fill(['status' => 'duplicate', 'transaction_id' => null, 'usd_entry_id' => null])->save();
 
             return $receipt;
         }

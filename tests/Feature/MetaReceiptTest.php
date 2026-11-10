@@ -270,3 +270,13 @@ it('leaves Meta charges on a card that is not ours out of the books', function (
     expect(app(MetaReceipts::class)->fromPilotIfDue())->toBe(0)
         ->and(UsdEntry::where('category', 'card_charge')->count())->toBe(1);
 });
+
+it('never saves the same transaction twice, even when its campaigns no longer match', function () {
+    $receipts = app(MetaReceipts::class);
+    expect($receipts->take('<first@meta>', 'Your Meta ads receipt', receiptText(), CarbonImmutable::parse('2026-10-16'))->status)->toBe('booked');
+
+    // A renamed campaign: the mail can't be split, but its transaction is already here — a duplicate, no error.
+    $renamed = str_replace('Leads', 'Leads (renamed)', receiptText());
+    expect($receipts->take('<again@meta>', 'Your Meta ads receipt', $renamed, CarbonImmutable::parse('2026-10-17'))->status)->toBe('duplicate')
+        ->and(MetaReceipt::whereNotNull('transaction_id')->count())->toBe(1);
+});
