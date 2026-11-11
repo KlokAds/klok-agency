@@ -83,3 +83,11 @@ it('matches a charge only to the days spent up to its own day, so later days sta
         ->and($balances->client($this->client->id))->toBe(['charged' => 600, 'uncharged' => 400])
         ->and(collect($accounts[0]['charges'][0]['by_campaign'])->pluck('amount', 'name')->all())->toBe(['Sales A' => 600, 'Sales B' => 300, 'অন্য' => 100]);
 });
+
+it("lists only the agency's ad accounts, not a client's account we only manage in Pilot", function () {
+    $theirs = PilotAccount::create(['pilot_id' => 10, 'external_id' => 'act_888', 'name' => 'Eazy Mall Ad Account', 'platform' => 'meta', 'currency' => 'USD', 'seen_at' => now()]);
+    $campaign = Campaign::create(['pilot_campaign_id' => 903, 'pilot_account_id' => $theirs->id, 'name' => 'Trio Msg']);
+    CampaignDay::create(['campaign_id' => $campaign->id, 'day' => '2026-10-02', 'spend' => 6702, 'results' => 1, 'clicks' => 1]);
+
+    expect(collect(app(AdAccountBalances::class)->accounts())->pluck('name')->all())->toBe(['Klok Ads Agency']);
+});

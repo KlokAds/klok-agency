@@ -379,7 +379,7 @@
     "খাতায় তোলা হয়েছে।": "Put in the books.",
     "Owner সরিয়ে রেখেছেন": "Set aside by the Owner",
     "সরিয়ে রাখা হয়েছে।": "Set aside.",
-    "Card :card খাতায় নেই — Dollar ও Card পাতায় card-টা যোগ করুন, তাহলে নিজে উঠবে।": "Card :card isn't in the books. Add it on the Dollars page and it will go in by itself.",
+    "Card :card আমাদের খাতার card না।": "Card :card is not a card in our books.",
     "কোন card থেকে, notification-এ লেখা নেই — নিজে মেলান।": "The notification doesn't say which card. Match it yourself.",
     "Main card-এ টাকা এসেছে — নতুন কেনা USD হলে Dollar ও Card-এ taka সহ লিখুন।": "Money came onto the main card. If it is newly bought USD, write it on the Dollars page with its taka.",
     "Card-এর একটা লেনদেন মেলাতে হবে": "A card move needs matching",

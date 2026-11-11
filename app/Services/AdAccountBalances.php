@@ -58,7 +58,9 @@ class AdAccountBalances
     {
         $out = [];
 
-        foreach (PilotAccount::orderBy('name')->get() as $account) {
+        // Only the agency's own ad accounts: those with a campaign billed to a client here. A
+        // client's account we only manage in Pilot is paid with their card, not ours.
+        foreach (PilotAccount::whereHas('campaigns', fn ($q) => $q->whereNotNull('client_id'))->orderBy('name')->get() as $account) {
             $days = $this->days($account);
             $charges = $this->charges($account);
             if ($days->isEmpty() && $charges->isEmpty()) {

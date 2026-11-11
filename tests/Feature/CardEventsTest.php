@@ -258,3 +258,23 @@ it("books any new app's charge on the card with the same last four digits once a
     expect($cards[$redot->id]['balance'])->toBe(10000 - 999)
         ->and($cards[$this->main->id]['balance'])->toBe(50000 - 10000);
 });
+
+it("skips a charge on a card whose digits are not in the books (the Owner's personal card in the same app) and keeps nothing of it", function () {
+    // The app's other account has no digits written: still not a reason to take an unknown card's charge.
+    Account::create(['code' => 'nsave_x', 'name' => 'nsave', 'kind' => 'card', 'app_package' => 'com.nsave.app', 'is_active' => true, 'sort' => 5]);
+
+    moneyNote("Card payment approved\n💳 Paid \$61.15 at FACEBK *5TQLYE2EL4 with your card ending 5372")->assertJson(['status' => 'card_ignored']);
+
+    expect((new Books)->summary()['card'])->toBe(50000)
+        ->and(UsdEntry::count())->toBe(1)
+        ->and(CardEvent::count())->toBe(0);
+});
+
+it('keeps only what is ours: summaries, offers and declines leave no copy and are not listed', function () {
+    moneyNote("📊 Marine Orvion · Mon 9 Nov\nSpent \$5.89 on 2 campaigns.", 'com.klokads.app', 'MH-Bot');
+    moneyNote('Transaction declined: $3.00 at Netflix, card *6903');
+    moneyNote('You spent $5.00 at Canva with card ending 6903')->assertJson(['status' => 'card_booked']);
+
+    expect(CardEvent::pluck('status')->all())->toBe(['booked'])
+        ->and(collect(CardEvents::recent())->pluck('status')->all())->toBe(['booked']);
+});

@@ -174,7 +174,9 @@ class Books
             }
         }
 
-        return array_values($cards->map(fn (Account $a) => ['id' => $a->id, 'name' => $a->name, 'last4' => $a->last4, 'balance' => (int) ($sums[$a->id] ?? 0)])->all());
+        // A card turned off with nothing on it is gone; one still holding money stays in sight.
+        return array_values($cards->filter(fn (Account $a) => $a->is_active || (int) ($sums[$a->id] ?? 0) !== 0)
+            ->map(fn (Account $a) => ['id' => $a->id, 'name' => $a->name, 'last4' => $a->last4, 'balance' => (int) ($sums[$a->id] ?? 0)])->all());
     }
 
     /**

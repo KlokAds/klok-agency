@@ -22,7 +22,8 @@ use Illuminate\Support\Facades\DB;
  * - money added moves it from the account it is set to come from (NSave's copy from its main);
  *   otherwise it is new dollars bought, which the Owner writes (with its taka) in Dollar ও Card;
  * - a declined charge, a code, an offer or anything without a dollar amount changes nothing.
- * What cannot be read for sure (no card digits, a card not in the books) waits for the Owner.
+ * A card whose digits are not in the books is not ours (the Owner's personal card): skipped.
+ * What cannot be read for sure (no card digits) waits for the Owner. Nothing not ours is kept.
  */
 class CardEvents
 {
@@ -124,6 +125,14 @@ class CardEvents
         if ($event->wasRecentlyCreated) {
             $this->handle($event);
 
+            // Only what is ours stays: anything else the phone sent (a summary, an offer, another
+            // card's charge) is not kept — the books hold no copy of the phone's other notifications.
+            if ($event->status === 'ignored') {
+                $event->delete();
+
+                return $event;
+            }
+
             if ($new) {
                 $this->announce($app, $event);
             }
@@ -219,10 +228,14 @@ class CardEvents
 
         $card ??= $this->accountFor($event);
 
+        if ($card === null && $event->last4 !== null) {
+            $event->update(['status' => 'ignored', 'problem' => __('Card :card আমাদের খাতার card না।', ['card' => $event->last4])]);
+
+            return;
+        }
+
         if ($card === null) {
-            $this->hold($event, $event->last4 !== null
-                ? __('Card :card খাতায় নেই — Dollar ও Card পাতায় card-টা যোগ করুন, তাহলে নিজে উঠবে।', ['card' => $event->last4])
-                : __('কোন card থেকে, notification-এ লেখা নেই — নিজে মেলান।'), $quiet);
+            $this->hold($event, __('কোন card থেকে, notification-এ লেখা নেই — নিজে মেলান।'), $quiet);
 
             return;
         }
@@ -267,11 +280,10 @@ class CardEvents
     {
         $mine = Account::where('app_package', $event->package)->where('is_active', true)->get();
 
+        // Card digits the books do not have are someone else's card (the Owner's personal one in
+        // the same app): never ours, whatever account the app has.
         if ($event->last4 !== null) {
-            return $mine->firstWhere('last4', $event->last4)
-                ?? Account::cardByDigits($event->last4)
-                // The app's one account has no digits written yet: it is that one.
-                ?? ($mine->count() === 1 && $mine->first()?->last4 === null ? $mine->first() : null);
+            return $mine->firstWhere('last4', $event->last4) ?? Account::cardByDigits($event->last4);
         }
 
         return $mine->count() === 1 ? $mine->first() : null;
@@ -389,7 +401,7 @@ class CardEvents
      */
     public static function recent(): array
     {
-        return array_values(CardEvent::with('card:id,name,last4')
+        return array_values(CardEvent::with('card:id,name,last4')->where('status', '!=', 'ignored')
             ->orderByRaw("case when status = 'held' then 0 else 1 end")->latest('posted_at')->limit(30)->get()
             ->map(fn (CardEvent $e) => [
                 'id' => $e->id, 'at' => $e->posted_at?->toIso8601String(), 'app' => $e->app_name, 'kind' => $e->kind, 'amount' => $e->amount,
