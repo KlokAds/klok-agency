@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Setting;
 use App\Services\KeepAlive;
+use App\Services\Ticker;
 use Illuminate\Support\Facades\Process;
 
 it('starts the in-app timer when it has not beaten lately, once, and not when it is running', function () {
@@ -28,4 +30,17 @@ it('starts the in-app timer when it has not beaten lately, once, and not when it
 
 it('wakes Pilot at its own address, not the MCP path', function () {
     expect(KeepAlive::pilotWakeUrl())->toBe('https://pilot.klokads.com/up');
+});
+
+it('does nothing once retired: KlokOne runs the clients and ads now', function () {
+    config(['agency.keep_alive' => true, 'agency.retired' => true, 'agency.php_cli' => '/opt/alt/php85/usr/bin/php']);
+    Process::fake();
+
+    app(KeepAlive::class)->ensure();
+    app(KeepAlive::class)->start(force: true);
+    Process::assertNothingRan();
+
+    expect(app(Ticker::class)->run())->toBe(['ended' => 0, 'reminders' => 0, 'summary' => false])
+        ->and(Setting::get('last_tick_at'))->toBeNull();
+    $this->artisan('agency:keep-alive')->assertSuccessful();
 });

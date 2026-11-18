@@ -22,6 +22,11 @@ class KeepAlive extends Command
 {
     public function handle(Ticker $ticker, KeepAliveService $keepAlive): int
     {
+        // Retired: KlokOne does this work now, and Pilot is woken from there (config/agency.php).
+        if (config('agency.retired')) {
+            return self::SUCCESS;
+        }
+
         $started = time();
         $lastPilot = 0;
         $code = KeepAliveService::codeStamp();

@@ -10,6 +10,14 @@ return [
     'keep_alive' => (bool) env('KEEP_ALIVE', false),
 
     /*
+    | KlokOne (one.klokads.com) runs the clients and their ads now: this app keeps its books to look
+    | back at and does nothing by itself: no timer, no tick, no spend sync, no guard, renewal,
+    | reminder or alert. Both acting on the same campaigns and clients would fight.
+    */
+
+    'retired' => (bool) env('AGENCY_RETIRED', false),
+
+    /*
     | The PHP command line the timer is started with (web requests run under another PHP binary).
     */
 

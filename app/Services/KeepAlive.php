@@ -66,6 +66,11 @@ class KeepAlive
     /** A detached `php artisan agency:keep-alive`, its output to the log. */
     public function start(bool $force = false): void
     {
+        // Retired: nothing starts it again, not even a timer handing over (config/agency.php).
+        if (config('agency.retired')) {
+            return;
+        }
+
         if (! $force && ! self::enabled()) {
             return;
         }

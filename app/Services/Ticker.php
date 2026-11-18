@@ -38,6 +38,11 @@ class Ticker
     /** @return array{ended: int, reminders: int, summary: bool} */
     public function run(): array
     {
+        // KlokOne does this work now (config/agency.php).
+        if (config('agency.retired')) {
+            return ['ended' => 0, 'reminders' => 0, 'summary' => false];
+        }
+
         $lock = Cache::lock('agency:tick', 120);
 
         if (! $lock->get()) {
